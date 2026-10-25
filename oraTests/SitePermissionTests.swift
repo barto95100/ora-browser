@@ -42,6 +42,16 @@ struct SiteOriginTests {
         #expect(SiteOrigin(string: origin.description) == origin)
     }
 
+    @Test func displayNameRevealsInsecureSchemesAndCustomPorts() throws {
+        let secure = try #require(SiteOrigin(string: "https://meet.example.com"))
+        let insecure = try #require(SiteOrigin(string: "http://meet.example.com"))
+        let customPort = try #require(SiteOrigin(string: "https://meet.example.com:8443"))
+
+        #expect(secure.displayName == "meet.example.com")
+        #expect(insecure.displayName == "http://meet.example.com")
+        #expect(customPort.displayName == "https://meet.example.com:8443")
+    }
+
     @Test func urlsWithoutHostAreRejected() {
         #expect(SiteOrigin(string: "about:blank") == nil)
         #expect(SiteOrigin(scheme: "https", host: "", port: nil) == nil)

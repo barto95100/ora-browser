@@ -24,7 +24,7 @@ struct SitePermissionPromptView: View {
                     .background(Circle().fill(Color(nsColor: .labelColor).opacity(0.08)))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(siteName)
+                    Text(request.origin.displayName)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color(nsColor: .labelColor))
                         .lineLimit(1)
@@ -64,13 +64,6 @@ struct SitePermissionPromptView: View {
                 .stroke(Color(nsColor: .separatorColor).opacity(0.7), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.12), radius: 20, x: 0, y: 8)
-    }
-
-    /// The host alone for regular HTTPS sites; the full origin otherwise, so an
-    /// insecure scheme or an unusual port is visible before granting access.
-    private var siteName: String {
-        let origin = request.origin
-        return origin.scheme == "https" && origin.port == nil ? origin.host : origin.description
     }
 
     private var capabilityDescription: String {

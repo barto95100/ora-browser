@@ -67,6 +67,13 @@ struct SiteOrigin: Hashable, Codable, Identifiable, CustomStringConvertible {
         return "\(scheme)://\(host)"
     }
 
+    /// How to show the site to the user: the host alone for regular HTTPS
+    /// sites, the full origin otherwise, so an insecure scheme or an unusual
+    /// port is visible before granting anything.
+    var displayName: String {
+        scheme == "https" && port == nil ? host : description
+    }
+
     private static func defaultPort(for scheme: String) -> Int? {
         switch scheme {
         case "http": 80
@@ -126,6 +133,27 @@ struct SitePermissions: Codable, Hashable {
             return .allow
         }
         return .ask
+    }
+}
+
+// MARK: - Display
+
+extension SitePermissionType {
+    var title: String {
+        switch self {
+        case .camera: "Camera"
+        case .microphone: "Microphone"
+        }
+    }
+}
+
+extension SitePermissionState {
+    var title: String {
+        switch self {
+        case .ask: "Ask"
+        case .allow: "Allow"
+        case .deny: "Don't Allow"
+        }
     }
 }
 

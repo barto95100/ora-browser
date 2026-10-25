@@ -119,6 +119,7 @@ struct SpacesSettingsView: View {
                         }
 
                         privacySettingsCard(for: container)
+                        SitePermissionsSettingsCard(container: container)
                         adBlockingSettingsCard(for: container)
 
                         SettingsCard(header: "Clear Data") {

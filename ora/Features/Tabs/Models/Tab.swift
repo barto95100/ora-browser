@@ -53,6 +53,8 @@ class Tab: ObservableObject, Identifiable {
     @Transient var passwordCoordinator: PasswordAutofillCoordinator?
     @Transient @Published var passwordOverlayState: PasswordAutofillOverlayState?
     @Transient @Published var passwordTriggerOverlayState: PasswordAutofillOverlayState?
+    /// Permission prompt currently shown for this tab, see `Tab+SitePermissions`.
+    @Transient @Published var permissionRequest: SitePermissionRequest?
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 
@@ -302,6 +304,7 @@ class Tab: ObservableObject, Identifiable {
     }
 
     func destroyWebView() {
+        cancelPermissionRequest()
         browserPage?.teardown()
         browserPage = nil
         pageDelegate = nil

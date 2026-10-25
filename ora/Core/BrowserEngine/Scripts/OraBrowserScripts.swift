@@ -159,12 +159,14 @@ enum OraBrowserScripts {
             return null;
         }
 
+        // Only tell the app when the next/previous buttons appear or disappear.
+        let lastCaps = null;
         function caps() {
-            post({
-                type: 'caps',
-                hasNext: !!findNextButton(),
-                hasPrevious: !!findPrevButton()
-            });
+            const hasNext = !!findNextButton();
+            const hasPrevious = !!findPrevButton();
+            if (lastCaps && lastCaps.hasNext === hasNext && lastCaps.hasPrevious === hasPrevious) return;
+            lastCaps = { hasNext, hasPrevious };
+            post({ type: 'caps', hasNext, hasPrevious });
         }
 
         const stateFrom = (element) => ({
@@ -209,6 +211,16 @@ enum OraBrowserScripts {
             });
             element.addEventListener('pause', update);
             element.addEventListener('ended', () => post({ type: 'ended' }));
+            // Leaving Picture in Picture with the video still playing means the
+            // user chose "back to tab" (closing the window pauses it): ask the
+            // app to show this tab, as Safari does.
+            element.addEventListener('enterpictureinpicture', () => post({ type: 'pip', state: 'entered' }));
+            element.addEventListener('leavepictureinpicture', () => {
+                post({ type: 'pip', state: 'left' });
+                setTimeout(() => {
+                    if (!element.paused) post({ type: 'pipReturn' });
+                }, 0);
+            });
             element.addEventListener('volumechange', () => {
                 // A muted video the user unmutes while it plays now counts.
                 if (!element.paused && isAudible(element) && !element.__oraWasPlayed) {
@@ -231,7 +243,19 @@ enum OraBrowserScripts {
             caps();
         }
 
-        const observer = new MutationObserver(scan);
+        // Busy pages (YouTube...) mutate their DOM constantly: coalesce mutations
+        // into at most one scan every 250 ms instead of one per mutation, to
+        // keep CPU and energy use low. Timers of hidden pages are throttled
+        // further by WebKit, as they should be.
+        let scanScheduled = false;
+        const observer = new MutationObserver(() => {
+            if (scanScheduled) return;
+            scanScheduled = true;
+            setTimeout(() => {
+                scanScheduled = false;
+                scan();
+            }, 250);
+        });
         observer.observe(document.documentElement, { childList: true, subtree: true });
         scan();
 
@@ -295,14 +319,17 @@ enum OraBrowserScripts {
         };
 
         window.__oraTriggerPiP = function(isActive = false) {
-            const video = document.querySelector('video');
-
             function hasAudio(target) {
                 if (!target) return false;
                 if (target.audioTracks && target.audioTracks.length > 0) return true;
                 if (!target.muted && target.volume > 0) return true;
                 return false;
             }
+
+            // Pages can hold several videos (hover previews, ads...): use the
+            // one actually playing with sound, not merely the first one.
+            const video = Array.from(document.querySelectorAll('video'))
+                .find((candidate) => !candidate.paused && hasAudio(candidate)) || null;
 
             if (
                 video &&
@@ -313,7 +340,9 @@ enum OraBrowserScripts {
                 hasAudio(video)
             ) {
                 video.requestPictureInPicture().catch(() => {});
-            } else if (document.pictureInPictureElement) {
+            } else if (isActive && document.pictureInPictureElement) {
+                // Only bring the video back when its tab is shown again; leaving
+                // a tab whose video is already in Picture in Picture keeps it.
                 document.exitPictureInPicture().catch(() => {});
             }
         };

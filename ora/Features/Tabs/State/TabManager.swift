@@ -71,6 +71,7 @@ class TabManager: ObservableObject {
         self.modelContext = modelContext
         self.mediaController = mediaController
         self.tabSearchingService = tabSearchingService
+        mediaController.tabManager = self
 
         self.modelContext.undoManager = UndoManager()
         initializeActiveContainerAndTab()

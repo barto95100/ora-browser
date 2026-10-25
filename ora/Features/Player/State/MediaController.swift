@@ -32,7 +32,15 @@ final class MediaController: ObservableObject {
     }
 
     private var tabRefs: [UUID: WeakTab] = [:]
+
+    /// Tabs whose video is in Picture in Picture. Their page must stay attached
+    /// to the window (see `ParkedBrowserPageView`), otherwise WebKit cannot
+    /// bring the video back when the user clicks "back to tab".
+    @Published private(set) var pictureInPictureTabIDs: Set<UUID> = []
+    private var pictureInPictureTabRefs: [UUID: WeakTab] = [:]
     private var titleSyncTimer: Timer?
+    /// The tab manager of the window this controller belongs to (set by it).
+    weak var tabManager: TabManager?
 
     init() {
         startPeriodicTitleSync()
@@ -92,6 +100,18 @@ final class MediaController: ObservableObject {
 //        case "ready":
             // Session is already ensured in other cases
 
+        case "pip":
+            if event.state == "entered" {
+                pictureInPictureTabRefs[id] = WeakTab(tab)
+                pictureInPictureTabIDs.insert(id)
+            } else {
+                pictureInPictureTabRefs[id] = nil
+                pictureInPictureTabIDs.remove(id)
+            }
+
+        case "pipReturn":
+            returnToTab(tab)
+
         case "volume":
             if let idx = sessions.firstIndex(where: { $0.tabID == id }), let vol = event.volume {
                 sessions[idx].volume = clamp(vol)
@@ -99,8 +119,14 @@ final class MediaController: ObservableObject {
 
         case "caps":
             if let idx = sessions.firstIndex(where: { $0.tabID == id }) {
-                sessions[idx].canGoNext = event.hasNext ?? sessions[idx].canGoNext
-                sessions[idx].canGoPrevious = event.hasPrevious ?? sessions[idx].canGoPrevious
+                let canGoNext = event.hasNext ?? sessions[idx].canGoNext
+                let canGoPrevious = event.hasPrevious ?? sessions[idx].canGoPrevious
+                // Don't republish identical values: every write to `sessions`
+                // re-renders the sidebar.
+                if sessions[idx].canGoNext != canGoNext || sessions[idx].canGoPrevious != canGoPrevious {
+                    sessions[idx].canGoNext = canGoNext
+                    sessions[idx].canGoPrevious = canGoPrevious
+                }
             }
 
         case "ended":
@@ -122,7 +148,7 @@ final class MediaController: ObservableObject {
             break
         }
 
-        isVisible = !visibleSessions.isEmpty
+        updateVisibility()
     }
 
     // MARK: - Controls (per session, default to primary)
@@ -171,17 +197,19 @@ final class MediaController: ObservableObject {
         // Update tab's isPlayingMedia property
         tabRefs[id]?.value?.isPlayingMedia = false
         tabRefs[id] = nil
-        isVisible = !visibleSessions.isEmpty
+        updateVisibility()
     }
 
     func removeSession(for tabID: UUID) {
         if let idx = sessions.firstIndex(where: { $0.tabID == tabID }) {
             sessions.remove(at: idx)
         }
+        pictureInPictureTabRefs[tabID] = nil
+        pictureInPictureTabIDs.remove(tabID)
         // Update tab's isPlayingMedia property
         tabRefs[tabID]?.value?.isPlayingMedia = false
         tabRefs[tabID] = nil
-        isVisible = !visibleSessions.isEmpty
+        updateVisibility()
     }
 
     /// Helpers
@@ -207,6 +235,36 @@ final class MediaController: ObservableObject {
 
     private func eval(_ tabID: UUID, _ javaScript: String) {
         tabRefs[tabID]?.value?.evaluateJavaScript(javaScript)
+    }
+
+    /// Tabs in Picture in Picture whose page is loaded, except `excludedTabID`
+    /// (the tab currently displayed, whose page is already in the window).
+    func pictureInPictureTabs(excluding excludedTabID: UUID?) -> [Tab] {
+        pictureInPictureTabIDs
+            .filter { $0 != excludedTabID }
+            .compactMap { pictureInPictureTabRefs[$0]?.value }
+            .filter { $0.browserPage != nil }
+    }
+
+    /// "Back to tab" in the Picture in Picture window: like Safari, show the
+    /// tab the video belongs to. Its page is not displayed otherwise, so the
+    /// video would come back into a hidden page.
+    private func returnToTab(_ tab: Tab) {
+        // Same path as the mini player's "go to tab" button: it also switches
+        // to the tab's space.
+        guard let tabManager else { return }
+        tabManager.activateTab(id: tab.id)
+        NSApp.activate()
+        DispatchQueue.main.async {
+            tab.pageWindow?.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    private func updateVisibility() {
+        let visible = !visibleSessions.isEmpty
+        if isVisible != visible {
+            isVisible = visible
+        }
     }
 
     private func clamp(_ value: Double) -> Double {

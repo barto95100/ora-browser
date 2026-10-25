@@ -2,6 +2,7 @@ import Foundation
 @testable import Ora
 import Testing
 
+@MainActor
 struct TabInitialTitleTests {
     @Test func webPagesUseTheHostWithoutWww() throws {
         let url = try #require(URL(string: "https://www.example.com/some/page"))

@@ -1,0 +1,66 @@
+# Vérifie chaque jour s'il y a du nouveau sur the-ora/browser et ouvre une PR
+# de synchronisation dans ce fork (branche `upstream-sync` -> `main`).
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: "17 5 * * *" # tous les jours vers 7h (heure de Paris)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM_REPO: the-ora/browser
+      UPSTREAM_BRANCH: main
+      SYNC_BRANCH: upstream-sync
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch upstream "${UPSTREAM_BRANCH}" --tags
+
+      - name: Check for new upstream commits
+        id: check
+        run: |
+          count=$(git rev-list --count "HEAD..upstream/${UPSTREAM_BRANCH}")
+          echo "count=${count}" >> "$GITHUB_OUTPUT"
+          echo "Nouveaux commits upstream : ${count}"
+
+      - name: Push sync branch
+        if: steps.check.outputs.count != '0'
+        run: |
+          git push --force origin "upstream/${UPSTREAM_BRANCH}:refs/heads/${SYNC_BRANCH}"
+
+      - name: Open or update pull request
+        if: steps.check.outputs.count != '0'
+        run: |
+          log=$(git log --oneline --no-merges "HEAD..upstream/${UPSTREAM_BRANCH}" | head -50)
+          body=$(printf '%s\n\n%s\n\n```\n%s\n```\n' \
+            "Synchronisation automatique depuis [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO})." \
+            "${{ steps.check.outputs.count }} nouveau(x) commit(s) upstream :" \
+            "$log")
+          existing=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+            echo "PR #$existing mise à jour"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" \
+              --base main --head "$SYNC_BRANCH" \
+              --title "Sync upstream (${UPSTREAM_REPO})" \
+              --body "$body"
+          fi

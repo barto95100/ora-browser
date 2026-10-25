@@ -55,6 +55,9 @@ class Tab: ObservableObject, Identifiable {
     @Transient @Published var passwordTriggerOverlayState: PasswordAutofillOverlayState?
     /// Permission prompt currently shown for this tab, see `Tab+SitePermissions`.
     @Transient @Published var permissionRequest: SitePermissionRequest?
+    @Transient var crashRecovery = PageCrashRecoveryPolicy()
+    @Transient var isReloadingAfterCrash = false
+    @Transient @Published var showsCrashRecoveryNotice = false
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 
@@ -309,6 +312,10 @@ class Tab: ObservableObject, Identifiable {
 
     func destroyWebView() {
         cancelPermissionRequest()
+        // A new page loads from scratch: nothing left to recover.
+        crashRecovery = PageCrashRecoveryPolicy()
+        isReloadingAfterCrash = false
+        showsCrashRecoveryNotice = false
         browserPage?.teardown()
         browserPage = nil
         pageDelegate = nil
@@ -332,6 +339,13 @@ class Tab: ObservableObject, Identifiable {
     }
 
     func retryNavigation() {
+        // A crashed page reloads in place, keeping its back/forward history.
+        if navigationError is PageCrashError {
+            crashRecovery.recordReload()
+            browserPage?.reload()
+            return
+        }
+
         // Don't clear error state immediately - let onStart callback handle it
         // This prevents showing white background before navigation begins
         if let url = failedURL {

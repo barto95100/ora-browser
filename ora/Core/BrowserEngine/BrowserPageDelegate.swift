@@ -30,6 +30,9 @@ protocol BrowserPageDelegate: AnyObject {
         completion: @escaping (String?) -> Void
     )
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask)
+    /// The process rendering the page ended (crash, or macOS reclaiming memory).
+    /// The page is blank until it is reloaded.
+    func browserPageWebContentProcessDidTerminate(_ page: BrowserPage)
 }
 
 extension BrowserPageDelegate {
@@ -81,4 +84,6 @@ extension BrowserPageDelegate {
     }
 
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {}
+
+    func browserPageWebContentProcessDidTerminate(_ page: BrowserPage) {}
 }

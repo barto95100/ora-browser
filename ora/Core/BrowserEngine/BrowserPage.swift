@@ -235,6 +235,14 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
         return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
     }
 
+    /// Navigation failure caused by the end of the web content process, which is
+    /// reported separately by `webViewWebContentProcessDidTerminate(_:)`.
+    private func isWebContentProcessTerminationError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == WKError.errorDomain
+            && nsError.code == WKError.Code.webContentProcessTerminated.rawValue
+    }
+
     private func mapInjectionTime(_ injectionTime: BrowserUserScriptInjectionTime) -> WKUserScriptInjectionTime {
         switch injectionTime {
         case .atDocumentStart:
@@ -314,11 +322,18 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
         }
     }
 
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        originalURL = nil
+        delegate?.browserPageWebContentProcessDidTerminate(self)
+    }
+
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         guard !isDownloadNavigation else {
             originalURL = nil
             return
         }
+        // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
+        guard !isWebContentProcessTerminationError(error) else { return }
 
         emitNavigationEvent(
             phase: .finished,
@@ -339,6 +354,8 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
             originalURL = nil
             return
         }
+        // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
+        guard !isWebContentProcessTerminationError(error) else { return }
 
         emitNavigationEvent(
             phase: .finished,

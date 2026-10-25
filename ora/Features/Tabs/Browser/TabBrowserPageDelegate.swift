@@ -63,7 +63,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             tab.isLoading = event.isLoading
             tab.loadingProgress = event.progress
             if let url = event.url {
-                tab.url = url
+                tab.updateURL(url)
             }
 
         case .committed:
@@ -86,7 +86,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                 }
             }
             if let url = event.url {
-                tab.url = url
+                tab.updateURL(url)
                 if tab.favicon == nil {
                     tab.setFavicon()
                 }
@@ -241,7 +241,9 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
         let oldTitle = tab.title
         tab.title = update.title
-        tab.url = URL(string: update.href) ?? tab.url
+        if let url = URL(string: update.href) {
+            tab.updateURL(url)
+        }
         tab.setFavicon()
         tab.updateHistory()
 

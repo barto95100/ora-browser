@@ -181,21 +181,36 @@ enum OraBrowserScripts {
             observer.observe(document.body, { childList: true, subtree: true });
         }
 
+        // Only audible media count as "played": muted autoplay videos (page
+        // backgrounds, previews, ads) must not bring up the mini player.
+        function isAudible(element) {
+            return !element.muted && element.volume > 0;
+        }
+
         function attach(element) {
             if (!element || element.__oraAttached) return;
             element.__oraAttached = true;
             const update = () => post(stateFrom(element));
             element.addEventListener('play', () => {
+                if (isAudible(element)) {
+                    element.__oraWasPlayed = true;
+                }
                 update();
-                element.__oraWasPlayed = true;
             });
             element.addEventListener('pause', update);
             element.addEventListener('ended', () => post({ type: 'ended' }));
-            element.addEventListener('volumechange', () =>
-                post({ type: 'volume', volume: element.muted ? 0 : element.volume })
-            );
+            element.addEventListener('volumechange', () => {
+                // A muted video the user unmutes while it plays now counts.
+                if (!element.paused && isAudible(element) && !element.__oraWasPlayed) {
+                    element.__oraWasPlayed = true;
+                    update();
+                }
+                post({ type: 'volume', volume: element.muted ? 0 : element.volume });
+            });
             if (!element.paused) {
-                element.__oraWasPlayed = true;
+                if (isAudible(element)) {
+                    element.__oraWasPlayed = true;
+                }
                 update();
             }
             watchRemoval(element, () => post({ type: 'removed' }));

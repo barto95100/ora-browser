@@ -57,6 +57,8 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         switch event.phase {
         case .started:
             progressResetWorkItem?.cancel()
+            // A prompt belongs to the page that asked; leaving it denies.
+            tab.cancelPermissionRequest()
             tab.clearNavigationError()
             tab.maintainSnapShots()
             passwordCoordinator?.clearAutofillState()
@@ -137,7 +139,29 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         origin: URL?,
         decisionHandler: @escaping (BrowserPermissionDecision) -> Void
     ) {
-        decisionHandler(.grant)
+        guard let tab, let origin = origin.flatMap(SiteOrigin.init(url:)) else {
+            decisionHandler(.deny)
+            return
+        }
+
+        let types = permission.sitePermissionTypes
+        let saved = SitePermissionStore.shared.permissions(
+            for: origin,
+            in: tab.container.id,
+            isPrivate: tab.isPrivate
+        )
+
+        switch saved.decision(for: types) {
+        case .allow:
+            decisionHandler(.grant)
+        case .deny:
+            decisionHandler(.deny)
+        case .ask:
+            let request = SitePermissionRequest(origin: origin, types: types) { granted in
+                decisionHandler(granted ? .grant : .deny)
+            }
+            tab.presentPermissionRequest(request)
+        }
     }
 
     func browserPage(

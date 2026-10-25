@@ -86,7 +86,17 @@ struct BrowserWebContentView: View {
                             LinkPreview(text: hovered)
                         }
                     }
+                    .overlay(alignment: .top) {
+                        if let request = tab.permissionRequest {
+                            SitePermissionPromptView(request: request, isPrivate: tab.isPrivate) { granted, remember in
+                                tab.answerPermissionRequest(granted: granted, remember: remember)
+                            }
+                            .padding(.top, 12)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+                    }
                     .animation(.easeOut(duration: 0.12), value: tab.hoveredLinkURL)
+                    .animation(.easeOut(duration: 0.2), value: tab.permissionRequest)
             } else {
                 ZStack {
                     Rectangle().fill(theme.background)

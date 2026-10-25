@@ -139,6 +139,9 @@ targets:
       base:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Ora.app/Contents/MacOS/Ora"
         BUNDLE_LOADER: "$(TEST_HOST)"
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: Q76T6LDBBZ
 
 schemes:
   ora:

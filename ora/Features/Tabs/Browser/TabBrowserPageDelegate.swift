@@ -179,6 +179,21 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
     func browserPage(
         _ page: BrowserPage,
+        queryPermission permission: BrowserPermissionKind,
+        origin: URL?
+    ) -> BrowserPermissionDecision {
+        guard let tab, let origin = origin.flatMap(SiteOrigin.init(url:)) else {
+            return .prompt
+        }
+
+        return SitePermissionStore.shared
+            .permissions(for: origin, in: tab.container.id, isPrivate: tab.isPrivate)
+            .decision(for: permission.sitePermissionTypes)
+            .permissionQueryDecision
+    }
+
+    func browserPage(
+        _ page: BrowserPage,
         runOpenPanelWith options: BrowserOpenPanelOptions,
         completion: @escaping ([URL]?) -> Void
     ) {

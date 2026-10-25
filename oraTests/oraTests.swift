@@ -329,6 +329,15 @@ struct OraTests {
         #expect(!script.contains("en-US"))
     }
 
+    /// The fake answer was always "prompt", even for a site the user allowed,
+    /// and a plain object without addEventListener broke sites watching the
+    /// permission state. WebKit answers like Safari.
+    @Test func fingerprintingScriptLeavesPermissionsQueryAlone() {
+        let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
+
+        #expect(!script.contains("permissions.query"))
+    }
+
     @Test func trackerRegexMatchesRootAndSubdomains() throws {
         let pattern = BrowserPrivacyService.regexForDomain("hotjar.com")
         let regex = try NSRegularExpression(pattern: pattern)

@@ -16,6 +16,13 @@ protocol BrowserPageDelegate: AnyObject {
         origin: URL?,
         decisionHandler: @escaping (BrowserPermissionDecision) -> Void
     )
+    /// Answer to `navigator.permissions.query()` for a capture permission,
+    /// without asking the user.
+    func browserPage(
+        _ page: BrowserPage,
+        queryPermission permission: BrowserPermissionKind,
+        origin: URL?
+    ) -> BrowserPermissionDecision
     func browserPage(
         _ page: BrowserPage,
         runOpenPanelWith options: BrowserOpenPanelOptions,
@@ -58,6 +65,14 @@ extension BrowserPageDelegate {
         decisionHandler: @escaping (BrowserPermissionDecision) -> Void
     ) {
         decisionHandler(.deny)
+    }
+
+    func browserPage(
+        _ page: BrowserPage,
+        queryPermission permission: BrowserPermissionKind,
+        origin: URL?
+    ) -> BrowserPermissionDecision {
+        .prompt
     }
 
     func browserPage(

@@ -246,20 +246,6 @@ struct FingerprintingProtectionProfile: Equatable {
                 return values;
             }
 
-            if (navigator.permissions && typeof navigator.permissions.query === 'function') {
-                const originalQuery = navigator.permissions.query.bind(navigator.permissions);
-                navigator.permissions.query = function (parameters) {
-                    const permissionName = parameters && parameters.name;
-                    if (permissionName === 'camera' ||
-                        permissionName === 'microphone' ||
-                        permissionName === 'geolocation' ||
-                        permissionName === 'notifications') {
-                        return Promise.resolve({ state: 'prompt', onchange: null });
-                    }
-                    return originalQuery(parameters);
-                };
-            }
-
             if (navigator.mediaDevices && typeof navigator.mediaDevices.enumerateDevices === 'function') {
                 const originalEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
                 navigator.mediaDevices.enumerateDevices = function () {

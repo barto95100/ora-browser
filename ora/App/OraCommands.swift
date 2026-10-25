@@ -127,6 +127,14 @@ struct OraCommands: Commands {
                 NotificationCenter.default.post(name: .goForward, object: NSApp.keyWindow)
             }
             .keyboardShortcut(KeyboardShortcuts.Navigation.forward.keyboardShortcut)
+
+            #if DEBUG
+                Divider()
+
+                Button("Copy Page Crash Command (All Tabs in Space)") {
+                    NotificationCenter.default.post(name: .simulatePageCrash, object: NSApp.keyWindow)
+                }
+            #endif
         }
 
         CommandMenu("Tabs") {

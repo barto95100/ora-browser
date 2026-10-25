@@ -11,6 +11,7 @@ extension Notification.Name {
     static let findInPage = Notification.Name("FindInPage")
     static let toggleFullURL = Notification.Name("ToggleFullURL")
     static let reloadPage = Notification.Name("ReloadPage")
+    static let simulatePageCrash = Notification.Name("SimulatePageCrash") // Debug builds only
     static let goBack = Notification.Name("GoBack")
     static let goForward = Notification.Name("GoForward")
     static let togglePinTab = Notification.Name("TogglePinTab")

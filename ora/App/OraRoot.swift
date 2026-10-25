@@ -241,6 +241,30 @@ struct OraRoot: View {
                         tabManager.activeTab?.reload()
                     }
                 }
+                #if DEBUG
+                    NotificationCenter.default.addObserver(
+                        forName: .simulatePageCrash,
+                        object: nil,
+                        queue: .main
+                    ) { note in
+                        Task { @MainActor in
+                            guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                            // The sandbox forbids Ora to kill a web content process
+                            // itself: copy the command that crashes them, to run in
+                            // Terminal (SIGKILL ends a process exactly like a crash).
+                            let tabs = tabManager.activeContainer?.tabs ?? []
+                            let pids = Set(tabs.compactMap { $0.browserPage?.webContentProcessIdentifier })
+                            guard !pids.isEmpty else {
+                                print("[Simulate crash] No web content process found")
+                                return
+                            }
+                            let command = "kill -9 " + pids.sorted().map(String.init).joined(separator: " ")
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(command, forType: .string)
+                            print("[Simulate crash] Copied to the clipboard, run it in Terminal: \(command)")
+                        }
+                    }
+                #endif
                 NotificationCenter.default.addObserver(forName: .goBack, object: nil, queue: .main) { note in
                     Task { @MainActor in
                         guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

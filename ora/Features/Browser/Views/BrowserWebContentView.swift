@@ -31,14 +31,12 @@ struct BrowserWebContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 if appState.isURLBarEditing {
+                    // Visual dimming only: clicks go through to the page (links,
+                    // context menu...). The URL bar ends editing by itself on any
+                    // click outside of it.
                     Color.black.opacity(0.15)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            DispatchQueue.main.async {
-                                appState.isURLBarEditing = false
-                            }
-                        }
+                        .allowsHitTesting(false)
                         .transition(.opacity)
                 }
             }

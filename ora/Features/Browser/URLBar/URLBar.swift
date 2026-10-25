@@ -25,6 +25,10 @@ struct URLBar: View {
     @FocusState private var isLauncherFocused: Bool
     @State private var mouseHasMoved = false
     @State private var mouseMonitor: Any?
+    @State private var mouseDownMonitor: Any?
+    @State private var editingFieldFrame: CGRect = .zero
+    @State private var suggestionsFrame: CGRect = .zero
+    @Environment(\.window) private var window
     @State private var suppressInitialSearch = false
 
     let onSidebarToggle: () -> Void
@@ -116,12 +120,44 @@ struct URLBar: View {
                 return event
             }
         }
+
+        // End editing when the user clicks anywhere else in the window. The
+        // event is passed through untouched, so the click still reaches its
+        // target (a sidebar tab, the page...), as in Safari.
+        if mouseDownMonitor == nil {
+            mouseDownMonitor = NSEvent.addLocalMonitorForEvents(
+                matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+            ) { event in
+                if isEditing, isOutsideEditingArea(event) {
+                    dismissEditing()
+                }
+                return event
+            }
+        }
+    }
+
+    /// Whether a mouse-down landed in this window but outside both the URL
+    /// field and its suggestions list.
+    private func isOutsideEditingArea(_ event: NSEvent) -> Bool {
+        guard let window, event.window === window, let contentView = window.contentView else {
+            return false
+        }
+        // SwiftUI's global space is top-left based, AppKit's may not be.
+        var point = contentView.convert(event.locationInWindow, from: nil)
+        if !contentView.isFlipped {
+            point.y = contentView.bounds.height - point.y
+        }
+        return !editingFieldFrame.contains(point) && !suggestionsFrame.contains(point)
     }
 
     private func cleanupInlineLauncher() {
         if let monitor = mouseMonitor {
             NSEvent.removeMonitor(monitor)
             mouseMonitor = nil
+        }
+        if let monitor = mouseDownMonitor {
+            NSEvent.removeMonitor(monitor)
+            mouseDownMonitor = nil
         }
         DispatchQueue.main.async {
             guard !appState.isURLBarEditing else { return }
@@ -219,6 +255,9 @@ struct URLBar: View {
                         urlDisplayField(tab: tab)
                             .transition(.blurReplace)
                     }
+                }
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+                    editingFieldFrame = frame
                 }
                 .overlay(alignment: .top) {
                     if isEditing {
@@ -441,6 +480,10 @@ struct URLBar: View {
                     .padding(0.25)
             )
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+                suggestionsFrame = frame
+            }
+            .onDisappear { suggestionsFrame = .zero }
             .environment(\.launcherMouseHasMoved, mouseHasMoved)
         }
     }

@@ -264,9 +264,19 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
 
         let oldTitle = tab.title
-        tab.title = update.title
-        if let url = URL(string: update.href) {
-            tab.updateURL(url)
+        let newURL = URL(string: update.href)
+        // Pages without a <title> report an empty one: show the host or the
+        // file name instead (like Safari) rather than a blank tab.
+        if update.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let fallbackTitle = MainActor.assumeIsolated {
+                newURL.flatMap { TabManager.initialTitleAndFavicon(for: $0)?.title }
+            }
+            tab.title = fallbackTitle ?? oldTitle
+        } else {
+            tab.title = update.title
+        }
+        if let newURL {
+            tab.updateURL(newURL)
         }
         tab.setFavicon()
         tab.updateHistory()

@@ -40,11 +40,22 @@ jobs:
     - name: Run SwiftLint
       run: swiftlint lint
 
-    - name: Install SwiftFormat
-      run: brew install swiftformat
+    - name: Install SwiftFormat (version figée)
+      env:
+        SWIFTFORMAT_VERSION: "0.64.1"
+      run: |
+        curl -fsSL -o /tmp/swiftformat.zip \
+          "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+        mkdir -p "$RUNNER_TEMP/swiftformat-bin"
+        unzip -o -q /tmp/swiftformat.zip -d "$RUNNER_TEMP/swiftformat-bin"
+        chmod +x "$RUNNER_TEMP/swiftformat-bin/swiftformat"
+        echo "$RUNNER_TEMP/swiftformat-bin" >> "$GITHUB_PATH"
 
     - name: Check code formatting
-      run: swiftformat --lint .
+      run: |
+        which swiftformat
+        swiftformat --version
+        swiftformat --lint .
 
     - name: Install Xcbeautify
       run: brew install xcbeautify

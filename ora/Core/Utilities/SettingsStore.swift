@@ -2,18 +2,6 @@ import AppKit
 import Foundation
 import SwiftUI
 
-struct SitePermissionSettings: Codable, Hashable, Identifiable {
-    var id: String {
-        host
-    }
-
-    let host: String
-    var camera: Bool
-    var microphone: Bool
-    var location: Bool
-    var notifications: Bool
-}
-
 enum AutoClearTabsAfter: String, CaseIterable, Identifiable, Codable {
     case never = "Never"
     case oneHour = "1 Hour"
@@ -148,7 +136,6 @@ class SettingsStore: ObservableObject {
     private let adBlockingKey = "settings.tracking.adBlocking"
     private let cookiesPolicyKey = "settings.cookies.policy"
     private let adBlockFilterListsKey = "settings.adBlock.filterLists"
-    private let sitePermissionsKey = "settings.permissions.sitePermissions"
     private let customSearchEnginesKey = "settings.customSearchEngines"
     private let globalDefaultSearchEngineKey = "settings.globalDefaultSearchEngine"
     private let customKeyboardShortcutsKey = "settings.customKeyboardShortcuts"
@@ -199,10 +186,6 @@ class SettingsStore: ObservableObject {
 
     @Published var cookiesPolicy: CookiesPolicy {
         didSet { defaults.set(cookiesPolicy.rawValue, forKey: cookiesPolicyKey) }
-    }
-
-    @Published var sitePermissions: [String: SitePermissionSettings] {
-        didSet { saveCodable(sitePermissions, forKey: sitePermissionsKey) }
     }
 
     @Published private(set) var adBlockFilterLists: [FilterListRecord] {
@@ -276,9 +259,6 @@ class SettingsStore: ObservableObject {
         } else {
             cookiesPolicy = .allowAll
         }
-
-        sitePermissions =
-            Self.loadCodable([String: SitePermissionSettings].self, key: sitePermissionsKey) ?? [:]
 
         adBlockFilterLists = FilterListCatalogService.shared.normalizedRecords(
             from: Self.loadCodable([FilterListRecord].self, key: adBlockFilterListsKey) ?? []
@@ -394,21 +374,8 @@ class SettingsStore: ObservableObject {
         defaults.removeObject(forKey: keyForDefaultAI(for: containerId))
         defaults.removeObject(forKey: keyForAutoClear(for: containerId))
         defaults.removeObject(forKey: keyForPrivacySettings(for: containerId))
+        SitePermissionStore.shared.removeAll(in: containerId)
         objectWillChange.send()
-    }
-
-    // MARK: - Permissions
-
-    func upsertSitePermission(_ permission: SitePermissionSettings) {
-        var copy = sitePermissions
-        copy[permission.host] = permission
-        sitePermissions = copy
-    }
-
-    func removeSitePermission(host: String) {
-        var copy = sitePermissions
-        copy.removeValue(forKey: host)
-        sitePermissions = copy
     }
 
     // MARK: - Custom Search Engines

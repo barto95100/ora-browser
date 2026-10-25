@@ -61,13 +61,23 @@ class LauncherViewModel: ObservableObject {
             text,
             activeContainerId: tabManager.activeContainer?.id ?? UUID()
         )
-        let tabs = tabManager.search(text)
+        // Switching to the tab the user is already on is a no-op, so never
+        // offer it (it used to swallow Enter in the URL bar).
+        let activeTabId = tabManager.activeTab?.id
+        let tabs = tabManager.search(text).filter { $0.id != activeTabId }
 
         suggestions = []
 
         var itemsCount = 0
-        appendOpenTabs(tabs, itemsCount: &itemsCount)
-        appendOpenURLSuggestionIfNeeded(text)
+        // A URL typed or pasted by the user is the most likely intent, so it
+        // goes first and is what Enter opens (as in Safari or Chrome).
+        if explicitURL(from: text) != nil {
+            appendOpenURLSuggestionIfNeeded(text)
+            appendOpenTabs(tabs, itemsCount: &itemsCount)
+        } else {
+            appendOpenTabs(tabs, itemsCount: &itemsCount)
+            appendOpenURLSuggestionIfNeeded(text)
+        }
         appendSearchWithDefaultEngineSuggestion(text)
 
         let insertIndex = suggestions.count
@@ -192,20 +202,23 @@ class LauncherViewModel: ObservableObject {
         }
     }
 
+    /// The URL the user is explicitly entering, if the text is one
+    /// (`https://example.com/page` or a bare `example.com`).
+    private func explicitURL(from text: String) -> URL? {
+        if let candidateURL = URL(string: text), candidateURL.scheme != nil, candidateURL.host != nil {
+            return candidateURL
+        }
+        if isValidURL(text) {
+            return constructURL(from: text)
+        }
+        return nil
+    }
+
     private func appendOpenURLSuggestionIfNeeded(_ text: String) {
         guard let tabManager, let historyManager, let privacyMode else {
             return
         }
-        let finalURL: URL? = if let candidateURL = URL(string: text), candidateURL.scheme != nil,
-                                candidateURL.host != nil
-        {
-            candidateURL
-        } else if isValidURL(text) {
-            constructURL(from: text)
-        } else {
-            nil
-        }
-        guard let url = finalURL else { return }
+        guard let url = explicitURL(from: text) else { return }
         let navigateCurrent = self.navigateInCurrentTab
         suggestions.append(
             LauncherSuggestion(

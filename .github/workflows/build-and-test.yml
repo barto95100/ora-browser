@@ -1,77 +1,110 @@
-name: Lint and Formatting
+# Lint, format check, build and unit tests on every push and pull request.
+# Also runnable on demand (used by Upstream Sync, whose PRs cannot trigger
+# workflows by themselves).
+name: Build and Test
 
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: build-and-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Same versions as the ones used locally, so lint results match.
+  SWIFTLINT_VERSION: "0.65.1"
+  SWIFTFORMAT_VERSION: "0.64.1"
 
 jobs:
   build-and-test:
     runs-on: macos-latest
-    
+    timeout-minutes: 45
+
     steps:
-    - name: Check architecture
-      run: uname -m
-      
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v5
 
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
-    
-    - name: Show Xcode version
-      run: xcodebuild -version
-    
-    - name: Show Swift version
-      run: swift --version
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
-    - name: Install Xcodegen
-      run: brew install xcodegen
+      - name: Show toolchain
+        run: |
+          uname -m
+          xcodebuild -version
+          swift --version
 
-    - name: Generate Xcode project
-      run: xcodegen
+      - name: Install pinned SwiftLint and SwiftFormat
+        run: |
+          bin="$RUNNER_TEMP/tools-bin"
+          mkdir -p "$bin"
+          # Download a release archive and install the named binary from it,
+          # wherever it sits inside the archive.
+          install_tool() {
+            local name="$1" url="$2" dir="$RUNNER_TEMP/$1"
+            curl -fsSL -o "$dir.zip" "$url"
+            unzip -o -q "$dir.zip" -d "$dir"
+            install -m 755 "$(find "$dir" -type f -name "$name" | head -n 1)" "$bin/$name"
+          }
+          install_tool swiftlint \
+            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip"
+          install_tool swiftformat \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+          echo "$bin" >> "$GITHUB_PATH"
 
-    - name: Install SwiftLint
-      run: brew install swiftlint
+      - name: Install XcodeGen and xcbeautify
+        run: brew install xcodegen xcbeautify
 
-    - name: Run SwiftLint
-      run: swiftlint lint
+      - name: Lint
+        run: |
+          swiftlint version
+          swiftlint lint --quiet
 
-    - name: Install SwiftFormat (version figée)
-      env:
-        SWIFTFORMAT_VERSION: "0.64.1"
-      run: |
-        curl -fsSL -o /tmp/swiftformat.zip \
-          "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
-        mkdir -p "$RUNNER_TEMP/swiftformat-bin"
-        unzip -o -q /tmp/swiftformat.zip -d "$RUNNER_TEMP/swiftformat-bin"
-        chmod +x "$RUNNER_TEMP/swiftformat-bin/swiftformat"
-        echo "$RUNNER_TEMP/swiftformat-bin" >> "$GITHUB_PATH"
+      - name: Check formatting
+        run: |
+          swiftformat --version
+          swiftformat --lint .
 
-    - name: Check code formatting
-      run: |
-        which swiftformat
-        swiftformat --version
-        swiftformat --lint .
+      - name: Generate Xcode project
+        run: xcodegen
 
-    - name: Install Xcbeautify
-      run: brew install xcbeautify
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .spm
+          key: ${{ runner.os }}-spm-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
 
-    - name: Clean build folder
-      run: xcodebuild clean -scheme ora -project Ora.xcodeproj
-    
-    - name: Cache SPM dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/Library/Caches/org.swift.swiftpm/
-          ~/.swiftpm/
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.swift') }}
-        restore-keys: |
-          ${{ runner.os }}-spm-
-    
-    - name: Resolve dependencies
-      run: xcodebuild -resolvePackageDependencies
+      # The CI has no signing identity: sign ad hoc ("-") instead, which is
+      # enough to build, run the host app and load the test bundle.
+      - name: Build and run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Ora.xcodeproj \
+            -scheme ora \
+            -destination "platform=macOS,arch=arm64" \
+            -clonedSourcePackagesDirPath .spm \
+            -resultBundlePath "$RUNNER_TEMP/TestResults.xcresult" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            | xcbeautify --renderer github-actions
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: ${{ runner.temp }}/TestResults.xcresult
+          retention-days: 7

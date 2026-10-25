@@ -86,11 +86,11 @@
 		<string>NSUserActivityTypeBrowsingWeb</string>
 	</array>
 	<key>SUEnableAutomaticChecks</key>
-	<true/>
+	<false/>
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://the-ora.github.io/browser/appcast.xml</string>
+	<string>https://barto95100.github.io/ora-browser/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>Ozj+rezzbJAD76RfajtfQ7rFojJbpFSCl/0DcFSBCTI=</string>
 </dict>

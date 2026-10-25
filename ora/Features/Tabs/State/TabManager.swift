@@ -222,7 +222,7 @@ class TabManager: ObservableObject {
         // Set the most recently accessed tab in the container
         if let lastAccessedTab = container.tabs
             .sorted(by: { $0.lastAccessedAt ?? Date() > $1.lastAccessedAt ?? Date() }).first,
-            lastAccessedTab.isWebViewReady
+           lastAccessedTab.isWebViewReady
         {
             activeTab?.maybeIsActive = false
             activeTab = lastAccessedTab

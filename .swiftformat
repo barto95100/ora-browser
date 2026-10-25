@@ -20,6 +20,14 @@
 --disable sortedImports
 --disable consecutiveSpaces
 --disable redundantReturn
+# Règles apparues dans les versions récentes de SwiftFormat : désactivées pour
+# garder le formatage d'origine (et éviter les conflits avec the-ora/browser)
+--disable wrapIfStatementBodies
+--disable nestedIf
+--disable repeatedGuard
+--disable redundantSwiftUIGroup
+--disable wrapIfExpressionBodies
+--disable redundantEmptyView
 --exclude Pods
 --exclude Carthage
 --exclude .build

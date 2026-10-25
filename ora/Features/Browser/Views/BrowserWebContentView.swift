@@ -53,6 +53,10 @@ struct BrowserWebContentView: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: appState.isURLBarEditing)
+        // A page left unloaded by a crash while in the background reloads now.
+        .onChange(of: tab.id, initial: true) {
+            tab.recoverFromCrashIfNeeded()
+        }
     }
 
     @ViewBuilder
@@ -106,8 +110,16 @@ struct BrowserWebContentView: View {
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
+                    .overlay(alignment: .top) {
+                        if tab.showsCrashRecoveryNotice {
+                            PageCrashNoticeView { tab.dismissCrashRecoveryNotice() }
+                                .padding(.top, 12)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+                    }
                     .animation(.easeOut(duration: 0.12), value: tab.hoveredLinkURL)
                     .animation(.easeOut(duration: 0.2), value: tab.permissionRequest)
+                    .animation(.easeOut(duration: 0.2), value: tab.showsCrashRecoveryNotice)
             } else {
                 ZStack {
                     Rectangle().fill(theme.background)

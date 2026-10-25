@@ -86,6 +86,8 @@ struct StatusPageView: View {
             return "lock.slash"
         case .timeout:
             return "clock.badge.exclamationmark"
+        case .crashed:
+            return "exclamationmark.octagon"
         case .unknown:
             return "exclamationmark.triangle"
         }
@@ -101,6 +103,8 @@ struct StatusPageView: View {
             return "Connection Not Secure"
         case .timeout:
             return "Request Timed Out"
+        case .crashed:
+            return "A Problem Repeatedly Occurred"
         case .unknown:
             return "Something Went Wrong"
         }
@@ -116,12 +120,18 @@ struct StatusPageView: View {
             return "The connection to this site is not secure."
         case .timeout:
             return "The page took too long to load. Try again or check your connection."
+        case .crashed:
+            return "This webpage stopped working several times in a row, so Ora didn't reload it again."
         case .unknown:
             return "An unexpected error occurred while loading this page."
         }
     }
 
     private var errorType: ErrorType {
+        if error is PageCrashError {
+            return .crashed
+        }
+
         let nsError = error as NSError
 
         // Network-related errors
@@ -158,6 +168,7 @@ struct StatusPageView: View {
         case notFound
         case security
         case timeout
+        case crashed
         case unknown
     }
 }

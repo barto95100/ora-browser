@@ -60,6 +60,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             // A prompt belongs to the page that asked; leaving it denies.
             tab.cancelPermissionRequest()
             tab.clearNavigationError()
+            tab.crashRecoveryNavigationDidStart()
             tab.maintainSnapShots()
             passwordCoordinator?.clearAutofillState()
             tab.isLoading = event.isLoading
@@ -79,6 +80,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             }
 
         case .finished:
+            tab.crashRecoveryNavigationDidFinish()
             tab.isLoading = event.isLoading
             tab.loadingProgress = event.progress
             if let title = event.title, !title.isEmpty {
@@ -101,6 +103,17 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             }
             progressResetWorkItem = workItem
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
+        }
+    }
+
+    func browserPageWebContentProcessDidTerminate(_ page: BrowserPage) {
+        guard let tab else { return }
+
+        progressResetWorkItem?.cancel()
+        MainActor.assumeIsolated {
+            // The media (and Picture in Picture) of the dead page is gone.
+            mediaController?.removeSession(for: tab.id)
+            tab.handleWebContentProcessTermination()
         }
     }
 

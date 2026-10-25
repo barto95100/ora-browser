@@ -2,22 +2,15 @@ import Foundation
 @preconcurrency import WebKit
 
 // swiftlint:disable type_body_length function_body_length
+/// What the fingerprinting protection randomizes or normalizes.
+///
+/// Navigator and screen properties are deliberately left alone: WebKit already
+/// reports them like Safari does (capped core count, no `deviceMemory`, real
+/// language and screen). Overriding them only made Ora stand out from Safari
+/// users and look inconsistent (language differing from the Accept-Language
+/// header, a screen smaller than the window), which bot detection flags; it
+/// broke YouTube playback after a few minutes.
 struct FingerprintingProtectionProfile: Equatable {
-    let hardwareConcurrency: Int
-    let deviceMemory: Int
-    let maxTouchPoints: Int
-    let webdriver: Bool
-    let platform: String
-    let vendor: String
-    let language: String
-    let languages: [String]
-    let screenWidth: Int
-    let screenHeight: Int
-    let availWidth: Int
-    let availHeight: Int
-    let colorDepth: Int
-    let pixelDepth: Int
-    let devicePixelRatio: Double
     let webGLVendor: String
     let webGLRenderer: String
     let webGLRendererName: String
@@ -29,21 +22,6 @@ struct FingerprintingProtectionProfile: Equatable {
     let mediaDeviceKinds: [String]
 
     static let balanced = FingerprintingProtectionProfile(
-        hardwareConcurrency: 8,
-        deviceMemory: 8,
-        maxTouchPoints: 0,
-        webdriver: false,
-        platform: "MacIntel",
-        vendor: "Apple Computer, Inc.",
-        language: "en-US",
-        languages: ["en-US", "en"],
-        screenWidth: 1440,
-        screenHeight: 900,
-        availWidth: 1440,
-        availHeight: 877,
-        colorDepth: 24,
-        pixelDepth: 24,
-        devicePixelRatio: 2,
         webGLVendor: "Apple Inc.",
         webGLRenderer: "Apple GPU",
         webGLRendererName: "WebKit WebGL",
@@ -59,23 +37,8 @@ struct FingerprintingProtectionProfile: Equatable {
         let profileObject: [String: Any] = [
             "audioBucketSize": audioBucketSize,
             "audioNoise": audioNoise,
-            "availHeight": availHeight,
-            "availWidth": availWidth,
             "canvasShift": canvasShift,
-            "colorDepth": colorDepth,
-            "deviceMemory": deviceMemory,
-            "devicePixelRatio": devicePixelRatio,
-            "hardwareConcurrency": hardwareConcurrency,
-            "language": language,
-            "languages": languages,
-            "maxTouchPoints": maxTouchPoints,
             "mediaDeviceKinds": mediaDeviceKinds,
-            "pixelDepth": pixelDepth,
-            "platform": platform,
-            "screenHeight": screenHeight,
-            "screenWidth": screenWidth,
-            "vendor": vendor,
-            "webdriver": webdriver,
             "webGLRenderer": webGLRenderer,
             "webGLRendererName": webGLRendererName,
             "webGLShadingLanguageVersion": webGLShadingLanguageVersion,
@@ -123,10 +86,6 @@ struct FingerprintingProtectionProfile: Equatable {
                         value: wrapper(original)
                     });
                 } catch (error) {}
-            }
-
-            function cloneLanguages() {
-                return profile.languages.slice();
             }
 
             function makeDevice(kind, index) {
@@ -240,23 +199,6 @@ struct FingerprintingProtectionProfile: Equatable {
                 }
                 return values;
             }
-
-            defineValue(Navigator.prototype, 'hardwareConcurrency', profile.hardwareConcurrency);
-            defineValue(Navigator.prototype, 'deviceMemory', profile.deviceMemory);
-            defineValue(Navigator.prototype, 'maxTouchPoints', profile.maxTouchPoints);
-            defineValue(Navigator.prototype, 'webdriver', profile.webdriver);
-            defineValue(Navigator.prototype, 'platform', profile.platform);
-            defineValue(Navigator.prototype, 'vendor', profile.vendor);
-            defineValue(Navigator.prototype, 'language', profile.language);
-            defineGetter(Navigator.prototype, 'languages', cloneLanguages);
-
-            defineValue(Screen.prototype, 'width', profile.screenWidth);
-            defineValue(Screen.prototype, 'height', profile.screenHeight);
-            defineValue(Screen.prototype, 'availWidth', profile.availWidth);
-            defineValue(Screen.prototype, 'availHeight', profile.availHeight);
-            defineValue(Screen.prototype, 'colorDepth', profile.colorDepth);
-            defineValue(Screen.prototype, 'pixelDepth', profile.pixelDepth);
-            defineValue(window, 'devicePixelRatio', profile.devicePixelRatio);
 
             if (navigator.permissions && typeof navigator.permissions.query === 'function') {
                 const originalQuery = navigator.permissions.query.bind(navigator.permissions);

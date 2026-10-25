@@ -304,24 +304,29 @@ struct OraTests {
     @Test func balancedFingerprintingProfileIsInternallyCoherent() {
         let profile = FingerprintingProtectionProfile.balanced
 
-        #expect(profile.language == profile.languages.first)
-        #expect(profile.availWidth <= profile.screenWidth)
-        #expect(profile.availHeight <= profile.screenHeight)
-        #expect(profile.devicePixelRatio > 0)
-        #expect(profile.platform == "MacIntel")
-        #expect(profile.vendor == "Apple Computer, Inc.")
+        #expect(profile.webGLVendor == "Apple Inc.")
         #expect(profile.mediaDeviceKinds == ["audioinput", "audiooutput", "videoinput"])
     }
 
     @Test func fingerprintingScriptIncludesBalancedSurfaceNormalization() {
         let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
 
-        #expect(script.contains("hardwareConcurrency"))
-        #expect(script.contains("devicePixelRatio"))
         #expect(script.contains("enumerateDevices"))
         #expect(script.contains("toDataURL"))
         #expect(script.contains("OfflineAudioContext"))
         #expect(script.contains("WebGLRenderingContext"))
+    }
+
+    /// Overriding navigator or screen properties made Ora inconsistent with
+    /// Safari (and with its own HTTP headers) and broke YouTube playback.
+    @Test func fingerprintingScriptLeavesNavigatorAndScreenAlone() {
+        let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
+
+        #expect(!script.contains("Navigator.prototype"))
+        #expect(!script.contains("Screen.prototype"))
+        #expect(!script.contains("devicePixelRatio"))
+        #expect(!script.contains("deviceMemory"))
+        #expect(!script.contains("en-US"))
     }
 
     @Test func trackerRegexMatchesRootAndSubdomains() throws {

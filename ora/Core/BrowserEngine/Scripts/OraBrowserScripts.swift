@@ -89,8 +89,15 @@ enum OraBrowserScripts {
         window.addEventListener('popstate', () => notifyChange(true));
         notifyChange(true);
 
+        // Only notify the app when the hovered link actually changes, so that
+        // moving across child elements of the same anchor does not re-render
+        // the link preview on every mouseover.
+        let lastHoverURL = '';
         function postHover(url) {
-            post('linkHover', url || "");
+            const value = url || '';
+            if (value === lastHoverURL) return;
+            lastHoverURL = value;
+            post('linkHover', value);
         }
 
         function currentAnchor(node) {

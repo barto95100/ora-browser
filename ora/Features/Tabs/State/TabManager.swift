@@ -300,14 +300,10 @@ class TabManager: ObservableObject {
         loadSilently: Bool = false
     ) -> Tab? {
         if let container = activeContainer {
-            if let host = url.host {
-                let faviconURL = FaviconService.shared.faviconURL(for: host)
-
-                let cleanHost = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-
+            if let (title, faviconURL) = Self.initialTitleAndFavicon(for: url) {
                 let newTab = Tab(
                     url: url,
-                    title: cleanHost,
+                    title: title,
                     favicon: faviconURL,
                     container: container,
                     type: .normal,
@@ -341,6 +337,20 @@ class TabManager: ObservableObject {
                 try? modelContext.save()
                 return newTab
             }
+        }
+        return nil
+    }
+
+    /// Placeholder title and favicon shown until the page reports its own:
+    /// the host for web pages, the file name for local files (which have no
+    /// host). Returns nil for URLs a tab cannot show.
+    static func initialTitleAndFavicon(for url: URL) -> (title: String, favicon: URL?)? {
+        if let host = url.host, !host.isEmpty {
+            let cleanHost = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+            return (cleanHost, FaviconService.shared.faviconURL(for: host))
+        }
+        if url.isFileURL {
+            return (url.lastPathComponent, nil)
         }
         return nil
     }

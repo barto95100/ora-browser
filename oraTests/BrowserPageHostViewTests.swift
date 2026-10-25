@@ -95,6 +95,19 @@ struct BrowserPageHostViewTests {
         #expect(staleContentView.removeFromSuperviewCalls == 0)
     }
 
+    @Test func cancelOperationStopsAtTheHostInsteadOfReachingTheWindow() {
+        let host = makeHost()
+        let nextResponder = CancelOperationSpy()
+        host.nextResponder = nextResponder
+        var handlerCalls = 0
+        host.cancelOperationHandler = { handlerCalls += 1 }
+
+        host.cancelOperation(nil)
+
+        #expect(handlerCalls == 1)
+        #expect(nextResponder.cancelOperationCalls == 0)
+    }
+
     private func makeHost() -> BrowserPageHostView {
         BrowserPageHostView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }
@@ -112,5 +125,14 @@ private final class TrackingContentView: NSView {
     override func viewWillMove(toSuperview newSuperview: NSView?) {
         superviewTransitions += 1
         super.viewWillMove(toSuperview: newSuperview)
+    }
+}
+
+/// Records `cancelOperation(_:)` calls that reach it through the responder chain.
+private final class CancelOperationSpy: NSResponder {
+    private(set) var cancelOperationCalls = 0
+
+    override func cancelOperation(_ sender: Any?) {
+        cancelOperationCalls += 1
     }
 }

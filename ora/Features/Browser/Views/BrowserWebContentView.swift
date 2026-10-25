@@ -5,6 +5,7 @@ struct BrowserWebContentView: View {
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var toolbarManager: ToolbarManager
+    @EnvironmentObject private var mediaController: MediaController
     let tab: Tab
 
     var body: some View {
@@ -27,6 +28,16 @@ struct BrowserWebContentView: View {
             }
 
             ZStack {
+                // Pages of tabs whose video is in Picture in Picture stay in the
+                // window, hidden behind the current page, so "back to tab" works.
+                ForEach(mediaController.pictureInPictureTabs(excluding: tab.id), id: \.id) { parkedTab in
+                    if let page = parkedTab.browserPage {
+                        ParkedBrowserPageView(page: page)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                    }
+                }
+
                 webContent
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 

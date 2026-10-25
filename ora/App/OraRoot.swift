@@ -107,6 +107,23 @@ struct OraRoot: View {
             .modelContext(downloadContext)
             .withTheme()
             .enableInjection()
+            // External links: reuse this window instead of opening a new one
+            // per link. `onOpenURL` only runs once the view is ready, so links
+            // that launch Ora are not lost. Private windows never take them.
+            .handlesExternalEvents(
+                preferring: privacyMode.isPrivate ? [] : ["*"],
+                allowing: privacyMode.isPrivate ? [] : ["*"]
+            )
+            .onOpenURL { url in
+                guard !privacyMode.isPrivate else { return }
+                tabManager.openTab(
+                    url: url,
+                    historyManager: historyManager,
+                    downloadManager: downloadManager,
+                    focusAfterOpening: true,
+                    isPrivate: false
+                )
+            }
             .onAppear {
                 downloadManager.toastManager = toastManager
                 Task {

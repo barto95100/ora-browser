@@ -2,22 +2,15 @@ import Foundation
 @preconcurrency import WebKit
 
 // swiftlint:disable type_body_length function_body_length
+/// What the fingerprinting protection randomizes or normalizes.
+///
+/// Navigator and screen properties are deliberately left alone: WebKit already
+/// reports them like Safari does (capped core count, no `deviceMemory`, real
+/// language and screen). Overriding them only made Ora stand out from Safari
+/// users and look inconsistent (language differing from the Accept-Language
+/// header, a screen smaller than the window), which bot detection flags; it
+/// broke YouTube playback after a few minutes.
 struct FingerprintingProtectionProfile: Equatable {
-    let hardwareConcurrency: Int
-    let deviceMemory: Int
-    let maxTouchPoints: Int
-    let webdriver: Bool
-    let platform: String
-    let vendor: String
-    let language: String
-    let languages: [String]
-    let screenWidth: Int
-    let screenHeight: Int
-    let availWidth: Int
-    let availHeight: Int
-    let colorDepth: Int
-    let pixelDepth: Int
-    let devicePixelRatio: Double
     let webGLVendor: String
     let webGLRenderer: String
     let webGLRendererName: String
@@ -29,21 +22,6 @@ struct FingerprintingProtectionProfile: Equatable {
     let mediaDeviceKinds: [String]
 
     static let balanced = FingerprintingProtectionProfile(
-        hardwareConcurrency: 8,
-        deviceMemory: 8,
-        maxTouchPoints: 0,
-        webdriver: false,
-        platform: "MacIntel",
-        vendor: "Apple Computer, Inc.",
-        language: "en-US",
-        languages: ["en-US", "en"],
-        screenWidth: 1440,
-        screenHeight: 900,
-        availWidth: 1440,
-        availHeight: 877,
-        colorDepth: 24,
-        pixelDepth: 24,
-        devicePixelRatio: 2,
         webGLVendor: "Apple Inc.",
         webGLRenderer: "Apple GPU",
         webGLRendererName: "WebKit WebGL",
@@ -55,27 +33,15 @@ struct FingerprintingProtectionProfile: Equatable {
         mediaDeviceKinds: ["audioinput", "audiooutput", "videoinput"]
     )
 
-    func scriptSource() -> String {
+    /// - Parameter seed: secret mixed with each site's origin in the page to
+    ///   derive its noise (see `FingerprintingNoiseSeed`).
+    func scriptSource(seed: UInt32) -> String {
         let profileObject: [String: Any] = [
+            "seed": seed,
             "audioBucketSize": audioBucketSize,
             "audioNoise": audioNoise,
-            "availHeight": availHeight,
-            "availWidth": availWidth,
             "canvasShift": canvasShift,
-            "colorDepth": colorDepth,
-            "deviceMemory": deviceMemory,
-            "devicePixelRatio": devicePixelRatio,
-            "hardwareConcurrency": hardwareConcurrency,
-            "language": language,
-            "languages": languages,
-            "maxTouchPoints": maxTouchPoints,
             "mediaDeviceKinds": mediaDeviceKinds,
-            "pixelDepth": pixelDepth,
-            "platform": platform,
-            "screenHeight": screenHeight,
-            "screenWidth": screenWidth,
-            "vendor": vendor,
-            "webdriver": webdriver,
             "webGLRenderer": webGLRenderer,
             "webGLRendererName": webGLRendererName,
             "webGLShadingLanguageVersion": webGLShadingLanguageVersion,
@@ -98,6 +64,47 @@ struct FingerprintingProtectionProfile: Equatable {
             window.__oraFingerprintingProtectionInstalled = true;
 
             const profile = \(profileJSON);
+
+            // Noise varies per session and per site ("farbling"): a secret
+            // seed, new at every launch and different per space, is mixed with
+            // the top-level site and this frame's origin. Within a session a
+            // site always reads the same values (nothing breaks), but two sites
+            // — or the same tracker embedded on two sites — never get the same
+            // noise, so readings cannot be linked across sites or sessions.
+            function hashString(value, seed) {
+                let hash = (0x811c9dc5 ^ seed) >>> 0;
+                for (let index = 0; index < value.length; index += 1) {
+                    hash ^= value.charCodeAt(index);
+                    hash = Math.imul(hash, 0x01000193) >>> 0;
+                }
+                return hash >>> 0;
+            }
+
+            function mix(seed, value) {
+                let hash = Math.imul((seed ^ value) >>> 0, 0x9e3779b1) >>> 0;
+                hash ^= hash >>> 16;
+                hash = Math.imul(hash, 0x85ebca6b) >>> 0;
+                hash ^= hash >>> 13;
+                return hash >>> 0;
+            }
+
+            const ancestorOrigins = location.ancestorOrigins;
+            const topOrigin = ancestorOrigins && ancestorOrigins.length
+                ? ancestorOrigins[ancestorOrigins.length - 1]
+                : location.origin;
+            const siteSeed = hashString(topOrigin + '|' + location.origin, profile.seed);
+
+            function noiseSign(index) {
+                return (mix(siteSeed, index) & 2) ? 1 : -1;
+            }
+
+            function touches(index) {
+                return (mix(siteSeed, index) & 1) === 0;
+            }
+
+            function clampByte(value) {
+                return Math.max(0, Math.min(255, value));
+            }
 
             function defineGetter(target, property, getter) {
                 if (!target) return;
@@ -123,10 +130,6 @@ struct FingerprintingProtectionProfile: Equatable {
                         value: wrapper(original)
                     });
                 } catch (error) {}
-            }
-
-            function cloneLanguages() {
-                return profile.languages.slice();
             }
 
             function makeDevice(kind, index) {
@@ -174,9 +177,11 @@ struct FingerprintingProtectionProfile: Equatable {
                 if (!data || !data.length) return;
                 const stride = Math.max(8, step * 16);
                 for (let index = 0; index < data.length; index += stride) {
-                    data[index] = (data[index] + profile.canvasShift) & 255;
+                    if (!touches(index)) continue;
+                    const delta = noiseSign(index) * profile.canvasShift;
+                    data[index] = clampByte(data[index] + delta);
                     if (index + 1 < data.length) {
-                        data[index + 1] = (data[index + 1] + profile.canvasShift) & 255;
+                        data[index + 1] = clampByte(data[index + 1] + delta);
                     }
                 }
             }
@@ -221,7 +226,7 @@ struct FingerprintingProtectionProfile: Equatable {
                     const stride = Math.max(profile.audioBucketSize, 32);
                     for (let index = 0; index < samples.length; index += stride) {
                         const sample = samples[index] || 0;
-                        samples[index] = Math.fround(sample + profile.audioNoise);
+                        samples[index] = Math.fround(sample + noiseSign(channel * 1000003 + index) * profile.audioNoise);
                     }
                 }
 
@@ -233,30 +238,13 @@ struct FingerprintingProtectionProfile: Equatable {
                 const stride = Math.max(profile.audioBucketSize, 16);
                 for (let index = 0; index < values.length; index += stride) {
                     if (mode === 'float') {
-                        values[index] = Math.fround((values[index] || 0) + profile.audioNoise);
+                        values[index] = Math.fround((values[index] || 0) + noiseSign(index) * profile.audioNoise);
                     } else {
-                        values[index] = Math.max(0, Math.min(255, (values[index] || 0) + 1));
+                        values[index] = clampByte((values[index] || 0) + noiseSign(index));
                     }
                 }
                 return values;
             }
-
-            defineValue(Navigator.prototype, 'hardwareConcurrency', profile.hardwareConcurrency);
-            defineValue(Navigator.prototype, 'deviceMemory', profile.deviceMemory);
-            defineValue(Navigator.prototype, 'maxTouchPoints', profile.maxTouchPoints);
-            defineValue(Navigator.prototype, 'webdriver', profile.webdriver);
-            defineValue(Navigator.prototype, 'platform', profile.platform);
-            defineValue(Navigator.prototype, 'vendor', profile.vendor);
-            defineValue(Navigator.prototype, 'language', profile.language);
-            defineGetter(Navigator.prototype, 'languages', cloneLanguages);
-
-            defineValue(Screen.prototype, 'width', profile.screenWidth);
-            defineValue(Screen.prototype, 'height', profile.screenHeight);
-            defineValue(Screen.prototype, 'availWidth', profile.availWidth);
-            defineValue(Screen.prototype, 'availHeight', profile.availHeight);
-            defineValue(Screen.prototype, 'colorDepth', profile.colorDepth);
-            defineValue(Screen.prototype, 'pixelDepth', profile.pixelDepth);
-            defineValue(window, 'devicePixelRatio', profile.devicePixelRatio);
 
             if (navigator.permissions && typeof navigator.permissions.query === 'function') {
                 const originalQuery = navigator.permissions.query.bind(navigator.permissions);
@@ -371,6 +359,35 @@ struct FingerprintingProtectionProfile: Equatable {
 
 // swiftlint:enable type_body_length function_body_length
 
+/// Secret behind the fingerprinting noise of a space.
+///
+/// A new random secret is drawn at every launch, so noise differs from one
+/// session to the next, and it is mixed with the space and browsing mode, so
+/// spaces (which have separate website data) and private browsing do not share
+/// noise either. The page then mixes it with each site's origin.
+enum FingerprintingNoiseSeed {
+    private static let sessionSecret = UInt64.random(in: .min ... .max)
+
+    static func seed(spaceID: UUID?, isPrivate: Bool) -> UInt32 {
+        seed(spaceID: spaceID, isPrivate: isPrivate, secret: sessionSecret)
+    }
+
+    /// Deterministic for a given secret (FNV-1a), so it is testable.
+    static func seed(spaceID: UUID?, isPrivate: Bool, secret: UInt64) -> UInt32 {
+        var hash: UInt64 = 0xCBF29CE484222325
+        func combine(_ bytes: some Sequence<UInt8>) {
+            for byte in bytes {
+                hash ^= UInt64(byte)
+                hash = hash &* 0x00000100000001B3
+            }
+        }
+        withUnsafeBytes(of: secret.littleEndian) { combine($0) }
+        combine((spaceID?.uuidString ?? "global").utf8)
+        combine([isPrivate ? 1 : 0])
+        return UInt32(truncatingIfNeeded: hash ^ (hash >> 32))
+    }
+}
+
 final class BrowserPrivacyService {
     private enum StaticRuleListIdentifier: String {
         case trackers = "com.orabrowser.privacy.trackers.v1"
@@ -427,21 +444,29 @@ final class BrowserPrivacyService {
         group.notify(queue: .main, execute: completion)
     }
 
-    static func privacyScripts(for privacySettings: SpacePrivacySettings) -> [BrowserUserScript] {
+    static func privacyScripts(
+        for privacySettings: SpacePrivacySettings,
+        spaceID: UUID? = nil,
+        isPrivate: Bool = false
+    ) -> [BrowserUserScript] {
         guard privacySettings.blockFingerprinting else { return [] }
 
         return [
             BrowserUserScript(
                 name: "ora-fingerprinting-protection",
-                source: fingerprintingProtectionScriptSource(),
+                source: fingerprintingProtectionScriptSource(
+                    seed: FingerprintingNoiseSeed.seed(spaceID: spaceID, isPrivate: isPrivate)
+                ),
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false
             )
         ]
     }
 
-    static func fingerprintingProtectionScriptSource() -> String {
-        FingerprintingProtectionProfile.balanced.scriptSource()
+    static func fingerprintingProtectionScriptSource(
+        seed: UInt32 = FingerprintingNoiseSeed.seed(spaceID: nil, isPrivate: false)
+    ) -> String {
+        FingerprintingProtectionProfile.balanced.scriptSource(seed: seed)
     }
 
     private func enabledRuleLists(for spaceID: UUID, privacySettings: SpacePrivacySettings) -> [String] {

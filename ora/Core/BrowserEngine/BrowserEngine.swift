@@ -1,7 +1,8 @@
 import Foundation
 
 struct BrowserPageConfiguration {
-    let userAgent: String?
+    /// Appended by WebKit to its own user agent prefix: see `SafariUserAgent`.
+    let applicationNameForUserAgent: String?
     let allowsPictureInPicture: Bool
     let allowsJavaScript: Bool
     let allowsJavaScriptWindowsAutomatically: Bool
@@ -18,7 +19,7 @@ struct BrowserPageConfiguration {
         privacySettings: SpacePrivacySettings
     ) -> BrowserPageConfiguration {
         BrowserPageConfiguration(
-            userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15",
+            applicationNameForUserAgent: SafariUserAgent.current,
             allowsPictureInPicture: true,
             allowsJavaScript: true,
             allowsJavaScriptWindowsAutomatically: false,

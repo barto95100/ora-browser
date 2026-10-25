@@ -50,9 +50,18 @@ final class SitePermissionStore: ObservableObject {
         setPermissions(permissions, for: origin, in: spaceId, isPrivate: isPrivate)
     }
 
+    /// Saves the permissions of a site. A site set back to "Ask" stays listed in
+    /// the settings, so the user can change it again; only
+    /// `removePermissions(for:in:isPrivate:)` forgets it, like in Safari.
     func setPermissions(_ permissions: SitePermissions, for origin: SiteOrigin, in spaceId: UUID, isPrivate: Bool) {
-        // A site with nothing decided is the same as an unknown site: don't keep it.
-        let value: SitePermissions? = permissions.isUndecided ? nil : permissions
+        update(permissions, for: origin, in: spaceId, isPrivate: isPrivate)
+    }
+
+    func removePermissions(for origin: SiteOrigin, in spaceId: UUID, isPrivate: Bool) {
+        update(nil, for: origin, in: spaceId, isPrivate: isPrivate)
+    }
+
+    private func update(_ value: SitePermissions?, for origin: SiteOrigin, in spaceId: UUID, isPrivate: Bool) {
         if isPrivate {
             privatePermissionsBySpace[spaceId, default: [:]][origin] = value
         } else {
@@ -62,10 +71,6 @@ final class SitePermissionStore: ObservableObject {
             }
             save()
         }
-    }
-
-    func removePermissions(for origin: SiteOrigin, in spaceId: UUID, isPrivate: Bool) {
-        setPermissions(SitePermissions(), for: origin, in: spaceId, isPrivate: isPrivate)
     }
 
     /// Forgets everything about a space, e.g. when it is deleted.

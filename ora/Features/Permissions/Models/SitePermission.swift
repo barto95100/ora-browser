@@ -169,3 +169,14 @@ extension BrowserPermissionKind {
         }
     }
 }
+
+extension SitePermissionState {
+    /// Answer to `navigator.permissions.query()` for this saved decision.
+    var permissionQueryDecision: BrowserPermissionDecision {
+        switch self {
+        case .allow: .grant
+        case .deny: .deny
+        case .ask: .prompt
+        }
+    }
+}

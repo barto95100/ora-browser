@@ -61,6 +61,13 @@ struct SiteOriginTests {
 // MARK: - SitePermissions
 
 struct SitePermissionsTests {
+    /// What `navigator.permissions.query()` tells the site.
+    @Test func permissionQueryReflectsTheSavedDecision() {
+        #expect(SitePermissionState.allow.permissionQueryDecision == .grant)
+        #expect(SitePermissionState.deny.permissionQueryDecision == .deny)
+        #expect(SitePermissionState.ask.permissionQueryDecision == .prompt)
+    }
+
     @Test func combinedDecisionDeniesIfAnyCapabilityIsDenied() {
         let permissions = SitePermissions(camera: .allow, microphone: .deny)
 
@@ -145,6 +152,15 @@ struct SitePermissionStoreTests {
         #expect(store.permissions(for: origin, in: space, isPrivate: false).camera == .ask)
         #expect(SitePermissionStore(defaults: defaults).permissions(for: origin, in: space, isPrivate: true)
             .isUndecided)
+    }
+
+    @Test func siteSetBackToAskStaysListed() {
+        let (store, _) = makeStore()
+
+        store.setState(.allow, for: [.camera], origin: origin, in: space, isPrivate: false)
+        store.setState(.ask, for: [.camera], origin: origin, in: space, isPrivate: false)
+
+        #expect(store.permissionsBySpace[space]?[origin]?.isUndecided == true)
     }
 
     @Test func resettingASiteRemovesIt() {

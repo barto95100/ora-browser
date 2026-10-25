@@ -436,13 +436,46 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
         case .cameraAndMicrophone: .cameraAndMicrophone
         @unknown default: .cameraAndMicrophone
         }
-        let pageURL = URL(string: "\(origin.protocol)://\(origin.host):\(origin.port)")
-        delegate?.browserPage(self, requestPermission: permission, origin: pageURL) { decision in
-            switch decision {
-            case .grant: decisionHandler(.grant)
-            case .deny: decisionHandler(.deny)
-            case .prompt: decisionHandler(.prompt)
-            }
+        delegate?.browserPage(self, requestPermission: permission, origin: url(of: origin)) { decision in
+            decisionHandler(Self.webKitDecision(decision))
+        }
+    }
+
+    /// Answers `navigator.permissions.query()`. Private WebKit delegate method
+    /// (WKUIDelegatePrivate, macOS 13+), the one Safari implements: without it,
+    /// WebKit's answer ignores the user's per-site decisions. WebKit then adjusts
+    /// the answer like in Safari (e.g. a denial reads as "prompt" until the page
+    /// itself was denied).
+    @objc(_webView:queryPermission:forOrigin:completionHandler:)
+    func webView(
+        _ webView: WKWebView,
+        queryPermission name: String,
+        forOrigin origin: WKSecurityOrigin,
+        completionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        let permission: BrowserPermissionKind? = switch name {
+        case "camera": .camera
+        case "microphone": .microphone
+        default: nil
+        }
+        guard let permission, let delegate else {
+            // Other permissions: WebKit's own default answer.
+            completionHandler(.prompt)
+            return
+        }
+        let decision = delegate.browserPage(self, queryPermission: permission, origin: url(of: origin))
+        completionHandler(Self.webKitDecision(decision))
+    }
+
+    private func url(of origin: WKSecurityOrigin) -> URL? {
+        URL(string: "\(origin.protocol)://\(origin.host):\(origin.port)")
+    }
+
+    private static func webKitDecision(_ decision: BrowserPermissionDecision) -> WKPermissionDecision {
+        switch decision {
+        case .grant: .grant
+        case .deny: .deny
+        case .prompt: .prompt
         }
     }
 

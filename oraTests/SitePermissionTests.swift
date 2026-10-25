@@ -84,13 +84,17 @@ struct SitePermissionsTests {
 struct SitePermissionStoreTests {
     private let space = UUID()
     private let otherSpace = UUID()
-    private let origin = SiteOrigin(scheme: "https", host: "meet.example.com", port: nil)!
+    private let origin = SiteOrigin(scheme: "https", host: "meet.example.com", port: nil) ?? {
+        preconditionFailure("valid test origin")
+    }()
 
     /// A store backed by its own throwaway defaults suite.
     private func makeStore(suite: String = "SitePermissionStoreTests.\(UUID().uuidString)")
         -> (SitePermissionStore, UserDefaults)
     {
-        let defaults = UserDefaults(suiteName: suite)!
+        guard let defaults = UserDefaults(suiteName: suite) else {
+            preconditionFailure("could not create defaults suite \(suite)")
+        }
         defaults.removePersistentDomain(forName: suite)
         return (SitePermissionStore(defaults: defaults), defaults)
     }

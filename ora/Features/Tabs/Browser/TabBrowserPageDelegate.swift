@@ -114,7 +114,12 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             handleURLUpdateMessage(message.body, for: tab)
         case "linkHover":
             let hovered = (message.body as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            tab.hoveredLinkURL = hovered.isEmpty ? nil : hovered
+            let newValue: String? = hovered.isEmpty ? nil : hovered
+            // Avoid publishing an identical value, which would needlessly
+            // invalidate the views observing the tab.
+            if tab.hoveredLinkURL != newValue {
+                tab.hoveredLinkURL = newValue
+            }
         case "mediaEvent":
             handleMediaEventMessage(message.body, for: tab)
         case "passwordManager":

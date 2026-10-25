@@ -89,20 +89,30 @@ enum OraBrowserScripts {
         window.addEventListener('popstate', () => notifyChange(true));
         notifyChange(true);
 
+        // Only notify the app when the hovered link actually changes, so that
+        // moving across child elements of the same anchor does not re-render
+        // the link preview on every mouseover.
+        let lastHoverURL = '';
         function postHover(url) {
-            post('linkHover', url || "");
+            const value = url || '';
+            if (value === lastHoverURL) return;
+            lastHoverURL = value;
+            post('linkHover', value);
+        }
+
+        function currentAnchor(node) {
+            return node && node.closest ? node.closest('a[href]') : null;
         }
 
         function onMouseOver(event) {
-            const anchor = event.target.closest && event.target.closest('a[href]');
+            const anchor = currentAnchor(event.target);
             postHover(anchor ? anchor.href : '');
         }
 
         function onMouseOut(event) {
-            const related = event.relatedTarget;
-            if (!related || !event.currentTarget.contains(related)) {
-                postHover("");
-            }
+            const from = currentAnchor(event.target);
+            const to = currentAnchor(event.relatedTarget);
+            if (from !== to) postHover(to ? to.href : '');
         }
 
         document.addEventListener('mouseover', onMouseOver, true);

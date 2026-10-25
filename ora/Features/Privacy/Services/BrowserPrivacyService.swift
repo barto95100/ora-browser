@@ -33,8 +33,11 @@ struct FingerprintingProtectionProfile: Equatable {
         mediaDeviceKinds: ["audioinput", "audiooutput", "videoinput"]
     )
 
-    func scriptSource() -> String {
+    /// - Parameter seed: secret mixed with each site's origin in the page to
+    ///   derive its noise (see `FingerprintingNoiseSeed`).
+    func scriptSource(seed: UInt32) -> String {
         let profileObject: [String: Any] = [
+            "seed": seed,
             "audioBucketSize": audioBucketSize,
             "audioNoise": audioNoise,
             "canvasShift": canvasShift,
@@ -61,6 +64,47 @@ struct FingerprintingProtectionProfile: Equatable {
             window.__oraFingerprintingProtectionInstalled = true;
 
             const profile = \(profileJSON);
+
+            // Noise varies per session and per site ("farbling"): a secret
+            // seed, new at every launch and different per space, is mixed with
+            // the top-level site and this frame's origin. Within a session a
+            // site always reads the same values (nothing breaks), but two sites
+            // — or the same tracker embedded on two sites — never get the same
+            // noise, so readings cannot be linked across sites or sessions.
+            function hashString(value, seed) {
+                let hash = (0x811c9dc5 ^ seed) >>> 0;
+                for (let index = 0; index < value.length; index += 1) {
+                    hash ^= value.charCodeAt(index);
+                    hash = Math.imul(hash, 0x01000193) >>> 0;
+                }
+                return hash >>> 0;
+            }
+
+            function mix(seed, value) {
+                let hash = Math.imul((seed ^ value) >>> 0, 0x9e3779b1) >>> 0;
+                hash ^= hash >>> 16;
+                hash = Math.imul(hash, 0x85ebca6b) >>> 0;
+                hash ^= hash >>> 13;
+                return hash >>> 0;
+            }
+
+            const ancestorOrigins = location.ancestorOrigins;
+            const topOrigin = ancestorOrigins && ancestorOrigins.length
+                ? ancestorOrigins[ancestorOrigins.length - 1]
+                : location.origin;
+            const siteSeed = hashString(topOrigin + '|' + location.origin, profile.seed);
+
+            function noiseSign(index) {
+                return (mix(siteSeed, index) & 2) ? 1 : -1;
+            }
+
+            function touches(index) {
+                return (mix(siteSeed, index) & 1) === 0;
+            }
+
+            function clampByte(value) {
+                return Math.max(0, Math.min(255, value));
+            }
 
             function defineGetter(target, property, getter) {
                 if (!target) return;
@@ -133,9 +177,11 @@ struct FingerprintingProtectionProfile: Equatable {
                 if (!data || !data.length) return;
                 const stride = Math.max(8, step * 16);
                 for (let index = 0; index < data.length; index += stride) {
-                    data[index] = (data[index] + profile.canvasShift) & 255;
+                    if (!touches(index)) continue;
+                    const delta = noiseSign(index) * profile.canvasShift;
+                    data[index] = clampByte(data[index] + delta);
                     if (index + 1 < data.length) {
-                        data[index + 1] = (data[index + 1] + profile.canvasShift) & 255;
+                        data[index + 1] = clampByte(data[index + 1] + delta);
                     }
                 }
             }
@@ -180,7 +226,7 @@ struct FingerprintingProtectionProfile: Equatable {
                     const stride = Math.max(profile.audioBucketSize, 32);
                     for (let index = 0; index < samples.length; index += stride) {
                         const sample = samples[index] || 0;
-                        samples[index] = Math.fround(sample + profile.audioNoise);
+                        samples[index] = Math.fround(sample + noiseSign(channel * 1000003 + index) * profile.audioNoise);
                     }
                 }
 
@@ -192,9 +238,9 @@ struct FingerprintingProtectionProfile: Equatable {
                 const stride = Math.max(profile.audioBucketSize, 16);
                 for (let index = 0; index < values.length; index += stride) {
                     if (mode === 'float') {
-                        values[index] = Math.fround((values[index] || 0) + profile.audioNoise);
+                        values[index] = Math.fround((values[index] || 0) + noiseSign(index) * profile.audioNoise);
                     } else {
-                        values[index] = Math.max(0, Math.min(255, (values[index] || 0) + 1));
+                        values[index] = clampByte((values[index] || 0) + noiseSign(index));
                     }
                 }
                 return values;
@@ -313,6 +359,35 @@ struct FingerprintingProtectionProfile: Equatable {
 
 // swiftlint:enable type_body_length function_body_length
 
+/// Secret behind the fingerprinting noise of a space.
+///
+/// A new random secret is drawn at every launch, so noise differs from one
+/// session to the next, and it is mixed with the space and browsing mode, so
+/// spaces (which have separate website data) and private browsing do not share
+/// noise either. The page then mixes it with each site's origin.
+enum FingerprintingNoiseSeed {
+    private static let sessionSecret = UInt64.random(in: .min ... .max)
+
+    static func seed(spaceID: UUID?, isPrivate: Bool) -> UInt32 {
+        seed(spaceID: spaceID, isPrivate: isPrivate, secret: sessionSecret)
+    }
+
+    /// Deterministic for a given secret (FNV-1a), so it is testable.
+    static func seed(spaceID: UUID?, isPrivate: Bool, secret: UInt64) -> UInt32 {
+        var hash: UInt64 = 0xCBF29CE484222325
+        func combine(_ bytes: some Sequence<UInt8>) {
+            for byte in bytes {
+                hash ^= UInt64(byte)
+                hash = hash &* 0x00000100000001B3
+            }
+        }
+        withUnsafeBytes(of: secret.littleEndian) { combine($0) }
+        combine((spaceID?.uuidString ?? "global").utf8)
+        combine([isPrivate ? 1 : 0])
+        return UInt32(truncatingIfNeeded: hash ^ (hash >> 32))
+    }
+}
+
 final class BrowserPrivacyService {
     private enum StaticRuleListIdentifier: String {
         case trackers = "com.orabrowser.privacy.trackers.v1"
@@ -369,21 +444,29 @@ final class BrowserPrivacyService {
         group.notify(queue: .main, execute: completion)
     }
 
-    static func privacyScripts(for privacySettings: SpacePrivacySettings) -> [BrowserUserScript] {
+    static func privacyScripts(
+        for privacySettings: SpacePrivacySettings,
+        spaceID: UUID? = nil,
+        isPrivate: Bool = false
+    ) -> [BrowserUserScript] {
         guard privacySettings.blockFingerprinting else { return [] }
 
         return [
             BrowserUserScript(
                 name: "ora-fingerprinting-protection",
-                source: fingerprintingProtectionScriptSource(),
+                source: fingerprintingProtectionScriptSource(
+                    seed: FingerprintingNoiseSeed.seed(spaceID: spaceID, isPrivate: isPrivate)
+                ),
                 injectionTime: .atDocumentStart,
                 forMainFrameOnly: false
             )
         ]
     }
 
-    static func fingerprintingProtectionScriptSource() -> String {
-        FingerprintingProtectionProfile.balanced.scriptSource()
+    static func fingerprintingProtectionScriptSource(
+        seed: UInt32 = FingerprintingNoiseSeed.seed(spaceID: nil, isPrivate: false)
+    ) -> String {
+        FingerprintingProtectionProfile.balanced.scriptSource(seed: seed)
     }
 
     private func enabledRuleLists(for spaceID: UUID, privacySettings: SpacePrivacySettings) -> [String] {

@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: upstream-sync
@@ -64,3 +65,10 @@ jobs:
               --title "Sync upstream (${UPSTREAM_REPO})" \
               --body "$body"
           fi
+
+      # Pull requests opened with GITHUB_TOKEN do not trigger other workflows,
+      # but workflow_dispatch does: run the CI on the sync branch explicitly so
+      # the pull request gets its checks.
+      - name: Run CI on the sync branch
+        if: steps.check.outputs.count != '0'
+        run: gh workflow run build-and-test.yml --repo "$GITHUB_REPOSITORY" --ref "$SYNC_BRANCH"

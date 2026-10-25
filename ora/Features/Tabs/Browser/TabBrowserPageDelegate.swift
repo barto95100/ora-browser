@@ -137,7 +137,9 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         origin: URL?,
         decisionHandler: @escaping (BrowserPermissionDecision) -> Void
     ) {
-        decisionHandler(.grant)
+        // Never grant capture devices silently: until per-site permissions
+        // are implemented, defer to WebKit's own prompt.
+        decisionHandler(.prompt)
     }
 
     func browserPage(

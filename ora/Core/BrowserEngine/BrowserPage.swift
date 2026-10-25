@@ -399,11 +399,22 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
         _ webView: WKWebView,
         requestMediaCapturePermissionFor origin: WKSecurityOrigin,
         initiatedByFrame frame: WKFrameInfo,
+        type: WKMediaCaptureType,
         decisionHandler: @escaping (WKPermissionDecision) -> Void
     ) {
+        let permission: BrowserPermissionKind = switch type {
+        case .camera: .camera
+        case .microphone: .microphone
+        case .cameraAndMicrophone: .cameraAndMicrophone
+        @unknown default: .cameraAndMicrophone
+        }
         let pageURL = URL(string: "\(origin.protocol)://\(origin.host):\(origin.port)")
-        delegate?.browserPage(self, requestPermission: .mediaCapture, origin: pageURL) { decision in
-            decisionHandler(decision == .grant ? .grant : .deny)
+        delegate?.browserPage(self, requestPermission: permission, origin: pageURL) { decision in
+            switch decision {
+            case .grant: decisionHandler(.grant)
+            case .deny: decisionHandler(.deny)
+            case .prompt: decisionHandler(.prompt)
+            }
         }
     }
 

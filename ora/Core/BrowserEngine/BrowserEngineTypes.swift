@@ -30,12 +30,16 @@ struct BrowserOpenPanelOptions {
 }
 
 enum BrowserPermissionKind {
-    case mediaCapture
+    case camera
+    case microphone
+    case cameraAndMicrophone
 }
 
 enum BrowserPermissionDecision {
     case grant
     case deny
+    /// Let WebKit ask the user with its own built-in prompt.
+    case prompt
 }
 
 struct BrowserNavigationAction {

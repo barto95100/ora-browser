@@ -21,29 +21,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return .terminateLater
     }
 
-    func application(_ application: NSApplication, open urls: [URL]) {
-        handleIncomingURLs(urls)
-    }
-
-    func getWindow() -> NSWindow? {
-        if let key = NSApp.keyWindow { return key }
-        if let visible = NSApp.windows.first(where: { $0.isVisible }) { return visible }
-        if let any = NSApp.windows.first {
-            any.makeKeyAndOrderFront(nil)
-            return any
-        }
-        return WindowFactory.makeMainWindow(rootView: OraRoot())
-    }
-
-    func handleIncomingURLs(_ urls: [URL]) {
-        let window = getWindow()!
-        for url in urls {
-            let userInfo: [AnyHashable: Any] = ["url": url]
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: .openURL, object: window, userInfo: userInfo)
-            }
-        }
-    }
+    // Links opened from other apps are routed by SwiftUI to a browser window
+    // (see `handlesExternalEvents` on the scenes and in `OraRoot`), so the app
+    // delegate deliberately does not implement `application(_:open:)`.
 }
 
 func deleteSwiftDataStore(_ loc: String) {
@@ -82,7 +62,9 @@ struct OraApp: App {
         .defaultSize(width: 1440, height: 900)
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
-        .handlesExternalEvents(matching: [])
+        // Links opened from other apps (Ora as default browser) go to a regular
+        // window; SwiftUI creates one if none is open, e.g. on a cold launch.
+        .handlesExternalEvents(matching: ["*"])
 
         WindowGroup("Private", id: "private") {
             OraRoot(isPrivate: true)
@@ -114,6 +96,7 @@ struct OraApp: App {
         .windowToolbarStyle(UnifiedCompactWindowToolbarStyle())
         .windowResizability(.contentSize)
         .defaultSize(width: 980, height: 640)
+        .handlesExternalEvents(matching: [])
         .commands { OraCommands() }
     }
 }

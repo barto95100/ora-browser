@@ -440,10 +440,6 @@ final class PasswordAutofillCoordinator {
             return window
         }
 
-        if let appDelegate = NSApp.delegate as? AppDelegate {
-            return appDelegate.getWindow()
-        }
-
         return NSApp.keyWindow
             ?? NSApp.windows.first(where: { $0.isVisible })
             ?? NSApp.windows.first

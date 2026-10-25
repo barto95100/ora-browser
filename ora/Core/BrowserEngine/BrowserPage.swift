@@ -126,7 +126,18 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
             return
         }
 
-        webView.load(request)
+        perform(request)
+    }
+
+    /// The app is sandboxed: WebKit may only read a local file loaded through
+    /// `loadFileURL(_:allowingReadAccessTo:)`, scoped to that file (the one the
+    /// user opened), not with a plain request.
+    private func perform(_ request: URLRequest) {
+        if let url = request.url, url.isFileURL {
+            webView.loadFileURL(url, allowingReadAccessTo: url)
+        } else {
+            webView.load(request)
+        }
     }
 
     func reload() {
@@ -190,7 +201,7 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
     private func flushPendingNavigationIfNeeded() {
         if let pendingLoadRequest {
             self.pendingLoadRequest = nil
-            webView.load(pendingLoadRequest)
+            perform(pendingLoadRequest)
             return
         }
 

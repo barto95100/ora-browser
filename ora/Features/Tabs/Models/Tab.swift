@@ -265,6 +265,15 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    /// Updates the tab's URL and keeps the persisted `urlString` in sync.
+    ///
+    /// `urlString` is what open-tab search queries match against, so it must
+    /// follow navigation instead of keeping the URL the tab was created with.
+    func updateURL(_ newURL: URL) {
+        url = newURL
+        urlString = newURL.absoluteString
+    }
+
     func loadURL(_ urlString: String) {
         lastAccessedAt = Date()
         let input = urlString.trimmingCharacters(in: .whitespacesAndNewlines)

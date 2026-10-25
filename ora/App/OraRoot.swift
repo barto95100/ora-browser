@@ -148,6 +148,17 @@ struct OraRoot: View {
                     return false
                 }
 
+                // Full screen: macOS only offers Globe+F in the View menu, which
+                // keyboards without a Globe key cannot type. Honour Ora's own,
+                // customizable shortcut (⌃⌘F by default) as well.
+                keyModifierListener.registerKeyDownHandler { event in
+                    guard KeyChord(fromEvent: event) == KeyboardShortcuts.Window.fullscreen.currentChord,
+                          let targetWindow = event.window ?? NSApp.keyWindow
+                    else { return false }
+                    targetWindow.toggleFullScreen(nil)
+                    return true
+                }
+
                 // Cmd+Q quit confirmation
                 NotificationCenter.default.addObserver(forName: .quitRequested, object: nil, queue: .main) { note in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

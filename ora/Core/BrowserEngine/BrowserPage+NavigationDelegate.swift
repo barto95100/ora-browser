@@ -1,0 +1,203 @@
+import AppKit
+import Foundation
+@preconcurrency import WebKit
+
+extension BrowserPage: WKNavigationDelegate {
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        let action = BrowserNavigationAction(
+            request: navigationAction.request,
+            modifierFlags: navigationAction.modifierFlags
+        )
+
+        switch delegate?.browserPage(self, decidePolicyFor: action) ?? .allow {
+        case .allow:
+            decisionHandler(.allow)
+        case .cancel:
+            decisionHandler(.cancel)
+        case .openInNewTab:
+            if let url = navigationAction.request.url {
+                delegate?.browserPage(self, didRequestOpenInNewTab: url)
+            }
+            decisionHandler(.cancel)
+        }
+    }
+
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        if !isDownloadNavigation {
+            originalURL = lastCommittedURL
+            emitNavigationEvent(
+                phase: .started,
+                url: webView.url,
+                title: webView.title,
+                progress: 10.0,
+                isLoading: true
+            )
+        }
+    }
+
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        if !isDownloadNavigation {
+            lastCommittedURL = webView.url
+            emitNavigationEvent(
+                phase: .committed,
+                url: webView.url,
+                title: webView.title,
+                progress: webView.estimatedProgress * 100.0,
+                isLoading: true
+            )
+        }
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if !isDownloadNavigation {
+            lastCommittedURL = webView.url
+            emitNavigationEvent(
+                phase: .finished,
+                url: webView.url,
+                title: webView.title,
+                progress: webView.estimatedProgress * 100.0,
+                isLoading: false
+            )
+            originalURL = nil
+        }
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        originalURL = nil
+        delegate?.browserPageWebContentProcessDidTerminate(self)
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        guard !isDownloadNavigation else {
+            originalURL = nil
+            return
+        }
+        // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
+        guard !isWebContentProcessTerminationError(error) else { return }
+
+        emitNavigationEvent(
+            phase: .finished,
+            url: webView.url,
+            title: webView.title,
+            progress: 100.0,
+            isLoading: false
+        )
+
+        if !handleCancelledNavigationError(error) {
+            delegate?.browserPage(self, didFailNavigationWith: error, failingURL: webView.url)
+        }
+        originalURL = nil
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        guard !isDownloadNavigation else {
+            originalURL = nil
+            return
+        }
+        // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
+        guard !isWebContentProcessTerminationError(error) else { return }
+
+        emitNavigationEvent(
+            phase: .finished,
+            url: webView.url,
+            title: webView.title,
+            progress: 100.0,
+            isLoading: false
+        )
+
+        if handleCancelledNavigationError(error) {
+            return
+        }
+
+        let nsError = error as NSError
+        let failingURL = nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL ?? webView.url
+        delegate?.browserPage(self, didFailNavigationWith: error, failingURL: failingURL)
+        originalURL = nil
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let serverTrust = challenge.protectionSpace.serverTrust,
+           sslBypassedHosts.contains(challenge.protectionSpace.host)
+        {
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
+    }
+
+    @available(macOS 11.3, *)
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationResponse: WKNavigationResponse,
+        decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+    ) {
+        if navigationResponse.canShowMIMEType {
+            isDownloadNavigation = false
+            originalURL = nil
+            decisionHandler(.allow)
+            return
+        }
+
+        isDownloadNavigation = true
+        emitNavigationEvent(
+            phase: .finished,
+            url: originalURL,
+            title: webView.title,
+            progress: 0,
+            isLoading: false
+        )
+        decisionHandler(.download)
+    }
+
+    @available(macOS 11.3, *)
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        guard let downloadURL = navigationResponse.response.url else { return }
+        let task = BrowserDownloadTask(download: download, originalURL: downloadURL)
+        delegate?.browserPage(self, didStartDownload: task)
+        isDownloadNavigation = false
+        originalURL = nil
+    }
+
+    // MARK: - Helpers
+
+    private func emitNavigationEvent(
+        phase: BrowserNavigationPhase,
+        url: URL?,
+        title: String?,
+        progress: Double,
+        isLoading: Bool
+    ) {
+        delegate?.browserPage(
+            self,
+            didUpdateNavigation: BrowserNavigationEvent(
+                phase: phase,
+                url: url,
+                title: title,
+                progress: progress,
+                isLoading: isLoading
+            )
+        )
+    }
+
+    private func handleCancelledNavigationError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
+    }
+
+    /// Navigation failure caused by the end of the web content process, which is
+    /// reported separately by `webViewWebContentProcessDidTerminate(_:)`.
+    private func isWebContentProcessTerminationError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == WKError.errorDomain
+            && nsError.code == WKError.Code.webContentProcessTerminated.rawValue
+    }
+}

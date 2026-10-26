@@ -7,8 +7,7 @@
         /// killing it. Debug builds only: it reads a private WebKit property.
         var webContentProcessIdentifier: pid_t? {
             let key = "_webProcessIdentifier"
-            guard let webView = contentView as? WKWebView,
-                  webView.responds(to: NSSelectorFromString(key)),
+            guard webView.responds(to: NSSelectorFromString(key)),
                   let pid = (webView.value(forKey: key) as? NSNumber)?.int32Value,
                   pid > 0
             else {

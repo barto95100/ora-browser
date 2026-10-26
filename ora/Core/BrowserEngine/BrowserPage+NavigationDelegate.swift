@@ -8,6 +8,13 @@ extension BrowserPage: WKNavigationDelegate {
         decidePolicyFor navigationAction: WKNavigationAction,
         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
     ) {
+        // Links the site marks as downloads (`<a download>`): download instead
+        // of navigating. Continues in webView(_:navigationAction:didBecome:).
+        if navigationAction.shouldPerformDownload {
+            decisionHandler(.download)
+            return
+        }
+
         let action = BrowserNavigationAction(
             request: navigationAction.request,
             modifierFlags: navigationAction.modifierFlags
@@ -156,6 +163,21 @@ extension BrowserPage: WKNavigationDelegate {
             isLoading: false
         )
         decisionHandler(.download)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        guard let downloadURL = navigationAction.request.url else { return }
+        delegate?.browserPage(self, didStartDownload: BrowserDownloadTask(download: download, originalURL: downloadURL))
+    }
+
+    /// "Download Image", "Download Linked File" and "Download Video" from the
+    /// page's context menu. Private WebKit delegate method
+    /// (WKNavigationDelegatePrivate, macOS 12+): without it, WebKit creates the
+    /// download but nothing takes care of it, so it never starts.
+    @objc(_webView:contextMenuDidCreateDownload:)
+    func webView(_ webView: WKWebView, contextMenuDidCreate download: WKDownload) {
+        guard let downloadURL = download.originalRequest?.url else { return }
+        delegate?.browserPage(self, didStartDownload: BrowserDownloadTask(download: download, originalURL: downloadURL))
     }
 
     @available(macOS 11.3, *)

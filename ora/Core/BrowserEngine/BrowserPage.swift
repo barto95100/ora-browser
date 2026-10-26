@@ -20,7 +20,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private var isReadyForNavigation = false
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
-    private var captureStateObservations: [NSKeyValueObservation] = []
+    private var observations: [NSKeyValueObservation] = []
 
     init(
         profile: BrowserEngineProfile,
@@ -62,8 +62,16 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
         super.init()
 
-        // Camera/microphone use, to show it and let the user pause it.
-        captureStateObservations = [
+        observations = [
+            // Address and title, including same-page navigations (history API,
+            // fragments): WebKit reports them, no polling from the page needed.
+            webView.observe(\.url) { [weak self] _, _ in
+                self?.notifyOnMain { $0.delegate?.browserPage($0, didChangeURL: $0.webView.url) }
+            },
+            webView.observe(\.title) { [weak self] _, _ in
+                self?.notifyOnMain { $0.delegate?.browserPage($0, didChangeTitle: $0.webView.title) }
+            },
+            // Camera/microphone use, to show it and let the user pause it.
             webView.observe(\.cameraCaptureState) { [weak self] _, _ in
                 self?.mediaCaptureStateDidChange()
             },
@@ -200,8 +208,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     }
 
     func teardown() {
-        captureStateObservations.forEach { $0.invalidate() }
-        captureStateObservations = []
+        observations.forEach { $0.invalidate() }
+        observations = []
         // Release the camera and microphone right away, not when WebKit frees
         // the page later (the camera light would stay on after closing a tab).
         if webView.cameraCaptureState != .none {
@@ -235,6 +243,13 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         if pendingReload {
             pendingReload = false
             webView.reload()
+        }
+    }
+
+    /// KVO may notify on any thread; the delegate updates the interface.
+    func notifyOnMain(_ body: @escaping (BrowserPage) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            if let self { body(self) }
         }
     }
 

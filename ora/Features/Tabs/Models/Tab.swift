@@ -8,12 +8,6 @@ enum TabType: String, Codable {
     case normal
 }
 
-struct URLUpdate: Codable {
-    let href: String
-    let title: String
-    let favicon: String?
-}
-
 // MARK: - Tab
 
 @Model
@@ -61,6 +55,8 @@ class Tab: ObservableObject, Identifiable {
     @Transient @Published var mediaCaptureState = BrowserMediaCaptureState()
     /// Site the shown favicon belongs to (see `Tab+Favicon.swift`).
     @Transient var faviconSiteHost: String?
+    /// Last page recorded in the history (see `Tab+History.swift`).
+    @Transient var lastRecordedVisitURL: URL?
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 

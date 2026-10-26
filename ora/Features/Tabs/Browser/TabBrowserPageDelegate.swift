@@ -91,7 +91,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             }
             if let url = event.url {
                 tab.updateURL(url)
-                tab.updateHistory()
+                tab.recordVisit()
                 tab.updateHeaderColor()
             }
 
@@ -118,6 +118,41 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
     }
 
+    func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
+        guard let tab, let url, tab.url != url else { return }
+
+        tab.updateURL(url)
+        // Same-page navigations (history API, fragments) have no "finished"
+        // event: record them here. Full loads are recorded when they finish.
+        if !page.isLoading {
+            tab.recordVisit()
+        }
+    }
+
+    func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {
+        guard let tab else { return }
+
+        // Pages without a <title> report an empty one: show the host or the
+        // file name instead (like Safari) rather than a blank tab.
+        let newTitle: String
+        if let title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            newTitle = title
+        } else if let fallback = MainActor.assumeIsolated({
+            page.currentURL.flatMap { TabManager.initialTitleAndFavicon(for: $0)?.title }
+        }) {
+            newTitle = fallback
+        } else {
+            return
+        }
+        guard tab.title != newTitle else { return }
+
+        tab.title = newTitle
+        tab.updateHistoryTitle()
+        MainActor.assumeIsolated {
+            mediaController?.syncTitleForTab(tab.id, newTitle: newTitle)
+        }
+    }
+
     func browserPage(_ page: BrowserPage, didFailNavigationWith error: Error, failingURL: URL?) {
         tab?.setNavigationError(error, for: failingURL)
     }
@@ -126,8 +161,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         guard let tab else { return }
 
         switch message.name {
-        case "listener":
-            handleURLUpdateMessage(message.body, for: tab)
         case "linkHover":
             let hovered = (message.body as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let newValue: String? = hovered.isEmpty ? nil : hovered
@@ -288,38 +321,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             DispatchQueue.main.async {
                 self.tab?.updateBackgroundColor(Color(nsColor: color))
                 self.tab?.colorUpdated = true
-            }
-        }
-    }
-
-    private func handleURLUpdateMessage(_ body: Any?, for tab: Tab) {
-        guard let jsonString = body as? String,
-              let jsonData = jsonString.data(using: .utf8),
-              let update = try? JSONDecoder().decode(URLUpdate.self, from: jsonData)
-        else {
-            return
-        }
-
-        let oldTitle = tab.title
-        let newURL = URL(string: update.href)
-        // Pages without a <title> report an empty one: show the host or the
-        // file name instead (like Safari) rather than a blank tab.
-        if update.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let fallbackTitle = MainActor.assumeIsolated {
-                newURL.flatMap { TabManager.initialTitleAndFavicon(for: $0)?.title }
-            }
-            tab.title = fallbackTitle ?? oldTitle
-        } else {
-            tab.title = update.title
-        }
-        if let newURL {
-            tab.updateURL(newURL)
-        }
-        tab.updateHistory()
-
-        if oldTitle != update.title, !update.title.isEmpty {
-            MainActor.assumeIsolated {
-                mediaController?.syncTitleForTab(tab.id, newTitle: update.title)
             }
         }
     }

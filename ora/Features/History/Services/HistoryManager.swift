@@ -55,6 +55,26 @@ class HistoryManager: ObservableObject {
         try? modelContext.save()
     }
 
+    /// Keeps the latest entry of a page in sync with its title, without
+    /// counting a new visit.
+    func updateTitle(_ title: String, for url: URL, container: TabContainer) {
+        let urlString = url.absoluteString
+        let containerId = container.id
+        let descriptor = FetchDescriptor<History>(
+            predicate: #Predicate { history in
+                history.urlString == urlString && history.container?.id == containerId
+            },
+            sortBy: [.init(\.lastAccessedAt, order: .reverse)]
+        )
+        guard !title.isEmpty,
+              let entry = try? modelContext.fetch(descriptor).first,
+              entry.title != title
+        else { return }
+
+        entry.title = title
+        try? modelContext.save()
+    }
+
     func search(_ text: String, activeContainerId: UUID) -> [History] {
         let trimmedText = text.trimmingCharacters(in: .whitespaces)
         let descriptor = FetchDescriptor<History>(

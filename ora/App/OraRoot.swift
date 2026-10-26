@@ -59,18 +59,15 @@ struct OraRoot: View {
         let media = MediaController()
         _mediaController = StateObject(wrappedValue: media)
 
+        let downloads = DownloadManager(modelContainer: container, modelContext: modelContext)
+        _downloadManager = StateObject(wrappedValue: downloads)
+
         _tabManager = StateObject(
             wrappedValue: TabManager(
                 modelContainer: container,
                 modelContext: modelContext,
-                mediaController: media
-            )
-        )
-
-        _downloadManager = StateObject(
-            wrappedValue: DownloadManager(
-                modelContainer: container,
-                modelContext: modelContext
+                mediaController: media,
+                downloadManager: downloads
             )
         )
     }

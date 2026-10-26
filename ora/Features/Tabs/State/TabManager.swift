@@ -43,6 +43,9 @@ class TabManager: ObservableObject {
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController
+    /// The window's download manager, shown by its Downloads panel. Tabs must
+    /// all use it: a separate instance records downloads the panel never sees.
+    let downloadManager: DownloadManager
 
     var recentTabs: [Tab] {
         guard let container = activeContainer else { return [] }
@@ -65,11 +68,13 @@ class TabManager: ObservableObject {
         modelContainer: ModelContainer,
         modelContext: ModelContext,
         mediaController: MediaController,
+        downloadManager: DownloadManager,
         tabSearchingService: TabSearchingProviding = TabSearchingService()
     ) {
         self.modelContainer = modelContainer
         self.modelContext = modelContext
         self.mediaController = mediaController
+        self.downloadManager = downloadManager
         self.tabSearchingService = tabSearchingService
         mediaController.tabManager = self
 
@@ -279,10 +284,7 @@ class TabManager: ObservableObject {
                 modelContainer: modelContainer,
                 modelContext: modelContext
             ),
-            downloadManager: downloadManager ?? DownloadManager(
-                modelContainer: modelContainer,
-                modelContext: modelContext
-            ),
+            downloadManager: downloadManager ?? self.downloadManager,
             tabManager: self,
             isPrivate: isPrivate
         )
@@ -325,10 +327,7 @@ class TabManager: ObservableObject {
                     // Initialize the WebView for the new active tab
                     newTab.restoreTransientState(
                         historyManager: historyManager,
-                        downloadManager: downloadManager ?? DownloadManager(
-                            modelContainer: modelContainer,
-                            modelContext: modelContext
-                        ),
+                        downloadManager: downloadManager ?? self.downloadManager,
                         tabManager: self,
                         isPrivate: isPrivate
                     )
@@ -479,10 +478,7 @@ class TabManager: ObservableObject {
                     modelContainer: modelContainer,
                     modelContext: modelContext
                 ),
-                downloadManager: tab.downloadManager ?? DownloadManager(
-                    modelContainer: modelContainer,
-                    modelContext: modelContext
-                ),
+                downloadManager: tab.downloadManager ?? self.downloadManager,
                 tabManager: self,
                 isPrivate: tab.isPrivate
             )

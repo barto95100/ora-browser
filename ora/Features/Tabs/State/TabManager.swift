@@ -500,7 +500,10 @@ class TabManager: ObservableObject {
         let allContainers = fetchContainers()
         for container in allContainers {
             for tab in container.tabs {
-                if !tab.isAlive, tab.isWebViewReady, tab.id != activeTab?.id, !tab.isPlayingMedia, tab.type == .normal {
+                // A tab in a call keeps its page, like one playing media.
+                if !tab.isAlive, tab.isWebViewReady, tab.id != activeTab?.id, !tab.isPlayingMedia,
+                   !tab.mediaCaptureState.isCapturing, tab.type == .normal
+                {
                     tab.destroyWebView()
                 }
             }
@@ -518,6 +521,7 @@ class TabManager: ObservableObject {
                    lastAccessed < cutoffDate,
                    tab.id != activeTab?.id,
                    !tab.isPlayingMedia,
+                   !tab.mediaCaptureState.isCapturing,
                    tab.type == .normal
                 {
                     closeTab(tab: tab, shouldTrackForRestore: false)
@@ -541,6 +545,7 @@ class TabManager: ObservableObject {
                    lastAccessed < cutoffDate,
                    tab.id != activeTab?.id,
                    !tab.isPlayingMedia,
+                   !tab.mediaCaptureState.isCapturing,
                    tab.type == .normal
                 {
                     closeTab(tab: tab)

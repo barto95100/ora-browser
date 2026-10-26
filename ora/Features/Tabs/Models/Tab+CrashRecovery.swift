@@ -16,6 +16,7 @@ extension Tab {
         loadingProgress = 0
         isReloadingAfterCrash = false
         if showsCrashRecoveryNotice { showsCrashRecoveryNotice = false }
+        if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }
 
         switch crashRecovery.processDidTerminate(isVisible: isShownInWindow) {
         case .reloadNow:

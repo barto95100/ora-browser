@@ -371,6 +371,10 @@ struct URLBar: View {
             .foregroundColor(buttonForegroundColor)
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in
+                tab.toggleCapture(device)
+            }
+
             Button {
                 if let activeTab = tabManager.activeTab {
                     triggerCopy(activeTab.url.absoluteString)

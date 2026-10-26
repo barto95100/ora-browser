@@ -31,11 +31,7 @@ extension BrowserPage {
 
     /// Called by the capture state observers set up in `init`.
     func mediaCaptureStateDidChange() {
-        // KVO may notify on any thread; the delegate updates the interface.
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            delegate?.browserPage(self, didChangeMediaCaptureState: mediaCaptureState)
-        }
+        notifyOnMain { $0.delegate?.browserPage($0, didChangeMediaCaptureState: $0.mediaCaptureState) }
     }
 }
 

@@ -62,32 +62,11 @@ enum OraBrowserScripts {
 
     private static let navigationAndMediaScript = """
     (function () {
-        let lastHref = location.href;
-        let lastTitle = document.title;
-
         function post(name, payload) {
             try {
                 window.__oraBridge && window.__oraBridge.postMessage(name, payload);
             } catch (error) {}
         }
-
-        function notifyChange(force = false) {
-            if (force || location.href !== lastHref || document.title !== lastTitle) {
-                lastHref = location.href;
-                lastTitle = document.title;
-                post('listener', JSON.stringify({ href: lastHref, title: lastTitle }));
-            }
-        }
-
-        const titleObserver = new MutationObserver(() => notifyChange());
-        const titleElement = document.querySelector('title');
-        if (titleElement) {
-            titleObserver.observe(titleElement, { childList: true });
-        }
-
-        setInterval(() => notifyChange(), 500);
-        window.addEventListener('popstate', () => notifyChange(true));
-        notifyChange(true);
 
         // Icons declared by the page, like Safari: the app picks and fetches
         // one. Sent again when the page changes them (e.g. an unread counter).

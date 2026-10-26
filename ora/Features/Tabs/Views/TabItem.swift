@@ -4,6 +4,8 @@ import SwiftUI
 struct LocalFavIcon: View {
     let faviconLocalFile: URL?
     let textColor: Color
+    /// Grey for tabs whose page is not loaded.
+    var isGrayscale = true
 
     @State private var image: NSImage?
 
@@ -15,7 +17,7 @@ struct LocalFavIcon: View {
                 .scaledToFit()
                 .frame(width: 16, height: 16)
                 .cornerRadius(4)
-                .grayscale(1.0)
+                .grayscale(isGrayscale ? 1.0 : 0.0)
         } else {
             Image(systemName: "globe")
                 .resizable()
@@ -61,7 +63,10 @@ struct FavIcon: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            if let favicon, isWebViewReady {
+            if faviconLocalFile != nil {
+                // The page's icon, downloaded once (see FaviconStore).
+                LocalFavIcon(faviconLocalFile: faviconLocalFile, textColor: textColor, isGrayscale: !isWebViewReady)
+            } else if let favicon, isWebViewReady {
                 AsyncImage(
                     url: favicon
                 ) { image in

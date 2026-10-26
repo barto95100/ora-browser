@@ -89,6 +89,36 @@ enum OraBrowserScripts {
         window.addEventListener('popstate', () => notifyChange(true));
         notifyChange(true);
 
+        // Icons declared by the page, like Safari: the app picks and fetches
+        // one. Sent again when the page changes them (e.g. an unread counter).
+        let lastIcons = null;
+        function iconCandidates() {
+            return Array.from(document.querySelectorAll('link[rel][href]'))
+                .filter(link => /(^|\\s)(icon|apple-touch-icon|apple-touch-icon-precomposed)(\\s|$)/i
+                    .test(link.getAttribute('rel')))
+                .map(link => ({
+                    href: link.href,
+                    rel: (link.getAttribute('rel') || '').toLowerCase(),
+                    sizes: link.getAttribute('sizes') || '',
+                    type: link.getAttribute('type') || ''
+                }));
+        }
+        function notifyIcons() {
+            const icons = iconCandidates();
+            const key = JSON.stringify(icons);
+            if (key === lastIcons) return;
+            lastIcons = key;
+            post('favicon', JSON.stringify({ page: location.href, icons: icons }));
+        }
+        notifyIcons();
+        if (document.head) {
+            let iconTimer = null;
+            new MutationObserver(() => {
+                if (iconTimer) return;
+                iconTimer = setTimeout(() => { iconTimer = null; notifyIcons(); }, 250);
+            }).observe(document.head, { childList: true, subtree: true, attributes: true, attributeFilter: ['href', 'rel'] });
+        }
+
         // Only notify the app when the hovered link actually changes, so that
         // moving across child elements of the same anchor does not re-render
         // the link preview on every mouseover.

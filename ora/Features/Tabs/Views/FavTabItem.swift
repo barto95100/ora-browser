@@ -23,7 +23,13 @@ struct FavTabItem: View {
 
     var body: some View {
         ZStack {
-            if let favicon = tab.favicon, tab.isWebViewReady {
+            if tab.faviconLocalFile != nil {
+                LocalFavIcon(
+                    faviconLocalFile: tab.faviconLocalFile,
+                    textColor: Color(.white),
+                    isGrayscale: !tab.isWebViewReady
+                )
+            } else if let favicon = tab.favicon, tab.isWebViewReady {
                 AsyncImage(
                     url: favicon
                 ) { image in

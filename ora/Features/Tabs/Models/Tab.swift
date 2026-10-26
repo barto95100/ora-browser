@@ -25,6 +25,9 @@ class Tab: ObservableObject, Identifiable {
     var order: Int
     var faviconLocalFile: URL?
     var backgroundColorHex: String = "#000000"
+    /// Security-scoped bookmark to the local file this tab shows, so it can be
+    /// read again after a relaunch (see `Tab+LocalFile.swift`).
+    var fileBookmark: Data?
 
     //    @Transient @Published var backgroundColor: Color = Color(.black)
     @Transient var isPlayingMedia: Bool = false
@@ -57,6 +60,8 @@ class Tab: ObservableObject, Identifiable {
     @Transient var faviconSiteHost: String?
     /// Last page recorded in the history (see `Tab+History.swift`).
     @Transient var lastRecordedVisitURL: URL?
+    /// Local file this tab currently has sandbox access to (see `Tab+LocalFile.swift`).
+    @Transient var fileAccessURL: URL?
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 
@@ -215,6 +220,7 @@ class Tab: ObservableObject, Identifiable {
         self.syncBackgroundColorFromHex()
         // Load after a short delay to ensure layout
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            self.beginFileAccessIfNeeded()
             let url = if self.type != .normal { self.savedURL } else { self.url }
             page.load(URLRequest(url: url ?? self.url))
             self.isWebViewReady = true
@@ -245,6 +251,7 @@ class Tab: ObservableObject, Identifiable {
                     if self?.browserPage === page {
                         self?.browserPage = nil
                         self?.pageDelegate = nil
+                        self?.endFileAccess()
                     }
                     completed()
                 }
@@ -299,6 +306,7 @@ class Tab: ObservableObject, Identifiable {
         browserPage = nil
         pageDelegate = nil
         isWebViewReady = false
+        endFileAccess()
     }
 
     func setNavigationError(_ error: Error, for url: URL?) {

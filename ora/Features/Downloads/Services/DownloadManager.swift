@@ -32,11 +32,20 @@ class DownloadManager: ObservableObject {
 
         do {
             let downloads = try modelContext.fetch(descriptor)
+            repairUnknownFileSizes(in: downloads)
             self.recentDownloads = Array(downloads.prefix(50))
             self.activeDownloads = downloads.filter { $0.status == .downloading }
         } catch {
             // Failed to load downloads
         }
+    }
+
+    /// Downloads completed before sizes were read from disk kept "-1 byte".
+    private func repairUnknownFileSizes(in downloads: [Download]) {
+        let unknown = downloads.filter { $0.status == .completed && $0.fileSize <= 0 }
+        guard !unknown.isEmpty else { return }
+        unknown.forEach { $0.refreshFileSizeFromDisk() }
+        try? modelContext.save()
     }
 
     func startDownload(

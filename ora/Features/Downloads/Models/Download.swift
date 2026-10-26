@@ -70,6 +70,19 @@ class Download: ObservableObject, Identifiable {
         self.destinationURL = destinationURL
         self.completedAt = Date()
         self.isActive = false
+        refreshFileSizeFromDisk()
+    }
+
+    /// Takes the size from the downloaded file when the server did not announce
+    /// it (e.g. HTML pages), which displayed "-1 byte".
+    func refreshFileSizeFromDisk() {
+        guard let destinationURL, let size = Self.fileSize(at: destinationURL) else { return }
+        fileSize = size
+        displayFileSize = size
+    }
+
+    static func fileSize(at url: URL) -> Int64? {
+        (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
     }
 
     func markFailed(error: String) {
@@ -84,10 +97,12 @@ class Download: ObservableObject, Identifiable {
     }
 
     var formattedFileSize: String {
-        return ByteCountFormatter.string(
-            fromByteCount: displayFileSize > 0 ? displayFileSize : fileSize,
-            countStyle: .file
-        )
+        Self.formattedSize(displayFileSize > 0 ? displayFileSize : fileSize)
+    }
+
+    /// A size, or a dash while it is unknown (servers may announce -1).
+    static func formattedSize(_ bytes: Int64) -> String {
+        bytes > 0 ? ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file) : "—"
     }
 
     var formattedDownloadedSize: String {

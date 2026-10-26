@@ -59,6 +59,8 @@ class Tab: ObservableObject, Identifiable {
     @Transient var isReloadingAfterCrash = false
     @Transient @Published var showsCrashRecoveryNotice = false
     @Transient @Published var mediaCaptureState = BrowserMediaCaptureState()
+    /// Site the shown favicon belongs to (see `Tab+Favicon.swift`).
+    @Transient var faviconSiteHost: String?
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 
@@ -112,50 +114,6 @@ class Tab: ObservableObject, Identifiable {
     func updateBackgroundColor(_ color: Color) {
         backgroundColor = color
         backgroundColorHex = color.toHex() ?? "#000000"
-    }
-
-    func setFavicon() {
-        guard let domain = Self.faviconDomain(of: url),
-              let faviconURL = FaviconService.shared.faviconURL(for: domain)
-        else { return }
-
-        // One file per site, shared by tabs: a per-tab file kept the previous
-        // site's icon when the new site has none, or when a slower download of
-        // the previous site finished last.
-        let saveURL = FileManager.default.faviconDirectory.appendingPathComponent("\(domain).png")
-        if favicon == faviconURL, faviconLocalFile == saveURL,
-           FileManager.default.fileExists(atPath: saveURL.path)
-        {
-            return // Same site, icon already there: nothing to fetch.
-        }
-
-        favicon = faviconURL
-        if faviconLocalFile != saveURL {
-            faviconLocalFile = nil
-        }
-
-        FaviconService.shared
-            .downloadAndSaveFavicon(
-                for: domain,
-                faviconURL: faviconURL,
-                to: saveURL
-            ) { [weak self] sourceURL, success in
-                guard success else { return }
-                Task { @MainActor in
-                    // The tab may have moved to another site meanwhile.
-                    guard let self, Self.faviconDomain(of: self.url) == domain else { return }
-                    self.faviconLocalFile = saveURL
-                    if let sourceURL {
-                        self.favicon = sourceURL
-                    }
-                }
-            }
-    }
-
-    /// The site a favicon belongs to: the host without "www.".
-    static func faviconDomain(of url: URL) -> String? {
-        guard let host = url.host?.lowercased(), !host.isEmpty else { return nil }
-        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
     }
 
     func switchSections(from: Tab, to: Tab) {
@@ -284,8 +242,8 @@ class Tab: ObservableObject, Identifiable {
         """
         // Silence first: closing Picture in Picture is animated and takes a
         // moment, during which the sound kept playing.
-        page.pauseAllMedia {
-            page.evaluateJavaScript(js) { [weak self] _, _ in
+        page.pauseAllMedia { [weak self] in
+            page.evaluateJavaScript(js) { _, _ in
                 page.closeMediaPresentations {
                     page.teardown()
                     if self?.browserPage === page {

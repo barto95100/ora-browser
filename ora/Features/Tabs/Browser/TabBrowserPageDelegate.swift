@@ -91,9 +91,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             }
             if let url = event.url {
                 tab.updateURL(url)
-                // Also after moving to another site in the same tab; returns
-                // early when the site's icon is already there.
-                tab.setFavicon()
                 tab.updateHistory()
                 tab.updateHeaderColor()
             }
@@ -141,6 +138,14 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             }
         case "mediaEvent":
             handleMediaEventMessage(message.body, for: tab)
+        case "favicon":
+            if let json = message.body as? String,
+               let favicon = try? JSONDecoder().decode(PageFaviconMessage.self, from: Data(json.utf8))
+            {
+                MainActor.assumeIsolated {
+                    tab.updateFavicon(from: favicon)
+                }
+            }
         case "passwordManager":
             if let body = message.body as? String {
                 passwordCoordinator?.handleMessage(body, pageURL: page.currentURL)
@@ -310,7 +315,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         if let newURL {
             tab.updateURL(newURL)
         }
-        tab.setFavicon()
         tab.updateHistory()
 
         if oldTitle != update.title, !update.title.isEmpty {

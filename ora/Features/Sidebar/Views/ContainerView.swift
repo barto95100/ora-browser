@@ -12,6 +12,9 @@ struct ContainerView: View {
     @EnvironmentObject var toastManager: ToastManager
 
     @State private var draggedItem: UUID?
+    /// Identifies the current drag, so a late end of a previous one (even of
+    /// the same tab) does not cancel it.
+    @State private var dragSession: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -19,17 +22,19 @@ struct ContainerView: View {
                 SidebarURLDisplay()
             }
             if !privacyMode.isPrivate {
-                FavTabsGrid(
-                    tabs: favoriteTabs,
-                    draggedItem: $draggedItem,
-                    onDrag: dragTab,
-                    selectedContainerId: selectedContainer,
-                    onSelect: selectTab,
-                    onFavoriteToggle: toggleFavorite,
-                    onClose: removeTab,
-                    onDuplicate: duplicateTab,
-                    onMoveToContainer: moveTab
-                )
+                if showsSection(favoriteTabs) {
+                    FavTabsGrid(
+                        tabs: favoriteTabs,
+                        draggedItem: $draggedItem,
+                        onDrag: dragTab,
+                        selectedContainerId: selectedContainer,
+                        onSelect: selectTab,
+                        onFavoriteToggle: toggleFavorite,
+                        onClose: removeTab,
+                        onDuplicate: duplicateTab,
+                        onMoveToContainer: moveTab
+                    )
+                }
             } else {
                 VStack(alignment: .center, spacing: 8) {
                     Text("Private Browsing")
@@ -52,7 +57,7 @@ struct ContainerView: View {
 
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
-                    if !privacyMode.isPrivate {
+                    if !privacyMode.isPrivate, showsSection(pinnedTabs) {
                         PinnedTabsList(
                             tabs: pinnedTabs,
                             draggedItem: $draggedItem,
@@ -82,7 +87,14 @@ struct ContainerView: View {
                 }
             }
         }
+        .animation(.easeOut(duration: 0.15), value: draggedItem != nil)
         .modifier(OraWindowDragGesture())
+    }
+
+    /// Empty favorites and pinned sections stay hidden, like Arc (upstream
+    /// issue 158), except while a tab is dragged, so it can be dropped there.
+    private func showsSection(_ tabs: [Tab]) -> Bool {
+        !tabs.isEmpty || draggedItem != nil
     }
 
     private var favoriteTabs: [Tab] {
@@ -139,9 +151,15 @@ struct ContainerView: View {
     }
 
     private func dragTab(_ tabId: UUID) -> NSItemProvider {
+        let session = UUID()
+        dragSession = session
         draggedItem = tabId
         let provider = TabItemProvider(object: tabId.uuidString as NSString)
+        // The provider may be released after the next drag has started: only
+        // end the drag it belongs to.
         provider.didEnd = {
+            guard dragSession == session else { return }
+            dragSession = nil
             draggedItem = nil
         }
         return provider

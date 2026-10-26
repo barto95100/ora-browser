@@ -4,7 +4,12 @@ import SwiftData
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        ExternalFileOpener.shared.install()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        ExternalFileOpener.shared.applicationDidFinishLaunching()
         // Disable automatic window tabbing for all NSWindow instances
         NSWindow.allowsAutomaticWindowTabbing = false
         AppearanceManager.shared.updateAppearance()
@@ -23,7 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Links opened from other apps are routed by SwiftUI to a browser window
     // (see `handlesExternalEvents` on the scenes and in `OraRoot`), so the app
-    // delegate deliberately does not implement `application(_:open:)`.
+    // delegate deliberately does not implement `application(_:open:)`. Files
+    // from Finder go through `ExternalFileOpener`.
 }
 
 func deleteSwiftDataStore(_ loc: String) {

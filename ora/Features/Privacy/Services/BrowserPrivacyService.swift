@@ -10,22 +10,16 @@ import Foundation
 /// users and look inconsistent (language differing from the Accept-Language
 /// header, a screen smaller than the window), which bot detection flags; it
 /// broke YouTube playback after a few minutes.
+///
+/// WebGL is left alone for the same reason: WebKit already hides the GPU like
+/// Safari ("Apple GPU"), and fixed values contradicted it ("Apple Inc." vendor,
+/// WebGL 1.0 reported for WebGL 2 contexts).
 struct FingerprintingProtectionProfile: Equatable {
-    let webGLVendor: String
-    let webGLRenderer: String
-    let webGLRendererName: String
-    let webGLVersion: String
-    let webGLShadingLanguageVersion: String
     let canvasShift: Int
     let audioNoise: Double
     let audioBucketSize: Int
 
     static let balanced = FingerprintingProtectionProfile(
-        webGLVendor: "Apple Inc.",
-        webGLRenderer: "Apple GPU",
-        webGLRendererName: "WebKit WebGL",
-        webGLVersion: "WebGL 1.0",
-        webGLShadingLanguageVersion: "WebGL GLSL ES 1.0",
         canvasShift: 1,
         audioNoise: 0.000_015_258_789_062_5,
         audioBucketSize: 64
@@ -38,12 +32,7 @@ struct FingerprintingProtectionProfile: Equatable {
             "seed": seed,
             "audioBucketSize": audioBucketSize,
             "audioNoise": audioNoise,
-            "canvasShift": canvasShift,
-            "webGLRenderer": webGLRenderer,
-            "webGLRendererName": webGLRendererName,
-            "webGLShadingLanguageVersion": webGLShadingLanguageVersion,
-            "webGLVendor": webGLVendor,
-            "webGLVersion": webGLVersion
+            "canvasShift": canvasShift
         ]
 
         guard JSONSerialization.isValidJSONObject(profileObject),
@@ -218,25 +207,6 @@ struct FingerprintingProtectionProfile: Equatable {
                     return sanitizeImageData(result, this.canvas.width || 1);
                 };
             });
-
-            function wrapWebGLContext(contextType) {
-                if (!contextType || !contextType.prototype) return;
-
-                wrapMethod(contextType.prototype, 'getParameter', function (original) {
-                    return function (parameter) {
-                        if (parameter === 37445) return profile.webGLVendor;
-                        if (parameter === 37446) return profile.webGLRenderer;
-                        if (parameter === 7936) return profile.webGLVendor;
-                        if (parameter === 7937) return profile.webGLRendererName;
-                        if (parameter === 7938) return profile.webGLVersion;
-                        if (parameter === 35724) return profile.webGLShadingLanguageVersion;
-                        return original.apply(this, arguments);
-                    };
-                });
-            }
-
-            wrapWebGLContext(window.WebGLRenderingContext);
-            wrapWebGLContext(window.WebGL2RenderingContext);
 
             if (window.OfflineAudioContext && window.OfflineAudioContext.prototype) {
                 wrapMethod(window.OfflineAudioContext.prototype, 'startRendering', function (original) {

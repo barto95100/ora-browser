@@ -304,7 +304,8 @@ struct OraTests {
     @Test func balancedFingerprintingProfileIsInternallyCoherent() {
         let profile = FingerprintingProtectionProfile.balanced
 
-        #expect(profile.webGLVendor == "Apple Inc.")
+        #expect(profile.canvasShift > 0)
+        #expect(profile.audioNoise > 0)
     }
 
     @Test func fingerprintingScriptIncludesBalancedSurfaceNormalization() {
@@ -312,7 +313,6 @@ struct OraTests {
 
         #expect(script.contains("toDataURL"))
         #expect(script.contains("OfflineAudioContext"))
-        #expect(script.contains("WebGLRenderingContext"))
     }
 
     /// Overriding navigator or screen properties made Ora inconsistent with
@@ -337,6 +337,15 @@ struct OraTests {
 
         #expect(!script.contains("enumerateDevices"))
         #expect(!script.contains("'ora-"))
+    }
+
+    /// WebKit already hides the GPU like Safari; the fixed values contradicted
+    /// it (vendor "Apple Inc." instead of "WebKit", WebGL 1.0 for WebGL 2).
+    @Test func fingerprintingScriptLeavesWebGLAlone() {
+        let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
+
+        #expect(!script.contains("WebGL"))
+        #expect(!script.contains("getParameter"))
     }
 
     @Test func fingerprintingScriptLeavesPermissionsQueryAlone() {

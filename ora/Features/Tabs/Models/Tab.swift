@@ -115,28 +115,47 @@ class Tab: ObservableObject, Identifiable {
     }
 
     func setFavicon() {
-        guard let host = self.url.host else { return }
+        guard let domain = Self.faviconDomain(of: url),
+              let faviconURL = FaviconService.shared.faviconURL(for: domain)
+        else { return }
 
-        let domain = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-        guard let faviconURL = FaviconService.shared.faviconURL(for: domain) else { return }
-        self.favicon = faviconURL
+        // One file per site, shared by tabs: a per-tab file kept the previous
+        // site's icon when the new site has none, or when a slower download of
+        // the previous site finished last.
+        let saveURL = FileManager.default.faviconDirectory.appendingPathComponent("\(domain).png")
+        if favicon == faviconURL, faviconLocalFile == saveURL,
+           FileManager.default.fileExists(atPath: saveURL.path)
+        {
+            return // Same site, icon already there: nothing to fetch.
+        }
 
-        let fileName = "\(self.id.uuidString).png"
-        let saveURL = FileManager.default.faviconDirectory.appendingPathComponent(fileName)
+        favicon = faviconURL
+        if faviconLocalFile != saveURL {
+            faviconLocalFile = nil
+        }
 
         FaviconService.shared
-            .downloadAndSaveFavicon(for: domain, faviconURL: faviconURL, to: saveURL) {
-                [weak self] sourceURL, success in
-                guard let self else { return }
-                if success {
-                    Task { @MainActor in
-                        self.faviconLocalFile = saveURL
-                        if let sourceURL {
-                            self.favicon = sourceURL
-                        }
+            .downloadAndSaveFavicon(
+                for: domain,
+                faviconURL: faviconURL,
+                to: saveURL
+            ) { [weak self] sourceURL, success in
+                guard success else { return }
+                Task { @MainActor in
+                    // The tab may have moved to another site meanwhile.
+                    guard let self, Self.faviconDomain(of: self.url) == domain else { return }
+                    self.faviconLocalFile = saveURL
+                    if let sourceURL {
+                        self.favicon = sourceURL
                     }
                 }
             }
+    }
+
+    /// The site a favicon belongs to: the host without "www.".
+    static func faviconDomain(of url: URL) -> String? {
+        guard let host = url.host?.lowercased(), !host.isEmpty else { return nil }
+        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
     }
 
     func switchSections(from: Tab, to: Tab) {

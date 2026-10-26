@@ -106,6 +106,10 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
     }
 
+    func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {
+        tab?.updateMediaCaptureState(state)
+    }
+
     func browserPageWebContentProcessDidTerminate(_ page: BrowserPage) {
         guard let tab else { return }
 

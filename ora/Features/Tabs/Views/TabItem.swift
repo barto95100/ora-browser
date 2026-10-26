@@ -46,6 +46,16 @@ struct FavIcon: View {
     let faviconLocalFile: URL?
     let textColor: Color
     var isPlayingMedia: Bool = false
+    var mediaCaptureState = BrowserMediaCaptureState()
+
+    /// Camera first: it matters more than the microphone.
+    private var captureDevice: BrowserCaptureDevice? {
+        BrowserCaptureDevice.allCases.first { mediaCaptureState[$0] != .none }
+    }
+
+    private var hasIndicator: Bool {
+        isPlayingMedia || captureDevice != nil
+    }
 
     var body: some View {
         HStack(spacing: 4) {
@@ -70,7 +80,15 @@ struct FavIcon: View {
                 )
             }
 
-            if isPlayingMedia {
+            if let captureDevice {
+                let isPaused = mediaCaptureState[captureDevice] == .muted
+                Image(systemName: captureDevice.symbolName(isPaused: isPaused))
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 8, height: 8)
+                    .foregroundColor(isPaused ? textColor.opacity(0.8) : .red)
+                    .help(isPaused ? "Paused" : "In use")
+            } else if isPlayingMedia {
                 Image(systemName: "speaker.wave.2.fill")
                     .resizable()
                     .scaledToFit()
@@ -78,7 +96,7 @@ struct FavIcon: View {
                     .foregroundColor(textColor.opacity(0.8))
             }
         }
-        .frame(width: isPlayingMedia ? 28 : 16, height: 16)
+        .frame(width: hasIndicator ? 28 : 16, height: 16)
     }
 }
 
@@ -109,7 +127,8 @@ struct TabItem: View {
                 favicon: tab.favicon,
                 faviconLocalFile: tab.faviconLocalFile,
                 textColor: textColor,
-                isPlayingMedia: tab.isPlayingMedia
+                isPlayingMedia: tab.isPlayingMedia,
+                mediaCaptureState: tab.mediaCaptureState
             )
             tabTitle
             Spacer()

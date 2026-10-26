@@ -58,6 +58,7 @@ class Tab: ObservableObject, Identifiable {
     @Transient var crashRecovery = PageCrashRecoveryPolicy()
     @Transient var isReloadingAfterCrash = false
     @Transient @Published var showsCrashRecoveryNotice = false
+    @Transient @Published var mediaCaptureState = BrowserMediaCaptureState()
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 
@@ -262,14 +263,18 @@ class Tab: ObservableObject, Identifiable {
             } catch (e) {}
         });
         """
-        page.evaluateJavaScript(js) { [weak self] _, _ in
-            page.closeMediaPresentations {
-                page.teardown()
-                if self?.browserPage === page {
-                    self?.browserPage = nil
-                    self?.pageDelegate = nil
+        // Silence first: closing Picture in Picture is animated and takes a
+        // moment, during which the sound kept playing.
+        page.pauseAllMedia {
+            page.evaluateJavaScript(js) { [weak self] _, _ in
+                page.closeMediaPresentations {
+                    page.teardown()
+                    if self?.browserPage === page {
+                        self?.browserPage = nil
+                        self?.pageDelegate = nil
+                    }
+                    completed()
                 }
-                completed()
             }
         }
     }
@@ -316,6 +321,7 @@ class Tab: ObservableObject, Identifiable {
         crashRecovery = PageCrashRecoveryPolicy()
         isReloadingAfterCrash = false
         showsCrashRecoveryNotice = false
+        if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }
         browserPage?.teardown()
         browserPage = nil
         pageDelegate = nil

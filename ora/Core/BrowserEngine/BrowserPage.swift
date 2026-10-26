@@ -14,6 +14,7 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
     private var isReadyForNavigation = false
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
+    private var captureStateObservations: [NSKeyValueObservation] = []
 
     init(
         profile: BrowserEngineProfile,
@@ -54,6 +55,16 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
         self.delegate = delegate
 
         super.init()
+
+        // Camera/microphone use, to show it and let the user pause it.
+        captureStateObservations = [
+            webView.observe(\.cameraCaptureState) { [weak self] _, _ in
+                self?.mediaCaptureStateDidChange()
+            },
+            webView.observe(\.microphoneCaptureState) { [weak self] _, _ in
+                self?.mediaCaptureStateDidChange()
+            }
+        ]
 
         for messageName in configuration.scriptMessageNames {
             contentController.add(self, name: messageName)
@@ -183,6 +194,16 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
     }
 
     func teardown() {
+        captureStateObservations.forEach { $0.invalidate() }
+        captureStateObservations = []
+        // Release the camera and microphone right away, not when WebKit frees
+        // the page later (the camera light would stay on after closing a tab).
+        if webView.cameraCaptureState != .none {
+            webView.setCameraCaptureState(.none, completionHandler: nil)
+        }
+        if webView.microphoneCaptureState != .none {
+            webView.setMicrophoneCaptureState(.none, completionHandler: nil)
+        }
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
@@ -539,5 +560,54 @@ final class BrowserPage: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptM
             defaultText: defaultText,
             completion: completionHandler
         )
+    }
+}
+
+// MARK: - Media Capture
+
+extension BrowserPage {
+    /// Pauses every media element of the page at once, in WebKit itself (does
+    /// not depend on the page's scripts).
+    func pauseAllMedia(completion: @escaping () -> Void) {
+        webView.pauseAllMediaPlayback(completionHandler: completion)
+    }
+
+    var mediaCaptureState: BrowserMediaCaptureState {
+        BrowserMediaCaptureState(
+            camera: BrowserCaptureState(webView.cameraCaptureState),
+            microphone: BrowserCaptureState(webView.microphoneCaptureState)
+        )
+    }
+
+    /// Pauses (muted) or resumes a capture device the page is using, like the
+    /// camera and microphone buttons of Safari's address bar.
+    func setCaptureMuted(_ muted: Bool, for device: BrowserCaptureDevice) {
+        let state: WKMediaCaptureState = muted ? .muted : .active
+        switch device {
+        case .camera:
+            guard webView.cameraCaptureState != .none else { return }
+            webView.setCameraCaptureState(state, completionHandler: nil)
+        case .microphone:
+            guard webView.microphoneCaptureState != .none else { return }
+            webView.setMicrophoneCaptureState(state, completionHandler: nil)
+        }
+    }
+
+    private func mediaCaptureStateDidChange() {
+        // KVO may notify on any thread; the delegate updates the interface.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            delegate?.browserPage(self, didChangeMediaCaptureState: mediaCaptureState)
+        }
+    }
+}
+
+private extension BrowserCaptureState {
+    init(_ state: WKMediaCaptureState) {
+        switch state {
+        case .active: self = .active
+        case .muted: self = .muted
+        default: self = .none
+        }
     }
 }

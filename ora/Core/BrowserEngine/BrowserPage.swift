@@ -156,10 +156,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
     /// The app is sandboxed: WebKit may only read a local file loaded through
     /// `loadFileURL(_:allowingReadAccessTo:)`, scoped to that file (the one the
-    /// user opened), not with a plain request.
+    /// user opened), or to its folder when the user allowed it (so the page's
+    /// images and styles load), not with a plain request.
     private func perform(_ request: URLRequest) {
         if let url = request.url, url.isFileURL {
-            webView.loadFileURL(url, allowingReadAccessTo: url)
+            let readAccess = LocalFolderAccess.shared.folder(containing: url) ?? url
+            webView.loadFileURL(url, allowingReadAccessTo: readAccess)
         } else {
             webView.load(request)
         }
@@ -172,6 +174,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             return
         }
 
+        // A local file is loaded again with its read access (a plain reload
+        // is refused by the sandbox once its first load failed).
+        if let url = webView.url, url.isFileURL {
+            perform(URLRequest(url: url))
+            return
+        }
         webView.reload()
     }
 

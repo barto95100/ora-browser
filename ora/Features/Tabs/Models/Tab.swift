@@ -62,6 +62,9 @@ class Tab: ObservableObject, Identifiable {
     @Transient var lastRecordedVisitURL: URL?
     /// Local file this tab currently has sandbox access to (see `Tab+LocalFile.swift`).
     @Transient var fileAccessURL: URL?
+    /// Folder of a local page whose images and styles are blocked, offered to
+    /// the user (see `Tab+LocalFile.swift`).
+    @Transient @Published var folderAccessRequest: URL?
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 

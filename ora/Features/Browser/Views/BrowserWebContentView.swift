@@ -119,7 +119,19 @@ struct BrowserWebContentView: View {
                     }
                     .animation(.easeOut(duration: 0.12), value: tab.hoveredLinkURL)
                     .animation(.easeOut(duration: 0.2), value: tab.permissionRequest)
+                    .overlay(alignment: .top) {
+                        if let folder = tab.folderAccessRequest {
+                            LocalFolderAccessPromptView(
+                                folderName: folder.lastPathComponent,
+                                onAllow: { tab.requestFolderAccess() },
+                                onDismiss: { tab.folderAccessRequest = nil }
+                            )
+                            .padding(.top, 12)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+                    }
                     .animation(.easeOut(duration: 0.2), value: tab.showsCrashRecoveryNotice)
+                    .animation(.easeOut(duration: 0.2), value: tab.folderAccessRequest)
             } else {
                 ZStack {
                     Rectangle().fill(theme.background)

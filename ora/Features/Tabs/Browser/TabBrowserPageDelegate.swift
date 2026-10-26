@@ -61,6 +61,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             tab.cancelPermissionRequest()
             tab.clearNavigationError()
             tab.crashRecoveryNavigationDidStart()
+            if tab.folderAccessRequest != nil { tab.folderAccessRequest = nil }
             tab.maintainSnapShots()
             passwordCoordinator?.clearAutofillState()
             tab.isLoading = event.isLoading
@@ -93,6 +94,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                 tab.updateURL(url)
                 tab.recordVisit()
                 tab.updateHeaderColor()
+                if url.isFileURL { tab.offerFolderAccessIfNeeded() }
             }
 
             let workItem = DispatchWorkItem { [weak tab] in

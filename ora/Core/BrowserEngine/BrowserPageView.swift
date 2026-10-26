@@ -12,6 +12,18 @@ final class BrowserPageHostView: NSView {
     /// Called when Escape reaches the host without being handled by the page.
     var cancelOperationHandler: (() -> Void)?
 
+    /// Lays the page out beside the host, outside the window, at its normal
+    /// size (pages parked during Picture in Picture).
+    var keepsContentOutsideWindow = false {
+        didSet { hostedContentView?.frame = contentFrame }
+    }
+
+    private var contentFrame: NSRect {
+        guard keepsContentOutsideWindow else { return bounds }
+        // Far enough to the left that no screen arrangement brings it under the mouse.
+        return bounds.offsetBy(dx: -(bounds.width + 100_000), dy: 0)
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
@@ -64,7 +76,7 @@ final class BrowserPageHostView: NSView {
             addSubview(newContentView)
         }
 
-        newContentView.frame = bounds
+        newContentView.frame = contentFrame
         hostedContentView = newContentView
         restoreCompanionViews(of: newContentView)
 
@@ -82,7 +94,7 @@ final class BrowserPageHostView: NSView {
 
     override func layout() {
         super.layout()
-        hostedContentView?.frame = bounds
+        hostedContentView?.frame = contentFrame
     }
 
     override func didAddSubview(_ subview: NSView) {

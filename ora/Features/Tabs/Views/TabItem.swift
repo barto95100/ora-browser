@@ -7,7 +7,8 @@ struct LocalFavIcon: View {
 
     @State private var image: NSImage?
 
-    var body: some View {
+    @ViewBuilder
+    private var icon: some View {
         if let image {
             Image(nsImage: image)
                 .resizable()
@@ -21,22 +22,23 @@ struct LocalFavIcon: View {
                 .scaledToFit()
                 .frame(width: 16, height: 16)
                 .foregroundColor(textColor)
-                .onAppear(perform: loadFavicon)
         }
     }
 
-    private func loadFavicon() {
-        guard let localURL = faviconLocalFile,
-              FileManager.default.fileExists(atPath: localURL.path) else { return }
-
-        // Loading may block briefly, so you can even do it async if needed
-        DispatchQueue.global(qos: .utility).async {
-            if let loadedImage = NSImage(contentsOfFile: localURL.path) {
-                DispatchQueue.main.async {
-                    self.image = loadedImage
-                }
+    var body: some View {
+        icon
+            // Reload when the tab's icon file changes (another site), instead of
+            // keeping the first image loaded.
+            .task(id: faviconLocalFile) {
+                image = await Self.loadImage(at: faviconLocalFile)
             }
-        }
+    }
+
+    private static func loadImage(at url: URL?) async -> NSImage? {
+        guard let url else { return nil }
+        return await Task.detached(priority: .utility) {
+            NSImage(contentsOf: url)
+        }.value
     }
 }
 

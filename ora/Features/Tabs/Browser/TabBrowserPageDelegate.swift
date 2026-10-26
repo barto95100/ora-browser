@@ -91,9 +91,9 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             }
             if let url = event.url {
                 tab.updateURL(url)
-                if tab.favicon == nil {
-                    tab.setFavicon()
-                }
+                // Also after moving to another site in the same tab; returns
+                // early when the site's icon is already there.
+                tab.setFavicon()
                 tab.updateHistory()
                 tab.updateHeaderColor()
             }

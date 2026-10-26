@@ -355,11 +355,6 @@ class TabManager: ObservableObject {
         return nil
     }
 
-    func reorderTabs(from: Tab, toTab: Tab) {
-        from.container.reorderTabs(from: from, to: toTab)
-        try? modelContext.save()
-    }
-
     func switchSections(from: Tab, toTab: Tab) {
         from.switchSections(from: from, to: toTab)
         try? modelContext.save()
@@ -629,7 +624,11 @@ class TabManager: ObservableObject {
             isPrivate: tab.isPrivate,
             loadSilently: true
         ) else { return }
-        self.reorderTabs(from: tab, toTab: newTab)
+        // Right after the original, in the same section.
+        if newTab.type == tab.type {
+            tab.container.moveTab(newTab, onto: tab)
+            try? modelContext.save()
+        }
     }
 
     func refreshPrivacySettings(for containerId: UUID) {

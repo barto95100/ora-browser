@@ -19,7 +19,6 @@ struct FingerprintingProtectionProfile: Equatable {
     let canvasShift: Int
     let audioNoise: Double
     let audioBucketSize: Int
-    let mediaDeviceKinds: [String]
 
     static let balanced = FingerprintingProtectionProfile(
         webGLVendor: "Apple Inc.",
@@ -29,8 +28,7 @@ struct FingerprintingProtectionProfile: Equatable {
         webGLShadingLanguageVersion: "WebGL GLSL ES 1.0",
         canvasShift: 1,
         audioNoise: 0.000_015_258_789_062_5,
-        audioBucketSize: 64,
-        mediaDeviceKinds: ["audioinput", "audiooutput", "videoinput"]
+        audioBucketSize: 64
     )
 
     /// - Parameter seed: secret mixed with each site's origin in the page to
@@ -41,7 +39,6 @@ struct FingerprintingProtectionProfile: Equatable {
             "audioBucketSize": audioBucketSize,
             "audioNoise": audioNoise,
             "canvasShift": canvasShift,
-            "mediaDeviceKinds": mediaDeviceKinds,
             "webGLRenderer": webGLRenderer,
             "webGLRendererName": webGLRendererName,
             "webGLShadingLanguageVersion": webGLShadingLanguageVersion,
@@ -106,21 +103,6 @@ struct FingerprintingProtectionProfile: Equatable {
                 return Math.max(0, Math.min(255, value));
             }
 
-            function defineGetter(target, property, getter) {
-                if (!target) return;
-                try {
-                    Object.defineProperty(target, property, {
-                        configurable: true,
-                        enumerable: false,
-                        get: getter
-                    });
-                } catch (error) {}
-            }
-
-            function defineValue(target, property, value) {
-                defineGetter(target, property, function () { return value; });
-            }
-
             function wrapMethod(target, property, wrapper) {
                 if (!target || typeof target[property] !== 'function') return;
                 const original = target[property];
@@ -130,39 +112,6 @@ struct FingerprintingProtectionProfile: Equatable {
                         value: wrapper(original)
                     });
                 } catch (error) {}
-            }
-
-            function makeDevice(kind, index) {
-                const suffix = String(index + 1);
-                const device = {
-                    deviceId: 'ora-' + kind + '-' + suffix,
-                    groupId: 'ora-group-' + kind,
-                    kind: kind,
-                    label: '',
-                    toJSON: function () {
-                        return {
-                            deviceId: this.deviceId,
-                            groupId: this.groupId,
-                            kind: this.kind,
-                            label: this.label
-                        };
-                    }
-                };
-
-                return Object.freeze(device);
-            }
-
-            function normalizeMediaDevices(devices) {
-                const hasLabels = Array.isArray(devices) && devices.some(function (device) {
-                    return !!(device && device.label);
-                });
-                if (hasLabels) {
-                    return devices;
-                }
-
-                return profile.mediaDeviceKinds.map(function (kind, index) {
-                    return makeDevice(kind, index);
-                });
             }
 
             function shouldSanitizeCanvas(canvas) {
@@ -244,13 +193,6 @@ struct FingerprintingProtectionProfile: Equatable {
                     }
                 }
                 return values;
-            }
-
-            if (navigator.mediaDevices && typeof navigator.mediaDevices.enumerateDevices === 'function') {
-                const originalEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
-                navigator.mediaDevices.enumerateDevices = function () {
-                    return originalEnumerateDevices().then(normalizeMediaDevices);
-                };
             }
 
             wrapMethod(HTMLCanvasElement.prototype, 'toDataURL', function (original) {

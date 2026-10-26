@@ -305,13 +305,11 @@ struct OraTests {
         let profile = FingerprintingProtectionProfile.balanced
 
         #expect(profile.webGLVendor == "Apple Inc.")
-        #expect(profile.mediaDeviceKinds == ["audioinput", "audiooutput", "videoinput"])
     }
 
     @Test func fingerprintingScriptIncludesBalancedSurfaceNormalization() {
         let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
 
-        #expect(script.contains("enumerateDevices"))
         #expect(script.contains("toDataURL"))
         #expect(script.contains("OfflineAudioContext"))
         #expect(script.contains("WebGLRenderingContext"))
@@ -332,6 +330,15 @@ struct OraTests {
     /// The fake answer was always "prompt", even for a site the user allowed,
     /// and a plain object without addEventListener broke sites watching the
     /// permission state. WebKit answers like Safari.
+    /// The fake devices were named "ora-…", identifying Ora; WebKit already
+    /// hides device names and identifiers until the site is allowed, like Safari.
+    @Test func fingerprintingScriptLeavesMediaDevicesAlone() {
+        let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
+
+        #expect(!script.contains("enumerateDevices"))
+        #expect(!script.contains("'ora-"))
+    }
+
     @Test func fingerprintingScriptLeavesPermissionsQueryAlone() {
         let script = BrowserPrivacyService.fingerprintingProtectionScriptSource()
 

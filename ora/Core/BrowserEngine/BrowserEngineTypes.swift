@@ -63,6 +63,12 @@ struct BrowserMediaCaptureState: Equatable {
         camera != .none || microphone != .none
     }
 
+    /// The device a tab's indicator shows: the camera first, it matters more
+    /// than the microphone. Nil when nothing is captured.
+    var indicatedDevice: BrowserCaptureDevice? {
+        BrowserCaptureDevice.allCases.first { self[$0] != .none }
+    }
+
     subscript(device: BrowserCaptureDevice) -> BrowserCaptureState {
         switch device {
         case .camera: camera

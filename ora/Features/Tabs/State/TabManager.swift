@@ -46,6 +46,9 @@ class TabManager: ObservableObject {
     /// The window's download manager, shown by its Downloads panel. Tabs must
     /// all use it: a separate instance records downloads the panel never sees.
     let downloadManager: DownloadManager
+    /// The window's history manager. Tabs restored or opened without one use
+    /// it, rather than a fallback instance of their own.
+    let historyManager: HistoryManager
 
     var recentTabs: [Tab] {
         guard let container = activeContainer else { return [] }
@@ -69,12 +72,14 @@ class TabManager: ObservableObject {
         modelContext: ModelContext,
         mediaController: MediaController,
         downloadManager: DownloadManager,
+        historyManager: HistoryManager,
         tabSearchingService: TabSearchingProviding = TabSearchingService()
     ) {
         self.modelContainer = modelContainer
         self.modelContext = modelContext
         self.mediaController = mediaController
         self.downloadManager = downloadManager
+        self.historyManager = historyManager
         self.tabSearchingService = tabSearchingService
         mediaController.tabManager = self
 
@@ -280,10 +285,7 @@ class TabManager: ObservableObject {
 
         // Initialize the WebView for the new active tab
         newTab.restoreTransientState(
-            historyManager: historyManager ?? HistoryManager(
-                modelContainer: modelContainer,
-                modelContext: modelContext
-            ),
+            historyManager: historyManager ?? self.historyManager,
             downloadManager: downloadManager ?? self.downloadManager,
             tabManager: self,
             isPrivate: isPrivate
@@ -384,16 +386,15 @@ class TabManager: ObservableObject {
         } else {
             self.activeTab = activeTab
         }
-        if activeTab?.isWebViewReady != nil, let historyManager = tab.historyManager,
-           let downloadManager = tab.downloadManager, let tabManager = tab.tabManager
-        {
-            activeTab?
-                .restoreTransientState(
-                    historyManager: historyManager,
-                    downloadManager: downloadManager,
-                    tabManager: tabManager,
-                    isPrivate: tab.isPrivate
-                )
+        // Make sure the tab now shown is loaded. It used to be skipped when the
+        // closed tab had never been loaded (it had no managers to lend).
+        if let nextTab = activeTab {
+            nextTab.restoreTransientState(
+                historyManager: nextTab.historyManager ?? historyManager,
+                downloadManager: nextTab.downloadManager ?? downloadManager,
+                tabManager: self,
+                isPrivate: nextTab.isPrivate
+            )
         }
         if shouldTrackForRestore, tab.type == .normal {
             trackRecentlyClosedTab(tab)
@@ -474,10 +475,7 @@ class TabManager: ObservableObject {
         // Lazy load WebView if not ready
         if !tab.isWebViewReady {
             tab.restoreTransientState(
-                historyManager: tab.historyManager ?? HistoryManager(
-                    modelContainer: modelContainer,
-                    modelContext: modelContext
-                ),
+                historyManager: tab.historyManager ?? historyManager,
                 downloadManager: tab.downloadManager ?? self.downloadManager,
                 tabManager: self,
                 isPrivate: tab.isPrivate
@@ -620,10 +618,10 @@ class TabManager: ObservableObject {
 
     func duplicateTab(_ tab: Tab) {
         // Create a new tab using the existing openTab method
-        guard let historyManager = tab.historyManager else { return }
+        // A tab never loaded since launch has no history manager yet.
         guard let newTab = openTab(
             url: tab.url,
-            historyManager: historyManager,
+            historyManager: tab.historyManager ?? historyManager,
             downloadManager: tab.downloadManager,
             focusAfterOpening: false,
             isPrivate: tab.isPrivate,

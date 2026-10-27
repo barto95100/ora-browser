@@ -17,12 +17,11 @@ struct BrowserSplitView: View {
             : sidebarManager.currentFraction.inverted()
     }
 
-    private var minPF: CGFloat {
-        sidebarManager.sidebarPosition == .primary ? 0.16 : 0.7
-    }
-
-    private var minSF: CGFloat {
-        sidebarManager.sidebarPosition == .primary ? 0.7 : 0.16
+    /// Minimum share of the window for the sidebar pane and the content pane.
+    private func minimumFractions(windowWidth: CGFloat) -> (primary: CGFloat, secondary: CGFloat) {
+        let sidebar = SidebarLayout.minimumFraction(forWindowWidth: windowWidth)
+        let content = 1 - SidebarLayout.maximumFraction
+        return sidebarManager.sidebarPosition == .primary ? (sidebar, content) : (content, sidebar)
     }
 
     private var prioritySide: SplitSide {
@@ -38,18 +37,21 @@ struct BrowserSplitView: View {
     }
 
     var body: some View {
-        HSplit(left: { primaryPane() }, right: { secondaryPane() })
-            .hide(sidebarManager.hiddenSidebar)
-            .splitter { Splitter.invisible() }
-            .fraction(splitFraction)
-            .constraints(
-                minPFraction: minPF,
-                minSFraction: minSF,
-                priority: prioritySide,
-                dragToHideP: dragToHidePFlag,
-                dragToHideS: dragToHideSFlag
-            )
-            .styling(hideSplitter: true)
+        GeometryReader { geometry in
+            let minimums = minimumFractions(windowWidth: geometry.size.width)
+            HSplit(left: { primaryPane() }, right: { secondaryPane() })
+                .hide(sidebarManager.hiddenSidebar)
+                .splitter { Splitter.invisible() }
+                .fraction(splitFraction)
+                .constraints(
+                    minPFraction: minimums.primary,
+                    minSFraction: minimums.secondary,
+                    priority: prioritySide,
+                    dragToHideP: dragToHidePFlag,
+                    dragToHideS: dragToHideSFlag
+                )
+                .styling(hideSplitter: true)
+        }
     }
 
     private func primaryPane() -> some View {

@@ -4,8 +4,25 @@ import SwiftUI
 final class BrowserPageHostView: NSView {
     private(set) weak var hostedContentView: NSView?
 
+    /// Views WebKit adds next to a page, in its superview: the docked Web
+    /// Inspector. They must follow their page when it moves to another host
+    /// (switching tabs), or the inspector's space stays blank.
+    private static let companionViews = NSMapTable<NSView, NSMutableArray>.weakToStrongObjects()
+
     /// Called when Escape reaches the host without being handled by the page.
     var cancelOperationHandler: (() -> Void)?
+
+    /// Lays the page out beside the host, outside the window, at its normal
+    /// size (pages parked during Picture in Picture).
+    var keepsContentOutsideWindow = false {
+        didSet { hostedContentView?.frame = contentFrame }
+    }
+
+    private var contentFrame: NSRect {
+        guard keepsContentOutsideWindow else { return bounds }
+        // Far enough to the left that no screen arrangement brings it under the mouse.
+        return bounds.offsetBy(dx: -(bounds.width + 100_000), dy: 0)
+    }
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -27,6 +44,11 @@ final class BrowserPageHostView: NSView {
         }
 
         let shouldRestoreFirstResponder = shouldTransferFirstResponder(from: previousContentView)
+
+        // A view becoming the hosted page is no longer a companion of the previous one.
+        if let previousContentView, let newContentView {
+            Self.companionViews.object(forKey: previousContentView)?.remove(newContentView)
+        }
 
         if isSameContentView {
             hostedContentView = nil
@@ -54,8 +76,9 @@ final class BrowserPageHostView: NSView {
             addSubview(newContentView)
         }
 
-        newContentView.frame = bounds
+        newContentView.frame = contentFrame
         hostedContentView = newContentView
+        restoreCompanionViews(of: newContentView)
 
         needsLayout = true
         layoutSubtreeIfNeeded()
@@ -71,7 +94,42 @@ final class BrowserPageHostView: NSView {
 
     override func layout() {
         super.layout()
-        hostedContentView?.frame = bounds
+        hostedContentView?.frame = contentFrame
+    }
+
+    override func didAddSubview(_ subview: NSView) {
+        super.didAddSubview(subview)
+        guard let page = hostedContentView, subview !== page else { return }
+        let companions = Self.companions(of: page)
+        if !companions.contains(subview) {
+            companions.add(subview)
+        }
+    }
+
+    override func willRemoveSubview(_ subview: NSView) {
+        super.willRemoveSubview(subview)
+        // Removed while on screen: closed or undocked by the user. Off screen,
+        // WebKit only takes it away because its page left the window (tab
+        // switch): keep it to put it back with the page.
+        guard window != nil, let page = hostedContentView, subview !== page else { return }
+        Self.companions(of: page).remove(subview)
+    }
+
+    private static func companions(of page: NSView) -> NSMutableArray {
+        if let companions = companionViews.object(forKey: page) {
+            return companions
+        }
+        let companions = NSMutableArray()
+        companionViews.setObject(companions, forKey: page)
+        return companions
+    }
+
+    /// Puts back the views WebKit had placed next to this page in its previous host.
+    private func restoreCompanionViews(of page: NSView) {
+        guard let companions = Self.companionViews.object(forKey: page) else { return }
+        for case let companion as NSView in companions.copy() as? [Any] ?? [] where companion.superview !== self {
+            addSubview(companion, positioned: .below, relativeTo: page)
+        }
     }
 
     /// Escape that the page does not handle travels up the responder chain as
@@ -94,11 +152,15 @@ final class BrowserPageHostView: NSView {
             return
         }
 
+        // Cleared first: the companions removed below stay recorded for their page.
+        self.hostedContentView = nil
+
         if hostedContentView.superview === self {
             hostedContentView.removeFromSuperview()
         }
-
-        self.hostedContentView = nil
+        for case let companion as NSView in Self.companions(of: hostedContentView) where companion.superview === self {
+            companion.removeFromSuperview()
+        }
     }
 
     private func releaseHostedContentView(_ contentView: NSView) {

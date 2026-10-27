@@ -21,54 +21,75 @@ struct FavTabItem: View {
 
     @State private var isHovering = false
 
-    var body: some View {
-        ZStack {
-            if tab.faviconLocalFile != nil {
-                LocalFavIcon(
-                    faviconLocalFile: tab.faviconLocalFile,
-                    textColor: Color(.white),
-                    isGrayscale: !tab.isWebViewReady
-                )
-            } else if let favicon = tab.favicon, tab.isWebViewReady {
-                AsyncImage(
-                    url: favicon
-                ) { image in
-                    image
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 20, height: 20)
-                } placeholder: {
-                    LocalFavIcon(
-                        faviconLocalFile: tab.faviconLocalFile,
-                        textColor: Color(.white)
-                    )
-                }
-            } else {
+    @ViewBuilder
+    private var favicon: some View {
+        if tab.faviconLocalFile != nil {
+            LocalFavIcon(
+                faviconLocalFile: tab.faviconLocalFile,
+                textColor: Color(.white),
+                isGrayscale: !tab.isWebViewReady
+            )
+        } else if let favicon = tab.favicon, tab.isWebViewReady {
+            AsyncImage(
+                url: favicon
+            ) { image in
+                image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+            } placeholder: {
                 LocalFavIcon(
                     faviconLocalFile: tab.faviconLocalFile,
                     textColor: Color(.white)
                 )
             }
+        } else {
+            LocalFavIcon(
+                faviconLocalFile: tab.faviconLocalFile,
+                textColor: Color(.white)
+            )
+        }
+    }
 
-            if tab.isPlayingMedia {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Image(systemName: "speaker.wave.2.fill")
+    /// Camera or microphone in use (red, grey when paused) before playing sound,
+    /// like the other tabs.
+    private var mediaBadge: MediaBadge? {
+        let capture = tab.mediaCaptureState
+        if let device = capture.indicatedDevice {
+            let isPaused = capture[device] == .muted
+            return MediaBadge(
+                symbolName: device.symbolName(isPaused: isPaused),
+                color: isPaused ? .white.opacity(0.9) : .red,
+                help: isPaused ? "Paused" : "In use"
+            )
+        }
+        if tab.isPlayingMedia {
+            return MediaBadge(symbolName: "speaker.wave.2.fill", color: .white.opacity(0.9), help: "")
+        }
+        return nil
+    }
+
+    var body: some View {
+        ZStack {
+            favicon
+                // Next to the icon, like the other tabs: in the corner of the
+                // card it was cut by the rounded border.
+                .overlay(alignment: .bottomTrailing) {
+                    if let badge = mediaBadge {
+                        Image(systemName: badge.symbolName)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 8, height: 8)
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundColor(badge.color)
                             .background(
                                 Circle()
                                     .fill(Color.black.opacity(0.6))
                                     .frame(width: 12, height: 12)
                             )
+                            .help(badge.help)
+                            .offset(x: 7, y: 7)
                     }
                 }
-                .padding(2)
-            }
         }
         .onTapGesture {
             onTap()
@@ -166,4 +187,10 @@ struct FavTabItem: View {
         }
         return theme.mutedBackground
     }
+}
+
+private struct MediaBadge {
+    let symbolName: String
+    let color: Color
+    let help: String
 }

@@ -48,13 +48,8 @@ struct OraRoot: View {
         self.tabContext = modelContext
         self.downloadContext = modelContext
         self.historyContext = modelContext
-        let historyManagerObj = StateObject(
-            wrappedValue: HistoryManager(
-                modelContainer: container,
-                modelContext: modelContext
-            )
-        )
-        _historyManager = historyManagerObj
+        let history = HistoryManager(modelContainer: container, modelContext: modelContext)
+        _historyManager = StateObject(wrappedValue: history)
 
         let media = MediaController()
         _mediaController = StateObject(wrappedValue: media)
@@ -67,7 +62,8 @@ struct OraRoot: View {
                 modelContainer: container,
                 modelContext: modelContext,
                 mediaController: media,
-                downloadManager: downloads
+                downloadManager: downloads,
+                historyManager: history
             )
         )
     }
@@ -121,9 +117,11 @@ struct OraRoot: View {
                     isPrivate: false
                 )
             }
-            // Files from Finder open in this window (see `ExternalFileOpener`),
+            // The window's undo manager (⌘Z reopens a closed tab), and files
+            // from Finder that open in this window (see `ExternalFileOpener`),
             // including those that launched Ora before it existed.
             .onChange(of: window, initial: true) { _, newWindow in
+                tabManager.windowUndoManager = newWindow?.undoManager
                 guard let newWindow, !privacyMode.isPrivate else { return }
                 for file in ExternalFileOpener.shared.register(newWindow) {
                     tabManager.openTab(

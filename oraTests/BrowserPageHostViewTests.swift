@@ -108,6 +108,59 @@ struct BrowserPageHostViewTests {
         #expect(nextResponder.cancelOperationCalls == 0)
     }
 
+    /// The docked Web Inspector WebKit takes away when its page leaves the
+    /// window (tab switch) comes back with the page in its new host.
+    @Test func inspectorTakenAwayOffScreenFollowsItsPage() {
+        let firstHost = makeHost()
+        let page = TrackingContentView()
+        let inspector = NSView()
+        firstHost.host(contentView: page)
+        firstHost.addSubview(inspector)
+
+        inspector.removeFromSuperview() // WebKit, page out of the window.
+        let secondHost = makeHost()
+        secondHost.host(contentView: page)
+
+        #expect(inspector.superview === secondHost)
+        #expect(secondHost.subviews.first === inspector) // Below the page.
+    }
+
+    /// An inspector closed by the user (on screen) is not brought back.
+    @Test func inspectorClosedOnScreenIsForgotten() {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [],
+            backing: .buffered,
+            defer: true
+        )
+        let firstHost = makeHost()
+        window.contentView = firstHost
+        let page = TrackingContentView()
+        let inspector = NSView()
+        firstHost.host(contentView: page)
+        firstHost.addSubview(inspector)
+
+        inspector.removeFromSuperview() // Closed, page on screen.
+        let secondHost = makeHost()
+        secondHost.host(contentView: page)
+
+        #expect(inspector.superview == nil)
+        #expect(secondHost.subviews.count == 1)
+    }
+
+    /// Pages parked during Picture in Picture keep their size but stay out of
+    /// the mouse's reach (no cursor or tooltips through the displayed page).
+    @Test func parkedPageIsLaidOutOutsideTheHostAtItsSize() {
+        let host = makeHost()
+        host.keepsContentOutsideWindow = true
+        let page = TrackingContentView()
+
+        host.host(contentView: page)
+
+        #expect(page.frame.size == host.bounds.size)
+        #expect(!page.frame.intersects(host.bounds))
+    }
+
     private func makeHost() -> BrowserPageHostView {
         BrowserPageHostView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }

@@ -30,7 +30,8 @@ class Tab: ObservableObject, Identifiable {
     var fileBookmark: Data?
 
     //    @Transient @Published var backgroundColor: Color = Color(.black)
-    @Transient var isPlayingMedia: Bool = false
+    /// Published so the sidebar's speaker icon follows playback.
+    @Transient @Published var isPlayingMedia: Bool = false
     @Transient var isLoading: Bool = false
     @Transient @Published var backgroundColor: Color = .black
     @Transient var historyManager: HistoryManager?

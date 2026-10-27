@@ -148,6 +148,19 @@ struct BrowserPageHostViewTests {
         #expect(secondHost.subviews.count == 1)
     }
 
+    /// Pages parked during Picture in Picture keep their size but stay out of
+    /// the mouse's reach (no cursor or tooltips through the displayed page).
+    @Test func parkedPageIsLaidOutOutsideTheHostAtItsSize() {
+        let host = makeHost()
+        host.keepsContentOutsideWindow = true
+        let page = TrackingContentView()
+
+        host.host(contentView: page)
+
+        #expect(page.frame.size == host.bounds.size)
+        #expect(!page.frame.intersects(host.bounds))
+    }
+
     private func makeHost() -> BrowserPageHostView {
         BrowserPageHostView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }

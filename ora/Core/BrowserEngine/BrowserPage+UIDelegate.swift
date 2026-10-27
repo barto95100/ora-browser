@@ -81,6 +81,17 @@ extension BrowserPage: WKUIDelegate {
         for navigationAction: WKNavigationAction,
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
+        // A sized `window.open` is a popup (e.g. "Sign in with…"): it gets its
+        // own window, linked to this page. Anything else opens in a new tab.
+        if BrowserPopupWindow.isPopup(windowFeatures) {
+            return MainActor.assumeIsolated {
+                BrowserPopupWindow.open(
+                    configuration: configuration,
+                    windowFeatures: windowFeatures,
+                    openerWindow: webView.window
+                )
+            }
+        }
         if let url = navigationAction.request.url {
             delegate?.browserPage(self, didRequestOpenInNewTab: url)
         }

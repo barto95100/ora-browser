@@ -27,7 +27,12 @@ struct OraCommands: Commands {
             Divider()
 
             Button("Close Tab") {
-                NotificationCenter.default.post(name: .closeActiveTab, object: NSApp.keyWindow)
+                // A popup ("Sign in with…" window) has no tabs: ⌘W closes it.
+                if let keyWindow = NSApp.keyWindow, BrowserPopupWindow.isPopupWindow(keyWindow) {
+                    keyWindow.performClose(nil)
+                } else {
+                    NotificationCenter.default.post(name: .closeActiveTab, object: NSApp.keyWindow)
+                }
             }.keyboardShortcut(KeyboardShortcuts.Tabs.close.keyboardShortcut)
 
             Button("Close Window") {

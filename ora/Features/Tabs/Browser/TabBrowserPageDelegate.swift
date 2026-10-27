@@ -22,15 +22,21 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             return .allow
         }
 
+        // ⌘-click opens the link in a background tab, ⌘⇧-click in front, like
+        // Safari. The tab is opened here, so the navigation is just cancelled
+        // (`.openInNewTab` would have the page open it a second time).
+        let inFront = navigationAction.modifierFlags.contains(.shift)
         MainActor.assumeIsolated {
             _ = tabManager.openTab(
                 url: url,
                 historyManager: historyManager,
                 downloadManager: downloadManager,
-                isPrivate: tab.isPrivate
+                focusAfterOpening: inFront,
+                isPrivate: tab.isPrivate,
+                loadSilently: !inFront
             )
         }
-        return .openInNewTab
+        return .cancel
     }
 
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL) {

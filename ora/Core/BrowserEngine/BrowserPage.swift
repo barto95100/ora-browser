@@ -21,6 +21,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
     private var observations: [NSKeyValueObservation] = []
+    /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.
+    var httpsUpgrade = HTTPSUpgradePolicy()
 
     init(
         profile: BrowserEngineProfile,

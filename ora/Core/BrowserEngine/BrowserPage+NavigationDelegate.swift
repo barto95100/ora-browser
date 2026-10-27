@@ -22,6 +22,13 @@ extension BrowserPage: WKNavigationDelegate {
 
         switch delegate?.browserPage(self, decidePolicyFor: action) ?? .allow {
         case .allow:
+            if let upgraded = httpsURL(for: navigationAction) {
+                decisionHandler(.cancel)
+                var request = navigationAction.request
+                request.url = upgraded
+                webView.load(request)
+                return
+            }
             decisionHandler(.allow)
         case .cancel:
             decisionHandler(.cancel)
@@ -47,6 +54,7 @@ extension BrowserPage: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        httpsUpgrade.navigationCommitted()
         if !isDownloadNavigation {
             lastCommittedURL = webView.url
             emitNavigationEvent(
@@ -108,6 +116,15 @@ extension BrowserPage: WKNavigationDelegate {
         // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
         guard !isWebContentProcessTerminationError(error) else { return }
 
+        let nsError = error as NSError
+        let failingURL = nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL ?? webView.url
+        // The site does not answer over HTTPS: load the HTTP page asked for,
+        // without showing an error.
+        if let fallback = httpsUpgrade.fallback(afterFailing: failingURL, error: error) {
+            webView.load(URLRequest(url: fallback))
+            return
+        }
+
         emitNavigationEvent(
             phase: .finished,
             url: webView.url,
@@ -120,8 +137,6 @@ extension BrowserPage: WKNavigationDelegate {
             return
         }
 
-        let nsError = error as NSError
-        let failingURL = nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL ?? webView.url
         delegate?.browserPage(self, didFailNavigationWith: error, failingURL: failingURL)
         originalURL = nil
     }
@@ -190,6 +205,17 @@ extension BrowserPage: WKNavigationDelegate {
     }
 
     // MARK: - Helpers
+
+    /// The HTTPS address to load instead, for a page loaded in this tab (not
+    /// back/forward or reload, which must keep their history entry).
+    private func httpsURL(for navigationAction: WKNavigationAction) -> URL? {
+        guard navigationAction.targetFrame?.isMainFrame == true,
+              navigationAction.navigationType != .backForward,
+              navigationAction.navigationType != .reload,
+              let url = navigationAction.request.url
+        else { return nil }
+        return httpsUpgrade.upgrade(url, httpMethod: navigationAction.request.httpMethod)
+    }
 
     private func emitNavigationEvent(
         phase: BrowserNavigationPhase,

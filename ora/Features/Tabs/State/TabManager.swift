@@ -46,6 +46,8 @@ class TabManager: ObservableObject {
     /// The window's download manager, shown by its Downloads panel. Tabs must
     /// all use it: a separate instance records downloads the panel never sees.
     let downloadManager: DownloadManager
+    /// The window's undo manager (Edit › Undo, ⌘Z), set by the window.
+    weak var windowUndoManager: UndoManager?
 
     var recentTabs: [Tab] {
         guard let container = activeContainer else { return [] }
@@ -78,7 +80,10 @@ class TabManager: ObservableObject {
         self.tabSearchingService = tabSearchingService
         mediaController.tabManager = self
 
-        self.modelContext.undoManager = UndoManager()
+        // No undo manager on the model context: it recorded every tab, history
+        // and download change, never emptied, and undoing them could unset a
+        // tab's container and crash (the-ora/browser#161). Closing a tab is
+        // undone through the window's undo manager instead.
         initializeActiveContainerAndTab()
 
         // Start automatic cleanup timer (every minute)
@@ -648,6 +653,15 @@ class TabManager: ObservableObject {
         if recentlyClosedTabs.count > maxRecentlyClosedTabs {
             recentlyClosedTabs.removeFirst(recentlyClosedTabs.count - maxRecentlyClosedTabs)
         }
+
+        // ⌘Z outside a text field reopens it, like Arc and Safari
+        // ("Undo Close Tab"); text fields keep undoing typing first.
+        windowUndoManager?.registerUndo(withTarget: self) { manager in
+            MainActor.assumeIsolated {
+                manager.restoreLastTab()
+            }
+        }
+        windowUndoManager?.setActionName("Close Tab")
     }
 
     private func shiftRestoredTabOrders(in container: TabContainer, restoring snapshot: ClosedTabSnapshot) {

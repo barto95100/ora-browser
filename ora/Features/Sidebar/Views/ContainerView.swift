@@ -11,7 +11,6 @@ struct ContainerView: View {
     @EnvironmentObject var privacyMode: PrivacyMode
     @EnvironmentObject var toastManager: ToastManager
 
-    @State var isDragging = false
     @State private var draggedItem: UUID?
 
     var body: some View {
@@ -83,7 +82,7 @@ struct ContainerView: View {
                 }
             }
         }
-        .modifier(OraWindowDragGesture(isDragging: $isDragging))
+        .modifier(OraWindowDragGesture())
     }
 
     private var favoriteTabs: [Tab] {
@@ -140,7 +139,6 @@ struct ContainerView: View {
     }
 
     private func dragTab(_ tabId: UUID) -> NSItemProvider {
-        isDragging = true
         draggedItem = tabId
         let provider = TabItemProvider(object: tabId.uuidString as NSString)
         provider.didEnd = {
@@ -149,55 +147,44 @@ struct ContainerView: View {
         return provider
     }
 
-    private func dropTab(_ tabId: String) {
-        isDragging = false
-        draggedItem = nil
-    }
-
     private func duplicateTab(_ tab: Tab) {
         tabManager.duplicateTab(tab)
     }
 }
 
+/// Lets the window be moved by dragging the sidebar's empty space. The
+/// gesture sits behind the tabs, so it never competes with a tab drag: on top
+/// of them it could hijack the drag, which then stuck to the mouse.
 private struct OraWindowDragGesture: ViewModifier {
-    @Binding var isDragging: Bool
-
     func body(content: Content) -> some View {
-        Group {
-            if isDragging {
-                content
-            } else {
-                if #available(macOS 15.0, *) {
-                    content.gesture(WindowDragGesture())
-                } else {
-                    content.gesture(BackportWindowDragGesture(isDragging: $isDragging))
-                }
-            }
+        content.background {
+            Color.clear
+                .contentShape(Rectangle())
+                .modifier(WindowDragArea())
+        }
+    }
+}
+
+private struct WindowDragArea: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, *) {
+            content.gesture(WindowDragGesture())
+        } else {
+            content.gesture(BackportWindowDragGesture())
         }
     }
 }
 
 private struct BackportWindowDragGesture: Gesture {
-    @Binding var isDragging: Bool
-
     struct Value: Equatable {
         static func == (lhs: Value, rhs: Value) -> Bool {
             true
         }
     }
 
-    init(isDragging: Binding<Bool>) {
-        self._isDragging = isDragging
-    }
-
     var body: some Gesture<Value> {
         DragGesture()
             .onChanged { _ in
-                // Makes intent cleaner, if we're dragging, then just return
-                // Maybe some other case needs to be watched for here
-                guard !isDragging else {
-                    return
-                }
                 guard let win = NSApp.keyWindow, let event = NSApp.currentEvent else {
                     return
                 }

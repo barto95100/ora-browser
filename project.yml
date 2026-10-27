@@ -59,6 +59,11 @@ targets:
     info:
       path: ora/Info/Info.plist
       properties:
+        # Web pages may load over plain HTTP, like in any browser (WebKit then
+        # marks them as not secure); the app's own requests keep App Transport
+        # Security. Without it, every public http:// page failed (error -1022).
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsInWebContent: true
         NSCameraUsageDescription: "Allows websites to use the camera, for example during video calls."
         NSMicrophoneUsageDescription: "Allows websites to use the microphone, for example during calls or dictation."
         SUFeedURL: "https://barto95100.github.io/ora-browser/appcast.xml"

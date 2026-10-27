@@ -263,6 +263,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        // Popups share this page's configuration, hence its message handlers:
+        // their messages are not about this page.
+        guard message.webView === webView else { return }
         delegate?.browserPage(
             self,
             didReceiveScriptMessage: BrowserScriptMessage(name: message.name, body: message.body)

@@ -24,13 +24,7 @@ struct BrowserView: View {
     private static let removeShieldJS = "document.getElementById('ora-sb-shield')?.remove();"
 
     private var clampedSidebarFraction: CGFloat {
-        min(
-            max(
-                sidebarManager.currentFraction.value,
-                FloatingSidebarOverlay.minFraction
-            ),
-            FloatingSidebarOverlay.maxFraction
-        )
+        min(sidebarManager.currentFraction.value, SidebarLayout.maximumFraction)
     }
 
     /// Injects/removes a transparent shield div in the web page to block
@@ -49,7 +43,7 @@ struct BrowserView: View {
                 d.style.position = 'fixed';
                 d.style.top = '0';
                 d.style.\(side) = '0';
-                d.style.width = '\(widthVW)vw';
+                d.style.width = 'max(\(widthVW)vw, \(Int(SidebarLayout.minimumWidth))px)';
                 d.style.height = '100vh';
                 d.style.zIndex = '2147483647';
                 d.style.pointerEvents = 'auto';

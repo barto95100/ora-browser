@@ -117,6 +117,9 @@ struct OraRoot: View {
                     isPrivate: false
                 )
             }
+            .onChange(of: window, initial: true) { _, newWindow in
+                tabManager.windowUndoManager = newWindow?.undoManager
+            }
             .onAppear {
                 downloadManager.toastManager = toastManager
                 Task {

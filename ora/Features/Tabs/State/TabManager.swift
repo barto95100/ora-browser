@@ -49,6 +49,8 @@ class TabManager: ObservableObject {
     /// The window's history manager. Tabs restored or opened without one use
     /// it, rather than a fallback instance of their own.
     let historyManager: HistoryManager
+    /// The window's undo manager (Edit › Undo, ⌘Z), set by the window.
+    weak var windowUndoManager: UndoManager?
 
     var recentTabs: [Tab] {
         guard let container = activeContainer else { return [] }
@@ -83,7 +85,10 @@ class TabManager: ObservableObject {
         self.tabSearchingService = tabSearchingService
         mediaController.tabManager = self
 
-        self.modelContext.undoManager = UndoManager()
+        // No undo manager on the model context: it recorded every tab, history
+        // and download change, never emptied, and undoing them could unset a
+        // tab's container and crash (the-ora/browser#161). Closing a tab is
+        // undone through the window's undo manager instead.
         initializeActiveContainerAndTab()
 
         // Start automatic cleanup timer (every minute)
@@ -357,11 +362,6 @@ class TabManager: ObservableObject {
         return nil
     }
 
-    func reorderTabs(from: Tab, toTab: Tab) {
-        from.container.reorderTabs(from: from, to: toTab)
-        try? modelContext.save()
-    }
-
     func switchSections(from: Tab, toTab: Tab) {
         from.switchSections(from: from, to: toTab)
         try? modelContext.save()
@@ -627,7 +627,11 @@ class TabManager: ObservableObject {
             isPrivate: tab.isPrivate,
             loadSilently: true
         ) else { return }
-        self.reorderTabs(from: tab, toTab: newTab)
+        // Right after the original, in the same section.
+        if newTab.type == tab.type {
+            tab.container.moveTab(newTab, onto: tab)
+            try? modelContext.save()
+        }
     }
 
     func refreshPrivacySettings(for containerId: UUID) {
@@ -646,6 +650,15 @@ class TabManager: ObservableObject {
         if recentlyClosedTabs.count > maxRecentlyClosedTabs {
             recentlyClosedTabs.removeFirst(recentlyClosedTabs.count - maxRecentlyClosedTabs)
         }
+
+        // ⌘Z outside a text field reopens it, like Arc and Safari
+        // ("Undo Close Tab"); text fields keep undoing typing first.
+        windowUndoManager?.registerUndo(withTarget: self) { manager in
+            MainActor.assumeIsolated {
+                manager.restoreLastTab()
+            }
+        }
+        windowUndoManager?.setActionName("Close Tab")
     }
 
     private func shiftRestoredTabOrders(in container: TabContainer, restoring snapshot: ClosedTabSnapshot) {

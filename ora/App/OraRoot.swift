@@ -117,8 +117,21 @@ struct OraRoot: View {
                     isPrivate: false
                 )
             }
+            // The window's undo manager (⌘Z reopens a closed tab), and files
+            // from Finder that open in this window (see `ExternalFileOpener`),
+            // including those that launched Ora before it existed.
             .onChange(of: window, initial: true) { _, newWindow in
                 tabManager.windowUndoManager = newWindow?.undoManager
+                guard let newWindow, !privacyMode.isPrivate else { return }
+                for file in ExternalFileOpener.shared.register(newWindow) {
+                    tabManager.openTab(
+                        url: file,
+                        historyManager: historyManager,
+                        downloadManager: downloadManager,
+                        focusAfterOpening: true,
+                        isPrivate: false
+                    )
+                }
             }
             .onAppear {
                 downloadManager.toastManager = toastManager

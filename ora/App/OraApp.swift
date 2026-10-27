@@ -38,6 +38,8 @@ func deleteSwiftDataStore(_ loc: String) {
 
 class AppState: ObservableObject {
     @Published var showLauncher: Bool = false
+    /// The history panel (⌘Y), see `HistoryPanel`.
+    @Published var showHistory: Bool = false
     @Published var launcherSearchText: String = ""
     @Published var showFinderIn: UUID?
     @Published var isFloatingTabSwitchVisible: Bool = false

@@ -1,0 +1,78 @@
+{
+  "originHash" : "2bd6443344eaf9dbfc7f66ba58fbc042ae9167a0e93f5230328cc9a635c6975e",
+  "pins" : [
+    {
+      "identity" : "faviconfinder",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/will-lumley/FavIconFinder",
+      "state" : {
+        "revision" : "11c2b27fbdc5fdfe0bf3addac01d27c40299a819",
+        "version" : "5.1.5"
+      }
+    },
+    {
+      "identity" : "inject",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/krzysztofzablocki/Inject",
+      "state" : {
+        "revision" : "f53380e986a8b056e37d7ce9ca68de610b8415ef",
+        "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "punycodeswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gumob/PunycodeSwift.git",
+      "state" : {
+        "revision" : "30a462bdb4398ea835a3585472229e0d74b36ba5",
+        "version" : "3.0.0"
+      }
+    },
+    {
+      "identity" : "safariconverterlib",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AdguardTeam/SafariConverterLib",
+      "state" : {
+        "revision" : "828f709a7a2ea6699e3788a5fcf492bfe24be560",
+        "version" : "4.2.2"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "eef1a539a373c1f1a320624b1130fc5de7b2e100",
+        "version" : "2.10.0"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "41982a3656a71c768319979febd796c6fd111d5c",
+        "version" : "1.5.0"
+      }
+    },
+    {
+      "identity" : "swift-psl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ameshkov/swift-psl",
+      "state" : {
+        "revision" : "7430353cd1a3483d588f987593954ec3c6104fdb",
+        "version" : "1.1.188"
+      }
+    },
+    {
+      "identity" : "swiftsoup",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/scinfu/SwiftSoup.git",
+      "state" : {
+        "revision" : "e7f85f4d3dd91ca9a1e94d3328aa1ed5120a8c0f",
+        "version" : "2.14.3"
+      }
+    }
+  ],
+  "version" : 3
+}

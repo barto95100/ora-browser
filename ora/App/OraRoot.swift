@@ -48,13 +48,8 @@ struct OraRoot: View {
         self.tabContext = modelContext
         self.downloadContext = modelContext
         self.historyContext = modelContext
-        let historyManagerObj = StateObject(
-            wrappedValue: HistoryManager(
-                modelContainer: container,
-                modelContext: modelContext
-            )
-        )
-        _historyManager = historyManagerObj
+        let history = HistoryManager(modelContainer: container, modelContext: modelContext)
+        _historyManager = StateObject(wrappedValue: history)
 
         let media = MediaController()
         _mediaController = StateObject(wrappedValue: media)
@@ -67,7 +62,8 @@ struct OraRoot: View {
                 modelContainer: container,
                 modelContext: modelContext,
                 mediaController: media,
-                downloadManager: downloads
+                downloadManager: downloads,
+                historyManager: history
             )
         )
     }

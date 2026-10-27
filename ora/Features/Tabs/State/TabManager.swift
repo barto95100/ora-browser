@@ -61,6 +61,8 @@ class TabManager: ObservableObject {
     @Query(sort: \TabContainer.lastAccessedAt, order: .reverse) var containers: [TabContainer]
 
     private var cleanupTimer: Timer?
+    /// macOS memory pressure events, see `TabManager+MemoryPressure.swift`.
+    var memoryPressureSource: DispatchSourceMemoryPressure?
     private var recentlyClosedTabs: [ClosedTabSnapshot] = []
     private let maxRecentlyClosedTabs = 5
 
@@ -83,6 +85,7 @@ class TabManager: ObservableObject {
 
         // Start automatic cleanup timer (every minute)
         startCleanupTimer()
+        startMemoryPressureMonitoring()
     }
 
     // MARK: - Public API's
@@ -563,6 +566,7 @@ class TabManager: ObservableObject {
 
     deinit {
         cleanupTimer?.invalidate()
+        memoryPressureSource?.cancel()
     }
 
     /// Activate a tab by its persistent id. If the tab is in a

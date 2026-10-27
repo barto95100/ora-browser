@@ -216,6 +216,16 @@ struct OraRoot: View {
                         }
                     }
                 }
+                // History panel; private windows keep no history.
+                NotificationCenter.default.addObserver(forName: .showHistory, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window ?? NSApp.keyWindow,
+                              !privacyMode.isPrivate
+                        else { return }
+                        appState.showLauncher = false
+                        appState.showHistory.toggle()
+                    }
+                }
                 NotificationCenter.default.addObserver(forName: .closeActiveTab, object: nil, queue: .main) { note in
                     Task { @MainActor in
                         guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

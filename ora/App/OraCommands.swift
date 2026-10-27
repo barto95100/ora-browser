@@ -133,6 +133,13 @@ struct OraCommands: Commands {
             }
             .keyboardShortcut(KeyboardShortcuts.Navigation.forward.keyboardShortcut)
 
+            Divider()
+
+            Button("Show History") {
+                NotificationCenter.default.post(name: .showHistory, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.History.show.keyboardShortcut)
+
             #if DEBUG
                 Divider()
 

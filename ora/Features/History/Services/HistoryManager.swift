@@ -99,6 +99,29 @@ class HistoryManager: ObservableObject {
         }
     }
 
+    func delete(_ entry: History) {
+        modelContext.delete(entry)
+        try? modelContext.save()
+    }
+
+    /// Removes the space's pages visited within the range. An entry keeps only
+    /// a page's last visit, so a page visited again in the range goes entirely.
+    func clear(_ range: HistoryClearRange, in container: TabContainer) {
+        let containerId = container.id
+        let start = range.startDate() ?? .distantPast
+        let descriptor = FetchDescriptor<History>(
+            predicate: #Predicate { $0.container?.id == containerId && $0.lastAccessedAt >= start }
+        )
+        do {
+            for history in try modelContext.fetch(descriptor) {
+                modelContext.delete(history)
+            }
+            try modelContext.save()
+        } catch {
+            logger.error("Failed to clear history: \(String(describing: error), privacy: .public)")
+        }
+    }
+
     func clearContainerHistory(_ container: TabContainer) {
         let containerId = container.id
         let descriptor = FetchDescriptor<History>(

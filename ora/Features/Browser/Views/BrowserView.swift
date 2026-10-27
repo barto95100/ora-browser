@@ -72,6 +72,9 @@ struct BrowserView: View {
                     if appState.isFloatingTabSwitchVisible {
                         FloatingTabSwitcher()
                     }
+                    if appState.showHistory {
+                        HistoryPanel()
+                    }
                 }
 
             if sidebarManager.isSidebarHidden {

@@ -19,6 +19,9 @@ struct NormalTabsList: View {
     @Query var containers: [TabContainer]
     @EnvironmentObject var tabManager: TabManager
     @State private var previousTabIds: [UUID] = []
+    /// Tab under the mouse, closed by a middle click like in every browser.
+    @State private var hoveredTab: Tab?
+    @State private var middleClick = MiddleClickMonitor()
 
     var body: some View {
         VStack(spacing: 8) {
@@ -45,6 +48,17 @@ struct NormalTabsList: View {
                         targetSection: .normal
                     )
                 )
+                .onHover { hovering in
+                    if hovering {
+                        hoveredTab = tab
+                    } else if hoveredTab === tab {
+                        hoveredTab = nil
+                    }
+                }
+                // A hidden sidebar (floating) reports no hover end.
+                .onDisappear {
+                    if hoveredTab === tab { hoveredTab = nil }
+                }
                 .transition(.asymmetric(
                     insertion: .opacity.combined(with: .move(edge: .bottom)),
                     removal: .opacity.combined(with: .move(edge: .top))
@@ -63,10 +77,21 @@ struct NormalTabsList: View {
         )
         .onAppear {
             previousTabIds = tabs.map(\.id)
+            middleClick.start { closeHoveredTab() }
         }
+        .onDisappear { middleClick.stop() }
         .onChange(of: tabs.map(\.id)) { _, newTabIds in
             previousTabIds = newTabIds
         }
+    }
+
+    /// Middle click on a tab: close it. Only regular tabs, so pinned and
+    /// favorite ones are never closed by accident.
+    private func closeHoveredTab() -> Bool {
+        guard let tab = hoveredTab, tab.type == .normal else { return false }
+        hoveredTab = nil
+        onClose(tab)
+        return true
     }
 
     private func shouldAnimate(_ tab: Tab) -> Bool {

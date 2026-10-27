@@ -30,4 +30,10 @@ struct MediaCaptureStateTests {
 
         #expect(state.isCapturing)
     }
+
+    @Test func theIndicatorShowsTheCameraFirst() {
+        #expect(BrowserMediaCaptureState().indicatedDevice == nil)
+        #expect(BrowserMediaCaptureState(camera: .none, microphone: .active).indicatedDevice == .microphone)
+        #expect(BrowserMediaCaptureState(camera: .muted, microphone: .active).indicatedDevice == .camera)
+    }
 }

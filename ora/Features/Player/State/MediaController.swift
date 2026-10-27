@@ -89,8 +89,10 @@ final class MediaController: ObservableObject {
             let idx = ensureSession()
             let playing = (event.state == "playing")
             sessions[idx].isPlaying = playing
-            // Update tab's isPlayingMedia property
-            tabRefs[tab.id]?.value?.isPlayingMedia = playing
+            // Update tab's isPlayingMedia property (published: only on change)
+            if let trackedTab = tabRefs[id]?.value, trackedTab.isPlayingMedia != playing {
+                trackedTab.isPlayingMedia = playing
+            }
             if let vol = event.volume { sessions[idx].volume = clamp(vol) }
             // Update recency when it starts playing
             if playing { sessions[idx].lastActive = Date()

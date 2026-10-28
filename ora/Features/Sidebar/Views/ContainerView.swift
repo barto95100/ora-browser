@@ -120,7 +120,11 @@ struct ContainerView: View {
         // Each page of the sidebar shows one space, in its own color.
         .environment(
             \.theme,
-            Theme(colorScheme: colorScheme, spaceColor: privacyMode.isPrivate ? nil : container.spaceColor)
+            Theme(
+                colorScheme: colorScheme,
+                spaceColor: privacyMode.isPrivate ? nil : container.spaceColor,
+                spaceTheme: privacyMode.isPrivate ? nil : container.spaceTheme
+            )
         )
         .modifier(OraWindowDragGesture())
     }

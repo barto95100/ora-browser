@@ -42,6 +42,9 @@ class TabManager: ObservableObject {
     @Published var activeTab: Tab?
     /// A link previewed over the active tab, see `TabManager+Peek.swift`.
     @Published var peek: PeekPage?
+    /// Left tab of a split asked for with New Split View, waiting for the tab
+    /// opened from the launcher (see `TabManager+Split.swift`).
+    var pendingSplitLeftTabID: UUID?
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController
@@ -132,6 +135,7 @@ class TabManager: ObservableObject {
     }
 
     func togglePinTab(_ tab: Tab) {
+        separateSplit(containing: tab, save: false)
         if tab.type == .pinned {
             tab.type = .normal
             tab.savedURL = nil
@@ -144,6 +148,7 @@ class TabManager: ObservableObject {
     }
 
     func toggleFavTab(_ tab: Tab) {
+        separateSplit(containing: tab, save: false)
         if tab.type == .fav {
             tab.type = .normal
             tab.savedURL = nil
@@ -158,6 +163,7 @@ class TabManager: ObservableObject {
     // MARK: - Container Public API's
 
     func moveTabToContainer(_ tab: Tab, toContainer: TabContainer) {
+        separateSplit(containing: tab, save: false)
         tab.container = toContainer
         try? modelContext.save()
     }
@@ -333,6 +339,7 @@ class TabManager: ObservableObject {
                 container.tabs.append(newTab)
 
                 if focusAfterOpening {
+                    completePendingSplit(with: newTab)
                     activateTab(newTab)
                 }
                 if focusAfterOpening || loadSilently {
@@ -373,10 +380,16 @@ class TabManager: ObservableObject {
     }
 
     func closeTab(tab: Tab, shouldTrackForRestore: Bool = true) {
+        tab.isClosing = true
+        // Closing one side of a split shows the other side alone.
+        let partner = splitPartner(of: tab)
+        separateSplit(containing: tab, save: false)
         // If the closed tab was active, select another tab
         if self.activeTab?.id == tab.id {
-            if let nextTab = tab.container.tabs
-                .filter({ $0.id != tab.id && $0.isWebViewReady })
+            if let partner {
+                self.activateTab(partner)
+            } else if let nextTab = tab.container.tabs
+                .filter({ $0.id != tab.id && $0.isWebViewReady && !$0.isClosing })
                 .sorted(by: { $0.lastAccessedAt ?? Date.distantPast > $1.lastAccessedAt ?? Date.distantPast })
                 .first
             {
@@ -461,16 +474,10 @@ class TabManager: ObservableObject {
         try? modelContext.save()
     }
 
-    func togglePiP(_ currentTab: Tab?, _ oldTab: Tab?) {
-        if currentTab?.id != oldTab?.id, SettingsStore.shared.autoPiPEnabled {
-            currentTab?.evaluateJavaScript("window.__oraTriggerPiP(true)")
-            oldTab?.evaluateJavaScript("window.__oraTriggerPiP()")
-        }
-    }
-
     func activateTab(_ tab: Tab) {
         // Toggle Picture-in-Picture on tab switch
-        togglePiP(tab, activeTab)
+        togglePiPOnSwitch(to: tab)
+        let previousTab = activeTab
 
         // Activate the tab
         activeTab?.maybeIsActive = false
@@ -489,6 +496,10 @@ class TabManager: ObservableObject {
                 isPrivate: tab.isPrivate
             )
         }
+        if let partner = splitPartner(of: tab) {
+            loadIfNeeded(partner)
+        }
+        focusPageIfSplit(tab, previous: previousTab)
         tab.updateHeaderColor()
         try? modelContext.save()
     }
@@ -503,7 +514,7 @@ class TabManager: ObservableObject {
         for container in allContainers {
             for tab in container.tabs {
                 // A tab in a call keeps its page, like one playing media.
-                if !tab.isAlive, tab.isWebViewReady, tab.id != activeTab?.id, !tab.isPlayingMedia,
+                if !tab.isAlive, tab.isWebViewReady, !isShown(tab), !tab.isPlayingMedia,
                    !tab.mediaCaptureState.isCapturing, tab.type == .normal
                 {
                     tab.destroyWebView()
@@ -521,7 +532,7 @@ class TabManager: ObservableObject {
             for tab in container.tabs {
                 if let lastAccessed = tab.lastAccessedAt,
                    lastAccessed < cutoffDate,
-                   tab.id != activeTab?.id,
+                   !isShown(tab),
                    !tab.isPlayingMedia,
                    !tab.mediaCaptureState.isCapturing,
                    tab.type == .normal
@@ -545,7 +556,7 @@ class TabManager: ObservableObject {
             for tab in container.tabs {
                 if let lastAccessed = tab.lastAccessedAt,
                    lastAccessed < cutoffDate,
-                   tab.id != activeTab?.id,
+                   !isShown(tab),
                    !tab.isPlayingMedia,
                    !tab.mediaCaptureState.isCapturing,
                    tab.type == .normal
@@ -598,8 +609,10 @@ class TabManager: ObservableObject {
             .filter { $0.type == .pinned }
             .sorted(by: { $0.order > $1.order })
 
+        // The right side of a split shares its left side's row.
+        let splitRightTabIDs = Set(splitPairs(in: container).values)
         let normalTabs = container.tabs
-            .filter { $0.type == .normal }
+            .filter { $0.type == .normal && !splitRightTabIDs.contains($0.id) }
             .sorted(by: { $0.order > $1.order })
 
         // Combine all tabs in the same order as the sidebar

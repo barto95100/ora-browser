@@ -132,6 +132,8 @@ struct LauncherView: View {
                     mouseMonitor = nil
                 }
                 viewModel.reset()
+                // New Split View is over once the launcher closes.
+                tabManager.pendingSplitLeftTabID = nil
                 input = ""
                 match = nil
                 isTextFieldFocused = false

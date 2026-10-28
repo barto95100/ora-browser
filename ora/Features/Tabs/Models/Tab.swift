@@ -28,11 +28,17 @@ class Tab: ObservableObject, Identifiable {
     /// Security-scoped bookmark to the local file this tab shows, so it can be
     /// read again after a relaunch (see `Tab+LocalFile.swift`).
     var fileBookmark: Data?
+    /// Split View: the tab shown at the right of this one (see `TabSplits`).
+    var splitRightTabID: UUID?
+    /// Split View: share of the width this tab takes when it is the left side.
+    var splitFraction: Double = 0.5
 
     //    @Transient @Published var backgroundColor: Color = Color(.black)
     /// Published so the sidebar's speaker icon follows playback.
     @Transient @Published var isPlayingMedia: Bool = false
     @Transient var isLoading: Bool = false
+    /// Set while the tab is being closed, so it is not picked as the next tab.
+    @Transient var isClosing = false
     @Transient @Published var backgroundColor: Color = .black
     @Transient var historyManager: HistoryManager?
     @Transient var downloadManager: DownloadManager?
@@ -122,6 +128,9 @@ class Tab: ObservableObject, Identifiable {
     }
 
     func switchSections(from: Tab, to: Tab) {
+        if to.type != .normal {
+            from.leaveSplit()
+        }
         from.type = to.type
         switch to.type {
         case .pinned, .fav:

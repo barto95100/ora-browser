@@ -9,6 +9,7 @@ extension Notification.Name {
     static let showHistory = Notification.Name("ShowHistory")
     static let closeActiveTab = Notification.Name("CloseActiveTab")
     static let openPeekInTab = Notification.Name("OpenPeekInTab")
+    static let newSplitView = Notification.Name("NewSplitView")
     static let restoreLastTab = Notification.Name("RestoreLastTab")
     static let findInPage = Notification.Name("FindInPage")
     static let toggleFullURL = Notification.Name("ToggleFullURL")

@@ -155,6 +155,11 @@ struct OraCommands: Commands {
             }
             .keyboardShortcut("o", modifiers: .command)
 
+            Button("New Split View") {
+                NotificationCenter.default.post(name: .newSplitView, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Tabs.newSplit.keyboardShortcut)
+
             Button("Reopen Closed Tab") {
                 NotificationCenter.default.post(name: .restoreLastTab, object: NSApp.keyWindow)
             }

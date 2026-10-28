@@ -17,6 +17,9 @@ struct SectionDropDelegate: DropDelegate {
 
         performHapticFeedback(pattern: .alignment)
         let newType = tabType(for: targetSection)
+        if newType != .normal {
+            moved.leaveSplit()
+        }
         moved.type = newType
         // Pinned and favorite tabs come back to their saved URL.
         moved.savedURL = newType == .normal ? nil : moved.url

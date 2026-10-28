@@ -232,6 +232,17 @@ struct OraRoot: View {
                         tabManager.openPeekInTab()
                     }
                 }
+                // New Split View: the tab opened from the launcher goes at the
+                // right of the current one.
+                NotificationCenter.default.addObserver(forName: .newSplitView, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window ?? NSApp.keyWindow,
+                              tabManager.prepareNewSplit()
+                        else { return }
+                        appState.showHistory = false
+                        appState.showLauncher = true
+                    }
+                }
                 NotificationCenter.default.addObserver(forName: .closeActiveTab, object: nil, queue: .main) { note in
                     Task { @MainActor in
                         guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

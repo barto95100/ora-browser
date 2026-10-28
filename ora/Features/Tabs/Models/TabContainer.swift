@@ -35,6 +35,11 @@ class TabContainer: ObservableObject, Identifiable {
     /// section's tabs are renumbered, so the other sections never move.
     func moveTab(_ moved: Tab, onto target: Tab) {
         guard moved.id != target.id else { return }
+        // The pinned section also holds folders.
+        if target.type == .pinned {
+            movePinned(moved, onto: target)
+            return
+        }
         // Taken before a change of section: a tab from another section is not
         // in the list yet, so it takes the target's place.
         let ids = displayedTabs(of: target.type).map(\.id)
@@ -48,11 +53,27 @@ class TabContainer: ObservableObject, Identifiable {
     /// duplicated tab next to its original).
     func placeTab(_ tab: Tab, after target: Tab) {
         guard tab.id != target.id else { return }
+        if target.type == .pinned {
+            placePinned(tab, after: target)
+            return
+        }
         let ids = displayedTabs(of: target.type).map(\.id)
         if tab.type != target.type {
             tab.switchSections(from: tab, to: target)
         }
         renumber(TabReordering.inserted(ids, inserting: tab.id, after: target.id))
+    }
+
+    /// Puts a tab last among the normal tabs (dropped under the last one),
+    /// taking it out of the favorites or pinned tabs if needed.
+    func moveToEndOfNormalTabs(_ tab: Tab) {
+        let ids = displayedTabs(of: .normal).map(\.id).filter { $0 != tab.id }
+        if tab.type != .normal {
+            tab.folderID = nil
+            tab.type = .normal
+            tab.savedURL = nil
+        }
+        renumber(ids + [tab.id])
     }
 
     /// A section's tabs in the order the sidebar shows them: same sort as the

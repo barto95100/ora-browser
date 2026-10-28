@@ -18,9 +18,17 @@ struct TabDropDelegate: DropDelegate {
         // The dragged tab is known right away: reading it back from the drag
         // item was asynchronous, so the list lagged and fast moves could be
         // applied out of order.
-        guard let draggedID = draggedItem, draggedID != item.id,
-              let moved = item.container.tabs.first(where: { $0.id == draggedID })
-        else { return }
+        guard let draggedID = draggedItem, draggedID != item.id else { return }
+        // A folder dragged over a pinned tab: to that tab's place, or its folder's.
+        if let folder = item.container.folders.first(where: { $0.id == draggedID }) {
+            guard item.type == .pinned else { return }
+            let targetID = item.container.folder(of: item)?.id ?? item.id
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                item.container.moveFolder(folder, onto: targetID)
+            }
+            return
+        }
+        guard let moved = item.container.tabs.first(where: { $0.id == draggedID }) else { return }
 
         performHapticFeedback(pattern: .alignment)
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {

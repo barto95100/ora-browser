@@ -17,6 +17,8 @@ struct ContainerView: View {
     @State private var dragSession: UUID?
     /// Height of the tab lists, to fill the rest of the sidebar with empty space.
     @State private var tabsHeight: CGFloat = 0
+    /// May be nil: the spaces' pages are hosted apart (`NSPageView`); the
+    /// double click zooms the window it happened in.
     @Environment(\.window) private var window: NSWindow?
 
     var body: some View {
@@ -101,7 +103,7 @@ struct ContainerView: View {
                             .contentShape(Rectangle())
                             .modifier(WindowDragArea())
                             .onTapGesture(count: 2) {
-                                window?.toggleMaximized()
+                                (NSApp.currentEvent?.window ?? window)?.toggleMaximized()
                             }
                             .onDrop(
                                 of: [.text],
@@ -223,7 +225,7 @@ private struct OraWindowDragGesture: ViewModifier {
                 .modifier(WindowDragArea())
                 // Same as the rest of the sidebar's empty space (`SidebarView`).
                 .onTapGesture(count: 2) {
-                    window?.toggleMaximized()
+                    (NSApp.currentEvent?.window ?? window)?.toggleMaximized()
                 }
         }
     }

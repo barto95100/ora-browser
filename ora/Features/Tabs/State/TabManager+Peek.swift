@@ -9,16 +9,26 @@ extension TabManager {
 
     /// "Open in New Tab" (⌘O): the Peek page becomes a regular tab, as it is.
     func openPeekInTab() {
+        openPeekPage(inSplitView: false)
+    }
+
+    /// "Open in Split View": the Peek page becomes a regular tab, shown at the
+    /// right of the tab it was opened from, like Arc.
+    func openPeekInSplitView() {
+        openPeekPage(inSplitView: true)
+    }
+
+    private func openPeekPage(inSplitView: Bool) {
         guard let peek, activeContainer != nil else { return }
         // Peek first lets go of the page; the tab takes it on the next pass.
         // Done at once, Peek's view (kept while it fades out) took it back.
         peek.moveToTab()
         DispatchQueue.main.async { [weak self] in
-            self?.adoptPeekPage(peek)
+            self?.adoptPeekPage(peek, inSplitView: inSplitView)
         }
     }
 
-    private func adoptPeekPage(_ peek: PeekPage) {
+    private func adoptPeekPage(_ peek: PeekPage, inSplitView: Bool) {
         guard self.peek === peek, let container = activeContainer else { return }
         self.peek = nil
 
@@ -39,7 +49,15 @@ extension TabManager {
         modelContext.insert(tab)
         container.tabs.append(tab)
         tab.adopt(peek.page, historyManager: historyManager, downloadManager: downloadManager, tabManager: self)
-        activateTab(tab)
+        if inSplitView {
+            // Beside the tab Peek was opened from.
+            if let opener = container.tabs.first(where: { $0.id == peek.openerTabID }), activeTab?.id != opener.id {
+                activateTab(opener)
+            }
+            openInSplitView(tab, on: .right)
+        } else {
+            activateTab(tab)
+        }
         container.lastAccessedAt = Date()
         try? modelContext.save()
     }

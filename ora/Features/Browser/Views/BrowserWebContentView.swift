@@ -44,11 +44,17 @@ struct BrowserWebContentView: View {
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+                // A tab dragged from the sidebar over the page: split zones.
+                if tabManager.draggingTabID != nil, tabManager.peek == nil {
+                    SplitDropOverlay()
+                }
+
                 if let peek = tabManager.peek {
                     PeekView(
                         peek: peek,
                         onClose: { tabManager.closePeek() },
-                        onOpenInTab: { tabManager.openPeekInTab() }
+                        onOpenInTab: { tabManager.openPeekInTab() },
+                        onOpenInSplitView: { tabManager.openPeekInSplitView() }
                     )
                     .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 }
@@ -70,9 +76,13 @@ struct BrowserWebContentView: View {
         .onChange(of: tab.id, initial: true) {
             tab.recoverFromCrashIfNeeded()
         }
-        // Peek belongs to the page it was opened from.
+        // Peek belongs to the page it was opened from. In a split, a click on
+        // a link of the other side focuses that side, then opens Peek from
+        // it: that Peek stays.
         .onChange(of: tab.id) {
-            tabManager.closePeek()
+            if tabManager.peek?.openerTabID != tab.id {
+                tabManager.closePeek()
+            }
         }
     }
 

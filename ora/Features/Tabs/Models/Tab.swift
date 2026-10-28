@@ -209,7 +209,8 @@ class Tab: ObservableObject, Identifiable {
             profile: profile,
             configuration: BrowserPageConfiguration.oraDefault(
                 userScripts: userScripts,
-                privacySettings: privacySettings
+                privacySettings: privacySettings,
+                enablesWebNotifications: !isPrivate
             ),
             delegate: nil
         )

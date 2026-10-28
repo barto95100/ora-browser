@@ -4,6 +4,7 @@ import Foundation
 enum SitePermissionType: String, Codable, CaseIterable, Identifiable {
     case camera
     case microphone
+    case notifications
 
     var id: String {
         rawValue
@@ -89,10 +90,16 @@ struct SiteOrigin: Hashable, Codable, Identifiable, CustomStringConvertible {
 struct SitePermissions: Codable, Hashable {
     var camera: SitePermissionState = .ask
     var microphone: SitePermissionState = .ask
+    var notifications: SitePermissionState = .ask
 
-    init(camera: SitePermissionState = .ask, microphone: SitePermissionState = .ask) {
+    init(
+        camera: SitePermissionState = .ask,
+        microphone: SitePermissionState = .ask,
+        notifications: SitePermissionState = .ask
+    ) {
         self.camera = camera
         self.microphone = microphone
+        self.notifications = notifications
     }
 
     /// Tolerate missing keys so that capabilities added later decode as `.ask`.
@@ -100,6 +107,7 @@ struct SitePermissions: Codable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         camera = try container.decodeIfPresent(SitePermissionState.self, forKey: .camera) ?? .ask
         microphone = try container.decodeIfPresent(SitePermissionState.self, forKey: .microphone) ?? .ask
+        notifications = try container.decodeIfPresent(SitePermissionState.self, forKey: .notifications) ?? .ask
     }
 
     subscript(type: SitePermissionType) -> SitePermissionState {
@@ -107,12 +115,14 @@ struct SitePermissions: Codable, Hashable {
             switch type {
             case .camera: camera
             case .microphone: microphone
+            case .notifications: notifications
             }
         }
         set {
             switch type {
             case .camera: camera = newValue
             case .microphone: microphone = newValue
+            case .notifications: notifications = newValue
             }
         }
     }
@@ -143,6 +153,7 @@ extension SitePermissionType {
         switch self {
         case .camera: "Camera"
         case .microphone: "Microphone"
+        case .notifications: "Notifications"
         }
     }
 }
@@ -160,12 +171,13 @@ extension SitePermissionState {
 // MARK: - Engine Mapping
 
 extension BrowserPermissionKind {
-    /// The site permissions a WebKit capture request covers.
+    /// The site permissions a WebKit request covers.
     var sitePermissionTypes: Set<SitePermissionType> {
         switch self {
         case .camera: [.camera]
         case .microphone: [.microphone]
         case .cameraAndMicrophone: [.camera, .microphone]
+        case .notifications: [.notifications]
         }
     }
 }

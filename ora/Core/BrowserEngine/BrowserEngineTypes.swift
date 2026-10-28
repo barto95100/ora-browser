@@ -33,6 +33,20 @@ enum BrowserPermissionKind {
     case camera
     case microphone
     case cameraAndMicrophone
+    /// Web notifications, see `WebNotificationBridge`.
+    case notifications
+}
+
+/// A notification a page asked to show (`new Notification(...)`).
+struct BrowserWebNotification: Equatable {
+    /// Unique within its page.
+    let id: String
+    let title: String
+    let body: String
+    /// Notifications of a page sharing a tag replace each other.
+    let tag: String?
+    let isSilent: Bool
+    let origin: URL?
 }
 
 enum BrowserPermissionDecision {

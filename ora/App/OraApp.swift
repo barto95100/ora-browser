@@ -6,6 +6,8 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         ExternalFileOpener.shared.install()
+        // Before launch ends: a click on a notification can be what launches Ora.
+        WebNotificationCenter.shared.install()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

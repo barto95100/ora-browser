@@ -221,6 +221,16 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             decisionHandler(.deny)
             return
         }
+        // A site allowed to send notifications: macOS must allow Ora too
+        // (asked once, right after the user allowed the site).
+        let answer: (BrowserPermissionDecision) -> Void = permission == .notifications
+            ? { decision in
+                if decision == .grant {
+                    WebNotificationCenter.shared.requestAuthorizationIfNeeded()
+                }
+                decisionHandler(decision)
+            }
+            : decisionHandler
 
         let types = permission.sitePermissionTypes
         let saved = SitePermissionStore.shared.permissions(
@@ -231,12 +241,12 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
         switch saved.decision(for: types) {
         case .allow:
-            decisionHandler(.grant)
+            answer(.grant)
         case .deny:
-            decisionHandler(.deny)
+            answer(.deny)
         case .ask:
             let request = SitePermissionRequest(origin: origin, types: types) { granted in
-                decisionHandler(granted ? .grant : .deny)
+                answer(granted ? .grant : .deny)
             }
             tab.presentPermissionRequest(request)
         }
@@ -312,6 +322,16 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         } else {
             completion(nil)
         }
+    }
+
+    func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification) {
+        guard let tab else { return }
+        WebNotificationCenter.shared.show(notification, from: tab)
+    }
+
+    func browserPage(_ page: BrowserPage, closeNotification id: String) {
+        guard let tab else { return }
+        WebNotificationCenter.shared.close(id, from: tab)
     }
 
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {

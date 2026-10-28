@@ -156,7 +156,10 @@ import SwiftUI
             logger.log("NSPageView updateSelectedIndex \(index), animated \(animated)")
 
             if animated {
-                NSAnimationContext.runAnimationGroup { _ in
+                NSAnimationContext.runAnimationGroup { context in
+                    // Short and easing out, like the downloads panel.
+                    context.duration = 0.3
+                    context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
                     self.animator().selectedIndex = index
                 } completionHandler: {
                     self.completeTransition()

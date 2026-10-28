@@ -28,6 +28,13 @@ struct SidebarView: View {
     /// Downloads transition state
     @State private var dragOffset: CGFloat = 0
 
+    /// Trackpad and Magic Mouse swipes, handled here rather than by the page
+    /// controller (whose transition felt slow): one swipe changes space with a
+    /// short animation; from the first space, swiping right shows the
+    /// downloads (they sit before it), swiping left hides them.
+    @State private var swipeMonitor = HorizontalSwipeMonitor()
+    @State private var swipeArea = SidebarSwipeArea()
+
     private var isShowingDownloads: Bool {
         downloadManager.isShowingDownloadsHistory
     }
@@ -81,7 +88,69 @@ struct SidebarView: View {
             // Swipe-to-dismiss gesture on the whole sidebar when downloads is showing
             .simultaneousGesture(downloadsNavigationGesture(width: width))
         }
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { swipeArea.frame = $0 }
+        .onChange(of: selectedContainerIndex.wrappedValue, initial: true) { _, index in
+            swipeArea.selectedIndex = index
+        }
+        .onChange(of: containers.map(\.id), initial: true) {
+            swipeArea.containers = containers
+        }
+        // The window is not known yet when the sidebar first appears.
+        .onChange(of: window, initial: true) { _, window in
+            swipeArea.window = window
+        }
+        .onAppear {
+            swipeMonitor.start(accepts: isInSidebar, handler: handleSwipe)
+        }
+        .onDisappear {
+            swipeMonitor.stop()
+        }
         .enableInjection()
+    }
+
+    private func isInSidebar(_ event: NSEvent) -> Bool {
+        guard let window = swipeArea.window, event.window === window, let contentView = window.contentView
+        else { return false }
+        // Window coordinates start at the bottom, SwiftUI's at the top.
+        let location = event.locationInWindow
+        let point = CGPoint(x: location.x, y: contentView.bounds.height - location.y)
+        return swipeArea.frame.contains(point)
+    }
+
+    private func handleSwipe(_ direction: HorizontalSwipeMonitor.Direction) -> Bool {
+        guard !privacyMode.isPrivate else { return false }
+        if isShowingDownloads {
+            if direction == .fingersLeft {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
+                    downloadManager.isShowingDownloadsHistory = false
+                }
+            }
+            return true
+        }
+        let index = swipeArea.selectedIndex
+        switch direction {
+        case .fingersRight where index == 0:
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
+                downloadManager.isShowingDownloadsHistory = true
+            }
+            return true
+        case .fingersRight:
+            showSpace(at: index - 1)
+            return true
+        case .fingersLeft where index + 1 < swipeArea.containers.count:
+            showSpace(at: index + 1)
+            return true
+        case .fingersLeft:
+            // Last space: the page controller bounces.
+            return false
+        }
+    }
+
+    private func showSpace(at index: Int) {
+        guard swipeArea.containers.indices.contains(index) else { return }
+        withAnimation(.easeOut(duration: 0.3)) {
+            tabManager.activateContainer(swipeArea.containers[index])
+        }
     }
 
     /// Computes transition progress (0 = spaces visible, 1 = downloads visible)
@@ -225,4 +294,13 @@ struct SidebarView: View {
     private func toggleMaximizeWindow() {
         window?.toggleMaximized()
     }
+}
+
+/// What the swipe monitor needs to know about the sidebar, kept in a
+/// reference so its handler always reads the current values.
+final class SidebarSwipeArea {
+    weak var window: NSWindow?
+    var frame: CGRect = .zero
+    var selectedIndex = 0
+    var containers: [TabContainer] = []
 }

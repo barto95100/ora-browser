@@ -225,7 +225,9 @@ struct DoubleClickToZoomWindow: ViewModifier {
             Color.clear
                 .contentShape(Rectangle())
                 .onTapGesture(count: 2) {
-                    window?.toggleMaximized()
+                    // The clicked window: the spaces' pages are hosted apart
+                    // (`NSPageView`) and may not get the `window` environment.
+                    (NSApp.currentEvent?.window ?? window)?.toggleMaximized()
                 }
         }
     }

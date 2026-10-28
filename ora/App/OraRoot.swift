@@ -99,6 +99,9 @@ struct OraRoot: View {
             .modelContext(historyContext)
             .modelContext(downloadContext)
             .withTheme()
+            // Private windows are always dark, like Safari's. Through SwiftUI:
+            // it manages the window's appearance and reset one set directly.
+            .preferredColorScheme(privacyMode.isPrivate ? .dark : nil)
             .enableInjection()
             // External links: reuse this window instead of opening a new one
             // per link. `onOpenURL` only runs once the view is ready, so links
@@ -122,6 +125,10 @@ struct OraRoot: View {
             // including those that launched Ora before it existed.
             .onChange(of: window, initial: true) { _, newWindow in
                 tabManager.windowUndoManager = newWindow?.undoManager
+                // Private windows are named so in the Window menu and Mission Control.
+                if privacyMode.isPrivate, let newWindow {
+                    newWindow.title = "Private Browsing"
+                }
                 guard let newWindow, !privacyMode.isPrivate else { return }
                 for file in ExternalFileOpener.shared.register(newWindow) {
                     tabManager.openTab(

@@ -39,23 +39,31 @@ struct ContainerView: View {
                     )
                 }
             } else {
-                VStack(alignment: .center, spacing: 8) {
-                    Text("Private Browsing")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                VStack(alignment: .center, spacing: 6) {
+                    Image(systemName: "hand.raised.fill")
+                        .font(.system(size: 22, weight: .medium))
                         .foregroundColor(.primary)
 
-                    Text("Your activity is not being saved")
-                        .font(.subheadline)
+                    Text("Private Browsing")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    Text("History, cookies and site data of this window are deleted when you close it.")
+                        .font(.caption)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+                .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.primary.opacity(0.08))
                 )
-                .padding(.horizontal)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                )
             }
 
             GeometryReader { scrollArea in

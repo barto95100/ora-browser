@@ -40,6 +40,8 @@ private struct ClosedTabSnapshot {
 class TabManager: ObservableObject {
     @Published var activeContainer: TabContainer?
     @Published var activeTab: Tab?
+    /// A link previewed over the active tab, see `TabManager+Peek.swift`.
+    @Published var peek: PeekPage?
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController
@@ -419,7 +421,10 @@ class TabManager: ObservableObject {
     }
 
     func closeActiveTab() {
-        if let tab = activeTab {
+        // ⌘W closes Peek first, like Arc.
+        if peek != nil {
+            closePeek()
+        } else if let tab = activeTab {
             closeTab(tab: tab)
         } else {
             NSApp.keyWindow?.close()

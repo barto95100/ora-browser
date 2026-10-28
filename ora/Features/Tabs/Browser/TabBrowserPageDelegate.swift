@@ -12,6 +12,21 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         _ page: BrowserPage,
         decidePolicyFor navigationAction: BrowserNavigationAction
     ) -> BrowserNavigationActionDisposition {
+        // Links from pinned and favorite tabs to other sites: Peek, like Arc.
+        if let tab, let url = navigationAction.request.url,
+           PeekPolicy.opensInPeek(
+               tabType: tab.type,
+               isLinkClick: navigationAction.isMainFrameLinkClick,
+               modifierFlags: navigationAction.modifierFlags,
+               from: tab.url,
+               to: url,
+               isEnabled: SettingsStore.shared.peekEnabled
+           )
+        {
+            tab.openPeek(url)
+            return .cancel
+        }
+
         guard navigationAction.modifierFlags.contains(.command),
               let url = navigationAction.request.url,
               let tab,

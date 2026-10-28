@@ -17,7 +17,9 @@ extension BrowserPage: WKNavigationDelegate {
 
         let action = BrowserNavigationAction(
             request: navigationAction.request,
-            modifierFlags: navigationAction.modifierFlags
+            modifierFlags: navigationAction.modifierFlags,
+            isMainFrameLinkClick: navigationAction.navigationType == .linkActivated
+                && navigationAction.targetFrame?.isMainFrame == true
         )
 
         switch delegate?.browserPage(self, decidePolicyFor: action) ?? .allow {

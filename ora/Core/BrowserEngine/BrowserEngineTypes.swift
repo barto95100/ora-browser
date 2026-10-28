@@ -90,6 +90,9 @@ struct BrowserMediaCaptureState: Equatable {
 struct BrowserNavigationAction {
     let request: URLRequest
     let modifierFlags: NSEvent.ModifierFlags
+    /// The user clicked a link that loads in the page itself (not a frame,
+    /// not a redirect or a script navigation).
+    var isMainFrameLinkClick = false
 }
 
 enum BrowserNavigationActionDisposition {

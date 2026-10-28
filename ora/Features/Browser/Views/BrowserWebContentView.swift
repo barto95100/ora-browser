@@ -41,6 +41,15 @@ struct BrowserWebContentView: View {
                 webContent
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+                if let peek = tabManager.peek {
+                    PeekView(
+                        peek: peek,
+                        onClose: { tabManager.closePeek() },
+                        onOpenInTab: { tabManager.openPeekInTab() }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                }
+
                 if appState.isURLBarEditing {
                     // Visual dimming only: clicks go through to the page (links,
                     // context menu...). The URL bar ends editing by itself on any
@@ -53,9 +62,14 @@ struct BrowserWebContentView: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: appState.isURLBarEditing)
+        .animation(.easeOut(duration: 0.15), value: tabManager.peek?.id)
         // A page left unloaded by a crash while in the background reloads now.
         .onChange(of: tab.id, initial: true) {
             tab.recoverFromCrashIfNeeded()
+        }
+        // Peek belongs to the page it was opened from.
+        .onChange(of: tab.id) {
+            tabManager.closePeek()
         }
     }
 

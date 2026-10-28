@@ -191,6 +191,9 @@ final class BrowserPageHostView: NSView {
 
 struct BrowserPageView: NSViewRepresentable {
     let page: BrowserPage
+    /// Escape not handled by the page; replaces stopping a loading page
+    /// (Peek closes with it, even while its page loads).
+    var onEscape: (() -> Void)?
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject var historyManager: HistoryManager
     @EnvironmentObject var privacyMode: PrivacyMode
@@ -208,7 +211,7 @@ struct BrowserPageView: NSViewRepresentable {
         let contentView = page.contentView
         context.coordinator.update(page: page, contentView: contentView)
         hostView.host(contentView: contentView)
-        hostView.cancelOperationHandler = Self.cancelOperationHandler(for: page)
+        hostView.cancelOperationHandler = onEscape ?? Self.cancelOperationHandler(for: page)
         return hostView
     }
 
@@ -216,7 +219,7 @@ struct BrowserPageView: NSViewRepresentable {
         let contentView = page.contentView
         context.coordinator.update(page: page, contentView: contentView)
         nsView.host(contentView: contentView)
-        nsView.cancelOperationHandler = Self.cancelOperationHandler(for: page)
+        nsView.cancelOperationHandler = onEscape ?? Self.cancelOperationHandler(for: page)
     }
 
     /// Like Safari, Escape stops a page that is still loading, and leaves a

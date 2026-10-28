@@ -226,6 +226,12 @@ struct OraRoot: View {
                         appState.showHistory.toggle()
                     }
                 }
+                NotificationCenter.default.addObserver(forName: .openPeekInTab, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                        tabManager.openPeekInTab()
+                    }
+                }
                 NotificationCenter.default.addObserver(forName: .closeActiveTab, object: nil, queue: .main) { note in
                     Task { @MainActor in
                         guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

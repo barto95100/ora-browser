@@ -14,6 +14,14 @@ struct FilterListCatalogService {
         adGuardMobileAdsID
     ]
 
+    /// Lists turned on by the recommended protections (see `PrivacyDefaults`):
+    /// ads, and AdGuard's tracker list, much broader than Ora's own.
+    static let recommendedProtectionIDs = [
+        adGuardBaseID,
+        adGuardMobileAdsID,
+        adGuardTrackingProtectionID
+    ]
+
     let builtinRecords: [FilterListRecord] = [
         FilterListRecord(
             id: FilterListCatalogService.adGuardBaseID,

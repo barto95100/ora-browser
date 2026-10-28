@@ -22,6 +22,20 @@ struct SpacePrivacySettings: Codable, Equatable, Hashable {
         self.cookiesPolicy = cookiesPolicy
     }
 
+    /// Whether ads or trackers are blocked.
+    var hasProtections: Bool {
+        adBlock.enabled || blockThirdPartyTrackers
+    }
+
+    /// Ads and trackers blocked with the recommended lists, others kept.
+    mutating func turnOnRecommendedProtections() {
+        blockThirdPartyTrackers = true
+        adBlock.enabled = true
+        for id in FilterListCatalogService.recommendedProtectionIDs where !adBlock.enabledBuiltinListIDs.contains(id) {
+            adBlock.enabledBuiltinListIDs.append(id)
+        }
+    }
+
     var adBlocking: Bool {
         get { adBlock.enabled }
         set { adBlock.enabled = newValue }

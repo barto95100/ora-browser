@@ -140,6 +140,11 @@ struct OraRoot: View {
                         (try? tabContext.fetch(FetchDescriptor<TabContainer>()))?.map(\.id) ?? []
                     }
                     await AdBlockService.shared.start(containerIDs: containerIDs)
+                    if !privacyMode.isPrivate {
+                        await MainActor.run {
+                            PrivacyDefaults.offerIfNeeded(containerIDs: containerIDs, dialogManager: dialogManager)
+                        }
+                    }
                 }
 
                 // Dialog keyboard shortcuts (highest priority — checked first)

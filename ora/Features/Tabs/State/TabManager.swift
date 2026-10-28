@@ -201,6 +201,7 @@ class TabManager: ObservableObject {
         activeContainer = newContainer
         self.activeTab = nil
         try? modelContext.save()
+        PrivacyDefaults.applyToNewSpace(newContainer.id)
         //        _ = fetchContainers() // Refresh containers
         return newContainer
     }

@@ -79,6 +79,8 @@ struct GeneralSettingsView: View {
                 }
 
                 Toggle("Auto Picture-in-Picture on tab switch", isOn: $settings.autoPiPEnabled)
+
+                Toggle("Open links from pinned tabs to other sites in Peek", isOn: $settings.peekEnabled)
             }
 
             SettingsCard(header: "Updates") {

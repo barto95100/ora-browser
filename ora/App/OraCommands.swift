@@ -150,6 +150,11 @@ struct OraCommands: Commands {
         }
 
         CommandMenu("Tabs") {
+            Button("Open Peek in New Tab") {
+                NotificationCenter.default.post(name: .openPeekInTab, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut("o", modifiers: .command)
+
             Button("Reopen Closed Tab") {
                 NotificationCenter.default.post(name: .restoreLastTab, object: NSApp.keyWindow)
             }

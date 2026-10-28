@@ -143,6 +143,7 @@ class SettingsStore: ObservableObject {
     private let tabRemovalTimeoutKey = "settings.tabRemovalTimeout"
     private let maxRecentTabsKey = "settings.maxRecentTabs"
     private let autoPiPEnabledKey = "settings.autoPiPEnabled"
+    private let peekEnabledKey = "settings.peekEnabled"
     private let passwordsEnabledKey = "settings.passwords.enabled"
     private let passwordManagerProviderKey = "settings.passwords.provider"
     private let passwordAutofillEnabledKey = "settings.passwords.autofillEnabled"
@@ -218,6 +219,11 @@ class SettingsStore: ObservableObject {
 
     @Published var autoPiPEnabled: Bool {
         didSet { defaults.set(autoPiPEnabled, forKey: autoPiPEnabledKey) }
+    }
+
+    /// Links from pinned and favorite tabs to other sites open in Peek, like Arc.
+    @Published var peekEnabled: Bool {
+        didSet { defaults.set(peekEnabled, forKey: peekEnabledKey) }
     }
 
     @Published var passwordsEnabled: Bool {
@@ -302,6 +308,7 @@ class SettingsStore: ObservableObject {
         maxRecentTabs = maxRecentTabsValue == 0 ? 5 : maxRecentTabsValue
 
         autoPiPEnabled = defaults.object(forKey: autoPiPEnabledKey) as? Bool ?? true
+        peekEnabled = defaults.object(forKey: peekEnabledKey) as? Bool ?? true
         passwordsEnabled = defaults.object(forKey: passwordsEnabledKey) as? Bool ?? true
         if let raw = defaults.string(forKey: passwordManagerProviderKey),
            let provider = PasswordManagerProviderKind(rawValue: raw)

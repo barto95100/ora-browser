@@ -185,6 +185,27 @@ class Tab: ObservableObject, Identifiable {
         updateHeaderColor()
     }
 
+    /// A page in this tab's space and privacy mode, with Ora's scripts and the
+    /// space's privacy settings.
+    func makeBrowserPage(isPrivate: Bool) -> BrowserPage {
+        let engine = BrowserEngine.shared
+        let profile = engine.makeProfile(identifier: container.id, isPrivate: isPrivate)
+        let privacySettings = SettingsStore.shared.privacySettings(for: container.id)
+        let userScripts = OraBrowserScripts.userScripts() + BrowserPrivacyService.privacyScripts(
+            for: privacySettings,
+            spaceID: container.id,
+            isPrivate: isPrivate
+        )
+        return engine.makePage(
+            profile: profile,
+            configuration: BrowserPageConfiguration.oraDefault(
+                userScripts: userScripts,
+                privacySettings: privacySettings
+            ),
+            delegate: nil
+        )
+    }
+
     func restoreTransientState(
         historyManager: HistoryManager,
         downloadManager: DownloadManager,
@@ -198,22 +219,7 @@ class Tab: ObservableObject, Identifiable {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }
 
-        let engine = BrowserEngine.shared
-        let profile = engine.makeProfile(identifier: container.id, isPrivate: isPrivate)
-        let privacySettings = SettingsStore.shared.privacySettings(for: container.id)
-        let userScripts = OraBrowserScripts.userScripts() + BrowserPrivacyService.privacyScripts(
-            for: privacySettings,
-            spaceID: container.id,
-            isPrivate: isPrivate
-        )
-        let page = engine.makePage(
-            profile: profile,
-            configuration: BrowserPageConfiguration.oraDefault(
-                userScripts: userScripts,
-                privacySettings: privacySettings
-            ),
-            delegate: nil
-        )
+        let page = makeBrowserPage(isPrivate: isPrivate)
         browserPage = page
 
         self.historyManager = historyManager

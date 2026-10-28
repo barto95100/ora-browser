@@ -18,8 +18,14 @@ struct BrowserView: View {
     private var spaceTheme: Theme {
         Theme(
             colorScheme: theme.colorScheme,
-            spaceColor: privacyMode.isPrivate ? nil : tabManager.activeContainer?.spaceColor
+            spaceColor: privacyMode.isPrivate ? nil : tabManager.activeContainer?.spaceColor,
+            spaceTheme: privacyMode.isPrivate ? nil : tabManager.activeContainer?.spaceTheme
         )
+    }
+
+    /// Changes when the space's look changes, to fade the background.
+    private var backgroundKey: String {
+        "\(spaceTheme.spaceTheme?.rawValue ?? "")-\(spaceTheme.spaceColor?.rawValue ?? "")"
     }
 
     @State private var isMouseOverURLBar = false
@@ -73,10 +79,10 @@ struct BrowserView: View {
                     ZStack {
                         Rectangle()
                             .fill(spaceTheme.windowBackground)
-                            .id(spaceTheme.spaceColor)
+                            .id(backgroundKey)
                             .transition(.opacity)
                     }
-                    .animation(.easeOut(duration: 0.35), value: spaceTheme.spaceColor)
+                    .animation(.easeOut(duration: 0.35), value: backgroundKey)
                     .ignoresSafeArea(.all)
                 }
                 .environment(\.theme, spaceTheme)
@@ -113,6 +119,9 @@ struct BrowserView: View {
             }
         }
         .edgesIgnoringSafeArea(.all)
+        // A space with a theme is shown dark, like Arc (private windows are
+        // made dark by `OraRoot`).
+        .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)
         .enableInjection()
         .animation(.easeOut(duration: 0.1), value: showFloatingSidebar)
         .onChange(of: showFloatingSidebar) { _, visible in

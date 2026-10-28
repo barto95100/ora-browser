@@ -12,6 +12,8 @@ class TabContainer: ObservableObject, Identifiable {
     var iconSymbol: String?
     /// The space's color (see `SpaceColor`), none by default.
     var colorName: String?
+    /// The space's theme (see `SpaceTheme`), none by default.
+    var themeName: String?
     var createdAt: Date
     var lastAccessedAt: Date
 

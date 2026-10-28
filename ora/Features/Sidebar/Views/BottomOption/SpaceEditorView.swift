@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Creates or edits a space: name, icon (a symbol or an emoji) and color.
+/// Creates or edits a space: name, icon (a symbol or an emoji), color and
+/// theme.
 /// Editing shows the changes right away; Cancel puts the space back as it was.
 struct SpaceEditorView: View {
     /// The space edited, or nil to create one.
@@ -16,6 +17,7 @@ struct SpaceEditorView: View {
     @State private var emoji = ContainerConstants.defaultEmoji
     @State private var iconSymbol: String?
     @State private var color: SpaceColor?
+    @State private var spaceTheme: SpaceTheme?
     @State private var isEmojiMode = false
     @State private var isEmojiPickerOpen = false
     /// The space before editing, put back by Cancel.
@@ -35,6 +37,7 @@ struct SpaceEditorView: View {
 
             iconSection
             colorSection
+            themeSection
 
             HStack {
                 if let container, tabManager.canDeleteSpace(container) {
@@ -60,6 +63,7 @@ struct SpaceEditorView: View {
         // Editing: the space shows its new look right away.
         .onChange(of: iconSymbol) { applyLive() }
         .onChange(of: color) { applyLive() }
+        .onChange(of: spaceTheme) { applyLive() }
         .onChange(of: emoji) { applyLive() }
     }
 
@@ -180,6 +184,61 @@ struct SpaceEditorView: View {
         .help(choice?.title ?? "None")
     }
 
+    // MARK: - Theme
+
+    private var themeSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                sectionTitle("Theme")
+                Spacer()
+                Text(spaceTheme?.title ?? "None")
+                    .font(.system(size: 12))
+                    .foregroundColor(theme.mutedForeground)
+            }
+            HStack(spacing: 6) {
+                themeChoice(nil)
+                ForEach(SpaceTheme.allCases) { themeChoice($0) }
+            }
+        }
+    }
+
+    /// A theme: its background, with its accent in a corner.
+    private func themeChoice(_ choice: SpaceTheme?) -> some View {
+        let isSelected = spaceTheme == choice
+        return Button {
+            spaceTheme = choice
+        } label: {
+            ZStack(alignment: .bottomTrailing) {
+                if let choice {
+                    Circle().fill(choice.background)
+                    // A quarter of the circle, once clipped to it.
+                    Rectangle()
+                        .fill(choice.accent)
+                        .frame(width: 11, height: 11)
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                } else {
+                    Image(systemName: "nosign")
+                        .font(.system(size: 17))
+                        .foregroundColor(theme.mutedForeground)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .frame(width: 22, height: 22)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 0.5))
+            .padding(2)
+            .overlay(Circle().stroke(isSelected ? theme.foreground.opacity(0.7) : .clear, lineWidth: 1.5))
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(choice?.title ?? "None")
+    }
+
     private func sectionTitle(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 13, weight: .medium))
@@ -194,11 +253,13 @@ struct SpaceEditorView: View {
             emoji = container.emoji
             iconSymbol = container.iconSymbol
             color = container.spaceColor
+            spaceTheme = container.spaceTheme
             original = SpaceLook(
                 name: container.name,
                 emoji: container.emoji,
                 iconSymbol: container.iconSymbol,
-                color: container.spaceColor
+                color: container.spaceColor,
+                theme: container.spaceTheme
             )
         }
         isEmojiMode = iconSymbol == nil && emoji != ContainerConstants.defaultEmoji
@@ -207,15 +268,35 @@ struct SpaceEditorView: View {
 
     private func applyLive() {
         guard let container else { return }
-        tabManager.updateSpace(container, name: container.name, emoji: emoji, iconSymbol: iconSymbol, color: color)
+        tabManager.updateSpace(
+            container,
+            name: container.name,
+            emoji: emoji,
+            iconSymbol: iconSymbol,
+            color: color,
+            theme: spaceTheme
+        )
     }
 
     private func save() {
         guard !trimmedName.isEmpty else { return }
         if let container {
-            tabManager.updateSpace(container, name: trimmedName, emoji: emoji, iconSymbol: iconSymbol, color: color)
+            tabManager.updateSpace(
+                container,
+                name: trimmedName,
+                emoji: emoji,
+                iconSymbol: iconSymbol,
+                color: color,
+                theme: spaceTheme
+            )
         } else {
-            tabManager.createSpace(name: trimmedName, emoji: emoji, iconSymbol: iconSymbol, color: color)
+            tabManager.createSpace(
+                name: trimmedName,
+                emoji: emoji,
+                iconSymbol: iconSymbol,
+                color: color,
+                theme: spaceTheme
+            )
         }
         dismiss()
     }
@@ -227,7 +308,8 @@ struct SpaceEditorView: View {
                 name: original.name,
                 emoji: original.emoji,
                 iconSymbol: original.iconSymbol,
-                color: original.color
+                color: original.color,
+                theme: original.theme
             )
         }
         dismiss()
@@ -254,6 +336,7 @@ private struct SpaceLook {
     let emoji: String
     let iconSymbol: String?
     let color: SpaceColor?
+    let theme: SpaceTheme?
 }
 
 extension TabManager {

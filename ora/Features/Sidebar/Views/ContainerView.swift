@@ -12,6 +12,7 @@ struct ContainerView: View {
     @EnvironmentObject var toastManager: ToastManager
 
     @State private var draggedItem: UUID?
+    @Environment(\.colorScheme) private var colorScheme
     /// Identifies the current drag, so a late end of a previous one (even of
     /// the same tab) does not cancel it.
     @State private var dragSession: UUID?
@@ -116,6 +117,11 @@ struct ContainerView: View {
             }
         }
         .animation(.easeOut(duration: 0.15), value: draggedItem != nil)
+        // Each page of the sidebar shows one space, in its own color.
+        .environment(
+            \.theme,
+            Theme(colorScheme: colorScheme, spaceColor: privacyMode.isPrivate ? nil : container.spaceColor)
+        )
         .modifier(OraWindowDragGesture())
     }
 

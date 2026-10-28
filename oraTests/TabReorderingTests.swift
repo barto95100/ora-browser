@@ -41,4 +41,21 @@ struct TabReorderingTests {
         #expect(result.count == ids.count)
         #expect(Set(result) == Set(ids))
     }
+
+    @Test func aDuplicateIsInsertedRightAfterItsOriginal() {
+        let duplicate = UUID()
+        let result = TabReordering.inserted(ids, inserting: duplicate, after: ids[1])
+        #expect(result == [ids[0], ids[1], duplicate, ids[2], ids[3]])
+    }
+
+    @Test func aDuplicateAlreadyListedMovesRightAfterItsOriginal() {
+        let result = TabReordering.inserted(ids, inserting: ids[0], after: ids[2])
+        #expect(result == [ids[1], ids[2], ids[0], ids[3]])
+    }
+
+    @Test func aDuplicateOfTheLastTabGoesLast() {
+        let duplicate = UUID()
+        let result = TabReordering.inserted(ids, inserting: duplicate, after: ids[3])
+        #expect(result.last == duplicate)
+    }
 }

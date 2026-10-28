@@ -116,6 +116,9 @@ struct ContainerView: View {
             }
         }
         .animation(.easeOut(duration: 0.15), value: draggedItem != nil)
+        .onChange(of: draggedItem) { _, item in
+            tabManager.draggingTabID = item
+        }
         .modifier(OraWindowDragGesture())
     }
 

@@ -28,6 +28,15 @@ extension BrowserPage: WKNavigationDelegate {
             if navigationAction.targetFrame?.isMainFrame ?? true, let url = navigationAction.request.url {
                 setContentBlocking(enabled: delegate?.browserPage(self, allowsContentBlockingFor: url) ?? true)
             }
+            // Link Tracking Protection: the address loads without its
+            // tracking parameters.
+            if let cleaned = linkTrackingCleanedURL(for: navigationAction) {
+                decisionHandler(.cancel)
+                var request = navigationAction.request
+                request.url = cleaned
+                webView.load(request)
+                return
+            }
             if let upgraded = httpsURL(for: navigationAction) {
                 decisionHandler(.cancel)
                 var request = navigationAction.request
@@ -228,6 +237,17 @@ extension BrowserPage: WKNavigationDelegate {
 
     /// The HTTPS address to load instead, for a page loaded in this tab (not
     /// back/forward or reload, which must keep their history entry).
+    private func linkTrackingCleanedURL(for navigationAction: WKNavigationAction) -> URL? {
+        guard navigationAction.targetFrame?.isMainFrame == true,
+              navigationAction.navigationType != .backForward,
+              navigationAction.navigationType != .reload,
+              navigationAction.request.httpMethod?.uppercased() ?? "GET" == "GET",
+              let url = navigationAction.request.url,
+              delegate?.browserPage(self, removesLinkTrackingFrom: url) == true
+        else { return nil }
+        return LinkTrackingProtection.cleaned(url)
+    }
+
     private func httpsURL(for navigationAction: WKNavigationAction) -> URL? {
         guard navigationAction.targetFrame?.isMainFrame == true,
               navigationAction.navigationType != .backForward,

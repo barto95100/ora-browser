@@ -44,6 +44,9 @@ protocol BrowserPageDelegate: AnyObject {
     func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool
     /// A content rule kept a load from the page (ad, tracker).
     func browserPage(_ page: BrowserPage, didBlockContentFrom url: URL)
+    /// Whether tracking parameters are taken off this address before it loads
+    /// (see `LinkTrackingProtection`).
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool
     /// A page of a site allowed to send notifications shows one.
     func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification)
     /// The page closed one of its notifications (`notification.close()`).
@@ -121,6 +124,10 @@ extension BrowserPageDelegate {
     }
 
     func browserPage(_ page: BrowserPage, didBlockContentFrom url: URL) {}
+
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool {
+        false
+    }
 
     func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification) {}
 

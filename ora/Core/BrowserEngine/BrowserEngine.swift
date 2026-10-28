@@ -13,10 +13,13 @@ struct BrowserPageConfiguration {
     let scriptMessageNames: [String]
     let userScripts: [BrowserUserScript]
     let privacySettings: SpacePrivacySettings
+    /// Gives pages the `Notification` API (not in private browsing, like Safari).
+    let enablesWebNotifications: Bool
 
     static func oraDefault(
         userScripts: [BrowserUserScript],
-        privacySettings: SpacePrivacySettings
+        privacySettings: SpacePrivacySettings,
+        enablesWebNotifications: Bool = true
     ) -> BrowserPageConfiguration {
         BrowserPageConfiguration(
             applicationNameForUserAgent: SafariUserAgent.current,
@@ -29,7 +32,8 @@ struct BrowserPageConfiguration {
             mediaPlaybackRequiresUserAction: false,
             scriptMessageNames: ["linkHover", "mediaEvent", "passwordManager", "favicon"],
             userScripts: userScripts,
-            privacySettings: privacySettings
+            privacySettings: privacySettings,
+            enablesWebNotifications: enablesWebNotifications
         )
     }
 }

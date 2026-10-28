@@ -93,6 +93,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             )
             contentController.addUserScript(userScript)
         }
+        if configuration.enablesWebNotifications {
+            installWebNotifications(in: contentController)
+        }
 
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -236,6 +239,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         for messageName in messageNames {
             controller.removeScriptMessageHandler(forName: messageName)
         }
+        controller.removeScriptMessageHandler(forName: WebNotificationBridge.messageName, contentWorld: .page)
         webView.removeFromSuperview()
     }
 

@@ -40,6 +40,10 @@ protocol BrowserPageDelegate: AnyObject {
         completion: @escaping (String?) -> Void
     )
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask)
+    /// A page of a site allowed to send notifications shows one.
+    func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification)
+    /// The page closed one of its notifications (`notification.close()`).
+    func browserPage(_ page: BrowserPage, closeNotification id: String)
     func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState)
     /// The process rendering the page ended (crash, or macOS reclaiming memory).
     /// The page is blank until it is reloaded.
@@ -107,6 +111,10 @@ extension BrowserPageDelegate {
     }
 
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {}
+
+    func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification) {}
+
+    func browserPage(_ page: BrowserPage, closeNotification id: String) {}
 
     func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {}
 

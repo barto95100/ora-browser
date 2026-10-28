@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Asks whether the current site may use the camera and/or the microphone.
+/// Asks whether the current site may use the camera and/or the microphone, or
+/// send notifications.
 ///
 /// There is deliberately no keyboard shortcut for "Allow": a reflex press of
 /// Return must never hand a capture device to a website.
@@ -29,7 +30,7 @@ struct SitePermissionPromptView: View {
                         .foregroundStyle(Color(nsColor: .labelColor))
                         .lineLimit(1)
                         .truncationMode(.middle)
-                    Text("wants to use your \(capabilityDescription)")
+                    Text(requestDescription)
                         .font(.subheadline)
                         .foregroundStyle(Color(nsColor: .secondaryLabelColor))
                 }
@@ -66,6 +67,13 @@ struct SitePermissionPromptView: View {
         .shadow(color: .black.opacity(0.12), radius: 20, x: 0, y: 8)
     }
 
+    private var requestDescription: String {
+        if request.types == [.notifications] {
+            return "wants to send you notifications"
+        }
+        return "wants to use your \(capabilityDescription)"
+    }
+
     private var capabilityDescription: String {
         switch (request.types.contains(.camera), request.types.contains(.microphone)) {
         case (true, true): "camera and microphone"
@@ -75,6 +83,9 @@ struct SitePermissionPromptView: View {
     }
 
     private var symbolName: String {
-        request.types.contains(.camera) ? "video.fill" : "mic.fill"
+        if request.types.contains(.notifications) {
+            return "bell.fill"
+        }
+        return request.types.contains(.camera) ? "video.fill" : "mic.fill"
     }
 }

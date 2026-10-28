@@ -36,6 +36,7 @@ extension BrowserPage: WKUIDelegate {
         let permission: BrowserPermissionKind? = switch name {
         case "camera": .camera
         case "microphone": .microphone
+        case "notifications": .notifications
         default: nil
         }
         guard let permission, let delegate else {

@@ -72,13 +72,19 @@ struct SplitTabItem: View {
         Button {
             onPinToggle(tab)
         } label: {
-            Label("Pin Tab", systemImage: "pin")
+            Label(
+                tab.type == .pinned ? "Unpin Tab" : "Pin Tab",
+                systemImage: tab.type == .pinned ? "pin.slash" : "pin"
+            )
         }
 
         Button {
             onFavoriteToggle(tab)
         } label: {
-            Label("Add to Favorites", systemImage: "star")
+            Label(
+                tab.type == .fav ? "Remove from Favorites" : "Add to Favorites",
+                systemImage: tab.type == .fav ? "star.slash" : "star"
+            )
         }
 
         Divider()

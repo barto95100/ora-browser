@@ -26,12 +26,12 @@ struct NormalTabsList: View {
     var body: some View {
         VStack(spacing: 8) {
             NewTabButton(addNewTab: onAddNewTab)
-            // A split shows as one row, its left tab's: the right tab is hidden.
-            let splits = TabSplits.pairs(tabs.map { TabSplits.Entry(id: $0.id, rightID: $0.splitRightTabID) })
-            let splitRightTabIDs = Set(splits.values)
-            ForEach(tabs.filter { !splitRightTabIDs.contains($0.id) }) { tab in
-                let splitRight = splits[tab.id].flatMap { id in tabs.first { $0.id == id } }
-                row(for: tab, splitRight: splitRight)
+            // A split shows as one row (see `TabManager.splitRows(in:)`).
+            let splits = tabs.first.map { tabManager.splitRows(in: $0.container) }
+            let hiddenTabIDs = splits?.hidden ?? []
+            ForEach(tabs.filter { !hiddenTabIDs.contains($0.id) }) { tab in
+                let split = splits?.rows[tab.id]
+                row(for: tab, split: split)
                     .onDrag { onDrag(tab.id) }
                     .onDrop(
                         of: [.text],
@@ -43,7 +43,9 @@ struct NormalTabsList: View {
                     )
                     // A hidden sidebar (floating) reports no hover end.
                     .onDisappear {
-                        if hoveredTab === tab || hoveredTab === splitRight { hoveredTab = nil }
+                        if hoveredTab === tab || hoveredTab === split?.left || hoveredTab === split?.right {
+                            hoveredTab = nil
+                        }
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .move(edge: .bottom)),
@@ -72,11 +74,11 @@ struct NormalTabsList: View {
     }
 
     @ViewBuilder
-    private func row(for tab: Tab, splitRight: Tab?) -> some View {
-        if let splitRight {
+    private func row(for tab: Tab, split: (left: Tab, right: Tab)?) -> some View {
+        if let split {
             SplitTabItem(
-                left: tab,
-                right: splitRight,
+                left: split.left,
+                right: split.right,
                 isDragging: draggedItem == tab.id,
                 onSelect: onSelect,
                 onClose: onClose,

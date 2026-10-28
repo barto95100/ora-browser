@@ -14,6 +14,20 @@ struct BrowserView: View {
 
     @ObserveInjection var inject
 
+    /// The theme with the color of the space shown (none in private windows).
+    private var spaceTheme: Theme {
+        Theme(
+            colorScheme: theme.colorScheme,
+            spaceColor: privacyMode.isPrivate ? nil : tabManager.activeContainer?.spaceColor,
+            spaceTheme: privacyMode.isPrivate ? nil : tabManager.activeContainer?.spaceTheme
+        )
+    }
+
+    /// Changes when the space's look changes, to fade the background.
+    private var backgroundKey: String {
+        "\(spaceTheme.spaceTheme?.rawValue ?? "")-\(spaceTheme.spaceColor?.rawValue ?? "")"
+    }
+
     @State private var isMouseOverURLBar = false
     @State private var showFloatingURLBar = false
     @State private var isMouseOverSidebar = false
@@ -60,7 +74,18 @@ struct BrowserView: View {
         ZStack(alignment: .top) {
             BrowserSplitView()
                 .ignoresSafeArea(.all)
-                .background(theme.subtleWindowBackgroundColor)
+                // The space's color, faded from one space to the next.
+                .background {
+                    ZStack {
+                        Rectangle()
+                            .fill(spaceTheme.windowBackground)
+                            .id(backgroundKey)
+                            .transition(.opacity)
+                    }
+                    .animation(.easeOut(duration: 0.35), value: backgroundKey)
+                    .ignoresSafeArea(.all)
+                }
+                .environment(\.theme, spaceTheme)
                 .background(
                     BlurEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
                         .ignoresSafeArea(.all)
@@ -94,6 +119,9 @@ struct BrowserView: View {
             }
         }
         .edgesIgnoringSafeArea(.all)
+        // A space with a theme is shown dark, like Arc (private windows are
+        // made dark by `OraRoot`).
+        .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)
         .enableInjection()
         .animation(.easeOut(duration: 0.1), value: showFloatingSidebar)
         .onChange(of: showFloatingSidebar) { _, visible in

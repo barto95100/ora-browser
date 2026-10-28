@@ -88,7 +88,6 @@ extension TabContainer {
     /// Puts a tab at the end of a folder, pinning it if needed.
     func addTab(_ tab: Tab, to folder: Folder) {
         if tab.type != .pinned {
-            tab.leaveSplit()
             tab.type = .pinned
             tab.savedURL = tab.url
         }

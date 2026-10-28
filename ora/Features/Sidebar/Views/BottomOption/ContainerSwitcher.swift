@@ -54,9 +54,16 @@ struct ContainerSwitcher: View {
             onContainerSelected(container)
         }) {
             HStack {
-                Text(displayEmoji)
-                    .font(.system(size: fontSize))
-                    .foregroundColor(displayEmoji == ContainerConstants.defaultEmoji ? .primary : .secondary)
+                // The space's symbol, in its color; compact and not hovered, a dot.
+                if let symbol = container.iconSymbol, !(isCompact && !isActive && !isHovered) {
+                    Image(systemName: symbol)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(container.spaceColor?.color ?? .primary)
+                } else {
+                    Text(displayEmoji)
+                        .font(.system(size: fontSize))
+                        .foregroundColor(displayEmoji == ContainerConstants.defaultEmoji ? .primary : .secondary)
+                }
             }
             .frame(width: buttonSize, height: buttonSize)
             .grayscale(!isActive && !isHovered ? 0.5 : 0)
@@ -78,16 +85,17 @@ struct ContainerSwitcher: View {
             }
         }
         .contextMenu {
-            Button("Edit Container") {
+            Button("Edit Space…") {
                 dialogManager.show { id in
-                    EditContainerModal(
+                    SpaceEditorView(
                         container: container,
                         dismiss: { dialogManager.dismiss(id: id) }
                     )
                     .environmentObject(tabManager)
+                    .environmentObject(dialogManager)
                 }
             }
-            Button("Delete Container") {
+            Button("Delete Space") {
                 dialogManager.confirm(
                     title: "Delete \"\(container.name)\"?",
                     message: "All tabs in this space will be permanently removed.",

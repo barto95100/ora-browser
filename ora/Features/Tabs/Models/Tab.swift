@@ -133,9 +133,6 @@ class Tab: ObservableObject, Identifiable {
     }
 
     func switchSections(from: Tab, to: Tab) {
-        if to.type != .normal {
-            from.leaveSplit()
-        }
         if to.type != .pinned {
             from.folderID = nil
         }

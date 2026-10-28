@@ -372,6 +372,10 @@ struct URLBar: View {
             .foregroundColor(buttonForegroundColor)
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            if privacyMode.isPrivate {
+                PrivateBrowsingBadge(foregroundColor: buttonForegroundColor)
+            }
+
             PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
 
             MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in

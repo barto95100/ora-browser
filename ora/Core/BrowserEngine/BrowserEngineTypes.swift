@@ -121,3 +121,26 @@ struct BrowserSnapshotConfiguration {
 
     static let full = BrowserSnapshotConfiguration(rect: nil, afterScreenUpdates: false)
 }
+
+/// Navigation "failures" that are not errors for the user, like in Safari: no
+/// error page for them.
+enum BrowserNavigationError {
+    /// WebKitErrorFrameLoadInterruptedByPolicyChange: the load was turned into
+    /// something else (a download, a new tab...).
+    static let frameLoadInterruptedByPolicyChange = 102
+    /// WebKitErrorPlugInWillHandleLoad: WebKit shows the resource itself, e.g.
+    /// a video or audio file opened directly, in its media player.
+    static let plugInWillHandleLoad = 204
+
+    static func isInterruption(_ error: Error) -> Bool {
+        let error = error as NSError
+        switch error.domain {
+        case NSURLErrorDomain:
+            return error.code == NSURLErrorCancelled
+        case "WebKitErrorDomain":
+            return [frameLoadInterruptedByPolicyChange, plugInWillHandleLoad].contains(error.code)
+        default:
+            return false
+        }
+    }
+}

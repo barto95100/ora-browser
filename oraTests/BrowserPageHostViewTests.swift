@@ -161,6 +161,26 @@ struct BrowserPageHostViewTests {
         #expect(!page.frame.intersects(host.bounds))
     }
 
+    @Test func escapeStopsAPageThatIsLoading() {
+        let host = makeHost()
+        let page = LoadingPageSpy(isLoading: true)
+        host.cancelOperationHandler = BrowserPageView.cancelOperationHandler(for: page)
+
+        host.cancelOperation(nil)
+
+        #expect(page.stopLoadingCalls == 1)
+    }
+
+    @Test func escapeLeavesALoadedPageAlone() {
+        let host = makeHost()
+        let page = LoadingPageSpy(isLoading: false)
+        host.cancelOperationHandler = BrowserPageView.cancelOperationHandler(for: page)
+
+        host.cancelOperation(nil)
+
+        #expect(page.stopLoadingCalls == 0)
+    }
+
     private func makeHost() -> BrowserPageHostView {
         BrowserPageHostView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }
@@ -187,5 +207,19 @@ private final class CancelOperationSpy: NSResponder {
 
     override func cancelOperation(_ sender: Any?) {
         cancelOperationCalls += 1
+    }
+}
+
+/// A page that records whether Escape stopped it.
+private final class LoadingPageSpy: LoadingStoppable {
+    let isLoading: Bool
+    private(set) var stopLoadingCalls = 0
+
+    init(isLoading: Bool) {
+        self.isLoading = isLoading
+    }
+
+    func stopLoading() {
+        stopLoadingCalls += 1
     }
 }

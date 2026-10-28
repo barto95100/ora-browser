@@ -202,10 +202,31 @@ enum OraBrowserScripts {
             observer.observe(document.body, { childList: true, subtree: true });
         }
 
-        // Only audible media count as "played": muted autoplay videos (page
-        // backgrounds, previews, ads) must not bring up the mini player.
+        // Only media the user can hear count as "played" and bring up the mini
+        // player: not muted autoplay videos (page backgrounds, previews, ads),
+        // nor videos without any sound track.
         function isAudible(element) {
-            return !element.muted && element.volume > 0;
+            return !element.muted && element.volume > 0 && hasSound(element);
+        }
+
+        // Whether the media has a sound track. Unknown until its metadata is
+        // loaded, so it is checked again once it plays.
+        function hasSound(element) {
+            if (element.tagName === 'AUDIO') return true;
+            if (element.readyState < HTMLMediaElement.HAVE_METADATA) return false;
+            if (!element.audioTracks || element.audioTracks.length > 0) return true;
+            // Streams (Media Source on blob: URLs, media streams) may list no
+            // tracks: assume they have sound. Files list theirs reliably.
+            const source = element.currentSrc || '';
+            return source.startsWith('blob:') || !!element.srcObject;
+        }
+
+        // Marks playing, audible media as played; returns whether it did.
+        function markPlayedIfAudible(element, update) {
+            if (element.__oraWasPlayed || element.paused || !isAudible(element)) return false;
+            element.__oraWasPlayed = true;
+            update();
+            return true;
         }
 
         function attach(element) {
@@ -213,11 +234,10 @@ enum OraBrowserScripts {
             element.__oraAttached = true;
             const update = () => post(stateFrom(element));
             element.addEventListener('play', () => {
-                if (isAudible(element)) {
-                    element.__oraWasPlayed = true;
-                }
-                update();
+                if (!markPlayedIfAudible(element, update)) update();
             });
+            // Playing: the metadata, hence the sound track, is known.
+            element.addEventListener('playing', () => markPlayedIfAudible(element, update));
             element.addEventListener('pause', update);
             element.addEventListener('ended', () => post({ type: 'ended' }));
             // Leaving Picture in Picture with the video still playing means the
@@ -232,17 +252,11 @@ enum OraBrowserScripts {
             });
             element.addEventListener('volumechange', () => {
                 // A muted video the user unmutes while it plays now counts.
-                if (!element.paused && isAudible(element) && !element.__oraWasPlayed) {
-                    element.__oraWasPlayed = true;
-                    update();
-                }
+                markPlayedIfAudible(element, update);
                 post({ type: 'volume', volume: element.muted ? 0 : element.volume });
             });
             if (!element.paused) {
-                if (isAudible(element)) {
-                    element.__oraWasPlayed = true;
-                }
-                update();
+                if (!markPlayedIfAudible(element, update)) update();
             }
             watchRemoval(element, () => post({ type: 'removed' }));
         }
@@ -328,17 +342,11 @@ enum OraBrowserScripts {
         };
 
         window.__oraTriggerPiP = function(isActive = false) {
-            function hasAudio(target) {
-                if (!target) return false;
-                if (target.audioTracks && target.audioTracks.length > 0) return true;
-                if (!target.muted && target.volume > 0) return true;
-                return false;
-            }
-
             // Pages can hold several videos (hover previews, ads...): use the
-            // one actually playing with sound, not merely the first one.
+            // one actually playing with sound, not merely the first one. Same
+            // rule as the mini player: not muted, and with a sound track.
             const video = Array.from(document.querySelectorAll('video'))
-                .find((candidate) => !candidate.paused && hasAudio(candidate)) || null;
+                .find((candidate) => !candidate.paused && isAudible(candidate)) || null;
 
             if (
                 video &&
@@ -346,7 +354,7 @@ enum OraBrowserScripts {
                 !document.pictureInPictureElement &&
                 !video.paused &&
                 !isActive &&
-                hasAudio(video)
+                isAudible(video)
             ) {
                 video.requestPictureInPicture().catch(() => {});
             } else if (isActive && document.pictureInPictureElement) {

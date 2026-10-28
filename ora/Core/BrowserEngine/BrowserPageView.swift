@@ -219,8 +219,9 @@ struct BrowserPageView: NSViewRepresentable {
         nsView.cancelOperationHandler = Self.cancelOperationHandler(for: page)
     }
 
-    /// Like Safari, Escape stops a page that is still loading.
-    private static func cancelOperationHandler(for page: BrowserPage) -> () -> Void {
+    /// Like Safari, Escape stops a page that is still loading, and leaves a
+    /// loaded page alone.
+    static func cancelOperationHandler(for page: some LoadingStoppable) -> () -> Void {
         { [weak page] in
             guard let page, page.isLoading else { return }
             page.stopLoading()
@@ -342,3 +343,12 @@ struct BrowserPageView: NSViewRepresentable {
         }
     }
 }
+
+/// A page that Escape can stop while it loads (see
+/// `BrowserPageView.cancelOperationHandler(for:)`).
+protocol LoadingStoppable: AnyObject {
+    var isLoading: Bool { get }
+    func stopLoading()
+}
+
+extension BrowserPage: LoadingStoppable {}

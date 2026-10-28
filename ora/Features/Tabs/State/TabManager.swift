@@ -609,11 +609,10 @@ class TabManager: ObservableObject {
             isPrivate: tab.isPrivate,
             loadSilently: true
         ) else { return }
-        // Right after the original, in the same section.
-        if newTab.type == tab.type {
-            tab.container.moveTab(newTab, onto: tab)
-            try? modelContext.save()
-        }
+        // Right after the original, in the same section (a new tab's order
+        // says nothing about its place: it may be below the original's).
+        tab.container.placeTab(newTab, after: tab)
+        try? modelContext.save()
     }
 
     func refreshPrivacySettings(for containerId: UUID) {

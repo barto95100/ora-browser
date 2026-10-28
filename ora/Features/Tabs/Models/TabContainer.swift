@@ -31,26 +31,41 @@ class TabContainer: ObservableObject, Identifiable {
 
     /// Moves a tab onto another one, in the other's section (favorites,
     /// pinned or normal), like a list: dragged down it goes after the target,
-    /// dragged up before it. Only that section's tabs are renumbered, so the
-    /// other sections never move.
+    /// dragged up before it, from another section in its place. Only that
+    /// section's tabs are renumbered, so the other sections never move.
     func moveTab(_ moved: Tab, onto target: Tab) {
         guard moved.id != target.id else { return }
-
-        // Display order: highest order first (see the sidebar lists).
-        let section = tabs
-            .filter { $0.type == target.type && $0.id != moved.id }
-            .sorted { $0.order > $1.order }
-        var ids = section.map(\.id)
-        if moved.type == target.type {
-            // Keep its place in the list, so moving down lands after the target.
-            let position = section.firstIndex { $0.order < moved.order } ?? ids.count
-            ids.insert(moved.id, at: position)
-        } else {
-            // From another section: it takes the target's place, before it.
+        // Taken before a change of section: a tab from another section is not
+        // in the list yet, so it takes the target's place.
+        let ids = displayedTabs(of: target.type).map(\.id)
+        if moved.type != target.type {
             moved.switchSections(from: moved, to: target)
         }
-        let orderedIDs = TabReordering.reordered(ids, moving: moved.id, onto: target.id)
-        let tabsByID = Dictionary((section + [moved]).map { ($0.id, $0) }) { first, _ in first }
+        renumber(TabReordering.reordered(ids, moving: moved.id, onto: target.id))
+    }
+
+    /// Puts a tab right after another one, in the other's section (a
+    /// duplicated tab next to its original).
+    func placeTab(_ tab: Tab, after target: Tab) {
+        guard tab.id != target.id else { return }
+        let ids = displayedTabs(of: target.type).map(\.id)
+        if tab.type != target.type {
+            tab.switchSections(from: tab, to: target)
+        }
+        renumber(TabReordering.inserted(ids, inserting: tab.id, after: target.id))
+    }
+
+    /// A section's tabs in the order the sidebar shows them: same sort as the
+    /// sidebar lists, so tabs sharing an order are seen in the same places.
+    private func displayedTabs(of type: TabType) -> [Tab] {
+        tabs
+            .sorted { $0.order > $1.order }
+            .filter { $0.type == type }
+    }
+
+    /// Gives the tabs, in display order, distinct orders (highest first).
+    private func renumber(_ orderedIDs: [UUID]) {
+        let tabsByID = Dictionary(tabs.map { ($0.id, $0) }) { first, _ in first }
         for (index, id) in orderedIDs.enumerated() {
             tabsByID[id]?.order = orderedIDs.count - index
         }
@@ -68,6 +83,16 @@ enum TabReordering {
             result.remove(at: movingIndex)
         }
         result.insert(moving, at: min(targetIndex, result.count))
+        return result
+    }
+
+    /// `ids` with `inserting` placed right after `target` (taken out of its
+    /// previous place if it was already there).
+    static func inserted(_ ids: [UUID], inserting: UUID, after target: UUID) -> [UUID] {
+        guard inserting != target else { return ids }
+        var result = ids.filter { $0 != inserting }
+        guard let targetIndex = result.firstIndex(of: target) else { return ids }
+        result.insert(inserting, at: targetIndex + 1)
         return result
     }
 }

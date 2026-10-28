@@ -8,6 +8,10 @@ class TabContainer: ObservableObject, Identifiable {
     var id: UUID
     var name: String
     var emoji: String
+    /// SF Symbol shown instead of the emoji (see `SpaceIcon`).
+    var iconSymbol: String?
+    /// The space's color (see `SpaceColor`), none by default.
+    var colorName: String?
     var createdAt: Date
     var lastAccessedAt: Date
 

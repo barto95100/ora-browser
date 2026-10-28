@@ -4,6 +4,9 @@ import SwiftUI
 // swiftlint:disable identifier_name
 struct Theme: Equatable {
     let colorScheme: ColorScheme
+    /// The color of the space shown, if it has one: it tints the window
+    /// background and the active tab, like Arc.
+    var spaceColor: SpaceColor?
 
     var primary: Color {
         Color(hex: "#f3e5d6")
@@ -26,7 +29,24 @@ struct Theme: Equatable {
     }
 
     var subtleWindowBackgroundColor: Color {
-        colorScheme == .dark ? self.primaryDark.opacity(0.3) : self.primary.opacity(0.3)
+        if let tint = spaceColor?.color {
+            return colorScheme == .dark
+                ? tint.mix(with: .black, by: 0.55).opacity(0.6)
+                : tint.mix(with: .white, by: 0.55).opacity(0.6)
+        }
+        return colorScheme == .dark ? self.primaryDark.opacity(0.3) : self.primary.opacity(0.3)
+    }
+
+    /// The window background: the space's color as a soft vertical gradient,
+    /// like Arc, or the usual background.
+    var windowBackground: AnyShapeStyle {
+        guard let tint = spaceColor?.color else { return AnyShapeStyle(subtleWindowBackgroundColor) }
+        let base: Color = colorScheme == .dark ? .black : .white
+        let top = tint.mix(with: base, by: colorScheme == .dark ? 0.45 : 0.4)
+        let bottom = tint.mix(with: base, by: colorScheme == .dark ? 0.7 : 0.7)
+        return AnyShapeStyle(
+            LinearGradient(colors: [top.opacity(0.7), bottom.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+        )
     }
 
     var solidWindowBackgroundColor: Color {
@@ -38,7 +58,11 @@ struct Theme: Equatable {
     }
 
     var activeTabBackground: Color {
-        colorScheme == .dark ? .white.opacity(0.15) : self.primaryDark.opacity(0.8)
+        if let tint = spaceColor?.color {
+            // Light: dark enough for the white title of the active tab.
+            return colorScheme == .dark ? tint.opacity(0.32) : tint.mix(with: .black, by: 0.45)
+        }
+        return colorScheme == .dark ? .white.opacity(0.15) : self.primaryDark.opacity(0.8)
     }
 
     var mutedBackground: Color {

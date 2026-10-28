@@ -14,6 +14,14 @@ struct BrowserView: View {
 
     @ObserveInjection var inject
 
+    /// The theme with the color of the space shown (none in private windows).
+    private var spaceTheme: Theme {
+        Theme(
+            colorScheme: theme.colorScheme,
+            spaceColor: privacyMode.isPrivate ? nil : tabManager.activeContainer?.spaceColor
+        )
+    }
+
     @State private var isMouseOverURLBar = false
     @State private var showFloatingURLBar = false
     @State private var isMouseOverSidebar = false
@@ -60,7 +68,18 @@ struct BrowserView: View {
         ZStack(alignment: .top) {
             BrowserSplitView()
                 .ignoresSafeArea(.all)
-                .background(theme.subtleWindowBackgroundColor)
+                // The space's color, faded from one space to the next.
+                .background {
+                    ZStack {
+                        Rectangle()
+                            .fill(spaceTheme.windowBackground)
+                            .id(spaceTheme.spaceColor)
+                            .transition(.opacity)
+                    }
+                    .animation(.easeOut(duration: 0.35), value: spaceTheme.spaceColor)
+                    .ignoresSafeArea(.all)
+                }
+                .environment(\.theme, spaceTheme)
                 .background(
                     BlurEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
                         .ignoresSafeArea(.all)

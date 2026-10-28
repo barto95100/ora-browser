@@ -203,8 +203,16 @@ struct SidebarView: View {
                 trailing: 0
             )
         )
-        .onTapGesture(count: 2) {
-            toggleMaximizeWindow()
+        // Double click on the sidebar's empty space zooms the window. Behind
+        // the content, not around it: a double click gesture around the tabs
+        // made every click in the sidebar wait for a possible second click
+        // (about half a second) before selecting a tab or opening a folder.
+        .background {
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) {
+                    toggleMaximizeWindow()
+                }
         }
     }
 

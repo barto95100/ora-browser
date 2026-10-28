@@ -254,6 +254,10 @@ struct TabItem: View {
             Label("Duplicate Tab", systemImage: "doc.on.doc")
         }
 
+        if tab.type == .pinned {
+            folderMenuItems
+        }
+
         if tabManager.canOpenInSplitView(tab) {
             Button {
                 tabManager.openInSplitView(tab)
@@ -282,6 +286,40 @@ struct TabItem: View {
 
         Button(role: .destructive, action: onClose) {
             Label("Close Tab", systemImage: "xmark")
+        }
+    }
+}
+
+extension TabItem {
+    /// Folders of the pinned section, like Arc.
+    @ViewBuilder
+    var folderMenuItems: some View {
+        Button {
+            tabManager.createFolder(in: tab.container, with: tab)
+        } label: {
+            Label("New Folder with Tab", systemImage: "folder.badge.plus")
+        }
+
+        let otherFolders = tab.container.pinnedEntries.compactMap { entry -> Folder? in
+            if case let .folder(folder) = entry, folder.id != tab.folderID { return folder }
+            return nil
+        }
+        if !otherFolders.isEmpty {
+            Menu("Move to Folder") {
+                ForEach(otherFolders) { folder in
+                    Button(folder.name) {
+                        tabManager.moveTab(tab, toFolder: folder)
+                    }
+                }
+            }
+        }
+
+        if tab.container.folder(of: tab) != nil {
+            Button {
+                tabManager.moveTab(tab, toFolder: nil)
+            } label: {
+                Label("Remove from Folder", systemImage: "folder.badge.minus")
+            }
         }
     }
 }

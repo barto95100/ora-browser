@@ -15,6 +15,9 @@ struct ContainerView: View {
     /// Identifies the current drag, so a late end of a previous one (even of
     /// the same tab) does not cancel it.
     @State private var dragSession: UUID?
+    /// Height of the tab lists, to fill the rest of the sidebar with empty space.
+    @State private var tabsHeight: CGFloat = 0
+    @Environment(\.window) private var window: NSWindow?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -55,35 +58,60 @@ struct ContainerView: View {
                 .padding(.horizontal)
             }
 
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-                    if !privacyMode.isPrivate, showsSection(pinnedTabs) {
-                        PinnedTabsList(
-                            tabs: pinnedTabs,
-                            draggedItem: $draggedItem,
-                            onDrag: dragTab,
-                            onSelect: selectTab,
-                            onPinToggle: togglePin,
-                            onFavoriteToggle: toggleFavorite,
-                            onClose: removeTab,
-                            onDuplicate: duplicateTab,
-                            onMoveToContainer: moveTab,
-                            containers: containers
-                        )
-                        Divider()
+            GeometryReader { scrollArea in
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if !privacyMode.isPrivate, showsSection(pinnedTabs) || !container.folders.isEmpty {
+                                PinnedTabsList(
+                                    container: container,
+                                    tabs: pinnedTabs,
+                                    draggedItem: $draggedItem,
+                                    onDrag: dragTab,
+                                    onSelect: selectTab,
+                                    onPinToggle: togglePin,
+                                    onFavoriteToggle: toggleFavorite,
+                                    onClose: removeTab,
+                                    onDuplicate: duplicateTab,
+                                    onMoveToContainer: moveTab,
+                                    containers: containers
+                                )
+                                Divider()
+                            }
+                            NormalTabsList(
+                                tabs: normalTabs,
+                                draggedItem: $draggedItem,
+                                onDrag: dragTab,
+                                onSelect: selectTab,
+                                onPinToggle: togglePin,
+                                onFavoriteToggle: toggleFavorite,
+                                onClose: removeTab,
+                                onDuplicate: duplicateTab,
+                                onMoveToContainer: moveTab,
+                                onAddNewTab: addNewTab
+                            )
+                        }
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabsHeight = $0 }
+                        // The empty space under the tabs (at least a row's height,
+                        // to drop a tab last even when the list scrolls). It
+                        // takes the clicks there, so it moves the window and
+                        // zooms it on a double click itself.
+                        Color.clear
+                            .frame(height: max(48, scrollArea.size.height - tabsHeight))
+                            .contentShape(Rectangle())
+                            .modifier(WindowDragArea())
+                            .onTapGesture(count: 2) {
+                                window?.toggleMaximized()
+                            }
+                            .onDrop(
+                                of: [.text],
+                                delegate: TabListEndDropDelegate(container: container, draggedItem: $draggedItem)
+                            )
                     }
-                    NormalTabsList(
-                        tabs: normalTabs,
-                        draggedItem: $draggedItem,
-                        onDrag: dragTab,
-                        onSelect: selectTab,
-                        onPinToggle: togglePin,
-                        onFavoriteToggle: toggleFavorite,
-                        onClose: removeTab,
-                        onDuplicate: duplicateTab,
-                        onMoveToContainer: moveTab,
-                        onAddNewTab: addNewTab
-                    )
+                    // The empty space is part of the scrolled content, which
+                    // takes the clicks there: it gets the window drag and the
+                    // double click to zoom too.
+                    .modifier(OraWindowDragGesture())
                 }
             }
         }
@@ -186,11 +214,17 @@ struct ContainerView: View {
 /// gesture sits behind the tabs, so it never competes with a tab drag: on top
 /// of them it could hijack the drag, which then stuck to the mouse.
 private struct OraWindowDragGesture: ViewModifier {
+    @Environment(\.window) private var window: NSWindow?
+
     func body(content: Content) -> some View {
         content.background {
             Color.clear
                 .contentShape(Rectangle())
                 .modifier(WindowDragArea())
+                // Same as the rest of the sidebar's empty space (`SidebarView`).
+                .onTapGesture(count: 2) {
+                    window?.toggleMaximized()
+                }
         }
     }
 }

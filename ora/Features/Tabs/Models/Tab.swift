@@ -32,6 +32,8 @@ class Tab: ObservableObject, Identifiable {
     var splitRightTabID: UUID?
     /// Split View: share of the width this tab takes when it is the left side.
     var splitFraction: Double = 0.5
+    /// Folder of the pinned section this tab is in (see `TabFolders`).
+    var folderID: UUID?
 
     //    @Transient @Published var backgroundColor: Color = Color(.black)
     /// Published so the sidebar's speaker icon follows playback.
@@ -130,6 +132,9 @@ class Tab: ObservableObject, Identifiable {
     func switchSections(from: Tab, to: Tab) {
         if to.type != .normal {
             from.leaveSplit()
+        }
+        if to.type != .pinned {
+            from.folderID = nil
         }
         from.type = to.type
         switch to.type {

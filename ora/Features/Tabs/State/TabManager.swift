@@ -45,6 +45,8 @@ class TabManager: ObservableObject {
     /// Left tab of a split asked for with New Split View, waiting for the tab
     /// opened from the launcher (see `TabManager+Split.swift`).
     var pendingSplitLeftTabID: UUID?
+    /// Folder whose name the sidebar is editing (a new folder, or Rename).
+    @Published var renamingFolderID: UUID?
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController
@@ -139,6 +141,7 @@ class TabManager: ObservableObject {
         if tab.type == .pinned {
             tab.type = .normal
             tab.savedURL = nil
+            tab.folderID = nil
         } else {
             tab.type = .pinned
             tab.savedURL = tab.url
@@ -149,6 +152,7 @@ class TabManager: ObservableObject {
 
     func toggleFavTab(_ tab: Tab) {
         separateSplit(containing: tab, save: false)
+        tab.folderID = nil
         if tab.type == .fav {
             tab.type = .normal
             tab.savedURL = nil
@@ -164,6 +168,7 @@ class TabManager: ObservableObject {
 
     func moveTabToContainer(_ tab: Tab, toContainer: TabContainer) {
         separateSplit(containing: tab, save: false)
+        tab.folderID = nil
         tab.container = toContainer
         try? modelContext.save()
     }
@@ -605,9 +610,8 @@ class TabManager: ObservableObject {
             .filter { $0.type == .fav }
             .sorted(by: { $0.order > $1.order })
 
-        let pinnedTabs = container.tabs
-            .filter { $0.type == .pinned }
-            .sorted(by: { $0.order > $1.order })
+        // Tabs of closed folders are hidden.
+        let pinnedTabs = container.visiblePinnedTabs(activeTabID: activeTab?.id)
 
         // The right side of a split shares its left side's row.
         let splitRightTabIDs = Set(splitPairs(in: container).values)

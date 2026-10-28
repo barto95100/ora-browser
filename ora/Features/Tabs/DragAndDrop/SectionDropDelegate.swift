@@ -20,6 +20,7 @@ struct SectionDropDelegate: DropDelegate {
         if newType != .normal {
             moved.leaveSplit()
         }
+        moved.folderID = nil
         moved.type = newType
         // Pinned and favorite tabs come back to their saved URL.
         moved.savedURL = newType == .normal ? nil : moved.url

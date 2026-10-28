@@ -104,7 +104,7 @@ extension BrowserPage: WKNavigationDelegate {
             isLoading: false
         )
 
-        if !handleCancelledNavigationError(error) {
+        if !BrowserNavigationError.isInterruption(error) {
             delegate?.browserPage(self, didFailNavigationWith: error, failingURL: webView.url)
         }
         originalURL = nil
@@ -135,7 +135,7 @@ extension BrowserPage: WKNavigationDelegate {
             isLoading: false
         )
 
-        if handleCancelledNavigationError(error) {
+        if BrowserNavigationError.isInterruption(error) {
             return
         }
 
@@ -236,11 +236,6 @@ extension BrowserPage: WKNavigationDelegate {
                 isLoading: isLoading
             )
         )
-    }
-
-    private func handleCancelledNavigationError(_ error: Error) -> Bool {
-        let nsError = error as NSError
-        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
     }
 
     /// Navigation failure caused by the end of the web content process, which is

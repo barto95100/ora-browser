@@ -254,6 +254,14 @@ struct TabItem: View {
             Label("Duplicate Tab", systemImage: "doc.on.doc")
         }
 
+        if tabManager.canOpenInSplitView(tab) {
+            Button {
+                tabManager.openInSplitView(tab)
+            } label: {
+                Label("Open in Split View", systemImage: "rectangle.split.2x1")
+            }
+        }
+
         Divider()
 
         if availableContainers.count > 1 {

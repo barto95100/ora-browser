@@ -26,44 +26,30 @@ struct NormalTabsList: View {
     var body: some View {
         VStack(spacing: 8) {
             NewTabButton(addNewTab: onAddNewTab)
-            ForEach(tabs) { tab in
-                TabItem(
-                    tab: tab,
-                    isSelected: tabManager.isActive(tab),
-                    isDragging: draggedItem == tab.id,
-                    onTap: { onSelect(tab) },
-                    onPinToggle: { onPinToggle(tab) },
-                    onFavoriteToggle: { onFavoriteToggle(tab) },
-                    onClose: { onClose(tab) },
-                    onDuplicate: { onDuplicate(tab) },
-                    onMoveToContainer: { onMoveToContainer(tab, $0) },
-                    availableContainers: containers
-                )
-                .onDrag { onDrag(tab.id) }
-                .onDrop(
-                    of: [.text],
-                    delegate: TabDropDelegate(
-                        item: tab,
-                        draggedItem: $draggedItem,
-                        targetSection: .normal
+            // A split shows as one row, its left tab's: the right tab is hidden.
+            let splits = TabSplits.pairs(tabs.map { TabSplits.Entry(id: $0.id, rightID: $0.splitRightTabID) })
+            let splitRightTabIDs = Set(splits.values)
+            ForEach(tabs.filter { !splitRightTabIDs.contains($0.id) }) { tab in
+                let splitRight = splits[tab.id].flatMap { id in tabs.first { $0.id == id } }
+                row(for: tab, splitRight: splitRight)
+                    .onDrag { onDrag(tab.id) }
+                    .onDrop(
+                        of: [.text],
+                        delegate: TabDropDelegate(
+                            item: tab,
+                            draggedItem: $draggedItem,
+                            targetSection: .normal
+                        )
                     )
-                )
-                .onHover { hovering in
-                    if hovering {
-                        hoveredTab = tab
-                    } else if hoveredTab === tab {
-                        hoveredTab = nil
+                    // A hidden sidebar (floating) reports no hover end.
+                    .onDisappear {
+                        if hoveredTab === tab || hoveredTab === splitRight { hoveredTab = nil }
                     }
-                }
-                // A hidden sidebar (floating) reports no hover end.
-                .onDisappear {
-                    if hoveredTab === tab { hoveredTab = nil }
-                }
-                .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .move(edge: .bottom)),
-                    removal: .opacity.combined(with: .move(edge: .top))
-                ))
-                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: shouldAnimate(tab))
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .bottom)),
+                        removal: .opacity.combined(with: .move(edge: .top))
+                    ))
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: shouldAnimate(tab))
             }
         }
         .onDrop(
@@ -82,6 +68,44 @@ struct NormalTabsList: View {
         .onDisappear { middleClick.stop() }
         .onChange(of: tabs.map(\.id)) { _, newTabIds in
             previousTabIds = newTabIds
+        }
+    }
+
+    @ViewBuilder
+    private func row(for tab: Tab, splitRight: Tab?) -> some View {
+        if let splitRight {
+            SplitTabItem(
+                left: tab,
+                right: splitRight,
+                isDragging: draggedItem == tab.id,
+                onSelect: onSelect,
+                onClose: onClose,
+                onPinToggle: onPinToggle,
+                onFavoriteToggle: onFavoriteToggle,
+                onHoverTab: updateHover
+            )
+        } else {
+            TabItem(
+                tab: tab,
+                isSelected: tabManager.isActive(tab),
+                isDragging: draggedItem == tab.id,
+                onTap: { onSelect(tab) },
+                onPinToggle: { onPinToggle(tab) },
+                onFavoriteToggle: { onFavoriteToggle(tab) },
+                onClose: { onClose(tab) },
+                onDuplicate: { onDuplicate(tab) },
+                onMoveToContainer: { onMoveToContainer(tab, $0) },
+                availableContainers: containers
+            )
+            .onHover { updateHover(tab, $0) }
+        }
+    }
+
+    private func updateHover(_ tab: Tab, _ hovering: Bool) {
+        if hovering {
+            hoveredTab = tab
+        } else if hoveredTab === tab {
+            hoveredTab = nil
         }
     }
 

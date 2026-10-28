@@ -162,6 +162,18 @@ struct ContainerView: View {
             dragSession = nil
             draggedItem = nil
         }
+        // The drag item is not always released when the drag ends (seen with
+        // a split row), which left the row hidden: the drag also ends once the
+        // mouse button is up and no drop has ended it.
+        Task { @MainActor in
+            while NSEvent.pressedMouseButtons != 0 {
+                try? await Task.sleep(for: .milliseconds(150))
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+            guard dragSession == session else { return }
+            dragSession = nil
+            draggedItem = nil
+        }
         return provider
     }
 

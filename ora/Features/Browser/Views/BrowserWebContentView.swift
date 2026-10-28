@@ -30,7 +30,7 @@ struct BrowserWebContentView: View {
             ZStack {
                 // Pages of tabs whose video is in Picture in Picture stay in the
                 // window, hidden behind the current page, so "back to tab" works.
-                ForEach(mediaController.pictureInPictureTabs(excluding: tab.id), id: \.id) { parkedTab in
+                ForEach(parkedTabs, id: \.id) { parkedTab in
                     if let page = parkedTab.browserPage {
                         ParkedBrowserPageView(page: page)
                             .allowsHitTesting(false)
@@ -38,8 +38,11 @@ struct BrowserWebContentView: View {
                     }
                 }
 
-                webContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                TabPanelsView(
+                    tabs: tabManager.split(containing: tab).map { [$0.left, $0.right] } ?? [tab],
+                    focusedTabID: tab.id
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 if let peek = tabManager.peek {
                     PeekView(
@@ -73,92 +76,9 @@ struct BrowserWebContentView: View {
         }
     }
 
-    @ViewBuilder
-    private var webContent: some View {
-        if tab.isWebViewReady {
-            if tab.hasNavigationError, let error = tab.navigationError {
-                StatusPageView(
-                    error: error,
-                    failedURL: tab.failedURL,
-                    onRetry: { tab.retryNavigation() },
-                    onGoBack: tab.canGoBack
-                        ? {
-                            tab.goBack()
-                            tab.clearNavigationError()
-                        } : nil,
-                    onContinueAnyway: {
-                        tab.continueToInsecureSite()
-                    }
-                )
-                .id(tab.id)
-            } else if let page = tab.browserPage {
-                BrowserPageView(page: page).id(tab.id)
-                    .overlay(alignment: .topLeading) {
-                        if let triggerState = tab.passwordTriggerOverlayState {
-                            PasswordAutofillTriggerView(overlay: triggerState, tab: tab)
-                        }
-                    }
-                    .overlay(alignment: .topLeading) {
-                        if let passwordOverlayState = tab.passwordOverlayState {
-                            PasswordAutofillOverlayView(overlay: passwordOverlayState, tab: tab)
-                        }
-                    }
-                    .overlay(alignment: .topTrailing) {
-                        if appState.showFinderIn == tab.id {
-                            FindView(page: page)
-                                .padding(.top, 16)
-                                .padding(.trailing, 16)
-                        }
-                    }
-                    .overlay(alignment: .bottomLeading) {
-                        if let hovered = tab.hoveredLinkURL, !hovered.isEmpty {
-                            LinkPreview(text: hovered)
-                        }
-                    }
-                    .overlay(alignment: .top) {
-                        if let request = tab.permissionRequest {
-                            SitePermissionPromptView(request: request, isPrivate: tab.isPrivate) { granted, remember in
-                                tab.answerPermissionRequest(granted: granted, remember: remember)
-                            }
-                            .padding(.top, 12)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-                    }
-                    .overlay(alignment: .top) {
-                        if tab.showsCrashRecoveryNotice {
-                            PageCrashNoticeView { tab.dismissCrashRecoveryNotice() }
-                                .padding(.top, 12)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-                    }
-                    .animation(.easeOut(duration: 0.12), value: tab.hoveredLinkURL)
-                    .animation(.easeOut(duration: 0.2), value: tab.permissionRequest)
-                    .overlay(alignment: .top) {
-                        if let folder = tab.folderAccessRequest {
-                            LocalFolderAccessPromptView(
-                                folderName: folder.lastPathComponent,
-                                onAllow: { tab.requestFolderAccess() },
-                                onDismiss: { tab.folderAccessRequest = nil }
-                            )
-                            .padding(.top, 12)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-                    }
-                    .animation(.easeOut(duration: 0.2), value: tab.showsCrashRecoveryNotice)
-                    .animation(.easeOut(duration: 0.2), value: tab.folderAccessRequest)
-            } else {
-                ZStack {
-                    Rectangle().fill(theme.background)
-                    ProgressView().frame(width: 32, height: 32)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        } else {
-            ZStack {
-                Rectangle().fill(theme.background)
-                ProgressView().frame(width: 32, height: 32)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
+    /// Pages in Picture in Picture kept in the window, apart from those shown.
+    private var parkedTabs: [Tab] {
+        let partnerID = tabManager.splitPartner(of: tab)?.id
+        return mediaController.pictureInPictureTabs(excluding: tab.id).filter { $0.id != partnerID }
     }
 }

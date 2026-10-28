@@ -23,6 +23,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private var observations: [NSKeyValueObservation] = []
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.
     var httpsUpgrade = HTTPSUpgradePolicy()
+    /// How the next new tab asked by the page opens (context menu items, see
+    /// `BrowserPage+ContextMenu.swift`).
+    var pendingNewTabDisposition: (disposition: BrowserNewTabDisposition, date: Date)?
 
     init(
         profile: BrowserEngineProfile,
@@ -59,10 +62,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         let contentController = WKUserContentController()
         webConfiguration.userContentController = contentController
         messageNames = configuration.scriptMessageNames
-        webView = WKWebView(frame: .zero, configuration: webConfiguration)
+        let oraWebView = OraWebView(frame: .zero, configuration: webConfiguration)
+        webView = oraWebView
         self.delegate = delegate
 
         super.init()
+        oraWebView.contextMenuOwner = self
 
         observations = [
             // Address and title, including same-page navigations (history API,

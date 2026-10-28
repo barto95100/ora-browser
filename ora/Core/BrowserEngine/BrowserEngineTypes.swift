@@ -49,6 +49,14 @@ struct BrowserWebNotification: Equatable {
     let origin: URL?
 }
 
+/// How a link asked to open in a new tab is shown.
+enum BrowserNewTabDisposition {
+    case foreground
+    case background
+    /// Beside the tab it comes from.
+    case splitView
+}
+
 enum BrowserPermissionDecision {
     case grant
     case deny

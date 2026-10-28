@@ -65,8 +65,8 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         return .cancel
     }
 
-    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL) {
-        openTab(url, inFront: true)
+    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
+        openTab(url, inFront: disposition != .background)
     }
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {

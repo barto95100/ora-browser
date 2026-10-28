@@ -6,7 +6,7 @@ protocol BrowserPageDelegate: AnyObject {
         _ page: BrowserPage,
         decidePolicyFor navigationAction: BrowserNavigationAction
     ) -> BrowserNavigationActionDisposition
-    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL)
+    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition)
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent)
     /// The page's address changed, including same-page navigations.
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?)
@@ -58,7 +58,7 @@ extension BrowserPageDelegate {
         .allow
     }
 
-    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL) {}
+    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {}
 
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {}
 

@@ -334,6 +334,12 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         tab?.recordBlockedContent(from: url)
     }
 
+    /// In spaces that block trackers, except for exempted sites.
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool {
+        guard let tab else { return false }
+        return tab.privacySettings.blockThirdPartyTrackers && tab.areProtectionsEnabled(for: url)
+    }
+
     func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification) {
         guard let tab else { return }
         WebNotificationCenter.shared.show(notification, from: tab)

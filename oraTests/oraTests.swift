@@ -370,6 +370,19 @@ struct OraTests {
         #expect(regex.firstMatch(in: otherURL, range: otherRange) == nil)
     }
 
+    /// WebKit refuses a whole rule list for one "|" in a url-filter.
+    @Test func trackerRegexIsAcceptedByWebKit() throws {
+        let pattern = BrowserPrivacyService.regexForDomain("google-analytics.com")
+        #expect(!pattern.contains("|"))
+        let regex = try NSRegularExpression(pattern: pattern)
+        func matches(_ url: String) -> Bool {
+            regex.firstMatch(in: url, range: NSRange(url.startIndex ..< url.endIndex, in: url)) != nil
+        }
+        #expect(matches("https://www.google-analytics.com/analytics.js"))
+        #expect(matches("https://google-analytics.com:443/collect"))
+        #expect(!matches("https://google-analytics.com.example.net/collect"))
+    }
+
     @Test func tracksUnsupportedRulesInCoverageSummary() throws {
         let compiler = ContentBlockerCompileService()
         let record = FilterListRecord(

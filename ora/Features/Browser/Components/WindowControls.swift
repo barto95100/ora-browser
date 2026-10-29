@@ -29,7 +29,14 @@ struct WindowControls: View {
 }
 
 struct WindowControlButton: View {
-    @Environment(\.window) private var window
+    @Environment(\.window) private var environmentWindow
+    /// The button's own window: views hosted apart (sidebar pages, private
+    /// windows) don't get `\.window`, and the buttons did nothing there.
+    @State private var hostWindow: NSWindow?
+
+    private var window: NSWindow? {
+        environmentWindow ?? hostWindow
+    }
 
     let type: WindowControlType
     @Binding var isHovered: Bool
@@ -65,6 +72,7 @@ struct WindowControlButton: View {
             .resizable()
             .frame(width: buttonSize, height: buttonSize)
             .opacity(imageOpacity)
+            .background(WindowReader(window: $hostWindow))
             .onAppear {
                 syncWindowFocus()
             }
@@ -85,7 +93,7 @@ struct WindowControlButton: View {
     }
 
     private func performAction() {
-        guard let window else { return }
+        guard let window = window ?? NSApp.currentEvent?.window else { return }
         switch type {
         case .close:
             window.performClose(nil)

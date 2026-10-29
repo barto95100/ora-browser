@@ -140,6 +140,11 @@ struct OraCommands: Commands {
             }
             .keyboardShortcut(KeyboardShortcuts.History.show.keyboardShortcut)
 
+            Button("Show Notes") {
+                NotificationCenter.default.post(name: .showNotes, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Notes.show.keyboardShortcut)
+
             #if DEBUG
                 Divider()
 

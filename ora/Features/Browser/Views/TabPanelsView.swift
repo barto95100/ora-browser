@@ -11,6 +11,7 @@ struct TabPanelsView: View {
     let tabs: [Tab]
     let focusedTabID: UUID
     @EnvironmentObject var tabManager: TabManager
+    @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
     /// Width share shown while the divider is dragged, saved when it is released.
     @State private var dragFraction: Double?
@@ -136,7 +137,8 @@ struct TabPanelsView: View {
     /// A click in the side of a split that is not focused focuses it (Peek,
     /// shown over both sides, takes its own clicks).
     private func focusClickedPanel(for event: NSEvent) {
-        guard tabManager.peek == nil, let active = tabManager.activeTab else { return }
+        // Tracing an area for a note: the click is for the capture.
+        guard tabManager.peek == nil, appState.areaCapture == nil, let active = tabManager.activeTab else { return }
         for tab in tabManager.shownTabs(around: active) where tab.id != active.id {
             guard let webView = tab.browserPage?.webView,
                   let window = webView.window,

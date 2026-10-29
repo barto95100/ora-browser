@@ -235,7 +235,19 @@ struct OraRoot: View {
                               !privacyMode.isPrivate
                         else { return }
                         appState.showLauncher = false
+                        appState.showNotes = false
                         appState.showHistory.toggle()
+                    }
+                }
+                // Notes of the space; private windows keep no notes.
+                NotificationCenter.default.addObserver(forName: .showNotes, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window ?? NSApp.keyWindow,
+                              !privacyMode.isPrivate
+                        else { return }
+                        appState.showLauncher = false
+                        appState.showHistory = false
+                        appState.showNotes.toggle()
                     }
                 }
                 NotificationCenter.default.addObserver(forName: .openPeekInTab, object: nil, queue: .main) { note in

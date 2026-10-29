@@ -100,6 +100,9 @@ struct BrowserView: View {
                     if appState.showHistory {
                         HistoryPanel()
                     }
+                    if appState.showNotes {
+                        NotesPanel()
+                    }
                 }
 
             if sidebarManager.isSidebarHidden {

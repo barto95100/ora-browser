@@ -49,6 +49,12 @@ class AppState: ObservableObject {
     @Published var showLauncher: Bool = false
     /// The history panel (⌘Y), see `HistoryPanel`.
     @Published var showHistory: Bool = false
+    /// The space's notes (⌥⌘N), see `NotesPanel`.
+    @Published var showNotes: Bool = false
+    /// The note of the current tab, at the right of the page, see `TabNotePanel`.
+    @Published var showTabNote: Bool = false
+    /// An area of the page to trace for a note, see `AreaCaptureOverlay`.
+    @Published var areaCapture: AreaCaptureRequest?
     @Published var launcherSearchText: String = ""
     @Published var showFinderIn: UUID?
     @Published var isFloatingTabSwitchVisible: Bool = false

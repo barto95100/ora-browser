@@ -26,6 +26,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// How the next new tab asked by the page opens (context menu items, see
     /// `BrowserPage+ContextMenu.swift`).
     var pendingNewTabDisposition: (disposition: BrowserNewTabDisposition, date: Date)?
+    /// The space's content rule lists (ads, trackers, cookies), taken off for
+    /// a site exempted from protections.
+    private var contentRuleLists: [WKContentRuleList] = []
+    private(set) var isContentBlockingEnabled = true
 
     init(
         profile: BrowserEngineProfile,
@@ -116,9 +120,14 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         BrowserPrivacyService.shared.prepareConfiguration(
             webConfiguration,
             spaceID: profile.identifier
-        ) { [weak self] in
-            self?.isReadyForNavigation = true
-            self?.flushPendingNavigationIfNeeded()
+        ) { [weak self] ruleLists in
+            guard let self else { return }
+            contentRuleLists = ruleLists
+            if !isContentBlockingEnabled {
+                webView.configuration.userContentController.removeAllContentRuleLists()
+            }
+            isReadyForNavigation = true
+            flushPendingNavigationIfNeeded()
         }
     }
 
@@ -174,6 +183,19 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             webView.loadFileURL(url, allowingReadAccessTo: readAccess)
         } else {
             webView.load(request)
+        }
+    }
+
+    /// Content blocking on or off for the page (a site exempted from
+    /// protections). Applies to the next loads.
+    func setContentBlocking(enabled: Bool) {
+        guard enabled != isContentBlockingEnabled else { return }
+        isContentBlockingEnabled = enabled
+        let controller = webView.configuration.userContentController
+        if enabled {
+            contentRuleLists.forEach(controller.add)
+        } else {
+            controller.removeAllContentRuleLists()
         }
     }
 

@@ -8,6 +8,8 @@ final class PeekPage: ObservableObject, Identifiable {
     let id = UUID()
     let page: BrowserPage
     let isPrivate: Bool
+    /// The tab Peek was opened from.
+    let openerTabID: UUID
     @Published private(set) var url: URL
     @Published private(set) var title: String = ""
     @Published private(set) var isLoading = true
@@ -20,6 +22,7 @@ final class PeekPage: ObservableObject, Identifiable {
         self.page = page
         self.url = url
         isPrivate = opener.isPrivate
+        openerTabID = opener.id
         pageDelegate = PeekPageDelegate(opener: opener)
         pageDelegate.peek = self
         page.delegate = pageDelegate

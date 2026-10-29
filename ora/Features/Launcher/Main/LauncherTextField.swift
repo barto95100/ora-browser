@@ -32,6 +32,19 @@ struct LauncherTextField: NSViewRepresentable {
             textView.textContainer?.maximumNumberOfLines = 1
         }
 
+        /// The field is shown to be typed in (launcher, address being
+        /// edited): it takes the keyboard itself. SwiftUI's focus does not
+        /// always reach an AppKit field, and a web page kept it: typing then
+        /// went nowhere.
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard window != nil else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, let window, currentEditor() == nil else { return }
+                window.makeFirstResponder(self)
+            }
+        }
+
         override func becomeFirstResponder() -> Bool {
             let didBecome = super.becomeFirstResponder()
             if didBecome {

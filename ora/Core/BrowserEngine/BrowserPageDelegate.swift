@@ -40,6 +40,13 @@ protocol BrowserPageDelegate: AnyObject {
         completion: @escaping (String?) -> Void
     )
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask)
+    /// Whether the space's content rules apply to this site (not exempted).
+    func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool
+    /// A content rule kept a load from the page (ad, tracker).
+    func browserPage(_ page: BrowserPage, didBlockContentFrom url: URL)
+    /// Whether tracking parameters are taken off this address before it loads
+    /// (see `LinkTrackingProtection`).
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool
     /// A page of a site allowed to send notifications shows one.
     func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification)
     /// The page closed one of its notifications (`notification.close()`).
@@ -111,6 +118,16 @@ extension BrowserPageDelegate {
     }
 
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {}
+
+    func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool {
+        true
+    }
+
+    func browserPage(_ page: BrowserPage, didBlockContentFrom url: URL) {}
+
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool {
+        false
+    }
 
     func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification) {}
 

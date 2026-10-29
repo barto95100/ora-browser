@@ -47,6 +47,9 @@ class TabManager: ObservableObject {
     var pendingSplitLeftTabID: UUID?
     /// Folder whose name the sidebar is editing (a new folder, or Rename).
     @Published var renamingFolderID: UUID?
+    /// Tab (or folder) being dragged in the sidebar: the page then offers
+    /// split zones (see `SplitDropOverlay`).
+    @Published var draggingTabID: UUID?
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController
@@ -137,7 +140,6 @@ class TabManager: ObservableObject {
     }
 
     func togglePinTab(_ tab: Tab) {
-        separateSplit(containing: tab, save: false)
         if tab.type == .pinned {
             tab.type = .normal
             tab.savedURL = nil
@@ -151,7 +153,6 @@ class TabManager: ObservableObject {
     }
 
     func toggleFavTab(_ tab: Tab) {
-        separateSplit(containing: tab, save: false)
         tab.folderID = nil
         if tab.type == .fav {
             tab.type = .normal
@@ -201,6 +202,7 @@ class TabManager: ObservableObject {
         activeContainer = newContainer
         self.activeTab = nil
         try? modelContext.save()
+        PrivacyDefaults.applyToNewSpace(newContainer.id)
         //        _ = fetchContainers() // Refresh containers
         return newContainer
     }
@@ -613,8 +615,8 @@ class TabManager: ObservableObject {
         // Tabs of closed folders are hidden.
         let pinnedTabs = container.visiblePinnedTabs(activeTabID: activeTab?.id)
 
-        // The right side of a split shares its left side's row.
-        let splitRightTabIDs = Set(splitPairs(in: container).values)
+        // The right side of a split of normal tabs shares its left side's row.
+        let splitRightTabIDs = splitRows(in: container).hidden
         let normalTabs = container.tabs
             .filter { $0.type == .normal && !splitRightTabIDs.contains($0.id) }
             .sorted(by: { $0.order > $1.order })

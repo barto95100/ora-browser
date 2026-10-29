@@ -12,11 +12,14 @@ struct ContainerView: View {
     @EnvironmentObject var toastManager: ToastManager
 
     @State private var draggedItem: UUID?
+    @Environment(\.colorScheme) private var colorScheme
     /// Identifies the current drag, so a late end of a previous one (even of
     /// the same tab) does not cancel it.
     @State private var dragSession: UUID?
     /// Height of the tab lists, to fill the rest of the sidebar with empty space.
     @State private var tabsHeight: CGFloat = 0
+    /// May be nil: the spaces' pages are hosted apart (`NSPageView`); the
+    /// double click zooms the window it happened in.
     @Environment(\.window) private var window: NSWindow?
 
     var body: some View {
@@ -39,23 +42,31 @@ struct ContainerView: View {
                     )
                 }
             } else {
-                VStack(alignment: .center, spacing: 8) {
-                    Text("Private Browsing")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                VStack(alignment: .center, spacing: 6) {
+                    Image(systemName: "hand.raised.fill")
+                        .font(.system(size: 22, weight: .medium))
                         .foregroundColor(.primary)
 
-                    Text("Your activity is not being saved")
-                        .font(.subheadline)
+                    Text("Private Browsing")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
+                    Text("History, cookies and site data of this window are deleted when you close it.")
+                        .font(.caption)
                         .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+                .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.primary.opacity(0.08))
                 )
-                .padding(.horizontal)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                )
             }
 
             GeometryReader { scrollArea in
@@ -101,7 +112,7 @@ struct ContainerView: View {
                             .contentShape(Rectangle())
                             .modifier(WindowDragArea())
                             .onTapGesture(count: 2) {
-                                window?.toggleMaximized()
+                                (NSApp.currentEvent?.window ?? window)?.toggleMaximized()
                             }
                             .onDrop(
                                 of: [.text],
@@ -116,6 +127,18 @@ struct ContainerView: View {
             }
         }
         .animation(.easeOut(duration: 0.15), value: draggedItem != nil)
+        // Each page of the sidebar shows one space, in its own color.
+        .environment(
+            \.theme,
+            Theme(
+                colorScheme: colorScheme,
+                spaceColor: privacyMode.isPrivate ? nil : container.spaceColor,
+                spaceTheme: privacyMode.isPrivate ? nil : container.spaceTheme
+            )
+        )
+        .onChange(of: draggedItem) { _, item in
+            tabManager.draggingTabID = item
+        }
         .modifier(OraWindowDragGesture())
     }
 
@@ -223,7 +246,7 @@ private struct OraWindowDragGesture: ViewModifier {
                 .modifier(WindowDragArea())
                 // Same as the rest of the sidebar's empty space (`SidebarView`).
                 .onTapGesture(count: 2) {
-                    window?.toggleMaximized()
+                    (NSApp.currentEvent?.window ?? window)?.toggleMaximized()
                 }
         }
     }

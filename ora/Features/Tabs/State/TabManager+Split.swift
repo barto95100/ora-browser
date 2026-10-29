@@ -1,22 +1,37 @@
 import AppKit
 import Foundation
 
-/// Split View, like Arc: two normal tabs of a space side by side (see
-/// `TabSplits`). The focused side is the active tab: the URL bar and the
-/// shortcuts act on it.
+/// Split View, like Arc: two tabs of a space side by side (see `TabSplits`),
+/// pinned and favorite tabs included. The focused side is the active tab: the
+/// URL bar and the shortcuts act on it.
 extension TabManager {
-    /// Left tab → right tab, for the normal tabs of `container`.
+    /// Left tab → right tab, for the tabs of `container`.
     func splitPairs(in container: TabContainer) -> [UUID: UUID] {
-        TabSplits.pairs(
-            container.tabs
-                .filter { $0.type == .normal }
-                .map { TabSplits.Entry(id: $0.id, rightID: $0.splitRightTabID) }
-        )
+        TabSplits.pairs(container.tabs.map { TabSplits.Entry(id: $0.id, rightID: $0.splitRightTabID) })
+    }
+
+    /// Splits of `container` shown by a row of the normal tabs, keyed by the
+    /// normal tab that holds the row: the left one when both are normal (the
+    /// right one is then hidden), the normal one otherwise. A split of two
+    /// pinned or favorite tabs has no row: each stays in its section.
+    func splitRows(in container: TabContainer) -> (rows: [UUID: (left: Tab, right: Tab)], hidden: Set<UUID>) {
+        let tabsByID = Dictionary(container.tabs.map { ($0.id, $0) }) { first, _ in first }
+        var rows: [UUID: (left: Tab, right: Tab)] = [:]
+        var hidden = Set<UUID>()
+        for (leftID, rightID) in splitPairs(in: container) {
+            guard let left = tabsByID[leftID], let right = tabsByID[rightID] else { continue }
+            if left.type == .normal {
+                rows[left.id] = (left, right)
+                if right.type == .normal { hidden.insert(right.id) }
+            } else if right.type == .normal {
+                rows[right.id] = (left, right)
+            }
+        }
+        return (rows, hidden)
     }
 
     /// The two tabs of the split `tab` is in, if any.
     func split(containing tab: Tab) -> (left: Tab, right: Tab)? {
-        guard tab.type == .normal else { return nil }
         let pairs = splitPairs(in: tab.container)
         guard let partnerID = TabSplits.partner(of: tab.id, in: pairs),
               let partner = tab.container.tabs.first(where: { $0.id == partnerID })
@@ -44,31 +59,42 @@ extension TabManager {
     func canOpenInSplitView(_ tab: Tab) -> Bool {
         guard let active = activeTab else { return false }
         return active.id != tab.id
-            && active.type == .normal
-            && tab.type == .normal
             && active.container.id == tab.container.id
             && splitPartner(of: active)?.id != tab.id
     }
 
     /// Shows `tab` at the right of the active tab, and focuses it.
     func openInSplitView(_ tab: Tab) {
-        guard canOpenInSplitView(tab), let left = activeTab else { return }
-        pairInSplit(left, with: tab)
+        guard canOpenInSplitView(tab) else { return }
+        openInSplitView(tab, on: .right)
+    }
+
+    /// A tab dropped on one side of the page: shown on that side, beside the
+    /// active tab (it replaces the other side of a split), and focused.
+    func openInSplitView(_ tab: Tab, on side: SplitDropSide) {
+        guard let active = activeTab, active.id != tab.id, active.container.id == tab.container.id else { return }
+        switch side {
+        case .left: pairInSplit(tab, with: active)
+        case .right: pairInSplit(active, with: tab)
+        }
         activateTab(tab)
     }
 
-    /// Separates the split `tab` is in: the right tab comes back under the left one.
+    /// Separates the split `tab` is in: the right tab comes back under the left
+    /// one when both are in the same section.
     func separateSplit(containing tab: Tab, save: Bool = true) {
         guard let split = split(containing: tab) else { return }
         split.left.splitRightTabID = nil
-        split.left.container.placeTab(split.right, after: split.left)
+        if split.left.type == split.right.type {
+            split.left.container.placeTab(split.right, after: split.left)
+        }
         if save { try? modelContext.save() }
     }
 
     /// ⌃⇧= (New Split View): the next tab opened from the launcher goes at the
     /// right of the active tab. Returns false when the active tab cannot be split.
     func prepareNewSplit() -> Bool {
-        guard let active = activeTab, active.type == .normal else { return false }
+        guard let active = activeTab else { return false }
         pendingSplitLeftTabID = active.id
         return true
     }
@@ -77,10 +103,7 @@ extension TabManager {
     func completePendingSplit(with newTab: Tab) {
         guard let leftID = pendingSplitLeftTabID else { return }
         pendingSplitLeftTabID = nil
-        guard let left = newTab.container.tabs.first(where: { $0.id == leftID }),
-              left.id != newTab.id,
-              left.type == .normal,
-              newTab.type == .normal
+        guard let left = newTab.container.tabs.first(where: { $0.id == leftID }), left.id != newTab.id
         else { return }
         pairInSplit(left, with: newTab)
     }
@@ -134,4 +157,10 @@ extension TabManager {
         loadIfNeeded(right)
         try? modelContext.save()
     }
+}
+
+/// Side of the page a tab is dropped on to make a split.
+enum SplitDropSide {
+    case left
+    case right
 }

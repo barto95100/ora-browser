@@ -313,14 +313,18 @@ final class BrowserPrivacyService {
             }
     }
 
+    /// Adds the space's content rule lists to the configuration, and gives
+    /// them to `completion` (a page can take them off for a site, see
+    /// `BrowserPage.setContentBlocking(enabled:)`).
     func prepareConfiguration(
         _ configuration: WKWebViewConfiguration,
         spaceID: UUID,
-        completion: @escaping () -> Void
+        completion: @escaping ([WKContentRuleList]) -> Void
     ) {
         let privacySettings = SettingsStore.shared.privacySettings(for: spaceID)
         let enabledRuleLists = enabledRuleLists(for: spaceID, privacySettings: privacySettings)
         let group = DispatchGroup()
+        var addedRuleLists: [WKContentRuleList] = []
 
         for identifier in enabledRuleLists {
             group.enter()
@@ -328,6 +332,7 @@ final class BrowserPrivacyService {
                 DispatchQueue.main.async {
                     if let ruleList {
                         configuration.userContentController.add(ruleList)
+                        addedRuleLists.append(ruleList)
                     }
                     group.leave()
                 }
@@ -339,7 +344,19 @@ final class BrowserPrivacyService {
             group.leave()
         }
 
-        group.notify(queue: .main, execute: completion)
+        group.notify(queue: .main) { completion(addedRuleLists) }
+    }
+
+    /// Whether an action of this rule list is content kept from the page (ads,
+    /// trackers), as opposed to cookies only, for the count of the shield.
+    static func blocksContent(ruleListIdentifier identifier: String) -> Bool {
+        identifier != StaticRuleListIdentifier.thirdPartyCookies.rawValue
+            && identifier != StaticRuleListIdentifier.allCookies.rawValue
+    }
+
+    /// Whether a space blocks anything with content rules.
+    static func hasContentBlocking(_ settings: SpacePrivacySettings) -> Bool {
+        settings.blockThirdPartyTrackers || settings.adBlock.enabled || settings.cookiesPolicy != .allowAll
     }
 
     static func privacyScripts(

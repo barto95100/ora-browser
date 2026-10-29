@@ -71,6 +71,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             tab.clearNavigationError()
             tab.crashRecoveryNavigationDidStart()
             if tab.folderAccessRequest != nil { tab.folderAccessRequest = nil }
+            if !tab.blockedContent.isEmpty { tab.blockedContent = [:] }
             tab.maintainSnapShots()
             passwordCoordinator?.clearAutofillState()
             tab.isLoading = event.isLoading
@@ -310,6 +311,21 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         } else {
             completion(nil)
         }
+    }
+
+    func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool {
+        guard let tab else { return true }
+        return tab.areProtectionsEnabled(for: url)
+    }
+
+    func browserPage(_ page: BrowserPage, didBlockContentFrom url: URL) {
+        tab?.recordBlockedContent(from: url)
+    }
+
+    /// In spaces that block trackers, except for exempted sites.
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool {
+        guard let tab else { return false }
+        return tab.privacySettings.blockThirdPartyTrackers && tab.areProtectionsEnabled(for: url)
     }
 
     func browserPage(_ page: BrowserPage, showNotification notification: BrowserWebNotification) {

@@ -206,7 +206,9 @@ struct URLBar: View {
                     WindowControls(isFullscreen: appState.isFullscreen)
                 }
 
-                if sidebarManager.sidebarPosition == .primary {
+                // With the sidebar shown, its button is next to the window
+                // buttons, at the top of the sidebar.
+                if sidebarManager.sidebarPosition == .primary, sidebarManager.isSidebarHidden {
                     URLBarButton(
                         systemName: "sidebar.left",
                         isEnabled: true,
@@ -329,7 +331,8 @@ struct URLBar: View {
                         .tint(buttonForegroundColor)
                         .scaleEffect(0.5)
                 } else {
-                    Image(systemName: tab.url.scheme == "https" ? "shield.lefthalf.filled" : "globe")
+                    // A lock, like Safari: the shield is the privacy protections'.
+                    Image(systemName: tab.url.scheme == "https" ? "lock.fill" : "globe")
                         .font(.system(size: 12))
                         .foregroundColor(buttonForegroundColor)
                 }
@@ -370,6 +373,12 @@ struct URLBar: View {
             .font(.system(size: 14))
             .foregroundColor(buttonForegroundColor)
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            if privacyMode.isPrivate {
+                PrivateBrowsingBadge(foregroundColor: buttonForegroundColor)
+            }
+
+            PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
 
             MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in
                 tab.toggleCapture(device)

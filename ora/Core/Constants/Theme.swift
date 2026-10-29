@@ -4,6 +4,11 @@ import SwiftUI
 // swiftlint:disable identifier_name
 struct Theme: Equatable {
     let colorScheme: ColorScheme
+    /// The color of the space shown, if it has one: it tints the window
+    /// background and the active tab, like Arc.
+    var spaceColor: SpaceColor?
+    /// The theme of the space shown, if it has one (always dark).
+    var spaceTheme: SpaceTheme?
 
     var primary: Color {
         Color(hex: "#f3e5d6")
@@ -14,7 +19,8 @@ struct Theme: Equatable {
     }
 
     var accent: Color {
-        colorScheme == .dark ? Color(hex: "#FF9B51") : Color(hex: "#F16D34")
+        if let spaceTheme { return spaceTheme.accent }
+        return colorScheme == .dark ? Color(hex: "#FF9B51") : Color(hex: "#F16D34")
     }
 
     var background: Color {
@@ -26,7 +32,36 @@ struct Theme: Equatable {
     }
 
     var subtleWindowBackgroundColor: Color {
-        colorScheme == .dark ? self.primaryDark.opacity(0.3) : self.primary.opacity(0.3)
+        if let spaceTheme {
+            return spaceTheme.background.opacity(0.95)
+        }
+        if let tint = spaceColor?.color {
+            return colorScheme == .dark
+                ? tint.mix(with: .black, by: 0.55).opacity(0.6)
+                : tint.mix(with: .white, by: 0.55).opacity(0.6)
+        }
+        return colorScheme == .dark ? self.primaryDark.opacity(0.3) : self.primary.opacity(0.3)
+    }
+
+    /// The window background: the space's color as a soft vertical gradient,
+    /// like Arc, or the usual background.
+    var windowBackground: AnyShapeStyle {
+        if let spaceTheme {
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: [spaceTheme.background, spaceTheme.background.mix(with: .black, by: 0.35)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+        }
+        guard let tint = spaceColor?.color else { return AnyShapeStyle(subtleWindowBackgroundColor) }
+        let base: Color = colorScheme == .dark ? .black : .white
+        let top = tint.mix(with: base, by: colorScheme == .dark ? 0.45 : 0.4)
+        let bottom = tint.mix(with: base, by: colorScheme == .dark ? 0.7 : 0.7)
+        return AnyShapeStyle(
+            LinearGradient(colors: [top.opacity(0.7), bottom.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+        )
     }
 
     var solidWindowBackgroundColor: Color {
@@ -38,7 +73,14 @@ struct Theme: Equatable {
     }
 
     var activeTabBackground: Color {
-        colorScheme == .dark ? .white.opacity(0.15) : self.primaryDark.opacity(0.8)
+        if let spaceTheme {
+            return (spaceColor?.color ?? spaceTheme.accent).opacity(0.28)
+        }
+        if let tint = spaceColor?.color {
+            // Light: dark enough for the white title of the active tab.
+            return colorScheme == .dark ? tint.opacity(0.32) : tint.mix(with: .black, by: 0.45)
+        }
+        return colorScheme == .dark ? .white.opacity(0.15) : self.primaryDark.opacity(0.8)
     }
 
     var mutedBackground: Color {

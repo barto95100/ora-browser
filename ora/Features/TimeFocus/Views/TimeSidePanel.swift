@@ -29,6 +29,7 @@ struct TimeSidePanel: View {
             Divider().opacity(0.5)
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
+                    FocusCard(spaceID: tabManager.activeContainer?.id)
                     summary(report)
                     TimeChart(report: report, period: .day)
                         .frame(height: 110)

@@ -218,6 +218,7 @@ class TabManager: ObservableObject {
         Task { @MainActor in
             try PasswordManagerService.shared.deleteEntries(for: containerId)
             BrowsingTimeStore.shared.delete(spaceID: containerId)
+            FocusSettings.shared.removeSpace(containerId)
 
             await PrivacyService.clearAllWebsiteData(for: containerId)
 

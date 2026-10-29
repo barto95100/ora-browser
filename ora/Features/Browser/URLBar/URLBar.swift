@@ -206,7 +206,9 @@ struct URLBar: View {
                     WindowControls(isFullscreen: appState.isFullscreen)
                 }
 
-                if sidebarManager.sidebarPosition == .primary {
+                // With the sidebar shown, its button is next to the window
+                // buttons, at the top of the sidebar.
+                if sidebarManager.sidebarPosition == .primary, sidebarManager.isSidebarHidden {
                     URLBarButton(
                         systemName: "sidebar.left",
                         isEnabled: true,

@@ -21,28 +21,3 @@ struct TasksButton: View {
         .accessibilityLabel(Text("Tasks"))
     }
 }
-
-/// Sidebar bottom button for the space's tasks, next to the notes.
-struct SidebarTasksButton: View {
-    @EnvironmentObject var appState: AppState
-    @EnvironmentObject var tabManager: TabManager
-    @Environment(\.theme) private var theme
-    @State private var isHovering = false
-
-    var body: some View {
-        Button {
-            appState.showTasks.toggle()
-        } label: {
-            Image(systemName: "checklist")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(appState.showTasks ? theme.accent : .secondary)
-                .frame(width: 28, height: 32)
-                .background(isHovering ? theme.invertedSolidWindowBackgroundColor.opacity(0.1) : .clear)
-                .cornerRadius(8)
-        }
-        .buttonStyle(.plain)
-        .disabled(tabManager.activeTab == nil)
-        .onHover { isHovering = $0 }
-        .help("Tasks (⌥⌘T)")
-    }
-}

@@ -12,6 +12,7 @@ struct SidebarHeader: View {
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toolbarManager: ToolbarManager
+    @EnvironmentObject var privacyMode: PrivacyMode
 
     private var sidebarIcon: String {
         sidebarManager.sidebarPosition == .secondary ? "sidebar.right" : "sidebar.left"
@@ -52,41 +53,15 @@ struct SidebarHeader: View {
                         Spacer()
                     }
 
-                    URLBarButton(
-                        systemName: "chevron.left",
-                        isEnabled: tabManager.activeTab?.canGoBack ?? false,
-                        foregroundColor: theme.foreground.opacity(0.7),
-                        action: {
-                            if let activeTab = tabManager.activeTab {
-                                activeTab.goBack()
-                            }
+                    // The address bar is hidden: back, forward, reload and its
+                    // tools (one menu); narrow, only the menu (⌘[, ⌘], ⌘R).
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 0) {
+                            navigationButtons
+                            toolsMenu
                         }
-                    )
-                    .oraShortcutHelp("Go Back", for: KeyboardShortcuts.Navigation.back)
-
-                    URLBarButton(
-                        systemName: "chevron.right",
-                        isEnabled: tabManager.activeTab?.canGoForward ?? false,
-                        foregroundColor: theme.foreground.opacity(0.7),
-                        action: {
-                            if let activeTab = tabManager.activeTab {
-                                activeTab.goForward()
-                            }
-                        }
-                    )
-                    .oraShortcutHelp("Go Forward", for: KeyboardShortcuts.Navigation.forward)
-
-                    URLBarButton(
-                        systemName: "arrow.clockwise",
-                        isEnabled: tabManager.activeTab != nil,
-                        foregroundColor: theme.foreground.opacity(0.7),
-                        action: {
-                            if let activeTab = tabManager.activeTab {
-                                activeTab.reload()
-                            }
-                        }
-                    )
-                    .oraShortcutHelp("Reload This Page", for: KeyboardShortcuts.Navigation.reload)
+                        toolsMenu
+                    }
 
                     if sidebarManager.sidebarPosition == .secondary {
                         Spacer()
@@ -103,6 +78,52 @@ struct SidebarHeader: View {
         }
         .padding(.horizontal, 18)
         .frame(height: 38)
+    }
+
+    @ViewBuilder
+    private var toolsMenu: some View {
+        if !privacyMode.isPrivate {
+            SidebarToolsMenu()
+        }
+    }
+
+    @ViewBuilder
+    private var navigationButtons: some View {
+        URLBarButton(
+            systemName: "chevron.left",
+            isEnabled: tabManager.activeTab?.canGoBack ?? false,
+            foregroundColor: theme.foreground.opacity(0.7),
+            action: {
+                if let activeTab = tabManager.activeTab {
+                    activeTab.goBack()
+                }
+            }
+        )
+        .oraShortcutHelp("Go Back", for: KeyboardShortcuts.Navigation.back)
+
+        URLBarButton(
+            systemName: "chevron.right",
+            isEnabled: tabManager.activeTab?.canGoForward ?? false,
+            foregroundColor: theme.foreground.opacity(0.7),
+            action: {
+                if let activeTab = tabManager.activeTab {
+                    activeTab.goForward()
+                }
+            }
+        )
+        .oraShortcutHelp("Go Forward", for: KeyboardShortcuts.Navigation.forward)
+
+        URLBarButton(
+            systemName: "arrow.clockwise",
+            isEnabled: tabManager.activeTab != nil,
+            foregroundColor: theme.foreground.opacity(0.7),
+            action: {
+                if let activeTab = tabManager.activeTab {
+                    activeTab.reload()
+                }
+            }
+        )
+        .oraShortcutHelp("Reload This Page", for: KeyboardShortcuts.Navigation.reload)
     }
 }
 

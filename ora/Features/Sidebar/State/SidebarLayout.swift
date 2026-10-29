@@ -6,9 +6,10 @@ import CoreGraphics
 /// Safari or Arc: a share made the sidebar's narrowest width grow with the
 /// window (about 290 pt on a large display).
 enum SidebarLayout {
-    /// Narrowest sidebar: favorites (3 columns), tab rows, the bottom bar and
-    /// the window buttons still fit.
-    static let minimumWidth: CGFloat = 140
+    /// Narrowest sidebar: the window buttons, the sidebar button and the tools
+    /// menu, favorites (3 columns), tab rows, and the bottom bar (settings,
+    /// spaces, new space) still fit; at 140 pt the bottom bar was cut.
+    static let minimumWidth: CGFloat = 200
 
     /// Widest sidebar, as a share of the window.
     static let maximumFraction: CGFloat = 0.30

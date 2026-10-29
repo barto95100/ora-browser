@@ -134,6 +134,7 @@ struct OraRoot: View {
                 }
                 guard let newWindow, !privacyMode.isPrivate else { return }
                 BrowsingTimeTracker.shared.register(newWindow, tabManager: tabManager)
+                BrowserWindows.normal.add(newWindow)
                 for file in ExternalFileOpener.shared.register(newWindow) {
                     tabManager.openTab(
                         url: file,
@@ -254,6 +255,12 @@ struct OraRoot: View {
                         appState.showHistory = false
                         appState.showTime = false
                         appState.showNotes.toggle()
+                    }
+                }
+                NotificationCenter.default.addObserver(forName: .showSettings, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window else { return }
+                        appState.showSettings.toggle()
                     }
                 }
                 NotificationCenter.default.addObserver(forName: .showTime, object: nil, queue: .main) { note in

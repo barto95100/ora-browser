@@ -81,16 +81,21 @@ struct SettingsContentView: View {
             .navigationSplitViewColumnWidth(200)
             .padding(.top, 8)
         } detail: {
-            detailView
+            SettingsDetailView(tab: selectedTab)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .navigationTitle(selectedTab.title)
                 .navigationSubtitle(selectedTab.subtitle)
         }
     }
+}
 
-    @ViewBuilder
-    private var detailView: some View {
-        switch selectedTab {
+/// The page of a settings section, in the settings window or in the browser
+/// window (`InWindowSettingsView`).
+struct SettingsDetailView: View {
+    let tab: SettingsTab
+
+    var body: some View {
+        switch tab {
         case .general:
             GeneralSettingsView()
         case .spaces:

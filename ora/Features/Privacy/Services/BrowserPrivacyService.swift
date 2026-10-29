@@ -520,9 +520,13 @@ final class BrowserPrivacyService {
         }
     }
 
+    /// The domain and its subdomains, whatever the path or port. Without "|":
+    /// WebKit's content rules reject a disjunction, and with it the whole list
+    /// ("Disjunctions are not supported yet"). An address always has a "/"
+    /// after its host, so `[/:]` ends the domain.
     static func regexForDomain(_ domain: String) -> String {
         let escapedDomain = NSRegularExpression.escapedPattern(for: domain)
-        return "^https?://([^/]+\\.)?\(escapedDomain)(?:[/:]|$)"
+        return "^https?://([^/:]+\\.)?\(escapedDomain)[/:]"
     }
 
     private static func encodeRules(_ rules: [[String: Any]]) -> String {

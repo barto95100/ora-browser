@@ -1,10 +1,11 @@
+import SwiftData
 import SwiftUI
 
 /// A site's icon, from the history; its initial when it has none.
 struct SiteIconView: View {
     let domain: String
     var size: CGFloat = 18
-    @EnvironmentObject var historyManager: HistoryManager
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.theme) private var theme
     @State private var icon: SiteIcon?
 
@@ -26,6 +27,6 @@ struct SiteIconView: View {
             }
         }
         .frame(width: size, height: size)
-        .task(id: domain) { icon = historyManager.siteIcon(for: domain) }
+        .task(id: domain) { icon = SiteIcon.find(for: domain, in: modelContext) }
     }
 }

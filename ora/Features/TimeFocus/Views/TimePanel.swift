@@ -61,15 +61,22 @@ struct TimePanel: View {
         return VStack(alignment: .leading, spacing: 14) {
             toolbar
             ScrollView {
-                VStack(spacing: 14) {
-                    summaryCard(shown)
-                    sitesCard(shown)
-                    footnote
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(spacing: 14) {
+                        summaryCard(shown)
+                        sitesCard(shown)
+                    }
+                    VStack(spacing: 14) {
+                        FocusCard(spaceID: spaceID)
+                        blockedCard
+                        footnote
+                    }
+                    .frame(width: 300)
                 }
             }
         }
         .padding(20)
-        .frame(maxWidth: 760, maxHeight: 700)
+        .frame(maxWidth: 1080, maxHeight: 720)
         .background(theme.launcherMainBackground)
         .background(BlurEffectView(material: .popover, blendingMode: .withinWindow))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -242,6 +249,35 @@ struct TimePanel: View {
                 store.delete(domain: site.domain)
             }
         }
+    }
+
+    /// The space's sites blocked during focus; its most used sites of the
+    /// last 7 days are offered.
+    @ViewBuilder
+    private var blockedCard: some View {
+        if let spaceID {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Blocked During Focus")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("These sites stay closed during a focus cycle in \(spaceName). Breaks open them again.")
+                    .font(.system(size: 11))
+                    .foregroundColor(theme.mutedForeground)
+                    .fixedSize(horizontal: false, vertical: true)
+                FocusBlockedSitesView(spaceID: spaceID, suggestions: suggestedSites)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(card)
+        }
+    }
+
+    private var suggestedSites: [String] {
+        _ = store.revision
+        let week = DateInterval(start: Date().addingTimeInterval(-7 * 86400), end: Date())
+        let seconds = store.entries(in: week)
+            .filter { $0.spaceID == spaceID }
+            .reduce(into: [String: Double]()) { $0[$1.domain, default: 0] += $1.seconds }
+        return seconds.sorted { $0.value > $1.value }.map(\.key)
     }
 
     private var footnote: some View {

@@ -381,6 +381,7 @@ struct URLBar: View {
             PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
 
             if !privacyMode.isPrivate {
+                FocusIndicator(foregroundColor: buttonForegroundColor)
                 TabNoteButton(foregroundColor: buttonForegroundColor)
                 TasksButton(foregroundColor: buttonForegroundColor)
             }

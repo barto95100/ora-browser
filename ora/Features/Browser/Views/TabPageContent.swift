@@ -84,6 +84,8 @@ struct TabPageContent: View {
                     }
                     .animation(.easeOut(duration: 0.2), value: tab.showsCrashRecoveryNotice)
                     .animation(.easeOut(duration: 0.2), value: tab.folderAccessRequest)
+                    // A site blocked during focus.
+                    .overlay { FocusBlockView(tab: tab) }
             } else {
                 ZStack {
                     Rectangle().fill(theme.background)

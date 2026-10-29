@@ -74,6 +74,9 @@ class Tab: ObservableObject, Identifiable {
     /// Folder of a local page whose images and styles are blocked, offered to
     /// the user (see `Tab+LocalFile.swift`).
     @Transient @Published var folderAccessRequest: URL?
+    /// Loads kept from the current page by content rules, by host (see
+    /// `Tab+Protections.swift`).
+    @Transient @Published var blockedContent: [String: Int] = [:]
 
     @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
 

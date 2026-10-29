@@ -24,6 +24,10 @@ extension BrowserPage: WKNavigationDelegate {
 
         switch delegate?.browserPage(self, decidePolicyFor: action) ?? .allow {
         case .allow:
+            // A site exempted from protections loads without content rules.
+            if navigationAction.targetFrame?.isMainFrame ?? true, let url = navigationAction.request.url {
+                setContentBlocking(enabled: delegate?.browserPage(self, allowsContentBlockingFor: url) ?? true)
+            }
             if let upgraded = httpsURL(for: navigationAction) {
                 decisionHandler(.cancel)
                 var request = navigationAction.request
@@ -191,6 +195,20 @@ extension BrowserPage: WKNavigationDelegate {
     /// page's context menu. Private WebKit delegate method
     /// (WKNavigationDelegatePrivate, macOS 12+): without it, WebKit creates the
     /// download but nothing takes care of it, so it never starts.
+    /// A content rule acted on a load (WKNavigationDelegatePrivate, the method
+    /// Safari's privacy report uses). Counted for the shield of the address
+    /// bar, except cookie-only rules.
+    @objc(_webView:contentRuleListWithIdentifier:performedAction:forURL:)
+    func webView(
+        _ webView: WKWebView,
+        contentRuleListWithIdentifier identifier: String,
+        performedAction action: NSObject,
+        forURL url: URL
+    ) {
+        guard BrowserPrivacyService.blocksContent(ruleListIdentifier: identifier) else { return }
+        notifyOnMain { $0.delegate?.browserPage($0, didBlockContentFrom: url) }
+    }
+
     @objc(_webView:contextMenuDidCreateDownload:)
     func webView(_ webView: WKWebView, contextMenuDidCreate download: WKDownload) {
         guard let downloadURL = download.originalRequest?.url else { return }

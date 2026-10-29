@@ -329,7 +329,8 @@ struct URLBar: View {
                         .tint(buttonForegroundColor)
                         .scaleEffect(0.5)
                 } else {
-                    Image(systemName: tab.url.scheme == "https" ? "shield.lefthalf.filled" : "globe")
+                    // A lock, like Safari: the shield is the privacy protections'.
+                    Image(systemName: tab.url.scheme == "https" ? "lock.fill" : "globe")
                         .font(.system(size: 12))
                         .foregroundColor(buttonForegroundColor)
                 }
@@ -374,6 +375,8 @@ struct URLBar: View {
             if privacyMode.isPrivate {
                 PrivateBrowsingBadge(foregroundColor: buttonForegroundColor)
             }
+
+            PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
 
             MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in
                 tab.toggleCapture(device)

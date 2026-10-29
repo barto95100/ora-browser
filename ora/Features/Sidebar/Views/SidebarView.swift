@@ -255,6 +255,7 @@ struct SidebarView: View {
             if !privacyMode.isPrivate {
                 HStack {
                     DownloadsWidget()
+                    NotesButton()
                     Spacer()
                     ContainerSwitcher(onContainerSelected: onContainerSelected)
                     Spacer()

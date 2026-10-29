@@ -380,6 +380,10 @@ struct URLBar: View {
 
             PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
 
+            if !privacyMode.isPrivate {
+                TabNoteButton(foregroundColor: buttonForegroundColor)
+            }
+
             MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in
                 tab.toggleCapture(device)
             }

@@ -95,6 +95,22 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
         let tabID = (userInfo[Self.tabIDKey] as? String).flatMap(UUID.init(uuidString:))
         let notificationID = userInfo[Self.notificationIDKey] as? String
         let isClick = response.actionIdentifier == UNNotificationDefaultActionIdentifier
+        // A task reminder (see `TaskReminders`): its space's list.
+        if userInfo[TaskReminders.taskIDKey] != nil {
+            let spaceID = (userInfo[TaskReminders.spaceIDKey] as? String).flatMap(UUID.init(uuidString:))
+            DispatchQueue.main.async {
+                if isClick {
+                    NSApp.activate()
+                    NotificationCenter.default.post(
+                        name: .openTaskReminder,
+                        object: nil,
+                        userInfo: spaceID.map { ["spaceID": $0] } ?? [:]
+                    )
+                }
+                completionHandler()
+            }
+            return
+        }
         DispatchQueue.main.async {
             if isClick, let tabID {
                 self.openTab(tabID, notificationID: notificationID)

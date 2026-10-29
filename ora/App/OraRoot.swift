@@ -250,6 +250,22 @@ struct OraRoot: View {
                         appState.showNotes.toggle()
                     }
                 }
+                NotificationCenter.default.addObserver(forName: .showTasks, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window ?? NSApp.keyWindow, !privacyMode.isPrivate,
+                              tabManager.activeTab != nil
+                        else { return }
+                        appState.showTasks.toggle()
+                    }
+                }
+                // A task reminder clicked: its space and its list, in the front window.
+                NotificationCenter.default.addObserver(forName: .openTaskReminder, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard window === NSApp.keyWindow, !privacyMode.isPrivate else { return }
+                        tabManager.showTasks(ofSpace: note.userInfo?["spaceID"] as? UUID)
+                        appState.showTasks = tabManager.activeTab != nil
+                    }
+                }
                 NotificationCenter.default.addObserver(forName: .openPeekInTab, object: nil, queue: .main) { note in
                     Task { @MainActor in
                         guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

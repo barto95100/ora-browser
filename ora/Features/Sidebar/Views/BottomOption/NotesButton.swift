@@ -15,7 +15,7 @@ struct NotesButton: View {
             Image(systemName: "note.text")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.secondary)
-                .frame(width: 32, height: 32)
+                .frame(width: 28, height: 32)
                 .background(isHovering ? theme.invertedSolidWindowBackgroundColor.opacity(0.1) : .clear)
                 .cornerRadius(8)
         }

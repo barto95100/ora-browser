@@ -382,6 +382,7 @@ struct URLBar: View {
 
             if !privacyMode.isPrivate {
                 TabNoteButton(foregroundColor: buttonForegroundColor)
+                TasksButton(foregroundColor: buttonForegroundColor)
             }
 
             MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in

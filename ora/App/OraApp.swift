@@ -52,7 +52,15 @@ class AppState: ObservableObject {
     /// The space's notes (⌥⌘N), see `NotesPanel`.
     @Published var showNotes: Bool = false
     /// The note of the current tab, at the right of the page, see `TabNotePanel`.
-    @Published var showTabNote: Bool = false
+    /// It shares that place with the tasks: one at a time.
+    @Published var showTabNote: Bool = false {
+        didSet { if showTabNote { showTasks = false } }
+    }
+
+    /// The space's tasks, at the right of the page, see `TasksPanel`.
+    @Published var showTasks: Bool = false {
+        didSet { if showTasks { showTabNote = false } }
+    }
     /// An area of the page to trace for a note, see `AreaCaptureOverlay`.
     @Published var areaCapture: AreaCaptureRequest?
     @Published var launcherSearchText: String = ""

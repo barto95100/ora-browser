@@ -80,7 +80,11 @@ struct GeneralSettingsView: View {
 
                 Toggle("Auto Picture-in-Picture on tab switch", isOn: $settings.autoPiPEnabled)
 
-                Toggle("Open links from pinned tabs to other sites in Peek", isOn: $settings.peekEnabled)
+                Picker("Links from pinned tabs to other sites", selection: $settings.pinnedLinkBehavior) {
+                    ForEach(PinnedLinkBehavior.allCases) { behavior in
+                        Text(behavior.title).tag(behavior)
+                    }
+                }
             }
 
             SettingsCard(header: "Updates") {

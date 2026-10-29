@@ -1,5 +1,26 @@
 import AppKit
 
+/// What a click on a link from a pinned or favorite tab to another site does
+/// (General settings).
+enum PinnedLinkBehavior: String, CaseIterable, Identifiable {
+    /// A preview over the page, like Arc.
+    case peek
+    case newTab
+    case sameTab
+
+    var id: String {
+        rawValue
+    }
+
+    var title: String {
+        switch self {
+        case .peek: "Peek"
+        case .newTab: "New Tab"
+        case .sameTab: "Same Tab"
+        }
+    }
+}
+
 /// When a link opens in Peek, like Arc: a plain click, in a pinned or favorite
 /// tab, on a link to another web site. The pinned page stays where it is.
 enum PeekPolicy {

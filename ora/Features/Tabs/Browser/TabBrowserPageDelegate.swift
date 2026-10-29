@@ -12,7 +12,9 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         _ page: BrowserPage,
         decidePolicyFor navigationAction: BrowserNavigationAction
     ) -> BrowserNavigationActionDisposition {
-        // Links from pinned and favorite tabs to other sites: Peek, like Arc.
+        // Links from pinned and favorite tabs to other sites: Peek (like Arc)
+        // or a new tab, as set in General settings.
+        let pinnedLinkBehavior = SettingsStore.shared.pinnedLinkBehavior
         if let tab, let url = navigationAction.request.url,
            PeekPolicy.opensInPeek(
                tabType: tab.type,
@@ -20,19 +22,23 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                modifierFlags: navigationAction.modifierFlags,
                from: tab.url,
                to: url,
-               isEnabled: SettingsStore.shared.peekEnabled
+               isEnabled: pinnedLinkBehavior != .sameTab
            )
         {
-            tab.openPeek(url)
+            if pinnedLinkBehavior == .peek {
+                tab.openPeek(url)
+            } else if let tabManager = tab.tabManager {
+                MainActor.assumeIsolated {
+                    _ = tabManager.openLinkTab(url, from: tab, disposition: .foreground)
+                }
+            }
             return .cancel
         }
 
         guard navigationAction.modifierFlags.contains(.command),
               let url = navigationAction.request.url,
               let tab,
-              let tabManager = tab.tabManager,
-              let historyManager = tab.historyManager,
-              let downloadManager = tab.downloadManager
+              let tabManager = tab.tabManager
         else {
             return .allow
         }
@@ -42,33 +48,15 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         // (`.openInNewTab` would have the page open it a second time).
         let inFront = navigationAction.modifierFlags.contains(.shift)
         MainActor.assumeIsolated {
-            _ = tabManager.openTab(
-                url: url,
-                historyManager: historyManager,
-                downloadManager: downloadManager,
-                focusAfterOpening: inFront,
-                isPrivate: tab.isPrivate,
-                loadSilently: !inFront
-            )
+            _ = tabManager.openLinkTab(url, from: tab, disposition: inFront ? .foreground : .background)
         }
         return .cancel
     }
 
-    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL) {
-        guard let tab,
-              let tabManager = tab.tabManager,
-              let historyManager = tab.historyManager
-        else {
-            return
-        }
-
+    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
+        guard let tab, let tabManager = tab.tabManager else { return }
         MainActor.assumeIsolated {
-            _ = tabManager.openTab(
-                url: url,
-                historyManager: historyManager,
-                downloadManager: tab.downloadManager,
-                isPrivate: tab.isPrivate
-            )
+            _ = tabManager.openLinkTab(url, from: tab, disposition: disposition)
         }
     }
 

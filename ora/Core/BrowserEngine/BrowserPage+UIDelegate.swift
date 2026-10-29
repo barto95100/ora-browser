@@ -94,7 +94,7 @@ extension BrowserPage: WKUIDelegate {
             }
         }
         if let url = navigationAction.request.url {
-            delegate?.browserPage(self, didRequestOpenInNewTab: url)
+            delegate?.browserPage(self, didRequestOpenInNewTab: url, disposition: takeNewTabDisposition())
         }
         return nil
     }

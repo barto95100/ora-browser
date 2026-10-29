@@ -27,6 +27,8 @@ struct SidebarView: View {
 
     /// Downloads transition state
     @State private var dragOffset: CGFloat = 0
+    /// Width of the bottom bar: narrow, its tools gather in a menu.
+    @State private var bottomBarWidth: CGFloat = 320
 
     /// Trackpad and Magic Mouse swipes, handled here rather than by the page
     /// controller (whose transition felt slow): one swipe changes space with a
@@ -253,14 +255,21 @@ struct SidebarView: View {
             }
 
             if !privacyMode.isPrivate {
-                HStack {
-                    DownloadsWidget()
-                    NotesButton()
-                    Spacer()
+                // In a narrow sidebar, downloads, notes and tasks gather in one
+                // menu, so that the spaces keep their room.
+                HStack(spacing: 2) {
+                    if bottomBarWidth < 260 {
+                        SidebarToolsMenu()
+                    } else {
+                        DownloadsWidget()
+                        NotesButton()
+                        SidebarTasksButton()
+                    }
                     ContainerSwitcher(onContainerSelected: onContainerSelected)
-                    Spacer()
+                        .padding(.horizontal, 4)
                     NewContainerButton()
                 }
+                .onGeometryChange(for: CGFloat.self, of: \.size.width) { bottomBarWidth = $0 }
                 .padding(.horizontal, 10)
             }
         }

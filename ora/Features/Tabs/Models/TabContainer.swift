@@ -19,6 +19,8 @@ class TabContainer: ObservableObject, Identifiable {
 
     @Relationship(deleteRule: .cascade) var tabs: [Tab] = []
     @Relationship(deleteRule: .cascade) var folders: [Folder] = []
+    /// The space's tasks (subtasks hang from their task), see `TasksPanel`.
+    @Relationship(deleteRule: .cascade, inverse: \SpaceTask.container) var tasks: [SpaceTask] = []
     @Relationship var history: [History] = []
 
     init(

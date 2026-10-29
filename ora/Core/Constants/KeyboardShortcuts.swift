@@ -250,6 +250,12 @@ enum KeyboardShortcuts {
             category: "Notes",
             defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command, .option])
         )
+        static let tasks = KeyboardShortcutDefinition(
+            id: "notes.tasks",
+            name: "Show Tasks",
+            category: "Notes",
+            defaultChord: KeyChord(keyEquivalent: .init("t"), modifiers: [.command, .option])
+        )
     }
 
     // MARK: - Zoom
@@ -351,7 +357,7 @@ enum KeyboardShortcuts {
         History.show,
 
         // Notes
-        Notes.show,
+        Notes.show, Notes.tasks,
 
         // Zoom
         Zoom.zoomIn, Zoom.zoomOut, Zoom.reset,

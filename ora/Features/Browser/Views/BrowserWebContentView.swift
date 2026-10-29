@@ -77,15 +77,24 @@ struct BrowserWebContentView: View {
                     }
                 }
 
-                // The tab's note, beside the page.
-                if appState.showTabNote, !privacyMode.isPrivate {
-                    TabNotePanel(tab: tab)
-                        .frame(width: 320)
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                // The tab's note or the space's tasks, beside the page. The side
+                // slides in and out; from one to the other it fades (a slide
+                // left the note's images, drawn by AppKit, ahead of the rest).
+                if appState.showTabNote || appState.showTasks, !privacyMode.isPrivate {
+                    Group {
+                        if appState.showTabNote {
+                            TabNotePanel(tab: tab).transition(.opacity)
+                        } else {
+                            TasksPanel(tab: tab).transition(.opacity)
+                        }
+                    }
+                    .frame(width: 320)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
         }
-        .animation(.easeOut(duration: 0.2), value: appState.showTabNote)
+        .animation(.easeOut(duration: 0.2), value: appState.showTabNote || appState.showTasks)
+        .animation(.easeInOut(duration: 0.2), value: appState.showTabNote)
         .animation(.easeOut(duration: 0.2), value: appState.isURLBarEditing)
         .animation(.easeOut(duration: 0.15), value: tabManager.peek?.id)
         // A page left unloaded by a crash while in the background reloads now.

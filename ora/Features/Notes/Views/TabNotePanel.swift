@@ -125,6 +125,16 @@ struct TabNotePanel: View {
                 .help(isEditing ? "Read" : "Edit")
             }
             Button {
+                appState.showLauncher = false
+                appState.showHistory = false
+                appState.showTime = false
+                appState.showNotes = true
+            } label: {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+            }
+            .buttonStyle(.plain)
+            .help("All Notes of the Space (⌥⌘N)")
+            Button {
                 appState.showTabNote = false
             } label: {
                 Image(systemName: "xmark")

@@ -45,21 +45,46 @@ func deleteSwiftDataStore(_ loc: String) {
     try? fileManager.removeItem(at: walURL)
 }
 
+enum SidePanel {
+    case tabNote
+    case tasks
+    case time
+}
+
 class AppState: ObservableObject {
     @Published var showLauncher: Bool = false
     /// The history panel (⌘Y), see `HistoryPanel`.
     @Published var showHistory: Bool = false
     /// The space's notes (⌥⌘N), see `NotesPanel`.
     @Published var showNotes: Bool = false
-    /// The note of the current tab, at the right of the page, see `TabNotePanel`.
-    /// It shares that place with the tasks: one at a time.
-    @Published var showTabNote: Bool = false {
-        didSet { if showTabNote { showTasks = false } }
+    /// The browsing time (⌥⌘Y), see `TimePanel`.
+    @Published var showTime: Bool = false
+    /// What is shown at the right of the page, one at a time: the tab's note
+    /// (`TabNotePanel`), the space's tasks (`TasksPanel`) or today's browsing
+    /// time (`TimeSidePanel`).
+    @Published var sidePanel: SidePanel?
+
+    var showTabNote: Bool {
+        get { sidePanel == .tabNote }
+        set { setSidePanel(.tabNote, shown: newValue) }
     }
 
-    /// The space's tasks, at the right of the page, see `TasksPanel`.
-    @Published var showTasks: Bool = false {
-        didSet { if showTasks { showTabNote = false } }
+    var showTasks: Bool {
+        get { sidePanel == .tasks }
+        set { setSidePanel(.tasks, shown: newValue) }
+    }
+
+    var showTimeSummary: Bool {
+        get { sidePanel == .time }
+        set { setSidePanel(.time, shown: newValue) }
+    }
+
+    private func setSidePanel(_ panel: SidePanel, shown: Bool) {
+        if shown {
+            sidePanel = panel
+        } else if sidePanel == panel {
+            sidePanel = nil
+        }
     }
     /// An area of the page to trace for a note, see `AreaCaptureOverlay`.
     @Published var areaCapture: AreaCaptureRequest?

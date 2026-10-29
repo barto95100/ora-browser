@@ -255,15 +255,16 @@ struct SidebarView: View {
             }
 
             if !privacyMode.isPrivate {
-                // In a narrow sidebar, downloads, notes and tasks gather in one
+                // In a narrow sidebar, downloads, notes, tasks and time gather in one
                 // menu, so that the spaces keep their room.
                 HStack(spacing: 2) {
-                    if bottomBarWidth < 260 {
+                    if bottomBarWidth < 290 {
                         SidebarToolsMenu()
                     } else {
                         DownloadsWidget()
                         NotesButton()
                         SidebarTasksButton()
+                        SidebarTimeButton()
                     }
                     ContainerSwitcher(onContainerSelected: onContainerSelected)
                         .padding(.horizontal, 4)

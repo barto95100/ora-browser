@@ -103,6 +103,9 @@ struct BrowserView: View {
                     if appState.showNotes {
                         NotesPanel()
                     }
+                    if appState.showTime {
+                        TimePanel()
+                    }
                 }
 
             if sidebarManager.isSidebarHidden {

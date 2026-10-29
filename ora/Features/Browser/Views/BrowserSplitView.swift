@@ -6,6 +6,7 @@ struct BrowserSplitView: View {
     @EnvironmentObject var toolbarManager: ToolbarManager
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toastManager: ToastManager
+    @EnvironmentObject var privacyMode: PrivacyMode
 
     private var targetSide: SplitSide {
         sidebarManager.sidebarPosition == .primary ? .primary : .secondary
@@ -79,7 +80,11 @@ struct BrowserSplitView: View {
 
     private func contentView() -> some View {
         Group {
-            if let activeTab = tabManager.activeTab {
+            if appState.showSettings, !privacyMode.isPrivate {
+                BrowserContentContainer {
+                    InWindowSettingsView()
+                }
+            } else if let activeTab = tabManager.activeTab {
                 BrowserContentContainer {
                     BrowserWebContentView(tab: activeTab)
                 }
@@ -90,5 +95,7 @@ struct BrowserSplitView: View {
             }
         }
         .toast(manager: toastManager)
+        // Picking a tab leaves the settings.
+        .onChange(of: tabManager.activeTab?.id) { appState.showSettings = false }
     }
 }

@@ -74,18 +74,24 @@ struct SidebarURLDisplay: View {
                 }
                 Spacer(minLength: 0)
 
-                Button {
-                    triggerCopy(tab.url.absoluteString)
-                } label: {
-                    Image(systemName: "link")
-                        .font(.system(size: 14))
-                        .foregroundColor(isHoveringCopy ? theme.foreground.opacity(0.8) : theme.mutedForeground)
-                }
-                .buttonStyle(.plain)
-                .onHover { hovering in
-                    isHoveringCopy = hovering
-                }
-                .animation(.easeOut(duration: 0.15), value: isHoveringCopy)
+                // A gesture before the card's own (which opens the launcher)
+                // so the click copies; a check mark tells it.
+                Image(systemName: showCopiedAnimation ? "checkmark" : "link")
+                    .font(.system(size: 14, weight: showCopiedAnimation ? .semibold : .regular))
+                    .foregroundColor(
+                        showCopiedAnimation ? theme.accent
+                            : isHoveringCopy ? theme.foreground.opacity(0.8) : theme.mutedForeground
+                    )
+                    .frame(width: 18, height: 18)
+                    .contentShape(Rectangle())
+                    .highPriorityGesture(TapGesture().onEnded { triggerCopy(tab.url.absoluteString) })
+                    .help("Copy URL")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel(Text("Copy URL"))
+                    .onHover { hovering in
+                        isHoveringCopy = hovering
+                    }
+                    .animation(.easeOut(duration: 0.15), value: isHoveringCopy)
             } else {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 12))

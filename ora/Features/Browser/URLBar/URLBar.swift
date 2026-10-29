@@ -382,27 +382,28 @@ struct URLBar: View {
 
             if !privacyMode.isPrivate {
                 FocusIndicator(foregroundColor: buttonForegroundColor)
-                TabNoteButton(foregroundColor: buttonForegroundColor)
-                TasksButton(foregroundColor: buttonForegroundColor)
+                URLBarTools(foregroundColor: buttonForegroundColor)
             }
 
             MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in
                 tab.toggleCapture(device)
             }
 
-            Button {
-                if let activeTab = tabManager.activeTab {
-                    triggerCopy(activeTab.url.absoluteString)
-                }
-            } label: {
-                Image(systemName: "link")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundColor(buttonForegroundColor)
-                    .frame(width: 16, height: 16)
-            }
-            .buttonStyle(.plain)
-            .oraShortcutHelp("Copy URL", for: KeyboardShortcuts.Address.copyURL)
-            .accessibilityLabel(Text("Copy URL"))
+            // A gesture before the bar's own (which starts editing) so the
+            // click copies; a check mark tells it.
+            Image(systemName: showCopiedAnimation ? "checkmark" : "link")
+                .font(.system(size: 12, weight: showCopiedAnimation ? .semibold : .regular))
+                .foregroundColor(buttonForegroundColor)
+                .frame(width: 16, height: 16)
+                .contentShape(Rectangle())
+                .highPriorityGesture(TapGesture().onEnded {
+                    if let activeTab = tabManager.activeTab {
+                        triggerCopy(activeTab.url.absoluteString)
+                    }
+                })
+                .accessibilityAddTraits(.isButton)
+                .oraShortcutHelp("Copy URL", for: KeyboardShortcuts.Address.copyURL)
+                .accessibilityLabel(Text("Copy URL"))
         }
         .frame(height: 30)
         .padding(.horizontal, 8)

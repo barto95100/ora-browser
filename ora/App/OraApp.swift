@@ -59,6 +59,8 @@ class AppState: ObservableObject {
     @Published var showNotes: Bool = false
     /// The browsing time (⌥⌘Y), see `TimePanel`.
     @Published var showTime: Bool = false
+    /// The settings in place of the page, see `InWindowSettingsView`.
+    @Published var showSettings: Bool = false
     /// What is shown at the right of the page, one at a time: the tab's note
     /// (`TabNotePanel`), the space's tasks (`TasksPanel`) or today's browsing
     /// time (`TimeSidePanel`).

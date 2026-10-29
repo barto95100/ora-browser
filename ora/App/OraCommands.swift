@@ -230,8 +230,14 @@ struct OraCommands: Commands {
         }
 
         CommandGroup(replacing: .appSettings) {
+            // In the browser window, like the rest; the settings window
+            // from a private window or another window.
             Button("Settings...") {
-                openWindow(id: "settings")
+                if BrowserWindows.isNormal(NSApp.keyWindow) {
+                    NotificationCenter.default.post(name: .showSettings, object: NSApp.keyWindow)
+                } else {
+                    openWindow(id: "settings")
+                }
             }
             .keyboardShortcut(",", modifiers: .command)
         }

@@ -8,10 +8,19 @@ extension BrowserPage: WKNavigationDelegate {
         decidePolicyFor navigationAction: WKNavigationAction,
         decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
     ) {
-        // Links the site marks as downloads (`<a download>`): download instead
-        // of navigating. Continues in webView(_:navigationAction:didBecome:).
+        // Links the site marks as downloads (`<a download>`): downloaded by the
+        // page itself (its cookies, so a signed-in site works). Answering
+        // `.download` relied on WebKit calling
+        // webView(_:navigationAction:didBecome:), which it did not: the click
+        // did nothing.
         if navigationAction.shouldPerformDownload {
-            decisionHandler(.download)
+            decisionHandler(.cancel)
+            let request = navigationAction.request
+            webView.startDownload(using: request) { [weak self] download in
+                guard let self, let url = request.url else { return }
+                let task = BrowserDownloadTask(download: download, originalURL: url)
+                self.delegate?.browserPage(self, didStartDownload: task)
+            }
             return
         }
 
@@ -177,7 +186,12 @@ extension BrowserPage: WKNavigationDelegate {
         decidePolicyFor navigationResponse: WKNavigationResponse,
         decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
     ) {
-        if navigationResponse.canShowMIMEType {
+        // Shown unless WebKit can't, or the server says it is a file to save
+        // ("Content-Disposition: attachment"), like Safari.
+        let isAttachment = (navigationResponse.response as? HTTPURLResponse)?
+            .value(forHTTPHeaderField: "Content-Disposition")?
+            .trimmingCharacters(in: .whitespaces).lowercased().hasPrefix("attachment") ?? false
+        if navigationResponse.canShowMIMEType, !isAttachment {
             isDownloadNavigation = false
             originalURL = nil
             decisionHandler(.allow)

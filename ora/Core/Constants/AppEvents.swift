@@ -9,6 +9,7 @@ extension Notification.Name {
     static let showHistory = Notification.Name("ShowHistory")
     static let showNotes = Notification.Name("ShowNotes")
     static let showTasks = Notification.Name("ShowTasks")
+    static let showTime = Notification.Name("ShowTime")
     /// A task reminder clicked; `userInfo["spaceID"]` is the task's space.
     static let openTaskReminder = Notification.Name("OpenTaskReminder")
     static let closeActiveTab = Notification.Name("CloseActiveTab")

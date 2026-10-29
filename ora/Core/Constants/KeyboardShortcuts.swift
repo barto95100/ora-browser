@@ -239,6 +239,12 @@ enum KeyboardShortcuts {
             category: "History",
             defaultChord: KeyChord(keyEquivalent: .init("y"), modifiers: [.command])
         )
+        static let time = KeyboardShortcutDefinition(
+            id: "history.time",
+            name: "Show Browsing Time",
+            category: "History",
+            defaultChord: KeyChord(keyEquivalent: .init("y"), modifiers: [.command, .option])
+        )
     }
 
     // MARK: - Notes
@@ -354,7 +360,7 @@ enum KeyboardShortcuts {
         Edit.find, Edit.findNext, Edit.findPrevious,
 
         // History
-        History.show,
+        History.show, History.time,
 
         // Notes
         Notes.show, Notes.tasks,

@@ -140,6 +140,11 @@ struct OraCommands: Commands {
             }
             .keyboardShortcut(KeyboardShortcuts.History.show.keyboardShortcut)
 
+            Button("Show Browsing Time") {
+                NotificationCenter.default.post(name: .showTime, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.History.time.keyboardShortcut)
+
             Button("Show Notes") {
                 NotificationCenter.default.post(name: .showNotes, object: NSApp.keyWindow)
             }

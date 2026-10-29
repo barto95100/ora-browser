@@ -71,6 +71,9 @@ struct OraRoot: View {
     var body: some View {
         BrowserView()
             .background(WindowReader(window: $window))
+            // Browsing time: the page in front changed.
+            .onChange(of: tabManager.activeTab?.id) { BrowsingTimeTracker.shared.refresh() }
+            .onChange(of: tabManager.activeTab?.url) { BrowsingTimeTracker.shared.refresh() }
             .background(
                 WindowAccessor(
                     isFullscreen: Binding(
@@ -130,6 +133,7 @@ struct OraRoot: View {
                     newWindow.title = "Private Browsing"
                 }
                 guard let newWindow, !privacyMode.isPrivate else { return }
+                BrowsingTimeTracker.shared.register(newWindow, tabManager: tabManager)
                 for file in ExternalFileOpener.shared.register(newWindow) {
                     tabManager.openTab(
                         url: file,
@@ -236,6 +240,7 @@ struct OraRoot: View {
                         else { return }
                         appState.showLauncher = false
                         appState.showNotes = false
+                        appState.showTime = false
                         appState.showHistory.toggle()
                     }
                 }
@@ -247,7 +252,18 @@ struct OraRoot: View {
                         else { return }
                         appState.showLauncher = false
                         appState.showHistory = false
+                        appState.showTime = false
                         appState.showNotes.toggle()
+                    }
+                }
+                NotificationCenter.default.addObserver(forName: .showTime, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window ?? NSApp.keyWindow, !privacyMode.isPrivate
+                        else { return }
+                        appState.showLauncher = false
+                        appState.showHistory = false
+                        appState.showNotes = false
+                        appState.showTime.toggle()
                     }
                 }
                 NotificationCenter.default.addObserver(forName: .showTasks, object: nil, queue: .main) { note in

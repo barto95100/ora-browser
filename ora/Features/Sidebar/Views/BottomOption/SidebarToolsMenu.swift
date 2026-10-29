@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Downloads, notes and tasks in one button, for a narrow sidebar. Like the
+/// Downloads, notes, tasks and browsing time in one button, for a narrow sidebar. Like the
 /// downloads button, a ring around it fills as downloads go on.
 struct SidebarToolsMenu: View {
     @EnvironmentObject var appState: AppState
@@ -51,7 +51,7 @@ struct SidebarToolsMenu: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help("Downloads, Notes, Tasks")
+        .help("Downloads, Notes, Tasks, Browsing Time")
     }
 
     private func showMenu() {
@@ -65,16 +65,17 @@ struct SidebarToolsMenu: View {
                 downloadManager.isShowingDownloadsHistory.toggle()
             }
         })
-        menu.addItem(ClosureMenuItem("Notes", symbol: "note.text", key: "n") {
-            appState.showLauncher = false
-            appState.showHistory = false
-            appState.showNotes.toggle()
+        menu.addItem(ClosureMenuItem("Notes", symbol: "note.text") {
+            appState.toggleTabNote(hasPage: tabManager.activeTab != nil)
         })
         let tasks = ClosureMenuItem("Tasks", symbol: "checklist", key: "t") {
             appState.showTasks.toggle()
         }
         tasks.isEnabled = tabManager.activeTab != nil
         menu.addItem(tasks)
+        menu.addItem(ClosureMenuItem("Browsing Time", symbol: "hourglass") {
+            appState.toggleTimeSummary(hasPage: tabManager.activeTab != nil)
+        })
         menu.autoenablesItems = false
         NSMenu.popUpContextMenu(menu, with: event, for: view)
     }

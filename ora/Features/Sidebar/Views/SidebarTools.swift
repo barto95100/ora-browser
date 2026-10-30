@@ -41,6 +41,15 @@ enum BrowserWindows {
         return NSApp.orderedWindows.first { isNormal($0) }
     }
 
+    /// Opens the settings at a section, in the front normal window.
+    static func showSettings(_ tab: SettingsTab) {
+        UserDefaults.standard.set(tab.rawValue, forKey: SettingsContentView.selectedTabDefaultsKey)
+        if let window = front {
+            window.makeKeyAndOrderFront(nil)
+            NotificationCenter.default.post(name: .showSettings, object: window, userInfo: ["open": true])
+        }
+    }
+
     /// Asks the front normal window to delete a space (from the settings).
     static func deleteSpace(_ spaceID: UUID) {
         if let window = front {

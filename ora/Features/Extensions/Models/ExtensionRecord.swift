@@ -6,6 +6,11 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     enum Source: Codable, Equatable {
         /// A Safari extension inside an app (from the App Store): the `.appex`.
         case safariApp(appexPath: String, bundleIdentifier: String)
+        /// From the Chrome Web Store: its id there, and its package in Ora
+        /// (a `.zip`, see `ExtensionPackages`).
+        case chromeWebStore(storeID: String, packagePath: String)
+        /// A folder or archive the user chose, copied into Ora.
+        case file(packagePath: String)
     }
 
     /// Also the extension's identity in WebKit (`uniqueIdentifier`), which
@@ -64,9 +69,32 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         installedAt = try container.decode(Date.self, forKey: .installedAt)
     }
 
-    var appexPath: String {
+    /// The app's `.appex`, or the package in Ora.
+    var path: String {
         switch source {
         case let .safariApp(path, _): path
+        case let .chromeWebStore(_, path): path
+        case let .file(path): path
+        }
+    }
+
+    /// The Safari extension's bundle id (to tell found ones from installed).
+    var bundleIdentifier: String? {
+        if case let .safariApp(_, identifier) = source { return identifier }
+        return nil
+    }
+
+    var storeID: String? {
+        if case let .chromeWebStore(identifier, _) = source { return identifier }
+        return nil
+    }
+
+    /// Where it comes from, under its name.
+    var originText: String {
+        switch source {
+        case .safariApp: "From \(appName ?? "an app")"
+        case .chromeWebStore: "From the Chrome Web Store"
+        case .file: "From a file"
         }
     }
 }

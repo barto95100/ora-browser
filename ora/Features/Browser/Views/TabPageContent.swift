@@ -82,6 +82,11 @@ struct TabPageContent: View {
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
+                    // An extension's page in the Chrome Web Store: "Add to Ora".
+                    .overlay(alignment: .top) {
+                        ChromeWebStoreBanner(tab: tab)
+                            .padding(.top, 12)
+                    }
                     .animation(.easeOut(duration: 0.2), value: tab.showsCrashRecoveryNotice)
                     .animation(.easeOut(duration: 0.2), value: tab.folderAccessRequest)
                     // A site blocked during focus.

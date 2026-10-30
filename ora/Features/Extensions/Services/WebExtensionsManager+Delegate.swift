@@ -181,7 +181,9 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         completionHandler: @escaping ((any Error)?) -> Void
     ) {
-        logger.notice("\(self.name(of: extensionContext), privacy: .public) native connection refused")
+        if loggedNativeCommands.insert("\(extensionContext.uniqueIdentifier):connect").inserted {
+            logger.notice("\(self.name(of: extensionContext), privacy: .public) native connection refused")
+        }
         completionHandler(Failure.nativeMessagingUnsupported)
     }
 

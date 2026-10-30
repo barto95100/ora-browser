@@ -18,17 +18,24 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
     }
 
-    /// An extension found in an app, read to show what it asks for.
+    /// An extension about to be added (from an app, the Chrome Web Store or
+    /// a file), read to show what it asks for.
     @MainActor
     struct Review: Identifiable {
-        let candidate: SafariExtensionCandidate
+        /// Its id once added (its package is already named after it).
+        let id: String
+        let source: ExtensionRecord.Source
+        /// The app that brings it, for a Safari extension.
+        let appName: String?
+        let fallbackName: String
         let webExtension: WKWebExtension
-        nonisolated var id: String {
-            candidate.id
-        }
 
         var name: String {
-            webExtension.displayName ?? candidate.name
+            webExtension.displayName ?? fallbackName
+        }
+
+        var originText: String {
+            ExtensionRecord(id: id, source: source, name: name, appName: appName).originText
         }
 
         var permissions: [String] {
@@ -134,7 +141,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
         // The extensions' keyboard shortcuts (see `+Commands.swift`).
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            MainActor.assumeIsolated { self.handleShortcut(event) }
+            // Local monitors run on the main thread, with the event.
+            nonisolated(unsafe) let event = event
+            return MainActor.assumeIsolated { self.handleShortcut(event) }
         }
         // Back from the App Store: a new app may bring an extension.
         center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
@@ -154,7 +163,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         scanTask = Task {
             let found = await Task.detached(priority: .utility) { SafariExtensionScanner.scan() }.value
             guard !Task.isCancelled else { return }
-            let installedIdentifiers = Set(installed.map(\.record.bundleIdentifier))
+            let installedIdentifiers = Set(installed.compactMap(\.record.bundleIdentifier))
             let available = found.filter { !installedIdentifiers.contains($0.bundleIdentifier) }
             if available != candidates { candidates = available }
         }
@@ -165,26 +174,27 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     func review(_ candidate: SafariExtensionCandidate) async throws -> Review {
         guard let bundle = Bundle(url: candidate.appexURL) else { throw Failure.appRemoved }
         let webExtension = try await WKWebExtension(appExtensionBundle: bundle)
-        return Review(candidate: candidate, webExtension: webExtension)
+        return Review(
+            id: UUID().uuidString,
+            source: .safariApp(appexPath: candidate.appexURL.path, bundleIdentifier: candidate.bundleIdentifier),
+            appName: candidate.appName,
+            fallbackName: candidate.name,
+            webExtension: webExtension
+        )
     }
 
     /// Installs a reviewed extension, with what it asked for; its websites
     /// on all of them, or each asked for the first time (like Safari).
     func install(_ review: Review, allowAllSites: Bool) {
-        var record = ExtensionRecord(
-            source: .safariApp(
-                appexPath: review.candidate.appexURL.path,
-                bundleIdentifier: review.candidate.bundleIdentifier
-            ),
-            name: review.name,
-            appName: review.candidate.appName
-        )
+        var record = ExtensionRecord(id: review.id, source: review.source, name: review.name, appName: review.appName)
         record.grantedPermissions = review.permissions
         record.grantedMatchPatterns = review.sites
         record.otherSites = allowAllSites ? .allow : .ask
         installed.append(Installed(record: record))
         save()
-        candidates.removeAll { $0.id == review.candidate.id }
+        if let bundleIdentifier = record.bundleIdentifier {
+            candidates.removeAll { $0.bundleIdentifier == bundleIdentifier }
+        }
         run(review.webExtension, id: record.id)
     }
 
@@ -203,8 +213,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     func remove(id: String) {
         guard let index = index(of: id) else { return }
         unload(at: index)
-        installed.remove(at: index)
+        let record = installed.remove(at: index).record
         save()
+        if record.bundleIdentifier == nil { ExtensionPackages.remove(path: record.path) }
         let types = WKWebExtensionController.allExtensionDataTypes
         controller.fetchDataRecords(ofTypes: types) { [controller] records in
             let own = records.filter { $0.uniqueIdentifier == id }
@@ -226,10 +237,18 @@ final class WebExtensionsManager: NSObject, ObservableObject {
 
     private func load(id: String) async {
         guard let index = index(of: id), installed[index].context == nil else { return }
-        let path = installed[index].record.appexPath
+        let record = installed[index].record
         do {
-            guard let bundle = Bundle(path: path) else { throw Failure.appRemoved }
-            let webExtension = try await WKWebExtension(appExtensionBundle: bundle)
+            let webExtension: WKWebExtension
+            if record.bundleIdentifier != nil {
+                guard let bundle = Bundle(path: record.path) else { throw Failure.appRemoved }
+                webExtension = try await WKWebExtension(appExtensionBundle: bundle)
+            } else {
+                // Ora's package: a .zip, or a folder.
+                let isArchive = record.path.hasSuffix(".zip")
+                let package = URL(fileURLWithPath: record.path, isDirectory: !isArchive)
+                webExtension = try await WKWebExtension(resourceBaseURL: package)
+            }
             run(webExtension, id: id)
         } catch {
             fail(id: id, error)
@@ -420,13 +439,5 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         guard let window, let adapter = windows.removeValue(forKey: ObjectIdentifier(window)) else { return }
         activeTabIDs[ObjectIdentifier(window)] = nil
         controller.didCloseWindow(adapter)
-    }
-}
-
-extension ExtensionRecord {
-    var bundleIdentifier: String {
-        switch source {
-        case let .safariApp(_, identifier): identifier
-        }
     }
 }

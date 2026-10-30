@@ -24,6 +24,7 @@ private struct ExtensionsSettingsContent: View {
     @State private var review: WebExtensionsManager.Review?
     @State private var reviewError: String?
     @State private var pendingRemoval: WebExtensionsManager.Installed?
+    @State private var fileError: String?
 
     var body: some View {
         ScrollView {
@@ -77,6 +78,21 @@ private struct ExtensionsSettingsContent: View {
                         }
                     }
                 }
+
+                SettingsCard(
+                    header: "Other Extensions",
+                    description: "On an extension's page in the Chrome Web Store, click “Add to Ora”. "
+                        + "Some Chrome extensions use features WebKit doesn't have: they may not work fully."
+                ) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Button("Add from Folder or Zip…") { chooseFile() }
+                        if let fileError {
+                            Label(fileError, systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -87,6 +103,7 @@ private struct ExtensionsSettingsContent: View {
                 manager.install(review, allowAllSites: allowAllSites)
                 self.review = nil
             } cancel: {
+                manager.discard(review)
                 self.review = nil
             }
         }
@@ -101,6 +118,18 @@ private struct ExtensionsSettingsContent: View {
             Button("Remove", role: .destructive) { manager.remove(id: item.id) }
         } message: { _ in
             Text("Its data in Ora is deleted. The app that brings it stays installed.")
+        }
+    }
+
+    private func chooseFile() {
+        fileError = nil
+        guard let url = WebExtensionsManager.chooseExtensionFile() else { return }
+        Task {
+            do {
+                review = try await manager.reviewFile(at: url)
+            } catch {
+                fileError = "Ora couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
+            }
         }
     }
 
@@ -141,11 +170,9 @@ private struct InstalledExtensionRow: View {
                 .frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.record.name)
-                if let appName = item.record.appName {
-                    Text("From \(appName)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text(item.record.originText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Text(ExtensionDetailView.summary(of: item.record))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -185,7 +212,7 @@ private struct InstalledExtensionRow: View {
 
 /// What an extension asks for, before adding it.
 @available(macOS 15.4, *)
-private struct ExtensionReviewSheet: View {
+struct ExtensionReviewSheet: View {
     let review: WebExtensionsManager.Review
     let add: (_ allowAllSites: Bool) -> Void
     let cancel: () -> Void
@@ -203,7 +230,7 @@ private struct ExtensionReviewSheet: View {
                         .font(.title3.weight(.semibold))
                     Text([
                         review.webExtension.displayVersion.map { "Version \($0)" },
-                        "From \(review.candidate.appName)"
+                        review.originText
                     ]
                     .compactMap(\.self).joined(separator: " · "))
                         .foregroundStyle(.secondary)

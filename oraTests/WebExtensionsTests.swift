@@ -147,3 +147,46 @@ struct ExtensionSiteAccessTests {
         #expect(ShortcutText.text(key: "l", modifiers: [.control, .option]) == "⌃⌥L")
     }
 }
+
+struct ChromeWebStoreTests {
+    private let darkReader = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
+
+    @Test func storePagesGiveTheExtension() {
+        let new = URL(string: "https://chromewebstore.google.com/detail/dark-reader/\(darkReader)?hl=fr")
+        let old = URL(string: "https://chrome.google.com/webstore/detail/dark-reader/\(darkReader)")
+        #expect(ChromeWebStore.extensionID(from: new) == darkReader)
+        #expect(ChromeWebStore.extensionID(from: old) == darkReader)
+        #expect(ChromeWebStore
+            .extensionID(from: URL(string: "https://chromewebstore.google.com/category/extensions")) == nil)
+        #expect(ChromeWebStore.extensionID(from: URL(string: "https://example.com/detail/x/\(darkReader)")) == nil)
+    }
+
+    @Test func downloadAsksForTheExtension() throws {
+        let url = try #require(ChromeWebStore.downloadURL(for: darkReader))
+        #expect(url.host == "clients2.google.com")
+        #expect(url.absoluteString.contains("x=id%3D\(darkReader)%26uc"))
+    }
+
+    @Test func crxGivesItsZip() throws {
+        let zip = Data([0x50, 0x4B, 0x03, 0x04, 0x01, 0x02])
+        func uint32(_ value: UInt32) -> Data {
+            withUnsafeBytes(of: value.littleEndian) { Data($0) }
+        }
+        let crx3 = Data("Cr24".utf8) + uint32(3) + uint32(5) + Data(repeating: 9, count: 5) + zip
+        let crx2 = Data("Cr24".utf8) + uint32(2) + uint32(2) + uint32(3) + Data(repeating: 7, count: 5) + zip
+        #expect(try CRXArchive.zipData(from: crx3) == zip)
+        #expect(try CRXArchive.zipData(from: crx2) == zip)
+        #expect(try CRXArchive.zipData(from: zip) == zip)
+        #expect(throws: CRXArchive.Failure.self) { try CRXArchive.zipData(from: Data("not an extension".utf8)) }
+    }
+
+    @Test func recordsSayWhereTheyComeFrom() {
+        let store = ExtensionRecord(
+            source: .chromeWebStore(storeID: darkReader, packagePath: "/p/1.zip"), name: "Dark Reader", appName: nil
+        )
+        #expect(store.originText == "From the Chrome Web Store")
+        #expect(store.storeID == darkReader)
+        #expect(store.bundleIdentifier == nil)
+        #expect(store.path == "/p/1.zip")
+    }
+}

@@ -34,8 +34,9 @@ private struct ExtensionStripContent: View {
     private static let slot: CGFloat = 30
 
     var body: some View {
-        // Redrawn when an extension changes its icon, badge, state or access.
-        let revision = manager.actionsRevision
+        // Redrawn when an extension changes its icon, badge, state or access
+        // (`actionsRevision`, observed with the manager); not rebuilt, so an
+        // open popup stays attached to its button.
         let items = manager.loadedContexts
         let pinned = items.filter(\.record.isPinned)
         let unpinned = items.filter { !$0.record.isPinned }
@@ -52,7 +53,6 @@ private struct ExtensionStripContent: View {
                     tab: tabManager.activeTab,
                     foregroundColor: foregroundColor
                 )
-                .id("\(item.record.id)-\(revision)")
             }
             if shown < items.count {
                 ExtensionOverflowMenu(

@@ -82,29 +82,48 @@ struct PinnedTabsList: View {
         )
     }
 
-    /// A folder and, below it, its tabs: all when it is open, only the active
-    /// tab when it is closed (like Arc). Hidden while the folder is dragged.
-    private func folderRows(_ folder: Folder) -> some View {
-        VStack(spacing: 8) {
-            FolderItem(folder: folder, isDragging: draggedItem == folder.id)
-                .onDrag { onDrag(folder.id) }
-                .onDrop(
-                    of: [.text],
-                    delegate: FolderDropDelegate(folder: folder, draggedItem: $draggedItem)
-                )
-            if draggedItem != folder.id {
-                let shownTabs = container.tabs(in: folder).filter { folder.isOpened || tabManager.isActive($0) }
-                if !shownTabs.isEmpty {
-                    VStack(spacing: 8) {
-                        ForEach(shownTabs) { tab in
-                            tabRow(tab)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-                    }
-                    // Indented under the folder, like Arc.
-                    .padding(.leading, 16)
+    /// A folder and, below it, its folders and tabs: all when it is open,
+    /// only the active tab (at any depth) when it is closed, like Arc. Hidden
+    /// while the folder is dragged.
+    private func folderRows(_ folder: Folder) -> AnyView {
+        AnyView(
+            VStack(spacing: 8) {
+                FolderItem(folder: folder, isDragging: draggedItem == folder.id)
+                    .onDrag { onDrag(folder.id) }
+                    .onDrop(
+                        of: [.text],
+                        delegate: FolderDropDelegate(folder: folder, draggedItem: $draggedItem)
+                    )
+                if draggedItem != folder.id {
+                    folderContents(folder)
                 }
             }
+        )
+    }
+
+    @ViewBuilder
+    private func folderContents(_ folder: Folder) -> some View {
+        let entries = container.entries(in: folder)
+        let activeTab = folder.isOpened ? nil : tabManager.activeTab.flatMap { tab in
+            container.contains(tab, in: folder) ? tab : nil
+        }
+        if folder.isOpened, !entries.isEmpty {
+            VStack(spacing: 8) {
+                ForEach(entries) { entry in
+                    Group {
+                        switch entry {
+                        case let .tab(tab): tabRow(tab)
+                        case let .folder(child): folderRows(child)
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            // Indented under the folder, like Arc.
+            .padding(.leading, 16)
+        } else if let activeTab {
+            tabRow(activeTab)
+                .padding(.leading, 16)
         }
     }
 }

@@ -19,12 +19,12 @@ struct TabDropDelegate: DropDelegate {
         // item was asynchronous, so the list lagged and fast moves could be
         // applied out of order.
         guard let draggedID = draggedItem, draggedID != item.id else { return }
-        // A folder dragged over a pinned tab: to that tab's place, or its folder's.
+        // A folder dragged over a pinned tab: to that tab's place, in its
+        // folder if it is in one (folders hold folders).
         if let folder = item.container.folders.first(where: { $0.id == draggedID }) {
             guard item.type == .pinned else { return }
-            let targetID = item.container.folder(of: item)?.id ?? item.id
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                item.container.moveFolder(folder, onto: targetID)
+                item.container.moveFolder(folder, onto: item.id)
             }
             return
         }

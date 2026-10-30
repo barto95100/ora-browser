@@ -141,9 +141,11 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
         // The extensions' keyboard shortcuts (see `+Commands.swift`).
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            // Local monitors run on the main thread, with the event.
-            nonisolated(unsafe) let event = event
-            return MainActor.assumeIsolated { self.handleShortcut(event) }
+            // Local monitors run on the main thread; only whether an
+            // extension took the key crosses back.
+            nonisolated(unsafe) let keyEvent = event
+            let handled = MainActor.assumeIsolated { self.handleShortcut(keyEvent) }
+            return handled ? nil : event
         }
         // Back from the App Store: a new app may bring an extension.
         center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
@@ -380,13 +382,20 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         NSApp.keyWindow.flatMap { windows[ObjectIdentifier($0)] } ?? orderedWindows.first
     }
 
-    func registerWindow(_ window: NSWindow, tabManager: TabManager) {
+    /// The front normal window: what Ora opens itself (options pages) never
+    /// goes to a private window.
+    var focusedNormalWindow: ExtensionWindow? {
+        if let window = focusedWindow, !window.isPrivateWindow { return window }
+        return orderedWindows.first { !$0.isPrivateWindow }
+    }
+
+    func registerWindow(_ window: NSWindow, tabManager: TabManager, isPrivate: Bool) {
         let key = ObjectIdentifier(window)
         if let existing = windows[key] {
             existing.tabManager = tabManager
             return
         }
-        let adapter = ExtensionWindow(window: window, tabManager: tabManager, manager: self)
+        let adapter = ExtensionWindow(window: window, tabManager: tabManager, isPrivate: isPrivate, manager: self)
         windows[key] = adapter
         controller.didOpenWindow(adapter)
         // Its tabs opened before the window was known: told again, now that

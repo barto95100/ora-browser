@@ -65,8 +65,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
         let contentController = WKUserContentController()
         webConfiguration.userContentController = contentController
-        // Extensions run in normal windows only, like Safari's default.
-        if #available(macOS 15.4, *), !profile.isPrivate,
+        // Extensions: in private windows (a non-persistent store), WebKit runs
+        // only those allowed in private browsing (`hasAccessToPrivateData`).
+        if #available(macOS 15.4, *),
            let controller = BrowserEngine.shared.webExtensionController as? WKWebExtensionController
         {
             webConfiguration.webExtensionController = controller

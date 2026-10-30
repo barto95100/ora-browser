@@ -35,7 +35,7 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
             historyManager: tabManager.historyManager,
             downloadManager: tabManager.downloadManager,
             focusAfterOpening: configuration.shouldBeActive,
-            isPrivate: false
+            isPrivate: window?.isPrivateWindow ?? false
         )
         if let tab { tabOpened(tab) }
         completionHandler(tab.map { adapter(for: $0) }, nil)

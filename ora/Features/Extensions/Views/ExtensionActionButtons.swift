@@ -6,7 +6,8 @@ import SwiftUI
 /// sidebar, or the address bar while the sidebar is hidden). Pinned ones as
 /// many as fit; the others in the extensions menu. A click shows the
 /// extension's popup under it; a right click, its menu.
-/// Nothing in private windows, nor before macOS 15.4.
+/// In private windows, only the extensions allowed there; nothing before
+/// macOS 15.4.
 struct ExtensionStrip: View {
     let foregroundColor: Color
     /// At most this many buttons (in the address bar); nil: as many as fit
@@ -15,8 +16,12 @@ struct ExtensionStrip: View {
     @EnvironmentObject private var privacyMode: PrivacyMode
 
     var body: some View {
-        if #available(macOS 15.4, *), !privacyMode.isPrivate {
-            ExtensionStripContent(foregroundColor: foregroundColor, maxVisible: maxVisible)
+        if #available(macOS 15.4, *) {
+            ExtensionStripContent(
+                foregroundColor: foregroundColor,
+                maxVisible: maxVisible,
+                isPrivate: privacyMode.isPrivate
+            )
         } else if maxVisible == nil {
             Spacer(minLength: 0)
         }
@@ -27,6 +32,7 @@ struct ExtensionStrip: View {
 private struct ExtensionStripContent: View {
     let foregroundColor: Color
     let maxVisible: Int?
+    let isPrivate: Bool
     @ObservedObject private var manager = WebExtensionsManager.shared
     @EnvironmentObject private var tabManager: TabManager
     @State private var width: CGFloat = 0
@@ -37,7 +43,7 @@ private struct ExtensionStripContent: View {
         // Redrawn when an extension changes its icon, badge, state or access
         // (`actionsRevision`, observed with the manager); not rebuilt, so an
         // open popup stays attached to its button.
-        let items = manager.loadedContexts
+        let items = manager.loadedContexts.filter { !isPrivate || $0.record.allowsPrivateBrowsing }
         let pinned = items.filter(\.record.isPinned)
         let unpinned = items.filter { !$0.record.isPinned }
         let shown = ExtensionStripLayout.visibleCount(

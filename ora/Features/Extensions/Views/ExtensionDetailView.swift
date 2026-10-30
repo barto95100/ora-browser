@@ -22,6 +22,16 @@ struct ExtensionDetailView: View {
             ))
             .help("Otherwise it is in the extensions menu (puzzle piece).")
 
+            VStack(alignment: .leading, spacing: 2) {
+                Toggle("Allow in Private Browsing", isOn: Binding(
+                    get: { record.allowsPrivateBrowsing },
+                    set: { manager.setAllowsPrivateBrowsing($0, id: record.id) }
+                ))
+                Text("It could see what you do in private windows.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             websites
 
             shortcuts

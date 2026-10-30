@@ -35,6 +35,8 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     /// Its button shows next to the sidebar button; unpinned, it is in the
     /// extensions menu.
     var isPinned: Bool
+    /// Runs in private windows too (off by default, like Safari).
+    var allowsPrivateBrowsing: Bool
     var installedAt: Date
 
     init(id: String = UUID().uuidString, source: Source, name: String, appName: String?) {
@@ -49,6 +51,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         otherSites = .ask
         siteRules = []
         isPinned = true
+        allowsPrivateBrowsing = false
         installedAt = Date()
     }
 
@@ -66,6 +69,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         otherSites = try container.decodeIfPresent(SiteDecision.self, forKey: .otherSites) ?? .allow
         siteRules = try container.decodeIfPresent([SiteRule].self, forKey: .siteRules) ?? []
         isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? true
+        allowsPrivateBrowsing = try container.decodeIfPresent(Bool.self, forKey: .allowsPrivateBrowsing) ?? false
         installedAt = try container.decode(Date.self, forKey: .installedAt)
     }
 

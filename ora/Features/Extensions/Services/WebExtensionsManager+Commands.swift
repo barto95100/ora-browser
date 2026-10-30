@@ -2,19 +2,23 @@ import AppKit
 @preconcurrency import WebKit
 
 /// The extensions' keyboard shortcuts (`commands` in their manifest), in
-/// normal windows; Ora's own shortcuts come first.
+/// browser windows (private ones: allowed extensions only); Ora's own
+/// shortcuts come first.
 @available(macOS 15.4, *)
 extension WebExtensionsManager {
-    func handleShortcut(_ event: NSEvent) -> NSEvent? {
-        guard BrowserWindows.isNormal(event.window), !Self.menuHasShortcut(for: event) else { return event }
-        for item in loadedContexts {
+    /// Whether an extension took the key.
+    func handleShortcut(_ event: NSEvent) -> Bool {
+        guard let window = orderedWindows.first(where: { $0.window === event.window }),
+              !Self.menuHasShortcut(for: event)
+        else { return false }
+        for item in loadedContexts where !window.isPrivateWindow || item.record.allowsPrivateBrowsing {
             guard let command = item.context.command(for: event) else { continue }
             // "Open the popup" shows it under the extension's button.
             popupAnchor = buttonAnchors.object(forKey: item.record.id as NSString)
             item.context.performCommand(command)
-            return nil
+            return true
         }
-        return event
+        return false
     }
 
     /// The shortcut as shown in menus, such as ⇧⌘Y.

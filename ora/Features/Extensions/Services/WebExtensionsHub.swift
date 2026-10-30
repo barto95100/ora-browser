@@ -17,11 +17,12 @@ enum WebExtensionsHub {
         }
     }
 
-    /// A normal browser window (private windows run no extensions).
-    static func registerWindow(_ window: NSWindow, tabManager: TabManager) {
+    /// A browser window; a private one shows only to the extensions allowed
+    /// in private browsing.
+    static func registerWindow(_ window: NSWindow, tabManager: TabManager, isPrivate: Bool) {
         if #available(macOS 15.4, *) {
             MainActor.assumeIsolated {
-                WebExtensionsManager.shared.registerWindow(window, tabManager: tabManager)
+                WebExtensionsManager.shared.registerWindow(window, tabManager: tabManager, isPrivate: isPrivate)
             }
         }
     }
@@ -34,7 +35,6 @@ enum WebExtensionsHub {
 
     /// A tab got its page.
     static func tabOpened(_ tab: Tab) {
-        guard !tab.isPrivate else { return }
         if #available(macOS 15.4, *) {
             MainActor.assumeIsolated { WebExtensionsManager.shared.tabOpened(tab) }
         }
@@ -42,14 +42,12 @@ enum WebExtensionsHub {
 
     /// A tab's page went away (closed, or unloaded).
     static func tabClosed(_ tab: Tab) {
-        guard !tab.isPrivate else { return }
         if #available(macOS 15.4, *) {
             MainActor.assumeIsolated { WebExtensionsManager.shared.tabClosed(tab) }
         }
     }
 
     static func tabChanged(_ tab: Tab, url: Bool = false, title: Bool = false, loading: Bool = false) {
-        guard !tab.isPrivate else { return }
         if #available(macOS 15.4, *) {
             MainActor.assumeIsolated {
                 WebExtensionsManager.shared.tabChanged(tab, url: url, title: title, loading: loading)

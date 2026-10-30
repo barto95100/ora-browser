@@ -45,6 +45,9 @@ final class BrowserEngine {
     }
 
     static let shared = BrowserEngine()
+    /// Set at launch on macOS 15.4+ (see `WebExtensionsManager`): pages of
+    /// normal windows run the enabled extensions. A `WKWebExtensionController`.
+    var webExtensionController: AnyObject?
     private let profileCacheLock = NSLock()
     private var profileCache: [ProfileKey: BrowserEngineProfile] = [:]
 

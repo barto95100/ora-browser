@@ -37,7 +37,13 @@ struct SidebarHeader: View {
                 .modifier(TitleBarHint(
                     text: "Toggle Sidebar (\(KeyboardShortcuts.App.toggleSidebar.currentChord.display))"
                 ))
-                Spacer()
+                // Right of the sidebar button, as many as fit.
+                ExtensionStrip(foregroundColor: theme.foreground)
+            }
+
+            // Sidebar at the right: its button is in the address bar.
+            if !toolbarManager.isToolbarHidden, sidebarManager.sidebarPosition == .secondary {
+                ExtensionStrip(foregroundColor: theme.foreground)
             }
 
             if toolbarManager.isToolbarHidden {
@@ -50,8 +56,9 @@ struct SidebarHeader: View {
                             action: { sidebarManager.toggleSidebar() }
                         )
                         .oraShortcutHelp("Toggle Sidebar", for: KeyboardShortcuts.App.toggleSidebar)
-                        Spacer()
                     }
+                    // The extensions in the space left, after the buttons below.
+                    ExtensionStrip(foregroundColor: theme.foreground)
 
                     // The address bar is hidden: back, forward, reload and its
                     // tools (one menu); narrow, only the menu (⌘[, ⌘], ⌘R).
@@ -62,9 +69,9 @@ struct SidebarHeader: View {
                         }
                         toolsMenu
                     }
+                    .layoutPriority(1)
 
                     if sidebarManager.sidebarPosition == .secondary {
-                        Spacer()
                         URLBarButton(
                             systemName: sidebarIcon,
                             isEnabled: true,

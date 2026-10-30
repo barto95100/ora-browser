@@ -243,6 +243,7 @@ class Tab: ObservableObject, Identifiable {
         self.isWebViewReady = false
         self.setupBrowserPageDelegate(for: page)
         self.syncBackgroundColorFromHex()
+        WebExtensionsHub.tabOpened(self)
         // Load after a short delay to ensure layout
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
             self.beginFileAccessIfNeeded()
@@ -273,6 +274,9 @@ class Tab: ObservableObject, Identifiable {
             page.evaluateJavaScript(js) { _, _ in
                 page.closeMediaPresentations {
                     page.teardown()
+                    if let self, self.browserPage === page {
+                        WebExtensionsHub.tabClosed(self)
+                    }
                     if self?.browserPage === page {
                         self?.browserPage = nil
                         self?.pageDelegate = nil
@@ -327,6 +331,7 @@ class Tab: ObservableObject, Identifiable {
         isReloadingAfterCrash = false
         showsCrashRecoveryNotice = false
         if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }
+        if browserPage != nil { WebExtensionsHub.tabClosed(self) }
         browserPage?.teardown()
         browserPage = nil
         pageDelegate = nil

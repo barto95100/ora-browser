@@ -216,6 +216,8 @@ struct URLBar: View {
                         action: onSidebarToggle
                     )
                     .oraShortcutHelp("Toggle Sidebar", for: KeyboardShortcuts.App.toggleSidebar)
+                    // The extensions follow the sidebar button.
+                    ExtensionStrip(foregroundColor: buttonForegroundColor, maxVisible: 3)
                 }
 
                 // Back button
@@ -280,6 +282,9 @@ struct URLBar: View {
                 )
 
                 if sidebarManager.sidebarPosition == .secondary {
+                    if sidebarManager.isSidebarHidden {
+                        ExtensionStrip(foregroundColor: buttonForegroundColor, maxVisible: 3)
+                    }
                     URLBarButton(
                         systemName: "sidebar.right",
                         isEnabled: true,

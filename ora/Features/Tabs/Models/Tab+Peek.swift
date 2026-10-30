@@ -29,5 +29,6 @@ extension Tab {
         syncBackgroundColorFromHex()
         isWebViewReady = true
         recordVisit()
+        WebExtensionsHub.tabOpened(self)
     }
 }

@@ -8,6 +8,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ExternalFileOpener.shared.install()
         // Before launch ends: a click on a notification can be what launches Ora.
         WebNotificationCenter.shared.install()
+        // Before the first page: pages get the extension controller.
+        WebExtensionsHub.start()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

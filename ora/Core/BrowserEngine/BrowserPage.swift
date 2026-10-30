@@ -65,6 +65,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
         let contentController = WKUserContentController()
         webConfiguration.userContentController = contentController
+        // Extensions run in normal windows only, like Safari's default.
+        if #available(macOS 15.4, *), !profile.isPrivate,
+           let controller = BrowserEngine.shared.webExtensionController as? WKWebExtensionController
+        {
+            webConfiguration.webExtensionController = controller
+        }
         messageNames = configuration.scriptMessageNames
         let oraWebView = OraWebView(frame: .zero, configuration: webConfiguration)
         webView = oraWebView
@@ -132,6 +138,11 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     }
 
     var contentView: NSView {
+        webView
+    }
+
+    /// The web view, for the extensions' tabs API only (`ExtensionTab`).
+    var extensionWebView: WKWebView {
         webView
     }
 

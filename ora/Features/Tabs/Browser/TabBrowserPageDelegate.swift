@@ -79,6 +79,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             if let url = event.url {
                 tab.updateURL(url)
             }
+            WebExtensionsHub.tabChanged(tab, url: true, loading: true)
 
         case .committed:
             tab.isLoading = event.isLoading
@@ -106,6 +107,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                 tab.updateHeaderColor()
                 if url.isFileURL { tab.offerFolderAccessIfNeeded() }
             }
+            WebExtensionsHub.tabChanged(tab, url: true, title: true, loading: true)
 
             let workItem = DispatchWorkItem { [weak tab] in
                 tab?.loadingProgress = 0
@@ -134,6 +136,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         guard let tab, let url, tab.url != url else { return }
 
         tab.updateURL(url)
+        WebExtensionsHub.tabChanged(tab, url: true)
         // Same-page navigations (history API, fragments) have no "finished"
         // event: record them here. Full loads are recorded when they finish.
         if !page.isLoading {
@@ -160,6 +163,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
         tab.title = newTitle
         tab.updateHistoryTitle()
+        WebExtensionsHub.tabChanged(tab, title: true)
         MainActor.assumeIsolated {
             mediaController?.syncTitleForTab(tab.id, newTitle: newTitle)
         }

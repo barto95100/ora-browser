@@ -5,6 +5,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
     case general
     case spaces
     case passwords
+    case extensions
     case timeFocus
     case shortcuts
     case searchEngines
@@ -14,6 +15,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
         case .general: return "General"
         case .spaces: return "Spaces"
         case .passwords: return "Passwords"
+        case .extensions: return "Extensions"
         case .timeFocus: return "Time & Focus"
         case .shortcuts: return "Shortcuts"
         case .searchEngines: return "Search"
@@ -25,6 +27,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
         case .general: return "gearshape"
         case .spaces: return "rectangle.3.group"
         case .passwords: return "key.horizontal"
+        case .extensions: return "puzzlepiece.extension"
         case .timeFocus: return "hourglass"
         case .shortcuts: return "command"
         case .searchEngines: return "magnifyingglass"
@@ -39,6 +42,8 @@ enum SettingsTab: String, Hashable, CaseIterable {
             return "Space-specific defaults and per-space data controls."
         case .passwords:
             return "Password manager integration, vault access, and autofill behavior."
+        case .extensions:
+            return "Safari extensions from your apps, and what they can access."
         case .timeFocus:
             return "Browsing time per site, and focus sessions."
         case .shortcuts:
@@ -102,6 +107,8 @@ struct SettingsDetailView: View {
             SpacesSettingsView()
         case .passwords:
             PasswordsSettingsView()
+        case .extensions:
+            ExtensionsSettingsView()
         case .timeFocus:
             TimeFocusSettingsView()
         case .shortcuts:

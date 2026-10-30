@@ -300,14 +300,14 @@ extension TabItem {
             Label("New Folder with Tab", systemImage: "folder.badge.plus")
         }
 
-        let otherFolders = tab.container.pinnedEntries.compactMap { entry -> Folder? in
-            if case let .folder(folder) = entry, folder.id != tab.folderID { return folder }
-            return nil
-        }
+        let container = tab.container
+        let otherFolders = container.folders
+            .filter { $0.id != tab.folderID }
+            .sorted { container.path(of: $0) < container.path(of: $1) }
         if !otherFolders.isEmpty {
             Menu("Move to Folder") {
                 ForEach(otherFolders) { folder in
-                    Button(folder.name) {
+                    Button(container.path(of: folder)) {
                         tabManager.moveTab(tab, toFolder: folder)
                     }
                 }

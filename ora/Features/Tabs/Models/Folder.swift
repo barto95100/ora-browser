@@ -11,6 +11,8 @@ class Folder: ObservableObject, Identifiable {
     /// Place in the pinned section, shared with the pinned tabs outside
     /// folders (see `TabFolders`).
     var order: Int = 0
+    /// The folder it is in; nil: the pinned section itself.
+    var parentID: UUID?
 
     @Relationship(inverse: \TabContainer.folders) var container: TabContainer
     init(

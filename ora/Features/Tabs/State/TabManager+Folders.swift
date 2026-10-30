@@ -3,13 +3,14 @@ import Foundation
 /// Folders of the pinned section, like Arc (see `TabContainer+Folders.swift`).
 extension TabManager {
     /// Creates a folder in the pinned section: in place of `tab`, which goes
-    /// in it, or first. Its name is edited right away.
+    /// in it; first in `parent`; or first. Its name is edited right away.
     @discardableResult
-    func createFolder(in container: TabContainer, with tab: Tab? = nil) -> Folder {
+    func createFolder(in container: TabContainer, with tab: Tab? = nil, parent: Folder? = nil) -> Folder {
         let folder = Folder(name: "New Folder", isOpened: true, container: container)
         modelContext.insert(folder)
         container.folders.append(folder)
-        container.insertFolder(folder, at: tab)
+        container.insertFolder(folder, at: tab, in: parent)
+        parent?.isOpened = true
         if let tab {
             container.addTab(tab, to: folder)
         }
@@ -40,6 +41,13 @@ extension TabManager {
         if renamingFolderID == folder.id {
             renamingFolderID = nil
         }
+        try? modelContext.save()
+    }
+
+    /// Puts a folder in another one, or in the section (`nil`).
+    func moveFolder(_ folder: Folder, into parent: Folder?) {
+        folder.container.moveFolder(folder, into: parent)
+        parent?.isOpened = true
         try? modelContext.save()
     }
 

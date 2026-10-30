@@ -68,10 +68,16 @@ struct FolderItem: View {
                 Label("Rename Folder", systemImage: "pencil")
             }
             Button {
-                tabManager.createFolder(in: folder.container)
+                tabManager.createFolder(in: folder.container, parent: folder)
+            } label: {
+                Label("New Folder Inside", systemImage: "folder.badge.plus")
+            }
+            Button {
+                tabManager.createFolder(in: folder.container, parent: folder.container.parent(of: folder))
             } label: {
                 Label("New Folder", systemImage: "folder.badge.plus")
             }
+            moveMenu
             Divider()
             Button(role: .destructive) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -82,6 +88,35 @@ struct FolderItem: View {
             }
         }
         .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isDragging)
+    }
+
+    /// Into another folder (not itself nor one of its own), or out of its folder.
+    @ViewBuilder
+    private var moveMenu: some View {
+        let container = folder.container
+        let targets = container.folders(acceptingFolder: folder)
+            .filter { $0.id != folder.parentID }
+            .sorted { container.path(of: $0) < container.path(of: $1) }
+        if !targets.isEmpty {
+            Menu("Move to Folder") {
+                ForEach(targets) { target in
+                    Button(container.path(of: target)) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                            tabManager.moveFolder(folder, into: target)
+                        }
+                    }
+                }
+            }
+        }
+        if folder.parentID != nil {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    tabManager.moveFolder(folder, into: container.parent(of: folder).flatMap(container.parent(of:)))
+                }
+            } label: {
+                Label("Move Out of Folder", systemImage: "arrow.up.left")
+            }
+        }
     }
 
     private var backgroundColor: Color {

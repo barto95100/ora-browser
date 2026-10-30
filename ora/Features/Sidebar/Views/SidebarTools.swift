@@ -33,4 +33,26 @@ enum BrowserWindows {
         guard let window else { return false }
         return normal.contains(window)
     }
+
+    /// The normal window in front: the key one, or the frontmost (from the
+    /// separate settings window, say).
+    static var front: NSWindow? {
+        if isNormal(NSApp.keyWindow) { return NSApp.keyWindow }
+        return NSApp.orderedWindows.first { isNormal($0) }
+    }
+
+    /// Asks the front normal window to delete a space (from the settings).
+    static func deleteSpace(_ spaceID: UUID) {
+        if let window = front {
+            NotificationCenter.default.post(name: .deleteSpace, object: window, userInfo: ["spaceID": spaceID])
+        }
+    }
+
+    /// Asks the front normal window to import from another browser.
+    static func showImport() {
+        if let window = front {
+            window.makeKeyAndOrderFront(nil)
+            NotificationCenter.default.post(name: .showImport, object: window)
+        }
+    }
 }

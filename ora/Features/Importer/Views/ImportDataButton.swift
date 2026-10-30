@@ -90,14 +90,11 @@ struct ImportDataButton: View {
 
     var body: some View {
         Menu("Import Data") {
+            Button("Zen…") {
+                BrowserWindows.showImport()
+            }
             Button("Arc") {
                 importArc()
-            }
-            Button("Safari") {
-                // importSafari()
-            }
-            Button("Chrome") {
-                // importChrome()
             }
         }
     }

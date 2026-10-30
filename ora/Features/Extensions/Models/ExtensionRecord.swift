@@ -37,6 +37,8 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     var isPinned: Bool
     /// Runs in private windows too (off by default, like Safari).
     var allowsPrivateBrowsing: Bool
+    /// Its version, as last loaded (to look for updates).
+    var version: String?
     var installedAt: Date
 
     init(id: String = UUID().uuidString, source: Source, name: String, appName: String?) {
@@ -70,6 +72,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         siteRules = try container.decodeIfPresent([SiteRule].self, forKey: .siteRules) ?? []
         isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? true
         allowsPrivateBrowsing = try container.decodeIfPresent(Bool.self, forKey: .allowsPrivateBrowsing) ?? false
+        version = try container.decodeIfPresent(String.self, forKey: .version)
         installedAt = try container.decode(Date.self, forKey: .installedAt)
     }
 

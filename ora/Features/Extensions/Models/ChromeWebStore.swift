@@ -104,3 +104,77 @@ enum ExtensionPackages {
         try? FileManager.default.removeItem(at: url)
     }
 }
+
+/// Updates of Chrome Web Store extensions, asked to Google like Chrome does
+/// (the "update check" of its update protocol).
+enum ChromeWebStoreUpdates {
+    struct Update: Equatable {
+        let version: String
+        let downloadURL: URL
+    }
+
+    /// One request for all the extensions and their versions.
+    static func checkURL(for extensions: [(storeID: String, version: String)]) -> URL? {
+        var components = URLComponents(string: "https://clients2.google.com/service/update2/crx")
+        components?.queryItems = [
+            URLQueryItem(name: "response", value: "updatecheck"),
+            URLQueryItem(name: "prodversion", value: ChromeWebStore.chromeVersion),
+            URLQueryItem(name: "acceptformat", value: "crx2,crx3")
+        ] + extensions.map { URLQueryItem(name: "x", value: "id=\($0.storeID)&v=\($0.version)&uc") }
+        return components?.url
+    }
+
+    /// The updates in Google's answer, by extension; "noupdate" ones are left
+    /// out.
+    static func parse(_ data: Data) -> [String: Update] {
+        let reader = UpdateCheckReader()
+        let parser = XMLParser(data: data)
+        parser.delegate = reader
+        parser.parse()
+        return reader.updates
+    }
+
+    private final class UpdateCheckReader: NSObject, XMLParserDelegate {
+        var updates: [String: Update] = [:]
+        private var appID: String?
+
+        func parser(
+            _ parser: XMLParser,
+            didStartElement elementName: String,
+            namespaceURI: String?,
+            qualifiedName: String?,
+            attributes: [String: String] = [:]
+        ) {
+            switch elementName {
+            case "app":
+                appID = attributes["appid"]
+            case "updatecheck":
+                guard let appID, attributes["status"] == "ok",
+                      let version = attributes["version"],
+                      let codebase = attributes["codebase"].flatMap(URL.init(string:))
+                else { return }
+                updates[appID] = Update(version: version, downloadURL: codebase)
+            default:
+                break
+            }
+        }
+    }
+}
+
+/// Extension versions: up to four numbers separated by dots (Chrome's rule).
+enum ExtensionVersion {
+    static func isNewer(_ version: String, than current: String) -> Bool {
+        let lhs = numbers(version)
+        let rhs = numbers(current)
+        for index in 0 ..< max(lhs.count, rhs.count) {
+            let left = index < lhs.count ? lhs[index] : 0
+            let right = index < rhs.count ? rhs[index] : 0
+            if left != right { return left > right }
+        }
+        return false
+    }
+
+    private static func numbers(_ version: String) -> [Int] {
+        version.split(separator: ".").map { Int($0) ?? 0 }
+    }
+}

@@ -70,6 +70,13 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     @Published private(set) var candidates: [SafariExtensionCandidate] = []
     /// Bumped when an extension's button (icon, badge, state) changes.
     @Published private(set) var actionsRevision = 0
+    /// Updates that ask for more than what was allowed: kept until reviewed
+    /// (see `+Updates.swift`).
+    @Published var pendingUpdates: [String: PendingUpdate] = [:]
+    /// What the last update check found, for the settings.
+    @Published var updateStatus: String?
+    @Published var isCheckingUpdates = false
+    var updateTimer: Timer?
 
     let logger = Logger(subsystem: "com.orabrowser.ora", category: "Extensions")
     /// The button the next popup shows under (see `ExtensionActionButtons`).
@@ -123,6 +130,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         for item in installed where item.record.isEnabled {
             Task { await load(id: item.id) }
         }
+        scheduleUpdateChecks()
 
         let center = NotificationCenter.default
         center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { note in
@@ -217,6 +225,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         unload(at: index)
         let record = installed.remove(at: index).record
         save()
+        if let pending = pendingUpdates.removeValue(forKey: id) {
+            ExtensionPackages.remove(path: pending.package.path)
+        }
         if record.bundleIdentifier == nil { ExtensionPackages.remove(path: record.path) }
         let types = WKWebExtensionController.allExtensionDataTypes
         controller.fetchDataRecords(ofTypes: types) { [controller] records in
@@ -280,11 +291,28 @@ final class WebExtensionsManager: NSObject, ObservableObject {
                 installed[index].record.name = name
                 save()
             }
+            if let version = webExtension.version, version != installed[index].record.version {
+                installed[index].record.version = version
+                save()
+            }
             for error in webExtension.errors {
                 logger.warning("\(webExtension.displayName ?? id, privacy: .public): \(error.localizedDescription)")
             }
         } catch {
             fail(id: id, error)
+        }
+    }
+
+    /// Runs another version of an installed extension in place of the
+    /// current one (an update): same id, so same data and permissions.
+    func replaceRunning(id: String, with webExtension: WKWebExtension) {
+        guard let index = index(of: id) else { return }
+        unload(at: index)
+        if installed[index].record.isEnabled {
+            run(webExtension, id: id)
+        } else if let version = webExtension.version {
+            installed[index].record.version = version
+            save()
         }
     }
 

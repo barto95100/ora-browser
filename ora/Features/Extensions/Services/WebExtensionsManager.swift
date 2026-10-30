@@ -75,6 +75,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     private var openTabIDs: Set<UUID> = []
     /// Messages to an extension's app already logged (`id:command`).
     var loggedNativeCommands: Set<String> = []
+    /// The extensions' buttons, by extension: a shortcut's popup shows under it.
+    let buttonAnchors = NSMapTable<NSString, NSView>.strongToWeakObjects()
+    private var keyMonitor: Any?
     private var activeTabIDs: [ObjectIdentifier: UUID] = [:]
     private var isStarted = false
     private var scanTask: Task<Void, Never>?
@@ -129,6 +132,10 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             let context = note.object as? WKWebExtensionContext
             MainActor.assumeIsolated { self.logErrors(of: context) }
         }
+        // The extensions' keyboard shortcuts (see `+Commands.swift`).
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            MainActor.assumeIsolated { self.handleShortcut(event) }
+        }
         // Back from the App Store: a new app may bring an extension.
         center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { self.refreshCandidates() }
@@ -161,8 +168,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         return Review(candidate: candidate, webExtension: webExtension)
     }
 
-    /// Installs a reviewed extension, with what it asked for.
-    func install(_ review: Review) {
+    /// Installs a reviewed extension, with what it asked for; its websites
+    /// on all of them, or each asked for the first time (like Safari).
+    func install(_ review: Review, allowAllSites: Bool) {
         var record = ExtensionRecord(
             source: .safariApp(
                 appexPath: review.candidate.appexURL.path,
@@ -173,6 +181,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         )
         record.grantedPermissions = review.permissions
         record.grantedMatchPatterns = review.sites
+        record.otherSites = allowAllSites ? .allow : .ask
         installed.append(Installed(record: record))
         save()
         candidates.removeAll { $0.id == review.candidate.id }
@@ -236,7 +245,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         #if DEBUG
             context.isInspectable = true
         #endif
-        grant(installed[index].record, to: context)
+        applyAccess(installed[index].record, to: context)
         do {
             try controller.load(context)
             installed[index].context = context
@@ -279,16 +288,20 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
     }
 
-    /// What the user allowed, granted again: WebKit doesn't keep it.
-    private func grant(_ record: ExtensionRecord, to context: WKWebExtensionContext) {
-        for name in record.grantedPermissions {
-            context.setPermissionStatus(.grantedExplicitly, for: WKWebExtension.Permission(rawValue: name))
+    /// Changes an installed extension's record, keeps it, and applies its
+    /// website access to the running extension at once.
+    func updateRecord(id: String, _ change: (inout ExtensionRecord) -> Void) {
+        guard let index = index(of: id) else { return }
+        change(&installed[index].record)
+        save()
+        if let context = installed[index].context {
+            applyAccess(installed[index].record, to: context)
         }
-        for pattern in record.grantedMatchPatterns {
-            if let matchPattern = try? WKWebExtension.MatchPattern(string: pattern) {
-                context.setPermissionStatus(.grantedExplicitly, for: matchPattern)
-            }
-        }
+        actionDidChange()
+    }
+
+    func record(for context: WKWebExtensionContext) -> ExtensionRecord? {
+        installed.first { $0.id == context.uniqueIdentifier }?.record
     }
 
     private func index(of id: String) -> Int? {
@@ -394,6 +407,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         if loading { properties.insert(.loading) }
         guard !properties.isEmpty else { return }
         controller.didChangeTabProperties(properties, for: adapter(for: tab))
+        // Another website in front: the buttons' dot (access asked) follows.
+        if url, tab.tabManager?.activeTab?.id == tab.id { actionDidChange() }
     }
 
     private func windowBecameKey(_ window: NSWindow?) {

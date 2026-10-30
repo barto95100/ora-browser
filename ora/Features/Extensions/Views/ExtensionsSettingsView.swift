@@ -83,8 +83,8 @@ private struct ExtensionsSettingsContent: View {
         }
         .onAppear { manager.refreshCandidates() }
         .sheet(item: $review) { review in
-            ExtensionReviewSheet(review: review) {
-                manager.install(review)
+            ExtensionReviewSheet(review: review) { allowAllSites in
+                manager.install(review, allowAllSites: allowAllSites)
                 self.review = nil
             } cancel: {
                 self.review = nil
@@ -122,7 +122,20 @@ private struct InstalledExtensionRow: View {
     let remove: () -> Void
     @ObservedObject private var manager = WebExtensionsManager.shared
 
+    @State private var showsDetails = false
+
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            row
+            DisclosureGroup("Details", isExpanded: $showsDetails) {
+                ExtensionDetailView(item: item)
+                    .padding(.top, 6)
+            }
+            .padding(.leading, 38)
+        }
+    }
+
+    private var row: some View {
         HStack(alignment: .top, spacing: 10) {
             icon
                 .frame(width: 28, height: 28)
@@ -133,8 +146,7 @@ private struct InstalledExtensionRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text("Websites: " + ExtensionPermissionText.describeSites(item.record.grantedMatchPatterns)
-                    .joined(separator: ", "))
+                Text(ExtensionDetailView.summary(of: item.record))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -175,8 +187,10 @@ private struct InstalledExtensionRow: View {
 @available(macOS 15.4, *)
 private struct ExtensionReviewSheet: View {
     let review: WebExtensionsManager.Review
-    let add: () -> Void
+    let add: (_ allowAllSites: Bool) -> Void
     let cancel: () -> Void
+    /// Like Safari: each website is asked the first time.
+    @State private var allowAllSites = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -212,6 +226,17 @@ private struct ExtensionReviewSheet: View {
                 )
             }
 
+            if !review.sites.isEmpty {
+                Picker("Websites:", selection: $allowAllSites) {
+                    Text("Ask on each website").tag(false)
+                    Text("Allow on all websites").tag(true)
+                }
+                .pickerStyle(.radioGroup)
+                Text("Password managers need all websites to fill in your logins.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             if review.permissions.contains("nativeMessaging") {
                 Text("Talking to its app (such as Touch ID unlock) only works in Safari.")
                     .font(.caption)
@@ -222,7 +247,7 @@ private struct ExtensionReviewSheet: View {
                 Spacer()
                 Button("Cancel", action: cancel)
                     .keyboardShortcut(.cancelAction)
-                Button("Add Extension", action: add)
+                Button("Add Extension") { add(allowAllSites) }
                     .keyboardShortcut(.defaultAction)
             }
         }

@@ -46,16 +46,7 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         openOptionsPageFor extensionContext: WKWebExtensionContext,
         completionHandler: @escaping ((any Error)?) -> Void
     ) {
-        guard let url = extensionContext.optionsPageURL, let tabManager = focusedWindow?.tabManager else {
-            completionHandler(nil)
-            return
-        }
-        _ = tabManager.openTab(
-            url: url,
-            historyManager: tabManager.historyManager,
-            downloadManager: tabManager.downloadManager,
-            isPrivate: false
-        )
+        openOptions(extensionContext)
         completionHandler(nil)
     }
 
@@ -98,8 +89,8 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
 
     // MARK: - Permissions
 
-    // Asked while running, beyond what was reviewed at install: refused for
-    // now (a prompt comes with the extension button's menu).
+    // Asked while running, beyond what was reviewed at install: the user
+    // decides (see `WebExtensionsManager+SiteAccess.swift`).
 
     func webExtensionController(
         _ controller: WKWebExtensionController,
@@ -108,9 +99,7 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         completionHandler: @escaping (Set<WKWebExtension.Permission>, Date?) -> Void
     ) {
-        let names = permissions.map(\.rawValue).sorted().joined(separator: ", ")
-        logger.notice("\(self.name(of: extensionContext), privacy: .public) asked for: \(names, privacy: .public)")
-        completionHandler([], nil)
+        askPermissions(permissions, for: extensionContext) { completionHandler($0, nil) }
     }
 
     func webExtensionController(
@@ -120,8 +109,14 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         completionHandler: @escaping (Set<URL>, Date?) -> Void
     ) {
-        logger.notice("\(self.name(of: extensionContext), privacy: .public) asked for \(urls.count) sites")
-        completionHandler([], nil)
+        let hosts = Array(Set(urls.compactMap { ExtensionSiteAccess.host(of: $0) })).sorted()
+        guard !hosts.isEmpty else {
+            completionHandler([], nil)
+            return
+        }
+        askSites(hosts: hosts, allSites: false, for: extensionContext) { allowed, expiresAt in
+            completionHandler(allowed ? urls : [], expiresAt)
+        }
     }
 
     func webExtensionController(
@@ -131,9 +126,23 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         completionHandler: @escaping (Set<WKWebExtension.MatchPattern>, Date?) -> Void
     ) {
-        let patterns = matchPatterns.map(\.string).sorted().joined(separator: ", ")
-        logger.notice("\(self.name(of: extensionContext), privacy: .public) asked for: \(patterns, privacy: .public)")
-        completionHandler([], nil)
+        let allSites = matchPatterns.contains { $0.matchesAllHosts || $0.matchesAllURLs }
+        let hosts = Array(Set(matchPatterns.compactMap(\.host))).sorted()
+        guard allSites || !hosts.isEmpty else {
+            completionHandler([], nil)
+            return
+        }
+        askSites(hosts: hosts, allSites: allSites, for: extensionContext) { allowed, expiresAt in
+            // All websites allowed: kept with the websites it asked for at
+            // install, which follow "Other Websites".
+            if allowed, allSites {
+                let patterns = matchPatterns.map(\.string)
+                self.updateRecord(id: extensionContext.uniqueIdentifier) { record in
+                    record.grantedMatchPatterns = Array(Set(record.grantedMatchPatterns).union(patterns)).sorted()
+                }
+            }
+            completionHandler(allowed ? matchPatterns : [], expiresAt)
+        }
     }
 
     // MARK: - Messages to the extension's app

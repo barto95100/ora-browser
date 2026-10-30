@@ -18,8 +18,18 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     var isEnabled: Bool
     /// What the user allowed, as WebKit names them (`tabs`, `storage`…).
     var grantedPermissions: [String]
-    /// Sites the user allowed, as match patterns (`*://*/*`…).
+    /// The websites it asked for (`*://*/*`…), granted while `otherSites`
+    /// is `.allow`.
     var grantedMatchPatterns: [String]
+    /// Websites allowed later, when it asked for them while running.
+    var extraMatchPatterns: [String]
+    /// Websites without a rule of their own, like Safari's "Other Websites".
+    var otherSites: SiteDecision
+    /// Allowed or refused websites, by host.
+    var siteRules: [SiteRule]
+    /// Its button shows next to the sidebar button; unpinned, it is in the
+    /// extensions menu.
+    var isPinned: Bool
     var installedAt: Date
 
     init(id: String = UUID().uuidString, source: Source, name: String, appName: String?) {
@@ -30,7 +40,28 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         isEnabled = true
         grantedPermissions = []
         grantedMatchPatterns = []
+        extraMatchPatterns = []
+        otherSites = .ask
+        siteRules = []
+        isPinned = true
         installedAt = Date()
+    }
+
+    /// Records from before website access: they had all their websites.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        source = try container.decode(Source.self, forKey: .source)
+        name = try container.decode(String.self, forKey: .name)
+        appName = try container.decodeIfPresent(String.self, forKey: .appName)
+        isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
+        grantedPermissions = try container.decode([String].self, forKey: .grantedPermissions)
+        grantedMatchPatterns = try container.decode([String].self, forKey: .grantedMatchPatterns)
+        extraMatchPatterns = try container.decodeIfPresent([String].self, forKey: .extraMatchPatterns) ?? []
+        otherSites = try container.decodeIfPresent(SiteDecision.self, forKey: .otherSites) ?? .allow
+        siteRules = try container.decodeIfPresent([SiteRule].self, forKey: .siteRules) ?? []
+        isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? true
+        installedAt = try container.decode(Date.self, forKey: .installedAt)
     }
 
     var appexPath: String {
@@ -38,6 +69,90 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         case let .safariApp(path, _): path
         }
     }
+}
+
+/// Whether an extension may read and change a website's pages.
+enum SiteDecision: String, Codable, CaseIterable {
+    /// Asks the first time it wants to (like Safari).
+    case ask
+    case allow
+    case deny
+}
+
+/// A website's decision for an extension; "for one day" ends at `expiresAt`.
+struct SiteRule: Codable, Equatable {
+    var host: String
+    var decision: SiteDecision
+    var expiresAt: Date?
+
+    func isActive(at date: Date) -> Bool {
+        expiresAt.map { $0 > date } ?? true
+    }
+}
+
+/// Website access rules, without WebKit.
+enum ExtensionSiteAccess {
+    /// The match pattern for one website (all its pages, http and https).
+    static func pattern(forHost host: String) -> String {
+        "*://\(host)/*"
+    }
+
+    /// The website of a page, if it is one (http or https).
+    static func host(of url: URL?) -> String? {
+        guard let url, ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
+              let host = url.host?.lowercased(), !host.isEmpty
+        else { return nil }
+        return host
+    }
+
+    /// The decision for a website: its own rule if still valid, else the
+    /// one for other websites.
+    static func decision(for host: String, in record: ExtensionRecord, at date: Date = Date()) -> SiteDecision {
+        record.siteRules.first { $0.host == host && $0.isActive(at: date) }?.decision ?? record.otherSites
+    }
+
+    /// Sets a website's rule, replacing its previous one; `.ask` removes it.
+    static func setting(
+        _ decision: SiteDecision,
+        for host: String,
+        until expiresAt: Date? = nil,
+        in rules: [SiteRule]
+    ) -> [SiteRule] {
+        var rules = rules.filter { $0.host != host }
+        if decision != .ask {
+            rules.append(SiteRule(host: host, decision: decision, expiresAt: expiresAt))
+        }
+        return rules.sorted { $0.host < $1.host }
+    }
+
+    /// Rules that ended ("for one day") are dropped.
+    static func activeRules(_ rules: [SiteRule], at date: Date = Date()) -> [SiteRule] {
+        rules.filter { $0.isActive(at: date) }
+    }
+
+    /// Match patterns to grant: the websites asked for when other websites
+    /// are allowed, those allowed while running, and allowed websites.
+    static func grantedPatterns(for record: ExtensionRecord, at date: Date = Date())
+        -> [(pattern: String, expiresAt: Date?)]
+    {
+        var patterns: [(pattern: String, expiresAt: Date?)] = []
+        if record.otherSites == .allow {
+            patterns += record.grantedMatchPatterns.map { (pattern: $0, expiresAt: nil) }
+        }
+        patterns += record.extraMatchPatterns.map { (pattern: $0, expiresAt: nil) }
+        for rule in activeRules(record.siteRules, at: date) where rule.decision == .allow {
+            patterns.append((pattern: pattern(forHost: rule.host), expiresAt: rule.expiresAt))
+        }
+        return patterns
+    }
+
+    /// Match patterns to refuse: refused websites.
+    static func deniedPatterns(for record: ExtensionRecord, at date: Date = Date()) -> [String] {
+        activeRules(record.siteRules, at: date).filter { $0.decision == .deny }.map { pattern(forHost: $0.host) }
+    }
+
+    /// Patterns meaning every website.
+    static let allSitesPatterns: Set<String> = ["<all_urls>", "*://*/*", "http://*/*", "https://*/*"]
 }
 
 /// A Safari extension found in an app, not installed in Ora yet.

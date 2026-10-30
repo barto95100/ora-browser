@@ -279,9 +279,10 @@ struct OraRoot: View {
                     }
                 }
                 NotificationCenter.default.addObserver(forName: .showSettings, object: nil, queue: .main) { note in
+                    let opens = note.userInfo?["open"] as? Bool == true
                     Task { @MainActor in
                         guard note.object as? NSWindow === window else { return }
-                        appState.showSettings.toggle()
+                        if opens { appState.showSettings = true } else { appState.showSettings.toggle() }
                     }
                 }
                 NotificationCenter.default.addObserver(forName: .showTime, object: nil, queue: .main) { note in

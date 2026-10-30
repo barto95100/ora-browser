@@ -27,13 +27,7 @@ extension WebExtensionsManager {
     /// show what it asks for before adding it.
     func reviewFromWebStore(_ storeID: String) async throws -> Review {
         guard let url = ChromeWebStore.downloadURL(for: storeID) else { throw PackageFailure.download }
-        var request = URLRequest(url: url)
-        request.setValue(
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
-                + "Chrome/\(ChromeWebStore.chromeVersion) Safari/537.36",
-            forHTTPHeaderField: "User-Agent"
-        )
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: Self.chromeRequest(url))
         guard (response as? HTTPURLResponse)?.statusCode == 200, !data.isEmpty else {
             throw PackageFailure.download
         }

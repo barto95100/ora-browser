@@ -85,7 +85,22 @@ private struct ExtensionsSettingsContent: View {
                         + "Some Chrome extensions use features WebKit doesn't have: they may not work fully."
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Button("Add from Folder or Zip…") { chooseFile() }
+                        HStack {
+                            Button("Add from Folder or Zip…") { chooseFile() }
+                            Button(manager.isCheckingUpdates ? "Checking…" : "Check for Updates") {
+                                #if DEBUG
+                                    // ⌥-click: reinstalls the current versions (to test updates).
+                                    let reinstall = NSEvent.modifierFlags.contains(.option)
+                                #else
+                                    let reinstall = false
+                                #endif
+                                Task { await manager.checkForUpdates(reinstall: reinstall) }
+                            }
+                            .disabled(manager.isCheckingUpdates)
+                        }
+                        Text(manager.updateStatus ?? "Updates are checked once a day, like Chrome.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         if let fileError {
                             Label(fileError, systemImage: "exclamationmark.triangle")
                                 .foregroundStyle(.orange)
@@ -152,10 +167,29 @@ private struct InstalledExtensionRow: View {
     @ObservedObject private var manager = WebExtensionsManager.shared
 
     @State private var showsDetails = false
+    @State private var reviewsUpdate = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             row
+            if let pending = manager.pendingUpdates[item.id] {
+                HStack(spacing: 8) {
+                    Label("Version \(pending.version) asks for more.", systemImage: "arrow.down.circle")
+                        .font(.caption)
+                    Button("Review…") { reviewsUpdate = true }
+                        .controlSize(.small)
+                }
+                .padding(.leading, 38)
+                .sheet(isPresented: $reviewsUpdate) {
+                    ExtensionUpdateSheet(name: item.record.name, update: pending) {
+                        manager.acceptUpdate(id: item.id)
+                        reviewsUpdate = false
+                    } notNow: {
+                        manager.declineUpdate(id: item.id)
+                        reviewsUpdate = false
+                    }
+                }
+            }
             DisclosureGroup("Details", isExpanded: $showsDetails) {
                 ExtensionDetailView(item: item)
                     .padding(.top, 6)
@@ -280,5 +314,47 @@ struct ExtensionReviewSheet: View {
         }
         .padding(24)
         .frame(width: 440)
+    }
+}
+
+/// An update that asks for more than what was allowed: shown before it
+/// runs (like Chrome).
+@available(macOS 15.4, *)
+private struct ExtensionUpdateSheet: View {
+    let name: String
+    let update: WebExtensionsManager.PendingUpdate
+    let accept: () -> Void
+    let notNow: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Update “\(name)” to version \(update.version)?")
+                .font(.title3.weight(.semibold))
+            Text("This version asks for more than what you allowed:")
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(update.newPermissions, id: \.self) { permission in
+                    Label(ExtensionPermissionText.describe(permission), systemImage: "plus.circle")
+                }
+                if !update.newSites.isEmpty {
+                    Label(
+                        "Read and change pages on: "
+                            + ExtensionPermissionText.describeSites(update.newSites).joined(separator: ", "),
+                        systemImage: "globe"
+                    )
+                }
+            }
+            Text("Until then, the current version keeps running.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack {
+                Spacer()
+                Button("Not Now", action: notNow)
+                    .keyboardShortcut(.cancelAction)
+                Button("Update", action: accept)
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(24)
+        .frame(width: 420)
     }
 }

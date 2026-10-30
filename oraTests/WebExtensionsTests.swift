@@ -191,3 +191,40 @@ struct ChromeWebStoreTests {
         #expect(store.path == "/p/1.zip")
     }
 }
+
+struct ExtensionUpdateTests {
+    @Test func versionsCompareNumberByNumber() {
+        #expect(ExtensionVersion.isNewer("4.9.110", than: "4.9.99"))
+        #expect(ExtensionVersion.isNewer("2026.10.1", than: "2026.10"))
+        #expect(!ExtensionVersion.isNewer("1.0", than: "1.0.0"))
+        #expect(!ExtensionVersion.isNewer("1.2", than: "1.10"))
+    }
+
+    @Test func oneCheckAsksForEveryExtension() throws {
+        let url = try #require(ChromeWebStoreUpdates.checkURL(for: [
+            (storeID: "aaaabbbbccccddddeeeeffffgggghhhh", version: "1.0"),
+            (storeID: "iiiijjjjkkkkllllmmmmnnnnoooopppp", version: "2.3")
+        ]))
+        #expect(url.absoluteString.contains("response=updatecheck"))
+        #expect(url.absoluteString.contains("x=id%3Daaaabbbbccccddddeeeeffffgggghhhh%26v%3D1.0%26uc"))
+        #expect(url.absoluteString.contains("x=id%3Diiiijjjjkkkkllllmmmmnnnnoooopppp%26v%3D2.3%26uc"))
+    }
+
+    @Test func googlesAnswerGivesTheUpdates() {
+        let answer = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <gupdate xmlns="http://www.google.com/update2/response" protocol="2.0" server="prod">
+          <app appid="aaaabbbbccccddddeeeeffffgggghhhh" status="ok">
+            <updatecheck codebase="https://clients2.googleusercontent.com/crx/blobs/x/a.crx" status="ok" version="4.9.110"/>
+          </app>
+          <app appid="iiiijjjjkkkkllllmmmmnnnnoooopppp" status="ok">
+            <updatecheck status="noupdate"/>
+          </app>
+        </gupdate>
+        """
+        let updates = ChromeWebStoreUpdates.parse(Data(answer.utf8))
+        #expect(updates.count == 1)
+        #expect(updates["aaaabbbbccccddddeeeeffffgggghhhh"]?.version == "4.9.110")
+        #expect(updates["aaaabbbbccccddddeeeeffffgggghhhh"]?.downloadURL.host == "clients2.googleusercontent.com")
+    }
+}

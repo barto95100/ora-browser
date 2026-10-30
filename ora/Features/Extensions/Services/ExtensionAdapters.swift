@@ -9,11 +9,13 @@ import AppKit
 final class ExtensionWindow: NSObject, WKWebExtensionWindow {
     weak var window: NSWindow?
     weak var tabManager: TabManager?
+    let isPrivateWindow: Bool
     private weak var manager: WebExtensionsManager?
 
-    init(window: NSWindow, tabManager: TabManager, manager: WebExtensionsManager) {
+    init(window: NSWindow, tabManager: TabManager, isPrivate: Bool, manager: WebExtensionsManager) {
         self.window = window
         self.tabManager = tabManager
+        isPrivateWindow = isPrivate
         self.manager = manager
     }
 
@@ -46,8 +48,9 @@ final class ExtensionWindow: NSObject, WKWebExtensionWindow {
         return .normal
     }
 
+    /// WebKit shows it only to extensions allowed in private browsing.
     func isPrivate(for context: WKWebExtensionContext) -> Bool {
-        false
+        isPrivateWindow
     }
 
     func frame(for context: WKWebExtensionContext) -> CGRect {

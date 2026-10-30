@@ -75,7 +75,7 @@ struct OraRoot: View {
             // Browsing time: the page in front changed.
             .onChange(of: tabManager.activeTab?.id) {
                 BrowsingTimeTracker.shared.refresh()
-                if !privacyMode.isPrivate { WebExtensionsHub.activeTabChanged(in: tabManager) }
+                WebExtensionsHub.activeTabChanged(in: tabManager)
             }
             .onChange(of: tabManager.activeTab?.url) { BrowsingTimeTracker.shared.refresh() }
             .background(
@@ -136,10 +136,14 @@ struct OraRoot: View {
                 if privacyMode.isPrivate, let newWindow {
                     newWindow.title = "Private Browsing"
                 }
+                if let newWindow {
+                    WebExtensionsHub.registerWindow(
+                        newWindow, tabManager: tabManager, isPrivate: privacyMode.isPrivate
+                    )
+                }
                 guard let newWindow, !privacyMode.isPrivate else { return }
                 BrowsingTimeTracker.shared.register(newWindow, tabManager: tabManager)
                 BrowserWindows.normal.add(newWindow)
-                WebExtensionsHub.registerWindow(newWindow, tabManager: tabManager)
                 for file in ExternalFileOpener.shared.register(newWindow) {
                     tabManager.openTab(
                         url: file,

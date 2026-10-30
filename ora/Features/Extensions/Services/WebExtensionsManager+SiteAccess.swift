@@ -8,6 +8,7 @@ extension WebExtensionsManager {
     /// Grants what the record allows and refuses what it refuses, in place:
     /// the extension keeps running (Bitwarden stays unlocked).
     func applyAccess(_ record: ExtensionRecord, to context: WKWebExtensionContext) {
+        context.hasAccessToPrivateData = record.allowsPrivateBrowsing
         for name in record.grantedPermissions {
             context.setPermissionStatus(.grantedExplicitly, for: WKWebExtension.Permission(rawValue: name))
         }
@@ -66,6 +67,10 @@ extension WebExtensionsManager {
         updateRecord(id: id) { $0.isPinned = pinned }
     }
 
+    func setAllowsPrivateBrowsing(_ allowed: Bool, id: String) {
+        updateRecord(id: id) { $0.allowsPrivateBrowsing = allowed }
+    }
+
     /// Asks before removing an extension (from its button's menu).
     func confirmRemove(id: String) {
         guard let record = installed.first(where: { $0.id == id })?.record else { return }
@@ -80,7 +85,7 @@ extension WebExtensionsManager {
 
     /// The extension's options page, in a new tab of the front window.
     func openOptions(_ context: WKWebExtensionContext) {
-        guard let url = context.optionsPageURL, let tabManager = focusedWindow?.tabManager else { return }
+        guard let url = context.optionsPageURL, let tabManager = focusedNormalWindow?.tabManager else { return }
         _ = tabManager.openTab(
             url: url,
             historyManager: tabManager.historyManager,

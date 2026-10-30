@@ -133,6 +133,7 @@ struct ExtensionSiteAccessTests {
         let record = try #require(try decoder.decode([ExtensionRecord].self, from: Data(json.utf8)).first)
         #expect(record.otherSites == .allow)
         #expect(record.isPinned)
+        #expect(!record.allowsPrivateBrowsing)
         #expect(record.siteRules.isEmpty)
     }
 

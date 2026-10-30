@@ -16,6 +16,7 @@ struct SpacesSettingsView: View {
     @State private var selectedContainerId: UUID?
     @State private var completedClearActions: Set<ClearDataAction> = []
     @State private var newCustomFilterListURL = ""
+    @State private var spacePendingDeletion: TabContainer?
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var toastManager: ToastManager
 
@@ -26,14 +27,29 @@ struct SpacesSettingsView: View {
     var body: some View {
         HStack(spacing: 0) {
             // Left list
-            List(selection: $selectedContainerId) {
-                ForEach(containers) { container in
-                    HStack {
-                        Text(container.emoji)
-                        Text(container.name)
+            VStack(spacing: 0) {
+                List(selection: $selectedContainerId) {
+                    ForEach(containers) { container in
+                        HStack {
+                            Text(container.emoji)
+                            Text(container.name)
+                        }
+                        .tag(container.id)
+                        .contextMenu {
+                            Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
+                                .disabled(containers.count <= 1)
+                        }
                     }
-                    .tag(container.id)
                 }
+                Divider()
+                Button {
+                    BrowserWindows.showImport()
+                } label: {
+                    Label("Import from Zen…", systemImage: "square.and.arrow.down")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+                .padding(10)
             }
             .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
 
@@ -176,6 +192,7 @@ struct SpacesSettingsView: View {
                             .buttonStyle(.bordered)
                         }
 
+                        deleteSpaceCard(for: container)
                     } else {
                         Text("No spaces found")
                             .foregroundStyle(.secondary)
@@ -189,6 +206,18 @@ struct SpacesSettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
         }
+        .confirmationDialog(
+            "Delete “\(spacePendingDeletion?.name ?? "")”?",
+            isPresented: Binding(
+                get: { spacePendingDeletion != nil },
+                set: { if !$0 { spacePendingDeletion = nil } }
+            ),
+            presenting: spacePendingDeletion
+        ) { container in
+            Button("Delete", role: .destructive) { delete(container) }
+        } message: { _ in
+            Text("All tabs in this space will be permanently removed.")
+        }
         .onAppear {
             if selectedContainerId == nil { selectedContainerId = containers.first?.id }
             Task {
@@ -197,6 +226,32 @@ struct SpacesSettingsView: View {
                 }
             }
         }
+    }
+
+    private func deleteSpaceCard(for container: TabContainer) -> some View {
+        SettingsCard(header: "Delete Space") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(
+                    containers.count <= 1
+                        ? "The last space can't be deleted."
+                        : "Removes the space with its tabs, folders and website data."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
+                    .disabled(containers.count <= 1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// The browser window deletes it, like from the sidebar (see `BrowserWindows`).
+    private func delete(_ container: TabContainer) {
+        if selectedContainerId == container.id {
+            selectedContainerId = containers.first { $0.id != container.id }?.id
+        }
+        BrowserWindows.deleteSpace(container.id)
+        spacePendingDeletion = nil
     }
 
     private func clearHistory(for container: TabContainer) -> Bool {

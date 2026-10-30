@@ -70,6 +70,7 @@ struct OraRoot: View {
 
     var body: some View {
         BrowserView()
+            .sheet(isPresented: $appState.showImport) { BrowserImportSheet() }
             .background(WindowReader(window: $window))
             // Browsing time: the page in front changed.
             .onChange(of: tabManager.activeTab?.id) { BrowsingTimeTracker.shared.refresh() }
@@ -255,6 +256,22 @@ struct OraRoot: View {
                         appState.showHistory = false
                         appState.showTime = false
                         appState.showNotes.toggle()
+                    }
+                }
+                NotificationCenter.default.addObserver(forName: .showImport, object: nil, queue: .main) { note in
+                    Task { @MainActor in
+                        guard note.object as? NSWindow === window, !privacyMode.isPrivate else { return }
+                        appState.showImport = true
+                    }
+                }
+                NotificationCenter.default.addObserver(forName: .deleteSpace, object: nil, queue: .main) { note in
+                    guard let spaceID = note.userInfo?["spaceID"] as? UUID else { return }
+                    Task { @MainActor in
+                        let descriptor = FetchDescriptor<TabContainer>(predicate: #Predicate { $0.id == spaceID })
+                        guard note.object as? NSWindow === window,
+                              let container = try? tabManager.modelContext.fetch(descriptor).first
+                        else { return }
+                        tabManager.deleteContainer(container)
                     }
                 }
                 NotificationCenter.default.addObserver(forName: .showSettings, object: nil, queue: .main) { note in

@@ -61,6 +61,8 @@ class AppState: ObservableObject {
     @Published var showTime: Bool = false
     /// The settings in place of the page, see `InWindowSettingsView`.
     @Published var showSettings: Bool = false
+    /// Import from another browser, see `BrowserImportSheet`.
+    @Published var showImport: Bool = false
     /// What is shown at the right of the page, one at a time: the tab's note
     /// (`TabNotePanel`), the space's tasks (`TasksPanel`) or today's browsing
     /// time (`TimeSidePanel`).

@@ -131,6 +131,8 @@ struct OraRoot: View {
             // including those that launched Ora before it existed.
             .onChange(of: window, initial: true) { _, newWindow in
                 tabManager.windowUndoManager = newWindow?.undoManager
+                // Keyboard shortcuts only act on the keys typed in this window.
+                keyModifierListener.window = newWindow
                 // Private windows are named so in the Window menu and Mission Control.
                 if privacyMode.isPrivate, let newWindow {
                     newWindow.title = "Private Browsing"
@@ -204,7 +206,8 @@ struct OraRoot: View {
                 // customizable shortcut (⌃⌘F by default) as well.
                 keyModifierListener.registerKeyDownHandler { event in
                     guard KeyChord(fromEvent: event) == KeyboardShortcuts.Window.fullscreen.currentChord,
-                          let targetWindow = event.window ?? NSApp.keyWindow
+                          // `KeyModifierListener` only passes the events of this window.
+                          let targetWindow = event.window
                     else { return false }
                     targetWindow.toggleFullScreen(nil)
                     return true

@@ -6,6 +6,7 @@ import SwiftUI
  * It publishes the current modifier flags via the `modifierFlags` property, which updates whenever modifier keys are pressed or released.
  *
  * Additionally, it allows registering custom handlers for key down events using `registerKeyDownHandler`.
+ * Handlers only receive the key down events of the listener's `window`.
  * If any registered handler returns true, the event is consumed and not propagated further.
  *
  *
@@ -34,6 +35,10 @@ import SwiftUI
 final class KeyModifierListener: ObservableObject {
     @Published var modifierFlags = NSEvent.ModifierFlags([])
 
+    /// The browser window that owns this listener. Key down handlers only see
+    /// the events typed in it (see `EventWindowScope`); none until it is known.
+    weak var window: NSWindow?
+
     init() {
         NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
             self?.modifierFlags = event.modifierFlags
@@ -58,6 +63,7 @@ final class KeyModifierListener: ObservableObject {
     }
 
     private func handleGlobalKeyDown(_ event: NSEvent) -> Bool {
+        guard EventWindowScope.concerns(eventWindow: event.window, window: window) else { return false }
         for handler in keyDownHandlers {
             if handler(event) {
                 return true

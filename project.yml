@@ -73,8 +73,6 @@ targets:
           NSAllowsArbitraryLoadsInWebContent: true
         NSCameraUsageDescription: "Allows websites to use the camera, for example during video calls."
         NSMicrophoneUsageDescription: "Allows websites to use the microphone, for example during calls or dictation."
-        SUFeedURL: "https://barto95100.github.io/ora-browser/appcast.xml"
-        SUPublicEDKey: "Ozj+rezzbJAD76RfajtfQ7rFojJbpFSCl/0DcFSBCTI="
         SUEnableAutomaticChecks: NO
         SUEnableInstallerLauncherService: YES
         CFBundleURLTypes:
@@ -115,8 +113,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        SUFeedURL: "https://barto95100.github.io/ora-browser/appcast.xml"
-        SUPublicEDKey: "Ozj+rezzbJAD76RfajtfQ7rFojJbpFSCl/0DcFSBCTI="
         SUEnableAutomaticChecks: NO
         SUEnableInstallerLauncherService: YES
       configs:

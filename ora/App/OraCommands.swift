@@ -221,11 +221,10 @@ struct OraCommands: Commands {
 
         CommandGroup(replacing: .appInfo) {
             Button("About Ora") { showAboutWindow() }
-            Button("Check for Updates") {
-                NotificationCenter.default.post(
-                    name: .checkForUpdates,
-                    object: NSApp.keyWindow
-                )
+            if UpdateService.isAvailable {
+                Button("Check for Updates") {
+                    UpdateService.shared.checkForUpdates()
+                }
             }
         }
 

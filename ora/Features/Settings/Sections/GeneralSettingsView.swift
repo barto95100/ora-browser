@@ -87,38 +87,40 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            SettingsCard(header: "Updates") {
-                Toggle("Auto-check for updates", isOn: $settings.autoUpdateEnabled)
+            if UpdateService.isAvailable {
+                SettingsCard(header: "Updates") {
+                    Toggle("Auto-check for updates", isOn: $settings.autoUpdateEnabled)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Button("Check for Updates") {
-                            updateService.checkForUpdates()
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Button("Check for Updates") {
+                                updateService.checkForUpdates()
+                            }
+
+                            if updateService.isCheckingForUpdates {
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 16, height: 16)
+                            }
+
+                            if updateService.updateAvailable {
+                                Text("Update available!")
+                                    .foregroundColor(.green)
+                                    .font(.caption)
+                            }
                         }
 
-                        if updateService.isCheckingForUpdates {
-                            ProgressView()
-                                .scaleEffect(0.5)
-                                .frame(width: 16, height: 16)
-                        }
-
-                        if updateService.updateAvailable {
-                            Text("Update available!")
-                                .foregroundColor(.green)
+                        if let result = updateService.lastCheckResult {
+                            Text(result)
                                 .font(.caption)
+                                .foregroundColor(updateService.updateAvailable ? .green : .secondary)
                         }
-                    }
 
-                    if let result = updateService.lastCheckResult {
-                        Text(result)
-                            .font(.caption)
-                            .foregroundColor(updateService.updateAvailable ? .green : .secondary)
-                    }
-
-                    if let lastCheck = updateService.lastCheckDate {
-                        Text("Last checked: \(lastCheck.formatted(date: .abbreviated, time: .shortened))")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        if let lastCheck = updateService.lastCheckDate {
+                            Text("Last checked: \(lastCheck.formatted(date: .abbreviated, time: .shortened))")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }

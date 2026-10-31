@@ -14,7 +14,6 @@ final class PrivacyMode: ObservableObject {
 struct OraRoot: View {
     @StateObject private var appState = AppState()
     @StateObject private var keyModifierListener = KeyModifierListener()
-    @StateObject private var updateService = UpdateService()
     @StateObject private var mediaController: MediaController
     @StateObject private var tabManager: TabManager
     @StateObject private var historyManager: HistoryManager
@@ -95,7 +94,7 @@ struct OraRoot: View {
             .environmentObject(CustomKeyboardShortcutManager.shared)
             .environmentObject(AppearanceManager.shared)
             .environmentObject(downloadManager)
-            .environmentObject(updateService)
+            .environmentObject(UpdateService.shared)
             .environmentObject(privacyMode)
             .environmentObject(sidebarManager)
             .environmentObject(toolbarManager)
@@ -229,11 +228,6 @@ struct OraRoot: View {
                     )
                 }
 
-                if SettingsStore.shared.autoUpdateEnabled {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        updateService.checkForUpdatesInBackground()
-                    }
-                }
                 NotificationCenter.default.addObserver(forName: .showLauncher, object: nil, queue: .main) { note in
                     Task { @MainActor in
                         guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
@@ -423,10 +417,6 @@ struct OraRoot: View {
                     {
                         AppearanceManager.shared.appearance = mode
                     }
-                }
-                NotificationCenter.default.addObserver(forName: .checkForUpdates, object: nil, queue: .main) { note in
-                    guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                    updateService.checkForUpdates()
                 }
                 NotificationCenter.default.addObserver(forName: .selectTabAtIndex, object: nil, queue: .main) { note in
                     Task { @MainActor in

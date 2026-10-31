@@ -3,8 +3,8 @@ import Foundation
 @MainActor
 extension Tab {
     /// Shows the icon the page declares, like Safari (from the page script).
-    func updateFavicon(from message: PageFaviconMessage) {
-        guard let pageURL = URL(string: message.page), let host = pageURL.host else { return }
+    func updateFavicon(from message: PageFaviconMessage, pageURL: URL?) {
+        guard let pageURL, let host = pageURL.host else { return }
 
         // Another site: don't keep showing the previous site's icon meanwhile.
         if faviconSiteHost != host {

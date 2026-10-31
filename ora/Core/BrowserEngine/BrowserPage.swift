@@ -319,6 +319,16 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         // Popups share this page's configuration, hence its message handlers:
         // their messages are not about this page.
         guard message.webView === webView else { return }
+        // Only our main-frame scripts may talk to us: drop messages from
+        // iframes and late ones from a page we already navigated away from.
+        let frameOrigin = message.frameInfo.securityOrigin
+        guard ScriptMessagePolicy.accepts(
+            isMainFrame: message.frameInfo.isMainFrame,
+            frameScheme: frameOrigin.protocol,
+            frameHost: frameOrigin.host,
+            framePort: frameOrigin.port,
+            pageURL: webView.url
+        ) else { return }
         delegate?.browserPage(
             self,
             didReceiveScriptMessage: BrowserScriptMessage(name: message.name, body: message.body)

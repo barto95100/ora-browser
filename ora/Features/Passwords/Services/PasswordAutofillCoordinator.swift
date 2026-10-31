@@ -106,6 +106,8 @@ struct PasswordAutofillOverlayState: Equatable {
     let emailSuggestions: [PasswordEmailSuggestion]
     let generatedPassword: String?
     let selectedSuggestionIndex: Int
+    /// Origin of the page the overlay was opened for, to check it is still there when filling.
+    var pageOrigin: String?
 
     var suggestions: [PasswordAutofillSuggestion] {
         var items: [PasswordAutofillSuggestion] = []
@@ -210,6 +212,15 @@ final class PasswordAutofillCoordinator {
             }
 
             await MainActor.run {
+                // The page may have navigated while the user was authenticating:
+                // never send the password to a page the entry doesn't belong to.
+                guard let pageURL = self.tab?.browserPage?.currentURL,
+                      PasswordManagerService.entry(origin: entry.origin, host: entry.host, matches: pageURL)
+                else {
+                    self.clearAutofillState()
+                    return
+                }
+
                 let request = PasswordFillRequest(
                     usernameFieldID: overlay.focus.usernameFieldID,
                     passwordFieldIDs: overlay.focus.passwordFieldIDs,
@@ -231,7 +242,8 @@ final class PasswordAutofillCoordinator {
             return
         }
 
-        guard tab?.browserPage != nil else {
+        guard isStillOnPage(of: overlay) else {
+            clearAutofillState()
             return
         }
 
@@ -253,7 +265,8 @@ final class PasswordAutofillCoordinator {
             return
         }
 
-        guard tab?.browserPage != nil else {
+        guard isStillOnPage(of: overlay) else {
+            clearAutofillState()
             return
         }
 
@@ -322,12 +335,23 @@ final class PasswordAutofillCoordinator {
             savedPasswordEntries: suggestions.savedPasswordEntries,
             emailSuggestions: suggestions.emailSuggestions,
             generatedPassword: suggestions.generatedPassword,
-            selectedSuggestionIndex: suggestions.selectedSuggestionIndex
+            selectedSuggestionIndex: suggestions.selectedSuggestionIndex,
+            pageOrigin: PasswordManagerService.normalizedOrigin(from: pageURL)
         )
 
         tab?.passwordTriggerOverlayState = overlayState
         tab?.passwordOverlayState = overlayState
         setOverlayKeyboardActive(true)
+    }
+
+    /// Whether the tab still shows the page the overlay was opened for.
+    private func isStillOnPage(of overlay: PasswordAutofillOverlayState) -> Bool {
+        guard let pageOrigin = overlay.pageOrigin,
+              let pageURL = tab?.browserPage?.currentURL
+        else {
+            return false
+        }
+        return PasswordManagerService.normalizedOrigin(from: pageURL) == pageOrigin
     }
 
     private func updateOverlayRect(for fieldID: String, rect: PasswordBridgeRect) {
@@ -471,7 +495,8 @@ final class PasswordAutofillCoordinator {
             savedPasswordEntries: overlay.savedPasswordEntries,
             emailSuggestions: overlay.emailSuggestions,
             generatedPassword: overlay.generatedPassword,
-            selectedSuggestionIndex: overlay.selectedSuggestionIndex
+            selectedSuggestionIndex: overlay.selectedSuggestionIndex,
+            pageOrigin: overlay.pageOrigin
         )
     }
 
@@ -484,7 +509,8 @@ final class PasswordAutofillCoordinator {
             savedPasswordEntries: overlay.savedPasswordEntries,
             emailSuggestions: overlay.emailSuggestions,
             generatedPassword: overlay.generatedPassword,
-            selectedSuggestionIndex: selectionIndex
+            selectedSuggestionIndex: selectionIndex,
+            pageOrigin: overlay.pageOrigin
         )
     }
 

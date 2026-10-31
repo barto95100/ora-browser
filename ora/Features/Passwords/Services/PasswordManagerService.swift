@@ -101,30 +101,8 @@ final class PasswordManagerService: ObservableObject {
     }
 
     func matchingEntries(for url: URL, containerID: UUID?) -> [SavedPasswordSummary] {
-        guard let origin = Self.normalizedOrigin(from: url),
-              let host = Self.normalizedHost(from: url)
-        else {
-            return []
-        }
-
-        let shouldAllowLegacyHostMatch = Self.isSecureDefaultPort(url)
-        let alternateHost = host.hasPrefix("www.")
-            ? String(host.dropFirst(4))
-            : "www.\(host)"
-
-        return scopedEntries(for: containerID)
-            .filter { entry in
-                if entry.origin == origin {
-                    return true
-                }
-
-                guard shouldAllowLegacyHostMatch, entry.origin == nil else {
-                    return false
-                }
-
-                let entryHost = Self.normalizeHost(entry.host)
-                return entryHost == host || entryHost == alternateHost
-            }
+        scopedEntries(for: containerID)
+            .filter { Self.entry(origin: $0.origin, host: $0.host, matches: url) }
             .sorted {
                 let lhsDate = $0.lastUsedAt ?? $0.updatedAt
                 let rhsDate = $1.lastUsedAt ?? $1.updatedAt
@@ -430,6 +408,30 @@ final class PasswordManagerService: ObservableObject {
             return nil
         }
         return normalizeHost(host)
+    }
+
+    /// Whether a saved entry belongs to the page at `url`: same origin, or, for a legacy
+    /// entry saved without an origin, same host (± `www.`) over HTTPS on the default port.
+    static func entry(origin entryOrigin: String?, host entryHost: String, matches url: URL) -> Bool {
+        guard let origin = normalizedOrigin(from: url),
+              let host = normalizedHost(from: url)
+        else {
+            return false
+        }
+
+        if entryOrigin == origin {
+            return true
+        }
+
+        guard entryOrigin == nil, isSecureDefaultPort(url) else {
+            return false
+        }
+
+        let alternateHost = host.hasPrefix("www.")
+            ? String(host.dropFirst(4))
+            : "www.\(host)"
+        let normalizedEntryHost = normalizeHost(entryHost)
+        return normalizedEntryHost == host || normalizedEntryHost == alternateHost
     }
 
     static func normalizedOrigin(from url: URL) -> String? {

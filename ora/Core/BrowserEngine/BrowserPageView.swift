@@ -267,6 +267,9 @@ struct BrowserPageView: NSViewRepresentable {
                 guard let self,
                       let page = self.page,
                       let contentView = self.contentView,
+                      // Each page view installs this app-wide monitor: only
+                      // the page of the window that was clicked may react.
+                      EventWindowScope.concerns(eventWindow: event.window, window: contentView.window),
                       self.isEventInContentView(event, contentView: contentView)
                 else {
                     return event

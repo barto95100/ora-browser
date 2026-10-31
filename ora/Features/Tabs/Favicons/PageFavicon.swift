@@ -9,8 +9,8 @@ struct PageIconCandidate: Decodable, Equatable {
 }
 
 /// Sent by the page script when the page's declared icons change.
+/// The page URL it also sends is ignored: the web view's own URL is trusted instead.
 struct PageFaviconMessage: Decodable {
-    let page: String
     let icons: [PageIconCandidate]
 }
 

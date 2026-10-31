@@ -94,9 +94,5 @@
 	<false/>
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
-	<key>SUFeedURL</key>
-	<string>https://barto95100.github.io/ora-browser/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>Ozj+rezzbJAD76RfajtfQ7rFojJbpFSCl/0DcFSBCTI=</string>
 </dict>
 </plist>

@@ -6,6 +6,12 @@ private let logger = Logger(subsystem: "com.orabrowser.ora", category: "UpdateSe
 
 class UpdateService: NSObject, ObservableObject {
     static let shared = UpdateService()
+
+    /// Whether this build can update itself: it needs both its own appcast
+    /// (`SUFeedURL`) and the public key that signs its updates (`SUPublicEDKey`).
+    /// Without them, no Sparkle updater is created and the update controls are hidden.
+    static let isAvailable = updatesConfigured(in: Bundle.main.infoDictionary)
+
     @Published var canCheckForUpdates = false
     @Published var updateProgress: Double = 0.0
     @Published var isCheckingForUpdates = false
@@ -16,18 +22,30 @@ class UpdateService: NSObject, ObservableObject {
     private var updater: SPUUpdater?
     private var userDriver: SPUStandardUserDriver?
 
-    override init() {
+    /// Sparkle supports a single updater per bundle: use `shared`.
+    override private init() {
         super.init()
+        guard Self.isAvailable else {
+            logger.info("Updates unavailable: no SUFeedURL or SUPublicEDKey in Info.plist")
+            return
+        }
         setupUpdater()
+    }
+
+    static func updatesConfigured(in info: [String: Any]?) -> Bool {
+        func hasValue(_ key: String) -> Bool {
+            guard let value = info?[key] as? String else { return false }
+            return !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        return hasValue("SUFeedURL") && hasValue("SUPublicEDKey")
     }
 
     private func setupUpdater() {
         let hostBundle = Bundle.main
-        let applicationBundle = hostBundle
         let userDriver = SPUStandardUserDriver(hostBundle: hostBundle, delegate: nil)
         let updater = SPUUpdater(
             hostBundle: hostBundle,
-            applicationBundle: applicationBundle,
+            applicationBundle: hostBundle,
             userDriver: userDriver,
             delegate: self
         )
@@ -35,18 +53,16 @@ class UpdateService: NSObject, ObservableObject {
         self.updater = updater
         self.userDriver = userDriver
 
-        // Start the updater
         do {
             try updater.start()
-
+            canCheckForUpdates = true
         } catch {
             logger.error("❌ Failed to start updater - Error: \(error.localizedDescription)")
         }
-
-        self.canCheckForUpdates = true // Force enable for development
     }
 
     func checkForUpdates() {
+        guard Self.isAvailable else { return }
         guard let updater, canCheckForUpdates else {
             logger
                 .error(
@@ -74,16 +90,12 @@ class UpdateService: NSObject, ObservableObject {
     }
 
     func checkForUpdatesInBackground() {
-        guard let updater else { return }
+        guard let updater, canCheckForUpdates else { return }
         updater.checkForUpdatesInBackground()
     }
 }
 
 extension UpdateService: SPUUpdaterDelegate {
-    func feedURLString(for updater: SPUUpdater) -> String? {
-        return "https://the-ora.github.io/browser/appcast.xml"
-    }
-
     func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
         let version = item.displayVersionString
 

@@ -18,6 +18,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSWindow.allowsAutomaticWindowTabbing = false
         AppearanceManager.shared.updateAppearance()
         ShortcutOverrideMonitor.shared.start()
+        // Once per launch, not per window; does nothing when updates are unavailable.
+        if UpdateService.isAvailable, SettingsStore.shared.autoUpdateEnabled {
+            UpdateService.shared.checkForUpdatesInBackground()
+        }
         #if DEBUG
             Bundle(path: "/Applications/InjectionIII.app/Contents/Resources/macOSInjection.bundle")?.load()
             Bundle(path: "/Applications/InjectionIII.app/Contents/Resources/macOSSwiftUISupport.bundle")?.load()

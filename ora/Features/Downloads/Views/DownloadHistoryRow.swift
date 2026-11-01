@@ -86,8 +86,7 @@ struct DownloadHistoryRow: View {
 
     private var fileIconView: some View {
         Image(nsImage: nativeFileIcon)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
+            .resizable().scaledToFit()
             .frame(width: 32, height: 32)
     }
 
@@ -165,7 +164,7 @@ struct DownloadHistoryRow: View {
             }
         }
 
-        if download.status == .failed || download.status == .cancelled {
+        if download.status == .failed || download.status == .cancelled, download.canRetry {
             Button {
                 downloadManager.retryDownload(download)
             } label: {

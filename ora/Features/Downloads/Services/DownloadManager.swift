@@ -4,17 +4,32 @@ import SwiftUI
 
 @MainActor
 class DownloadManager: ObservableObject {
+    /// Active downloads live in memory only: they are added when WebKit starts one
+    /// and removed when it finishes, fails or is cancelled.
     @Published var activeDownloads: [Download] = []
     @Published var recentDownloads: [Download] = []
     @Published var isShowingDownloadsHistory = false
 
+    static let recentLimit = 50
+
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     private var activeDownloadTasks: [UUID: BrowserDownloadTask] = [:]
-    private var taskDownloads: [UUID: Download] = [:]
-    private var taskDestinationURLs: [UUID: URL] = [:]
-    private var progressTimers: [UUID: Timer] = [:]
+    private var transfers: [UUID: Transfer] = [:]
+    private lazy var progressThrottle = DownloadProgressThrottle { [weak self] in
+        self?.refreshDisplayedProgress()
+    }
+
     weak var toastManager: ToastManager?
+
+    /// What a running WebKit download needs, keyed by its task ID.
+    private struct Transfer {
+        let task: BrowserDownloadTask
+        let download: Download
+        let destinationURL: URL
+        let expectedSize: Int64
+        let observation: NSKeyValueObservation
+    }
 
     init(
         modelContainer: ModelContainer,
@@ -22,22 +37,32 @@ class DownloadManager: ObservableObject {
     ) {
         self.modelContainer = modelContainer
         self.modelContext = modelContext
+        markInterruptedDownloads()
         loadRecentDownloads()
     }
 
+    /// Downloads left "downloading" by a previous session (quit, crash) have no
+    /// WebKit task anymore: they become failed ("Interrupted").
+    private func markInterruptedDownloads() {
+        // Enum comparisons are unreliable in SwiftData predicates: narrow on
+        // `completedAt` (never set while downloading), then filter the status.
+        let descriptor = FetchDescriptor<Download>(predicate: #Predicate<Download> { $0.completedAt == nil })
+        guard let unfinished = try? modelContext.fetch(descriptor) else { return }
+        let stale = unfinished.filter { $0.status == .downloading || $0.status == .pending }
+        guard !stale.isEmpty else { return }
+        stale.forEach { $0.markInterrupted() }
+        try? modelContext.save()
+    }
+
     private func loadRecentDownloads() {
-        let descriptor = FetchDescriptor<Download>(
+        var descriptor = FetchDescriptor<Download>(
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
+        descriptor.fetchLimit = Self.recentLimit
 
-        do {
-            let downloads = try modelContext.fetch(descriptor)
-            repairUnknownFileSizes(in: downloads)
-            self.recentDownloads = Array(downloads.prefix(50))
-            self.activeDownloads = downloads.filter { $0.status == .downloading }
-        } catch {
-            // Failed to load downloads
-        }
+        guard let downloads = try? modelContext.fetch(descriptor) else { return }
+        repairUnknownFileSizes(in: downloads)
+        recentDownloads = downloads
     }
 
     /// Downloads completed before sizes were read from disk kept "-1 byte".
@@ -63,37 +88,22 @@ class DownloadManager: ObservableObject {
         download.status = .downloading
         download.isActive = true
 
-        // Save to SwiftData
         modelContext.insert(download)
-        do {
-            try modelContext.save()
-        } catch {
-            // Failed to save download
-        }
+        try? modelContext.save()
 
         activeDownloadTasks[download.id] = downloadTask
         activeDownloads.append(download)
         refreshRecentDownloads()
-
-        // Ensure SwiftUI picks up the change when called from WKDownload callbacks
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-        }
 
         toastManager?.show("Downloading \(suggestedFilename)", type: .info, icon: .system("arrow.down.circle"))
 
         return download
     }
 
+    /// Shows new progress without touching the database (see `Download.updateDisplayProgress`).
     func updateDownloadProgress(_ download: Download, downloadedBytes: Int64, totalBytes: Int64) {
-        download.updateProgress(downloadedBytes: downloadedBytes, totalBytes: totalBytes)
-
-        try? modelContext.save()
-
-        // Trigger UI updates
-        DispatchQueue.main.async {
-            self.objectWillChange.send()
-            download.objectWillChange.send()
+        if download.updateDisplayProgress(downloadedBytes: downloadedBytes, totalBytes: totalBytes) {
+            objectWillChange.send()
         }
     }
 
@@ -124,8 +134,10 @@ class DownloadManager: ObservableObject {
     func cancelDownload(_ download: Download) {
         let fileName = download.fileName
         if let downloadTask = activeDownloadTasks[download.id] {
-            downloadTask.cancel()
+            // Read the last bytes received before forgetting the task.
+            refreshDisplayedProgress(of: downloadTask.id)
             cleanupTask(downloadTask.id)
+            downloadTask.cancel()
         }
 
         download.markCancelled()
@@ -157,35 +169,29 @@ class DownloadManager: ObservableObject {
                 expectedSize: expectedSize
             )
 
-            self.taskDownloads[task.id] = download
-            self.taskDestinationURLs[task.id] = finalURL
-            self.startProgressTimer(for: task, download: download, expectedSize: expectedSize)
+            self.observeProgress(of: task, download: download, destinationURL: finalURL, expectedSize: expectedSize)
             completion(finalURL)
         }
 
         task.onRedirect = { [weak self] newURL in
-            guard let self, let download = self.taskDownloads[task.id] else { return }
-            download.originalURL = newURL
-            download.originalURLString = newURL.absoluteString
-            try? self.modelContext.save()
+            guard let self, let download = self.transfers[task.id]?.download else { return }
+            // Saved with the next start/finish/failure, not on every redirect.
+            let storedURL = Download.storableURL(for: newURL)
+            download.originalURL = storedURL
+            download.originalURLString = storedURL.absoluteString
         }
 
         task.onFinish = { [weak self] in
-            guard let self,
-                  let download = self.taskDownloads[task.id],
-                  let destinationURL = self.taskDestinationURLs[task.id]
-            else {
-                return
-            }
-
-            self.completeDownload(download, destinationURL: destinationURL)
+            guard let self, let transfer = self.transfers[task.id] else { return }
             self.cleanupTask(task.id)
+            self.completeDownload(transfer.download, destinationURL: transfer.destinationURL)
         }
 
         task.onFail = { [weak self] error in
-            guard let self, let download = self.taskDownloads[task.id] else { return }
-            self.failDownload(download, error: error.localizedDescription)
+            guard let self, let transfer = self.transfers[task.id] else { return }
+            self.refreshDisplayedProgress(of: task.id)
             self.cleanupTask(task.id)
+            self.failDownload(transfer.download, error: error.localizedDescription)
         }
     }
 
@@ -242,7 +248,7 @@ class DownloadManager: ObservableObject {
 
     /// Re-opens the original URL in the browser to re-trigger the download
     func retryDownload(_ download: Download) {
-        guard let url = URL(string: download.originalURLString) else { return }
+        guard download.canRetry, let url = URL(string: download.originalURLString) else { return }
         deleteDownload(download)
         if let window = NSApp.keyWindow {
             NotificationCenter.default.post(name: .openURL, object: window, userInfo: ["url": url])
@@ -277,28 +283,44 @@ class DownloadManager: ObservableObject {
         return finalURL
     }
 
-    private func startProgressTimer(for task: BrowserDownloadTask, download: Download, expectedSize: Int64) {
-        let taskID = task.id
-        progressTimers[taskID]?.invalidate()
-        progressTimers[taskID] = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            let completedBytes = task.progress.completedUnitCount
-            let totalBytes = task.progress.totalUnitCount > 0 ? task.progress.totalUnitCount : expectedSize
-            Task { @MainActor in
-                guard let download = self.taskDownloads[taskID] else { return }
-                self.updateDownloadProgress(
-                    download,
-                    downloadedBytes: completedBytes,
-                    totalBytes: totalBytes
-                )
-            }
+    /// Observes the byte count (not `fractionCompleted`, which stays at 0 when the
+    /// server announces no size). The KVO callback only signals the throttle.
+    private func observeProgress(
+        of task: BrowserDownloadTask,
+        download: Download,
+        destinationURL: URL,
+        expectedSize: Int64
+    ) {
+        let throttle = progressThrottle
+        let observation = task.progress.observe(\.completedUnitCount) { _, _ in
+            throttle.signal()
         }
+        transfers[task.id] = Transfer(
+            task: task,
+            download: download,
+            destinationURL: destinationURL,
+            expectedSize: expectedSize,
+            observation: observation
+        )
+    }
+
+    /// One UI refresh for all running downloads, at most ~4 times per second.
+    private func refreshDisplayedProgress() {
+        transfers.keys.forEach(refreshDisplayedProgress(of:))
+    }
+
+    private func refreshDisplayedProgress(of taskID: UUID) {
+        guard let transfer = transfers[taskID] else { return }
+        let progress = transfer.task.progress
+        let totalBytes = progress.totalUnitCount > 0 ? progress.totalUnitCount : transfer.expectedSize
+        updateDownloadProgress(
+            transfer.download,
+            downloadedBytes: progress.completedUnitCount,
+            totalBytes: totalBytes
+        )
     }
 
     private func cleanupTask(_ taskID: UUID) {
-        progressTimers[taskID]?.invalidate()
-        progressTimers.removeValue(forKey: taskID)
-        taskDownloads.removeValue(forKey: taskID)
-        taskDestinationURLs.removeValue(forKey: taskID)
+        transfers.removeValue(forKey: taskID)?.observation.invalidate()
     }
 }

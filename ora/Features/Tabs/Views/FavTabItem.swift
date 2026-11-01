@@ -1,5 +1,4 @@
 import AppKit
-import SwiftData
 import SwiftUI
 
 struct FavTabItem: View {
@@ -13,7 +12,6 @@ struct FavTabItem: View {
     let onMoveToContainer: (TabContainer) -> Void
 
     @Environment(\.theme) private var theme
-    @Query var containers: [TabContainer]
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject var historyManager: HistoryManager
     @EnvironmentObject var downloadManager: DownloadManager
@@ -156,18 +154,6 @@ struct FavTabItem: View {
             Button(action: onDuplicate) {
                 Label("Duplicate Tab", systemImage: "doc.on.doc")
             }
-
-            // Divider()
-
-            //      Menu("Move to Container") {
-            //        ForEach(containers) { container in
-            //            if container.id != tabManager.activeContainer?.id {
-            //            Button(action: { onMoveToContainer(container) }) {
-            //              Label(container.title, systemImage: container.icon)
-            //            }
-            //          }
-            //        }
-            //      }
 
             Divider()
 

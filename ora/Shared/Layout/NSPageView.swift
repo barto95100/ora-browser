@@ -8,6 +8,14 @@ import SwiftUI
         subsystem: "com.orabrowser.app", category: "NSPageView"
     )
 
+    /// Finds a page from its identifier. Identifiers must be unique, or the
+    /// later pages with the same one show the first page's content.
+    enum PageIdentity {
+        static func object<T>(withID id: String, in pages: [T], idKeyPath: KeyPath<T, String>) -> T? {
+            pages.first { $0[keyPath: idKeyPath] == id }
+        }
+    }
+
     /// A ``NSViewControllerRepresentable`` for showing ``NSPageController``.
     /// Use ``init(selection:pageObjects:idKeyPath:contentView:)`` to initialize a view and add it to a SwiftUI view
     /// hierarchy.
@@ -51,10 +59,7 @@ import SwiftUI
                 guard let controller else {
                     return nil
                 }
-                return controller.pageObjects.first { page in
-                    let pageId = page[keyPath: idKeyPath]
-                    return pageId == id
-                }
+                return PageIdentity.object(withID: id, in: controller.pageObjects, idKeyPath: idKeyPath)
             }
             controller.onContentPrepared = onContentPrepared
             controller.onSelectedIndexChanged = { index in

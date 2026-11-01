@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContainerView: View {
     let container: TabContainer
-    let selectedContainer: String
     let containers: [TabContainer]
 
     @EnvironmentObject var appState: AppState
@@ -33,7 +32,6 @@ struct ContainerView: View {
                         tabs: favoriteTabs,
                         draggedItem: $draggedItem,
                         onDrag: dragTab,
-                        selectedContainerId: selectedContainer,
                         onSelect: selectTab,
                         onFavoriteToggle: toggleFavorite,
                         onClose: removeTab,

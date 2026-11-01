@@ -37,6 +37,12 @@ class TabContainer: ObservableObject, Identifiable {
         self.lastAccessedAt = nowDate
     }
 
+    /// Identifies the space's page in the sidebar: unique, unlike the name,
+    /// and kept when the space is renamed.
+    var pageID: String {
+        id.uuidString
+    }
+
     /// Moves a tab onto another one, in the other's section (favorites,
     /// pinned or normal), like a list: dragged down it goes after the target,
     /// dragged up before it, from another section in its place. Only that

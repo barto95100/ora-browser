@@ -29,7 +29,7 @@ struct GeneralSettingsView: View {
                     HStack {
                         Text("Born for your Mac. Make Ora your default browser.")
                         Spacer()
-                        Button("Set as Default") { DefaultBrowserManager.requestSetAsDefault() }
+                        Button("Set as Default") { defaultBrowserManager.requestSetAsDefault() }
                     }
                 }
             }
@@ -125,6 +125,7 @@ struct GeneralSettingsView: View {
                 }
             }
         }
+        .onAppear { defaultBrowserManager.refresh() }
     }
 
     private func getAppVersion() -> String {

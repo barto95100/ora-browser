@@ -314,7 +314,10 @@ struct URLBar: View {
                 // Dismiss URL bar editing if the center launcher is opened
                 if newValue, isEditing { dismissEditing() }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .copyAddressURL)) { _ in
+            .onReceive(NotificationCenter.default.publisher(for: .copyAddressURL)) { note in
+                guard NotificationWindowScope.concerns(
+                    target: note.object, window: window, keyWindow: NSApp.keyWindow
+                ) else { return }
                 if let activeTab = tabManager.activeTab {
                     ClipboardUtils.copyWithToast(
                         activeTab.url.absoluteString,

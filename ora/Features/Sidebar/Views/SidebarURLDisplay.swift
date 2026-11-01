@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SidebarURLDisplay: View {
     @Environment(\.theme) private var theme
+    @Environment(\.window) private var window
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var tabManager: TabManager
@@ -129,8 +130,9 @@ struct SidebarURLDisplay: View {
                 .stroke(theme.invertedSolidWindowBackgroundColor.opacity(0.05), lineWidth: 1)
         )
         .animation(.easeOut(duration: 0.15), value: isHovering)
-        .onReceive(NotificationCenter.default.publisher(for: .copyAddressURL)) { _ in
-            guard toolbarManager.isToolbarHidden, sidebarManager.sidebarPosition == .primary else { return }
+        .onReceive(NotificationCenter.default.publisher(for: .copyAddressURL)) { note in
+            guard NotificationWindowScope.concerns(target: note.object, window: window, keyWindow: NSApp.keyWindow),
+                  toolbarManager.isToolbarHidden, sidebarManager.sidebarPosition == .primary else { return }
             if let activeTab = tabManager.activeTab {
                 ClipboardUtils.copyWithToast(
                     activeTab.url.absoluteString,

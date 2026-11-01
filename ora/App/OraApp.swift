@@ -6,6 +6,8 @@ import SwiftUI
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         ExternalFileOpener.shared.install()
+        // The sidebar's hidden state is no longer remembered between launches.
+        SidebarManager.removeObsoleteDefaults()
         // Before launch ends: a click on a notification can be what launches Ora.
         WebNotificationCenter.shared.install()
         // Before the first page: pages get the extension controller.

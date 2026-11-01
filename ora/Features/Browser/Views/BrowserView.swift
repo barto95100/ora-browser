@@ -4,6 +4,7 @@ import SwiftUI
 
 struct BrowserView: View {
     @Environment(\.theme) var theme
+    @Environment(\.window) private var window
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var downloadManager: DownloadManager
@@ -39,6 +40,11 @@ struct BrowserView: View {
 
     private var clampedSidebarFraction: CGFloat {
         min(sidebarManager.currentFraction.value, SidebarLayout.maximumFraction)
+    }
+
+    /// Whether a menu command was chosen for this window.
+    private func isForThisWindow(_ note: Notification) -> Bool {
+        NotificationWindowScope.concerns(target: note.object, window: window, keyWindow: NSApp.keyWindow)
     }
 
     /// Injects/removes a transparent shield div in the web page to block
@@ -133,11 +139,18 @@ struct BrowserView: View {
         .onChange(of: showFloatingSidebar) { _, visible in
             injectSidebarMouseShield(visible: visible)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleSidebar)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .toggleSidebar)) { note in
+            guard isForThisWindow(note) else { return }
             sidebarManager.toggleSidebar()
         }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleSidebarPosition)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .toggleSidebarPosition)) { note in
+            guard isForThisWindow(note) else { return }
             sidebarManager.toggleSidebarPosition()
+        }
+        // The position is shared by every window: each one keeps its own
+        // sidebar hidden or shown.
+        .onChange(of: sidebarManager.sidebarPosition) { oldPosition, newPosition in
+            sidebarManager.sidebarPositionChanged(from: oldPosition, to: newPosition)
         }
         .onChange(of: downloadManager.isShowingDownloadsHistory) { _, isOpen in
             if sidebarManager.isSidebarHidden {

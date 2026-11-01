@@ -7,17 +7,14 @@ struct BrowserWebContentView: View {
     @EnvironmentObject private var toolbarManager: ToolbarManager
     @EnvironmentObject private var mediaController: MediaController
     @EnvironmentObject private var privacyMode: PrivacyMode
+    @EnvironmentObject private var sidebarManager: SidebarManager
     let tab: Tab
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if !toolbarManager.isToolbarHidden {
                 URLBar(
-                    onSidebarToggle: {
-                        NotificationCenter.default.post(
-                            name: .toggleSidebar, object: nil
-                        )
-                    }
+                    onSidebarToggle: { sidebarManager.toggleSidebar() }
                 )
                 .zIndex(1)
                 .transition(

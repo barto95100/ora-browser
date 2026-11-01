@@ -2,7 +2,6 @@ import SwiftUI
 
 struct OraCommands: Commands {
     @AppStorage("AppAppearance") private var appearanceRaw: String = AppAppearance.system.rawValue
-    @AppStorage("ui.sidebar.hidden") private var isSidebarHidden: Bool = false
     @AppStorage("ui.sidebar.position") private var sidebarPosition: SidebarPosition = .primary
     @AppStorage("ui.toolbar.hidden") private var isToolbarHidden: Bool = false
     @AppStorage("ui.toolbar.showfullurl") private var showFullURL: Bool = false
@@ -56,7 +55,7 @@ struct OraCommands: Commands {
             Divider()
 
             Button("Copy URL") {
-                NotificationCenter.default.post(name: .copyAddressURL, object: nil)
+                NotificationCenter.default.post(name: .copyAddressURL, object: NSApp.keyWindow)
             }
             .keyboardShortcut(KeyboardShortcuts.Address.copyURL.keyboardShortcut)
         }
@@ -82,8 +81,8 @@ struct OraCommands: Commands {
             Divider()
 
             // VISIBILITY
-            Button(isSidebarHidden ? "Show Sidebar" : "Hide Sidebar") {
-                NotificationCenter.default.post(name: .toggleSidebar, object: nil)
+            Button("Toggle Sidebar") {
+                NotificationCenter.default.post(name: .toggleSidebar, object: NSApp.keyWindow)
             }
             .keyboardShortcut(KeyboardShortcuts.App.toggleSidebar.keyboardShortcut)
 
@@ -96,7 +95,7 @@ struct OraCommands: Commands {
 
             // LAYOUT
             Button(sidebarPosition == .primary ? "Right Side Tabs" : "Left Side Tabs") {
-                NotificationCenter.default.post(name: .toggleSidebarPosition, object: nil)
+                NotificationCenter.default.post(name: .toggleSidebarPosition, object: NSApp.keyWindow)
             }
 
             Button(showFullURL ? "Hide Full URL" : "Show Full URL") {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct FloatingURLBar: View {
+    @EnvironmentObject private var sidebarManager: SidebarManager
     @Binding var showFloatingURLBar: Bool
     @Binding var isMouseOverURLBar: Bool
 
@@ -12,11 +13,7 @@ struct FloatingURLBar: View {
         ZStack(alignment: .top) {
             if showFloatingURLBar {
                 URLBar(
-                    onSidebarToggle: {
-                        NotificationCenter.default.post(
-                            name: .toggleSidebar, object: nil
-                        )
-                    }
+                    onSidebarToggle: { sidebarManager.toggleSidebar() }
                 )
                 .shadow(color: Color.black.opacity(0.2), radius: 10, y: 4)
                 .overlay(

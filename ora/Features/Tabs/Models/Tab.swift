@@ -332,6 +332,11 @@ class Tab: ObservableObject, Identifiable {
         showsCrashRecoveryNotice = false
         if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }
         if browserPage != nil { WebExtensionsHub.tabClosed(self) }
+        // The page's media go with it (closed, unloaded in the background or
+        // reloaded for new privacy settings): no event reports it.
+        if let mediaController = tabManager?.mediaController {
+            MainActor.assumeIsolated { mediaController.removeSession(for: id) }
+        }
         browserPage?.teardown()
         browserPage = nil
         pageDelegate = nil

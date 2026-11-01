@@ -86,9 +86,12 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             tab.loadingProgress = event.progress
             if let title = event.title, !title.isEmpty {
                 tab.title = title
-                MainActor.assumeIsolated {
-                    mediaController?.syncTitleForTab(tab.id, newTitle: title)
-                }
+            }
+            // A new document replaced the page: its media (and Picture in
+            // Picture) are gone, and the script sends no event on unload.
+            // Same-document navigations (history API) don't commit.
+            MainActor.assumeIsolated {
+                mediaController?.removeSession(for: tab.id)
             }
 
         case .finished:

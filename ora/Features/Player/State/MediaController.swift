@@ -38,17 +38,8 @@ final class MediaController: ObservableObject {
     /// bring the video back when the user clicks "back to tab".
     @Published private(set) var pictureInPictureTabIDs: Set<UUID> = []
     private var pictureInPictureTabRefs: [UUID: WeakTab] = [:]
-    private var titleSyncTimer: Timer?
     /// The tab manager of the window this controller belongs to (set by it).
     weak var tabManager: TabManager?
-
-    init() {
-        startPeriodicTitleSync()
-    }
-
-    deinit {
-        titleSyncTimer?.invalidate()
-    }
 
     // MARK: - Public accessors
 
@@ -64,15 +55,39 @@ final class MediaController: ObservableObject {
 
     func receive(event: MediaEventPayload, from tab: Tab) {
         tabRefs[tab.id] = WeakTab(tab)
-        let id = tab.id
 
+        switch event.type {
+        case "pip":
+            if event.state == "entered" {
+                pictureInPictureTabRefs[tab.id] = WeakTab(tab)
+                pictureInPictureTabIDs.insert(tab.id)
+            } else {
+                pictureInPictureTabRefs[tab.id] = nil
+                pictureInPictureTabIDs.remove(tab.id)
+            }
+        case "pipReturn":
+            returnToTab(tab)
+        default:
+            receive(
+                event: event,
+                tabID: tab.id,
+                title: tab.title,
+                pageURL: tab.url,
+                favicon: tab.faviconLocalFile ?? tab.favicon
+            )
+        }
+    }
+
+    /// Session state for a media event, without the tab itself (testable).
+    /// The tab's `isPlayingMedia` is updated when the tab is known.
+    func receive(event: MediaEventPayload, tabID id: UUID, title: String, pageURL: URL, favicon: URL?) {
         func ensureSession() -> Int {
             if let idx = sessions.firstIndex(where: { $0.tabID == id }) { return idx }
             let session = Session(
                 tabID: id,
-                title: tab.title,
-                pageURL: tab.url,
-                favicon: tab.faviconLocalFile ?? tab.favicon,
+                title: title,
+                pageURL: pageURL,
+                favicon: favicon,
                 isPlaying: false,
                 volume: 1.0,
                 canGoNext: false,
@@ -99,20 +114,6 @@ final class MediaController: ObservableObject {
                 moveToFront(index: idx)
             }
             if let wasPlayed = event.wasPlayed { sessions[idx].wasPlayed = wasPlayed }
-//        case "ready":
-            // Session is already ensured in other cases
-
-        case "pip":
-            if event.state == "entered" {
-                pictureInPictureTabRefs[id] = WeakTab(tab)
-                pictureInPictureTabIDs.insert(id)
-            } else {
-                pictureInPictureTabRefs[id] = nil
-                pictureInPictureTabIDs.remove(id)
-            }
-
-        case "pipReturn":
-            returnToTab(tab)
 
         case "volume":
             if let idx = sessions.firstIndex(where: { $0.tabID == id }), let vol = event.volume {
@@ -135,16 +136,11 @@ final class MediaController: ObservableObject {
             if let idx = sessions.firstIndex(where: { $0.tabID == id }) {
                 sessions[idx].isPlaying = false
                 // Update tab's isPlayingMedia property
-                tabRefs[tab.id]?.value?.isPlayingMedia = false
+                tabRefs[id]?.value?.isPlayingMedia = false
             }
 
         case "removed":
-            if let idx = sessions.firstIndex(where: { $0.tabID == id }) {
-                sessions.remove(at: idx)
-            }
-            // Update tab's isPlayingMedia property
-            tabRefs[tab.id]?.value?.isPlayingMedia = false
-            self.removeSession(for: tab.id)
+            removeSession(for: id)
 
         default:
             break
@@ -165,14 +161,13 @@ final class MediaController: ObservableObject {
 
     func nextTrack(_ tabID: UUID? = nil) {
         guard let id = tabID ?? primary?.tabID else { return }
+        // The new title arrives through the page's title change.
         eval(id, "window.__oraMedia && window.__oraMedia.next && window.__oraMedia.next()")
-        scheduleTitleSync(for: id)
     }
 
     func previousTrack(_ tabID: UUID? = nil) {
         guard let id = tabID ?? primary?.tabID else { return }
         eval(id, "window.__oraMedia && window.__oraMedia.previous && window.__oraMedia.previous()")
-        scheduleTitleSync(for: id)
     }
 
     func setVolume(for tabID: UUID? = nil, _ value: Double) {
@@ -273,48 +268,13 @@ final class MediaController: ObservableObject {
         max(0, min(1, value))
     }
 
-    private func startPeriodicTitleSync() {
-        titleSyncTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.syncTitlesForPlayingSessions()
-            }
-        }
-    }
-
-    private func syncTitlesForPlayingSessions() {
-        let playingSessions = sessions.filter(\.isPlaying)
-        for session in playingSessions {
-            if let tab = tabRefs[session.tabID]?.value,
-               let idx = sessions.firstIndex(where: { $0.tabID == session.tabID }),
-               !tab.title.isEmpty,
-               tab.title != sessions[idx].title
-            {
-                sessions[idx].title = tab.title
-            }
-        }
-    }
-
     // MARK: - Title sync helpers
 
+    /// Called on every title change of the page (WebKit notification): no
+    /// polling needed to keep the mini player's title up to date.
     func syncTitleForTab(_ tabID: UUID, newTitle: String) {
-        if let idx = sessions.firstIndex(where: { $0.tabID == tabID }) {
+        if let idx = sessions.firstIndex(where: { $0.tabID == tabID }), sessions[idx].title != newTitle {
             sessions[idx].title = newTitle
-        }
-    }
-
-    private func scheduleTitleSync(for tabID: UUID, attempts: Int = 6, delay: TimeInterval = 0.25) {
-        guard attempts > 0 else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self else { return }
-            if let tab = self.tabRefs[tabID]?.value,
-               let idx = self.sessions.firstIndex(where: { $0.tabID == tabID }),
-               !tab.title.isEmpty,
-               tab.title != self.sessions[idx].title
-            {
-                self.sessions[idx].title = tab.title
-            } else if attempts > 1 {
-                self.scheduleTitleSync(for: tabID, attempts: attempts - 1, delay: delay)
-            }
         }
     }
 }

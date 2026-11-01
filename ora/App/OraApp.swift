@@ -43,16 +43,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // from Finder go through `ExternalFileOpener`.
 }
 
-func deleteSwiftDataStore(_ loc: String) {
-    let fileManager = FileManager.default
-    let storeURL = URL.applicationSupportDirectory.appending(path: loc)
-    let shmURL = storeURL.appendingPathExtension("-shm")
-    let walURL = storeURL.appendingPathExtension("-wal")
-    try? fileManager.removeItem(at: storeURL)
-    try? fileManager.removeItem(at: shmURL)
-    try? fileManager.removeItem(at: walURL)
-}
-
 enum SidePanel {
     case tabNote
     case tasks

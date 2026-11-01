@@ -34,15 +34,11 @@ struct OraRoot: View {
     init(isPrivate: Bool = false) {
         _privacyMode = StateObject(wrappedValue: PrivacyMode(isPrivate: isPrivate))
 
-        let container: ModelContainer
-        let modelContext: ModelContext
-        do {
-            container = try ModelConfiguration.createOraContainer(isPrivate: isPrivate)
-            modelContext = ModelContext(container)
-        } catch {
-            deleteSwiftDataStore("OraData.sqlite")
-            fatalError("Failed to initialize ModelContainer: \(error)")
-        }
+        // Never crashes on the user's data: see `DatabaseRecovery`.
+        let container = isPrivate
+            ? DatabaseRecovery.inMemoryContainer()
+            : DatabaseRecovery.openMainContainer()
+        let modelContext = ModelContext(container)
 
         self.tabContext = modelContext
         self.downloadContext = modelContext
@@ -143,6 +139,10 @@ struct OraRoot: View {
                     )
                 }
                 guard let newWindow, !privacyMode.isPrivate else { return }
+                // The database couldn't be opened: say so, once.
+                if let notice = DatabaseRecovery.takePendingNotice() {
+                    DatabaseRecovery.presentNotice(notice, in: newWindow)
+                }
                 BrowsingTimeTracker.shared.register(newWindow, tabManager: tabManager)
                 BrowserWindows.normal.add(newWindow)
                 for file in ExternalFileOpener.shared.register(newWindow) {

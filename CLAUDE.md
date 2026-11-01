@@ -60,7 +60,7 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
 - Extensions (`WKWebExtension*`, macOS 15.4+, façade `WebExtensionsHub`) : les pages des extensions doivent
   s'annoncer comme Safari (user-agent), toutes les pages chargées doivent appartenir à un onglet annoncé,
   Bitwarden Safari envoie `sleep` en boucle (répondre après 10 s).
-- `TabManager` est isolé `@MainActor` (via `@Query`) : marquer les suites de tests `@MainActor` ou les
+- `TabManager` est isolé `@MainActor` (déclaré explicitement) : marquer les suites de tests `@MainActor` ou les
   fonctions pures `nonisolated`.
 
 ## État au 31/10/2026

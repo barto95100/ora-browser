@@ -73,8 +73,6 @@ class TabManager: ObservableObject {
     /// Note: Could be made injectable via init parameter if preferred
     let tabSearchingService: TabSearchingProviding
 
-    @Query(sort: \TabContainer.lastAccessedAt, order: .reverse) var containers: [TabContainer]
-
     private var cleanupTimer: Timer?
     /// macOS memory pressure events, see `TabManager+MemoryPressure.swift`.
     var memoryPressureSource: DispatchSourceMemoryPressure?

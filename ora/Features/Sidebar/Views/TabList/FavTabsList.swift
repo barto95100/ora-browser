@@ -7,7 +7,6 @@ struct FavTabsGrid: View {
     let tabs: [Tab]
     @Binding var draggedItem: UUID?
     let onDrag: (UUID) -> NSItemProvider
-    let selectedContainerId: String
     let onSelect: (Tab) -> Void
     let onFavoriteToggle: (Tab) -> Void
     let onClose: (Tab) -> Void

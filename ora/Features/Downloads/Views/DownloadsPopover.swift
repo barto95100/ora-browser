@@ -133,13 +133,17 @@ private struct DownloadsPopoverRow: View {
             .buttonStyle(.plain)
             .help("Show in Finder")
         case .failed, .cancelled:
-            Button {
-                downloadManager.retryDownload(download)
-            } label: {
-                Image(systemName: "arrow.clockwise.circle.fill").foregroundColor(theme.mutedForeground)
-            }
-            .buttonStyle(.plain)
-            .help("Try Again")
+            if download.canRetry { retryButton }
         }
+    }
+
+    private var retryButton: some View {
+        Button {
+            downloadManager.retryDownload(download)
+        } label: {
+            Image(systemName: "arrow.clockwise.circle.fill").foregroundColor(theme.mutedForeground)
+        }
+        .buttonStyle(.plain)
+        .help("Try Again")
     }
 }

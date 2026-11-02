@@ -168,6 +168,8 @@ struct BrowserView: View {
             }
             if let tab = newTab, !tab.isWebViewReady {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                    // The window may have closed meanwhile.
+                    guard !tabManager.isTornDown else { return }
                     tab.restoreTransientState(
                         historyManager: historyManager,
                         downloadManager: downloadManager,
@@ -180,6 +182,8 @@ struct BrowserView: View {
         .onAppear {
             if let tab = tabManager.activeTab, !tab.isWebViewReady {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // The window may have closed meanwhile.
+                    guard !tabManager.isTornDown else { return }
                     tab.restoreTransientState(
                         historyManager: historyManager,
                         downloadManager: downloadManager,

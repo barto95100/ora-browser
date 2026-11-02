@@ -12,11 +12,27 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
 
     private let window: NSWindow
     private let webView: WKWebView
+    /// The window of the page that opened it: the popup closes with it.
+    private weak var openerWindow: NSWindow?
     private var titleObservation: NSKeyValueObservation?
 
     /// Whether the window is an open popup (⌘W then closes it, see `OraCommands`).
     static func isPopupWindow(_ window: NSWindow) -> Bool {
         openPopups.contains { $0.window === window }
+    }
+
+    /// Closes the popups opened from `window`, and theirs: they share their
+    /// opener's process and website data (private ones too), which must not
+    /// outlive its window.
+    static func closePopups(openedFrom window: NSWindow) {
+        for popup in openPopups where popup.openerWindow === window {
+            popup.window.close()
+        }
+    }
+
+    /// The open popups opened from `window` (not counting theirs).
+    static func popupCount(openedFrom window: NSWindow) -> Int {
+        openPopups.filter { $0.openerWindow === window }.count
     }
 
     /// Whether WebKit's window features ask for a popup window rather than a tab.
@@ -35,6 +51,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
             configuration: configuration,
             frame: frame(for: windowFeatures, openerWindow: openerWindow)
         )
+        popup.openerWindow = openerWindow
         openPopups.insert(popup)
         popup.window.makeKeyAndOrderFront(nil)
         popup.window.makeFirstResponder(popup.webView)
@@ -91,6 +108,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         titleObservation = nil
         webView.stopLoading()
         Self.openPopups.remove(self)
+        Self.closePopups(openedFrom: window)
     }
 }
 

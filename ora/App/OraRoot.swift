@@ -157,6 +157,8 @@ struct OraRoot: View {
                     )
                 }
             }
+            // Closing the window stops and frees its pages; quitting saves.
+            .windowLifecycle(window: window, tabManager: tabManager)
             // The menu commands: they stop with the window (see `windowCommands`).
             .windowCommands(
                 WindowCommandTargets(

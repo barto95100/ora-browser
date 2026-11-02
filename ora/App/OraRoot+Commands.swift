@@ -353,3 +353,34 @@ private struct WindowPageCommands: ViewModifier {
         }
     }
 }
+
+extension View {
+    /// What a browser window does when it closes, and when the app quits.
+    func windowLifecycle(window: NSWindow?, tabManager: TabManager) -> some View {
+        modifier(WindowLifecycle(window: window, tabManager: tabManager))
+    }
+}
+
+/// A closing window stops its pages and timers, closes the popups its pages
+/// opened and saves; quitting saves too.
+private struct WindowLifecycle: ViewModifier {
+    let window: NSWindow?
+    let tabManager: TabManager
+
+    func body(content: Content) -> some View {
+        content
+            .onNotification(NSWindow.willCloseNotification) { note in
+                // Only this window's own closing (not a sheet or a popup).
+                guard let window, note.object as? NSWindow === window else { return }
+                MainActor.assumeIsolated {
+                    BrowserPopupWindow.closePopups(openedFrom: window)
+                    tabManager.tearDown()
+                }
+            }
+            .onNotification(NSApplication.willTerminateNotification) { _ in
+                MainActor.assumeIsolated {
+                    tabManager.saveOnQuit()
+                }
+            }
+    }
+}

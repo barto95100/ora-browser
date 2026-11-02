@@ -32,6 +32,28 @@ import SwiftUI
  * }
  */
 
+/// Adds and removes local event monitors; `NSEvent` in the app, a fake in tests.
+protocol EventMonitoring {
+    func addLocalMonitor(
+        matching mask: NSEvent.EventTypeMask,
+        handler: @escaping (NSEvent) -> NSEvent?
+    ) -> Any?
+    func removeMonitor(_ monitor: Any)
+}
+
+struct SystemEventMonitoring: EventMonitoring {
+    func addLocalMonitor(
+        matching mask: NSEvent.EventTypeMask,
+        handler: @escaping (NSEvent) -> NSEvent?
+    ) -> Any? {
+        NSEvent.addLocalMonitorForEvents(matching: mask, handler: handler)
+    }
+
+    func removeMonitor(_ monitor: Any) {
+        NSEvent.removeMonitor(monitor)
+    }
+}
+
 final class KeyModifierListener: ObservableObject {
     @Published var modifierFlags = NSEvent.ModifierFlags([])
 
@@ -39,18 +61,30 @@ final class KeyModifierListener: ObservableObject {
     /// the events typed in it (see `EventWindowScope`); none until it is known.
     weak var window: NSWindow?
 
-    init() {
-        NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+    private let monitoring: EventMonitoring
+    /// Removed with the listener: a closed window stops seeing the keys.
+    private var monitors: [Any] = []
+
+    init(monitoring: EventMonitoring = SystemEventMonitoring()) {
+        self.monitoring = monitoring
+        let flagsMonitor = monitoring.addLocalMonitor(matching: .flagsChanged) { [weak self] event in
             self?.modifierFlags = event.modifierFlags
             return event
         }
 
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        let keyDownMonitor = monitoring.addLocalMonitor(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
             if self.handleGlobalKeyDown(event) {
                 return nil
             }
             return event
+        }
+        monitors = [flagsMonitor, keyDownMonitor].compactMap { $0 }
+    }
+
+    deinit {
+        for monitor in monitors {
+            monitoring.removeMonitor(monitor)
         }
     }
 

@@ -28,7 +28,7 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
 
 Ludo n'intervient que pour les décisions produit, les tests manuels par lots et les blocages. Pour chaque PR :
 
-1. `git checkout main && git pull && git checkout -b <branche> && xcodegen` ; plan écrit dans
+1. `git switch main && git pull --ff-only && git switch -c <branche> && xcodegen` ; plan écrit dans
    `docs/audit/journal/<n°>-<branche>.md` (local, hors git), sans attendre de validation.
 2. Code + tests Swift Testing ; un bug à prouver : faire d'abord échouer le test sur le code actuel.
 3. `xcodegen`, compilation, suite complète avec `xcodebuild` (stable) ; SwiftFormat / SwiftLint propres.
@@ -38,14 +38,16 @@ Ludo n'intervient que pour les décisions produit, les tests manuels par lots et
    Corriger ce qu'il trouve ; relancer la relecture si le changement est important.
 5. Commit (Conventional Commits, en anglais, sans mention d'IA), push,
    `gh pr create --repo barto95100/ora-browser --base main`, description `## Summary` / `## Testing`.
-6. `gh pr checks --watch`. CI en échec : corriger et repousser. CI en file d'attente chez GitHub :
-   attendre. Jamais `--admin`, jamais de contournement de la règle de `main`, jamais de force push.
-7. `gh pr merge --merge --delete-branch`, puis `git checkout main && git pull && xcodegen`.
+6. `gh pr checks <n°> --repo barto95100/ora-browser --watch`. CI en échec : corriger et repousser.
+   CI en file d'attente chez GitHub : attendre. Jamais `--admin`, jamais de contournement de la règle
+   de `main`, jamais de force push.
+7. `gh pr merge <n°> --repo barto95100/ora-browser --merge --delete-branch`, puis
+   `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
 8. Ajouter les étapes de test manuelles numérotées de la PR, avec son lien, dans
    `docs/audit/TESTS-MANUELS.md` (local). Les logs `[DEBUG-…]` de mesure restent hors des commits.
 
-S'arrêter et demander seulement pour : une décision produit (section 5 de la synthèse ou nouvelle), un
-changement nécessaire hors périmètre, un échec inexpliqué après 2 essais, une action irréversible
+S'arrêter et demander seulement pour : une décision produit (section 5 de `docs/audit/SYNTHESE.md`,
+local, ou nouvelle), un changement nécessaire hors périmètre, un échec inexpliqué après 2 essais, une action irréversible
 (suppression de données, réécriture d'historique). Sinon, prendre la décision la plus raisonnable et la
 noter dans la PR. Pas d'équipe d'agents pour coder : un seul agent qui enchaîne, plus un sous-agent
 relecteur par PR. À la fin du lot (ou en cas d'arrêt) : résumé avec les PR fusionnées et leurs liens, les

@@ -31,8 +31,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        let targetWindow = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isVisible })
+        // Only a browser window shows the confirmation: from the settings or
+        // passwords window, nothing answered and the app never quit.
+        let targetWindow = BrowserWindows.quitTarget(
+            keyWindow: NSApp.keyWindow,
+            orderedWindows: NSApp.orderedWindows,
+            browserWindows: BrowserWindows.browsing.allObjects
+        )
         guard let targetWindow else { return .terminateNow }
+        if !targetWindow.isKeyWindow {
+            targetWindow.makeKeyAndOrderFront(nil)
+        }
         NotificationCenter.default.post(name: .quitRequested, object: targetWindow)
         return .terminateLater
     }

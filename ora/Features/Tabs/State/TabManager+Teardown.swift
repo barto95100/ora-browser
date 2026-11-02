@@ -26,6 +26,11 @@ extension TabManager {
         modelContext.saveOrLog("close window")
     }
 
+    /// The app quits: what was not saved yet is.
+    func saveOnQuit() {
+        modelContext.saveOrLog("quit")
+    }
+
     /// Stops a page's media and its Picture in Picture before it goes: a video
     /// still playing went to a black Picture in Picture that kept the closed
     /// window alive. The same steps as closing a tab (`Tab.stopMedia`), sent

@@ -379,7 +379,7 @@ private struct WindowLifecycle: ViewModifier {
             }
             .onNotification(NSApplication.willTerminateNotification) { _ in
                 MainActor.assumeIsolated {
-                    tabManager.modelContext.saveOrLog("quit")
+                    tabManager.saveOnQuit()
                 }
             }
     }

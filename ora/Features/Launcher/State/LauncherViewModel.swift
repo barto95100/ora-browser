@@ -2,6 +2,9 @@ import SwiftUI
 
 @MainActor
 class LauncherViewModel: ObservableObject {
+    /// Open tabs and history entries shown together, at most.
+    static let maxSuggestions = 5
+
     let searchEngineService = SearchEngineService()
 
     @Published var suggestions: [LauncherSuggestion] = []
@@ -59,7 +62,9 @@ class LauncherViewModel: ObservableObject {
 
         let histories = historyManager.search(
             text,
-            activeContainerId: tabManager.activeContainer?.id ?? UUID()
+            activeContainerId: tabManager.activeContainer?.id ?? UUID(),
+            // The launcher shows at most this many suggestions in all.
+            limit: Self.maxSuggestions
         )
         // Switching to the tab the user is already on is a no-op, so never
         // offer it (it used to swallow Enter in the URL bar).
@@ -314,7 +319,7 @@ class LauncherViewModel: ObservableObject {
         guard let tabManager, let historyManager, let privacyMode else { return }
         let navigateCurrent = self.navigateInCurrentTab
         for history in histories {
-            if itemsCount >= 5 { break }
+            if itemsCount >= Self.maxSuggestions { break }
             suggestions.append(
                 LauncherSuggestion(
                     type: .suggestedLink,

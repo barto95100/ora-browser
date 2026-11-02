@@ -30,7 +30,7 @@ struct SectionDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         draggedItem = nil
-        try? tabManager.modelContext.save()
+        tabManager.modelContext.saveOrLog("drop on section")
         return true
     }
 }

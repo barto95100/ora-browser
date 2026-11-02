@@ -50,7 +50,7 @@ extension TabManager {
     }
 
     func saveTasks() {
-        try? modelContext.save()
+        modelContext.saveOrLog("save tasks")
     }
 }
 

@@ -30,7 +30,7 @@ struct FolderDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         draggedItem = nil
-        try? folder.container.modelContext?.save()
+        folder.container.modelContext?.saveOrLog("drop on folder")
         return true
     }
 }

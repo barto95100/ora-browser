@@ -59,6 +59,6 @@ extension TabManager {
             activateTab(tab)
         }
         container.lastAccessedAt = Date()
-        try? modelContext.save()
+        modelContext.saveOrLog("adopt peek page")
     }
 }

@@ -52,7 +52,7 @@ class HistoryManager: ObservableObject {
             ))
         }
 
-        try? modelContext.save()
+        modelContext.saveOrLog("record history visit")
     }
 
     /// Keeps the latest entry of a page in sync with its title, without
@@ -72,7 +72,7 @@ class HistoryManager: ObservableObject {
         else { return }
 
         entry.title = title
-        try? modelContext.save()
+        modelContext.saveOrLog("update history title")
     }
 
     func search(_ text: String, activeContainerId: UUID) -> [History] {
@@ -101,7 +101,7 @@ class HistoryManager: ObservableObject {
 
     func delete(_ entry: History) {
         modelContext.delete(entry)
-        try? modelContext.save()
+        modelContext.saveOrLog("delete history entry")
     }
 
     /// Removes the space's pages visited within the range. An entry keeps only

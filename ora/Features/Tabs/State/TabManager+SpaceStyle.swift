@@ -15,7 +15,7 @@ extension TabManager {
         container.iconSymbol = iconSymbol
         container.colorName = color?.rawValue
         container.themeName = theme?.rawValue
-        try? modelContext.save()
+        modelContext.saveOrLog("update space style")
     }
 
     @discardableResult

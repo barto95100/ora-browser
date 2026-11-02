@@ -42,7 +42,7 @@ struct TabDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         draggedItem = nil
-        try? item.container.modelContext?.save()
+        item.container.modelContext?.saveOrLog("drop on tab")
         return true
     }
 }

@@ -110,7 +110,7 @@ final class BrowsingTimeStore: ObservableObject {
     }
 
     private func save() {
-        try? context?.save()
+        context?.saveOrLog("browsing time")
         revision += 1
     }
 }

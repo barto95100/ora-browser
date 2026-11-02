@@ -119,8 +119,19 @@ enum DatabaseRecovery {
     /// What the first window tells the user, once.
     @MainActor private static var pendingNotice: Outcome?
 
-    /// The main database's container, for a regular window.
-    @MainActor static func openMainContainer() -> ModelContainer {
+    /// The app's one container on the main database: normal windows, the
+    /// settings and passwords windows all use it. Opened on first use.
+    @MainActor static var mainContainer: ModelContainer {
+        if let openedMainContainer { return openedMainContainer }
+        let container = openMainContainer()
+        openedMainContainer = container
+        return container
+    }
+
+    @MainActor private static var openedMainContainer: ModelContainer?
+
+    /// Opens the main database's container (see `mainContainer`).
+    @MainActor private static func openMainContainer() -> ModelContainer {
         let result = openContainer(at: ModelConfiguration.oraDatabaseURL, mayMoveAside: !hasMovedAside)
         switch result.outcome {
         case .opened:

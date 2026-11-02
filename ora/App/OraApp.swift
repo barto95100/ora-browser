@@ -110,10 +110,6 @@ class AppState: ObservableObject {
 struct OraApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
-    /// Shared model container that uses the same configuration as the main browser
-    private let sharedModelContainer: ModelContainer? =
-        try? ModelConfiguration.createOraContainer(isPrivate: false)
-
     var body: some Scene {
         WindowGroup(id: "normal") {
             OraRoot()
@@ -138,21 +134,12 @@ struct OraApp: App {
         .handlesExternalEvents(matching: [])
 
         WindowGroup("Settings", id: "settings") {
-            if let sharedModelContainer {
-                SettingsWindowRoot()
-                    .environmentObject(AppearanceManager.shared)
-                    .environmentObject(UpdateService.shared)
-                    .environmentObject(DefaultBrowserManager.shared)
-                    .modelContainer(sharedModelContainer)
-            } else {
-                // Fallback UI when SwiftData is completely broken
-                VStack {
-                    Text("Settings Unavailable")
-                        .font(.title)
-                }
-                .padding()
-                .frame(width: 400, height: 300)
-            }
+            // The browser windows' database (never missing, see `DatabaseRecovery`).
+            SettingsWindowRoot()
+                .environmentObject(AppearanceManager.shared)
+                .environmentObject(UpdateService.shared)
+                .environmentObject(DefaultBrowserManager.shared)
+                .modelContainer(DatabaseRecovery.mainContainer)
         }
         .windowToolbarStyle(UnifiedCompactWindowToolbarStyle())
         .windowResizability(.contentSize)

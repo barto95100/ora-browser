@@ -42,9 +42,11 @@ class Tab: ObservableObject, Identifiable {
     /// Set while the tab is being closed, so it is not picked as the next tab.
     @Transient var isClosing = false
     @Transient @Published var backgroundColor: Color = .black
-    @Transient var historyManager: HistoryManager?
-    @Transient var downloadManager: DownloadManager?
-    @Transient var tabManager: TabManager?
+    /// The window's managers, owned by the window: weak, or the tab (kept by
+    /// `TabManager.activeTab`) would keep its closed window alive.
+    @Transient weak var historyManager: HistoryManager?
+    @Transient weak var downloadManager: DownloadManager?
+    @Transient weak var tabManager: TabManager?
     @Transient var browserPage: BrowserPage?
     @Transient var pageDelegate: TabBrowserPageDelegate?
     @Transient @Published var isWebViewReady: Bool = false
@@ -244,8 +246,10 @@ class Tab: ObservableObject, Identifiable {
         self.setupBrowserPageDelegate(for: page)
         self.syncBackgroundColorFromHex()
         WebExtensionsHub.tabOpened(self)
-        // Load after a short delay to ensure layout
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+        // Load after a short delay to ensure layout. Not if the page was
+        // destroyed (tab closed or unloaded) or replaced in the meantime.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self, weak page] in
+            guard let self, let page, self.browserPage === page else { return }
             self.beginFileAccessIfNeeded()
             let url = if self.type != .normal { self.savedURL } else { self.url }
             page.load(URLRequest(url: url ?? self.url))

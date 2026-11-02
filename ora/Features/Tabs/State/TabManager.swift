@@ -147,7 +147,7 @@ class TabManager: ObservableObject {
             tab.savedURL = tab.url
         }
 
-        try? modelContext.save()
+        modelContext.saveOrLog("toggle pin tab")
     }
 
     func toggleFavTab(_ tab: Tab) {
@@ -160,7 +160,7 @@ class TabManager: ObservableObject {
             tab.savedURL = tab.url
         }
 
-        try? modelContext.save()
+        modelContext.saveOrLog("toggle favorite tab")
     }
 
     // MARK: - Container Public API's
@@ -169,7 +169,7 @@ class TabManager: ObservableObject {
         separateSplit(containing: tab, save: false)
         tab.folderID = nil
         tab.container = toContainer
-        try? modelContext.save()
+        modelContext.saveOrLog("move tab to space")
     }
 
     private func initializeActiveContainerAndTab() {
@@ -199,7 +199,7 @@ class TabManager: ObservableObject {
         modelContext.insert(newContainer)
         activeContainer = newContainer
         self.activeTab = nil
-        try? modelContext.save()
+        modelContext.saveOrLog("create space")
         PrivacyDefaults.applyToNewSpace(newContainer.id)
         //        _ = fetchContainers() // Refresh containers
         return newContainer
@@ -208,7 +208,7 @@ class TabManager: ObservableObject {
     func renameContainer(_ container: TabContainer, name: String, emoji: String) {
         container.name = name
         container.emoji = emoji
-        try? modelContext.save()
+        modelContext.saveOrLog("rename space")
     }
 
     func deleteContainer(_ container: TabContainer) {
@@ -233,7 +233,7 @@ class TabManager: ObservableObject {
             // In practice, SwiftData can fail when the parent and children are
             // removed in the same save pass while non-optional inverse
             // relationships still exist.
-            try? modelContext.save()
+            modelContext.saveOrLog("delete space contents")
 
             guard let containerToDelete = fetchContainer(id: containerId) else {
                 SettingsStore.shared.removeContainerSettings(for: containerId)
@@ -242,7 +242,7 @@ class TabManager: ObservableObject {
             }
 
             modelContext.delete(containerToDelete)
-            try? modelContext.save()
+            modelContext.saveOrLog("delete space")
             SettingsStore.shared.removeContainerSettings(for: containerId)
 
             activateFallbackContainerIfNeeded(afterDeletingActiveContainer: wasActiveContainer)
@@ -266,7 +266,7 @@ class TabManager: ObservableObject {
             activeTab = nil
         }
 
-        try? modelContext.save()
+        modelContext.saveOrLog("activate space")
     }
 
     // MARK: - Tab Public API's
@@ -314,7 +314,7 @@ class TabManager: ObservableObject {
             isPrivate: isPrivate
         )
 
-        try? modelContext.save()
+        modelContext.saveOrLog("add tab")
         return newTab
     }
 
@@ -360,7 +360,7 @@ class TabManager: ObservableObject {
                 }
 
                 container.lastAccessedAt = Date()
-                try? modelContext.save()
+                modelContext.saveOrLog("open tab")
                 return newTab
             }
         }
@@ -383,7 +383,7 @@ class TabManager: ObservableObject {
 
     func switchSections(from: Tab, toTab: Tab) {
         from.switchSections(from: from, to: toTab)
-        try? modelContext.save()
+        modelContext.saveOrLog("switch tab section")
     }
 
     func closeTab(tab: Tab, shouldTrackForRestore: Bool = true) {
@@ -434,7 +434,7 @@ class TabManager: ObservableObject {
                     tab.destroyWebView()
                 }
                 self.mediaController.removeSession(for: tab.id)
-                try? self.modelContext.save()
+                self.modelContext.saveOrLog("close tab")
             }
         }
         self.activeTab?.maybeIsActive = true
@@ -478,7 +478,7 @@ class TabManager: ObservableObject {
         modelContext.insert(restoredTab)
         container.tabs.append(restoredTab)
         activateTab(restoredTab)
-        try? modelContext.save()
+        modelContext.saveOrLog("restore last tab")
     }
 
     func activateTab(_ tab: Tab) {
@@ -508,7 +508,7 @@ class TabManager: ObservableObject {
         }
         focusPageIfSplit(tab, previous: previousTab)
         tab.updateHeaderColor()
-        try? modelContext.save()
+        modelContext.saveOrLog("activate tab")
     }
 
     /// Clean up old tabs that haven't been accessed recently to preserve memory
@@ -658,7 +658,7 @@ class TabManager: ObservableObject {
         // Right after the original, in the same section (a new tab's order
         // says nothing about its place: it may be below the original's).
         tab.container.placeTab(newTab, after: tab)
-        try? modelContext.save()
+        modelContext.saveOrLog("duplicate tab")
     }
 
     func refreshPrivacySettings(for containerId: UUID) {

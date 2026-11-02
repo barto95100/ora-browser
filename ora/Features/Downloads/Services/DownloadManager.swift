@@ -51,7 +51,7 @@ class DownloadManager: ObservableObject {
         let stale = unfinished.filter { $0.status == .downloading || $0.status == .pending }
         guard !stale.isEmpty else { return }
         stale.forEach { $0.markInterrupted() }
-        try? modelContext.save()
+        modelContext.saveOrLog("mark interrupted downloads")
     }
 
     private func loadRecentDownloads() {
@@ -70,7 +70,7 @@ class DownloadManager: ObservableObject {
         let unknown = downloads.filter { $0.status == .completed && $0.fileSize <= 0 }
         guard !unknown.isEmpty else { return }
         unknown.forEach { $0.refreshFileSizeFromDisk() }
-        try? modelContext.save()
+        modelContext.saveOrLog("repair download sizes")
     }
 
     func startDownload(
@@ -89,7 +89,7 @@ class DownloadManager: ObservableObject {
         download.isActive = true
 
         modelContext.insert(download)
-        try? modelContext.save()
+        modelContext.saveOrLog("start download")
 
         activeDownloadTasks[download.id] = downloadTask
         activeDownloads.append(download)
@@ -110,7 +110,7 @@ class DownloadManager: ObservableObject {
     func completeDownload(_ download: Download, destinationURL: URL) {
         download.markCompleted(destinationURL: destinationURL)
 
-        try? modelContext.save()
+        modelContext.saveOrLog("complete download")
 
         activeDownloadTasks.removeValue(forKey: download.id)
         activeDownloads.removeAll { $0.id == download.id }
@@ -122,7 +122,7 @@ class DownloadManager: ObservableObject {
     func failDownload(_ download: Download, error: String) {
         download.markFailed(error: error)
 
-        try? modelContext.save()
+        modelContext.saveOrLog("fail download")
 
         activeDownloadTasks.removeValue(forKey: download.id)
         activeDownloads.removeAll { $0.id == download.id }
@@ -142,7 +142,7 @@ class DownloadManager: ObservableObject {
 
         download.markCancelled()
 
-        try? modelContext.save()
+        modelContext.saveOrLog("cancel download")
 
         activeDownloadTasks.removeValue(forKey: download.id)
         activeDownloads.removeAll { $0.id == download.id }
@@ -201,7 +201,7 @@ class DownloadManager: ObservableObject {
             modelContext.delete(download)
         }
 
-        try? modelContext.save()
+        modelContext.saveOrLog("clear completed downloads")
         refreshRecentDownloads()
     }
 
@@ -213,7 +213,7 @@ class DownloadManager: ObservableObject {
             modelContext.delete(download)
         }
 
-        try? modelContext.save()
+        modelContext.saveOrLog("clear non-active downloads")
         refreshRecentDownloads()
     }
 
@@ -224,7 +224,7 @@ class DownloadManager: ObservableObject {
         }
 
         modelContext.delete(download)
-        try? modelContext.save()
+        modelContext.saveOrLog("delete download")
         refreshRecentDownloads()
     }
 

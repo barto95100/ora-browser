@@ -20,13 +20,13 @@ extension Tab {
             fileAccessURL = resolved.url
             if resolved.isStale {
                 fileBookmark = Self.bookmark(for: resolved.url)
-                try? modelContext?.save()
+                modelContext?.saveOrLog("refresh stale file bookmark")
             }
             // The file was moved or renamed: follow it.
             if resolved.url.standardizedFileURL != file.standardizedFileURL {
                 if type != .normal { savedURL = resolved.url }
                 updateURL(resolved.url)
-                try? modelContext?.save()
+                modelContext?.saveOrLog("follow moved file")
             }
             return
         }
@@ -34,7 +34,7 @@ extension Tab {
         // Opened during this session: the sandbox grants access right now.
         // Saved at once: nothing else may save the tab before Ora quits.
         fileBookmark = Self.bookmark(for: file)
-        try? modelContext?.save()
+        modelContext?.saveOrLog("store file bookmark")
     }
 
     /// Gives the access back when the tab's page goes away.

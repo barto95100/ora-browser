@@ -23,7 +23,7 @@ struct TabListEndDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         draggedItem = nil
-        try? container.modelContext?.save()
+        container.modelContext?.saveOrLog("drop at end of tab list")
         return true
     }
 }

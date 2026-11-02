@@ -20,7 +20,7 @@ extension TabManager {
 
         if opener.type == .normal, newTab.container.id == opener.container.id {
             opener.container.placeTab(newTab, after: opener)
-            try? modelContext.save()
+            modelContext.saveOrLog("open link tab")
         }
         if disposition == .splitView, activeTab?.id == opener.id {
             openInSplitView(newTab)

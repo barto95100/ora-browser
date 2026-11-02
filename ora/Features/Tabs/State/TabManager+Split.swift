@@ -88,7 +88,7 @@ extension TabManager {
         if split.left.type == split.right.type {
             split.left.container.placeTab(split.right, after: split.left)
         }
-        if save { try? modelContext.save() }
+        if save { modelContext.saveOrLog("separate split") }
     }
 
     /// ⌃⇧= (New Split View): the next tab opened from the launcher goes at the
@@ -109,7 +109,7 @@ extension TabManager {
     }
 
     func saveSplitLayout() {
-        try? modelContext.save()
+        modelContext.saveOrLog("save split layout")
     }
 
     /// Loads a tab's page if it is not loaded (the other side of a split).
@@ -155,7 +155,7 @@ extension TabManager {
         left.splitFraction = 0.5
         loadIfNeeded(left)
         loadIfNeeded(right)
-        try? modelContext.save()
+        modelContext.saveOrLog("pair tabs in split")
     }
 }
 

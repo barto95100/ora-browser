@@ -15,7 +15,7 @@ extension TabManager {
             container.addTab(tab, to: folder)
         }
         renamingFolderID = folder.id
-        try? modelContext.save()
+        modelContext.saveOrLog("create folder")
         return folder
     }
 
@@ -23,13 +23,13 @@ extension TabManager {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if !name.isEmpty, name != folder.name {
             folder.name = name
-            try? modelContext.save()
+            modelContext.saveOrLog("rename folder")
         }
     }
 
     func toggleFolder(_ folder: Folder) {
         folder.isOpened.toggle()
-        try? modelContext.save()
+        modelContext.saveOrLog("toggle folder")
     }
 
     /// Deletes a folder; its tabs stay pinned, where the folder was.
@@ -41,14 +41,14 @@ extension TabManager {
         if renamingFolderID == folder.id {
             renamingFolderID = nil
         }
-        try? modelContext.save()
+        modelContext.saveOrLog("delete folder")
     }
 
     /// Puts a folder in another one, or in the section (`nil`).
     func moveFolder(_ folder: Folder, into parent: Folder?) {
         folder.container.moveFolder(folder, into: parent)
         parent?.isOpened = true
-        try? modelContext.save()
+        modelContext.saveOrLog("move folder")
     }
 
     /// Puts a pinned tab in a folder, or out of folders (`nil`).
@@ -58,6 +58,6 @@ extension TabManager {
         } else {
             tab.container.removeFromFolder(tab)
         }
-        try? modelContext.save()
+        modelContext.saveOrLog("move tab to folder")
     }
 }

@@ -23,7 +23,7 @@ extension TabManager {
             addImportedItems(space.pinned, in: nil, to: container)
             return container
         }
-        try? modelContext.save()
+        modelContext.saveOrLog("import spaces")
         return created
     }
 

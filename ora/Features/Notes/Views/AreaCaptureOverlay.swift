@@ -36,15 +36,15 @@ struct AreaCaptureOverlay: View {
 
     private static let addCursorShield = """
     (() => {
-        document.getElementById('ora-capture-shield')?.remove();
+        window.__captureShield?.remove();
         const d = document.createElement('div');
-        d.id = 'ora-capture-shield';
+        window.__captureShield = d;
         d.style.cssText = 'position:fixed;inset:0;z-index:2147483647;cursor:crosshair;';
         document.documentElement.appendChild(d);
     })();
     """
 
-    private static let removeCursorShield = "document.getElementById('ora-capture-shield')?.remove();"
+    private static let removeCursorShield = "window.__captureShield?.remove(); window.__captureShield = null;"
 
     /// `rect` in `view`'s coordinates: the page under its center gives it.
     private func capture(_ rect: NSRect, in view: NSView) {

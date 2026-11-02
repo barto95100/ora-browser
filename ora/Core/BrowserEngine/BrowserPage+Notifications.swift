@@ -7,7 +7,7 @@ import Foundation
 /// the usual permission prompt), and notifications of allowed sites go to the
 /// page delegate, which shows them with macOS notifications.
 final class WebNotificationBridge: NSObject, WKScriptMessageHandlerWithReply {
-    static let messageName = "oraNotifications"
+    static let messageName = "notifications"
 
     /// Weak: the page owns this bridge.
     weak var page: BrowserPage?
@@ -99,7 +99,7 @@ extension BrowserPage {
             name: WebNotificationBridge.messageName
         )
         contentController.addUserScript(WKUserScript(
-            source: WebNotificationScript.source,
+            source: WebNotificationScript.source(channel: notificationChannel),
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true,
             in: .page
@@ -110,12 +110,16 @@ extension BrowserPage {
     /// Center ("click"), so it can show what the notification was about.
     func dispatchNotificationEvent(_ type: String, notificationID: String) {
         guard let arguments = try? JSONSerialization.data(withJSONObject: [notificationID, type]),
-              let list = String(data: arguments, encoding: .utf8)
+              let list = String(data: arguments, encoding: .utf8),
+              let detail = try? JSONSerialization.data(withJSONObject: list, options: .fragmentsAllowed),
+              let detailString = String(data: detail, encoding: .utf8)
         else { return }
+        // From the app's world: the page's own `dispatchEvent` or
+        // `CustomEvent`, which it may have replaced, never sees the channel.
         webView.evaluateJavaScript(
-            "window.__oraNotificationEvent && window.__oraNotificationEvent(...\(list))",
+            "window.dispatchEvent(new CustomEvent('\(notificationChannel)', { detail: \(detailString) }))",
             in: nil,
-            in: .page,
+            in: Self.appWorld,
             completionHandler: nil
         )
     }

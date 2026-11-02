@@ -42,11 +42,11 @@ enum OraBrowserScripts {
 
     private static let bridgeScript = """
     (function () {
-        if (window.__oraBridge && typeof window.__oraBridge.postMessage === 'function') {
+        if (window.__bridge && typeof window.__bridge.postMessage === 'function') {
             return;
         }
 
-        window.__oraBridge = {
+        window.__bridge = {
             postMessage: function(name, payload) {
                 try {
                     if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers[name]) {
@@ -64,7 +64,7 @@ enum OraBrowserScripts {
     (function () {
         function post(name, payload) {
             try {
-                window.__oraBridge && window.__oraBridge.postMessage(name, payload);
+                window.__bridge && window.__bridge.postMessage(name, payload);
             } catch (error) {}
         }
 
@@ -129,14 +129,14 @@ enum OraBrowserScripts {
     })();
 
     (function () {
-        if (window.__oraMediaInstalled) {
+        if (window.__mediaInstalled) {
             return;
         }
-        window.__oraMediaInstalled = true;
+        window.__mediaInstalled = true;
 
         function post(payload) {
             try {
-                window.__oraBridge && window.__oraBridge.postMessage('mediaEvent', JSON.stringify(payload));
+                window.__bridge && window.__bridge.postMessage('mediaEvent', JSON.stringify(payload));
             } catch (error) {}
         }
 
@@ -180,7 +180,7 @@ enum OraBrowserScripts {
 
         const stateFrom = (element) => ({
             type: 'state',
-            wasPlayed: element && element.__oraWasPlayed,
+            wasPlayed: element && element.__wasPlayed,
             state: element && !element.paused ? 'playing' : 'paused',
             volume: element ? (element.muted ? 0 : element.volume) : undefined,
             title: document.title
@@ -223,15 +223,15 @@ enum OraBrowserScripts {
 
         // Marks playing, audible media as played; returns whether it did.
         function markPlayedIfAudible(element, update) {
-            if (element.__oraWasPlayed || element.paused || !isAudible(element)) return false;
-            element.__oraWasPlayed = true;
+            if (element.__wasPlayed || element.paused || !isAudible(element)) return false;
+            element.__wasPlayed = true;
             update();
             return true;
         }
 
         function attach(element) {
-            if (!element || element.__oraAttached) return;
-            element.__oraAttached = true;
+            if (!element || element.__attached) return;
+            element.__attached = true;
             const update = () => post(stateFrom(element));
             element.addEventListener('play', () => {
                 if (!markPlayedIfAudible(element, update)) update();
@@ -282,7 +282,7 @@ enum OraBrowserScripts {
         observer.observe(document.documentElement, { childList: true, subtree: true });
         scan();
 
-        window.__oraMedia = {
+        window.__media = {
             active: null,
             _pick() {
                 const elements = Array.from(document.querySelectorAll('video, audio'));
@@ -341,7 +341,7 @@ enum OraBrowserScripts {
             }
         };
 
-        window.__oraTriggerPiP = function(isActive = false) {
+        window.__triggerPiP = function(isActive = false) {
             // Pages can hold several videos (hover previews, ads...): use the
             // one actually playing with sound, not merely the first one. Same
             // rule as the mini player: not muted, and with a sound track.

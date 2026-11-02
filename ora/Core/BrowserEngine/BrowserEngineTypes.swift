@@ -12,11 +12,23 @@ enum BrowserUserScriptInjectionTime {
     case atDocumentEnd
 }
 
+/// Where a script runs. The app's own scripts run in a world of their own:
+/// they share the page's document, but the page can't see their variables or
+/// their message handlers (no "not Safari" fingerprint, no tampering).
+enum BrowserScriptWorld {
+    /// Isolated from the page (the default).
+    case app
+    /// The page's own world: only for scripts that must change what the page
+    /// sees (fingerprinting protection).
+    case page
+}
+
 struct BrowserUserScript {
     let name: String?
     let source: String
     let injectionTime: BrowserUserScriptInjectionTime
     let forMainFrameOnly: Bool
+    var world: BrowserScriptWorld = .app
 }
 
 struct BrowserScriptMessage {

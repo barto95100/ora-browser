@@ -44,10 +44,13 @@ struct FingerprintingProtectionProfile: Equatable {
 
         return """
         (function () {
-            if (window.__oraFingerprintingProtectionInstalled) {
+            // Once per window: a frame's first blank document and the page it
+            // then loads can share their window. The marker's name is random
+            // per launch, so it names nothing.
+            if (window.\(BrowserPrivacyService.installMarker)) {
                 return;
             }
-            window.__oraFingerprintingProtectionInstalled = true;
+            Object.defineProperty(window, '\(BrowserPrivacyService.installMarker)', { value: true });
 
             const profile = \(profileJSON);
 
@@ -373,10 +376,15 @@ final class BrowserPrivacyService {
                     seed: FingerprintingNoiseSeed.seed(spaceID: spaceID, isPrivate: isPrivate)
                 ),
                 injectionTime: .atDocumentStart,
-                forMainFrameOnly: false
+                forMainFrameOnly: false,
+                // It changes the APIs the page itself calls.
+                world: .page
             )
         ]
     }
+
+    /// A window property name that says nothing of the app, new at each launch.
+    static let installMarker = "_" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12).lowercased()
 
     static func fingerprintingProtectionScriptSource(
         seed: UInt32 = FingerprintingNoiseSeed.seed(spaceID: nil, isPrivate: false)

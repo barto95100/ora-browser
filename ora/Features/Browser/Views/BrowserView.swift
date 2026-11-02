@@ -36,7 +36,9 @@ struct BrowserView: View {
 
     // MARK: - Sidebar mouse shield
 
-    private static let removeShieldJS = "document.getElementById('ora-sb-shield')?.remove();"
+    /// The shield is held by the app's script world, not found by an id the
+    /// page could read.
+    private static let removeShieldJS = "window.__sidebarShield?.remove(); window.__sidebarShield = null;"
 
     private var clampedSidebarFraction: CGFloat {
         min(sidebarManager.currentFraction.value, SidebarLayout.maximumFraction)
@@ -56,10 +58,9 @@ struct BrowserView: View {
             let widthVW = clampedSidebarFraction * 100
             activeTab.evaluateJavaScript(
                 """
-                var e = document.getElementById('ora-sb-shield');
-                if (e) e.remove();
+                window.__sidebarShield?.remove();
                 var d = document.createElement('div');
-                d.id = 'ora-sb-shield';
+                window.__sidebarShield = d;
                 d.style.position = 'fixed';
                 d.style.top = '0';
                 d.style.\(side) = '0';

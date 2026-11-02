@@ -12,7 +12,7 @@ enum PageAnchor {
         let top = point.map { "\($0.y)" } ?? "innerHeight / 2"
         return """
         (() => {
-            document.getElementById('ora-capture-shield')?.remove();
+            window.__captureShield?.remove(); window.__captureShield = null;
             const x = \(left), y = \(top);
             let text = '';
             const range = document.caretRangeFromPoint && document.caretRangeFromPoint(x, y);

@@ -9,7 +9,7 @@ import Foundation
 final class WebNotificationBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let messageName = "oraNotifications"
 
-    /// Weak: the content controller keeps its handlers alive.
+    /// Weak: the page owns this bridge.
     weak var page: BrowserPage?
 
     init(page: BrowserPage) {
@@ -91,8 +91,10 @@ extension BrowserWebNotification {
 
 extension BrowserPage {
     func installWebNotifications(in contentController: WKUserContentController) {
+        let bridge = WebNotificationBridge(page: self)
+        notificationBridge = bridge
         contentController.addScriptMessageHandler(
-            WebNotificationBridge(page: self),
+            WeakScriptMessageHandlerWithReply(bridge),
             contentWorld: .page,
             name: WebNotificationBridge.messageName
         )

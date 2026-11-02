@@ -282,6 +282,7 @@ class Tab: ObservableObject, Identifiable {
                         WebExtensionsHub.tabClosed(self)
                     }
                     if self?.browserPage === page {
+                        self?.pageDelegate?.dismissDialog()
                         self?.browserPage = nil
                         self?.pageDelegate = nil
                         self?.endFileAccess()
@@ -341,6 +342,7 @@ class Tab: ObservableObject, Identifiable {
         if let mediaController = tabManager?.mediaController {
             MainActor.assumeIsolated { mediaController.removeSession(for: id) }
         }
+        pageDelegate?.dismissDialog()
         browserPage?.teardown()
         browserPage = nil
         pageDelegate = nil

@@ -3,6 +3,11 @@ import SwiftUI
 
 final class TabBrowserPageDelegate: BrowserPageDelegate {
     weak var tab: Tab?
+    /// When the page may show `alert`, `confirm` and `prompt` dialogs.
+    var dialogPolicy = JavaScriptDialogPolicy()
+    /// The dialog sheet open for the page, and its window (see `dismissDialog`).
+    weak var dialogSheet: NSWindow?
+    weak var dialogParentWindow: NSWindow?
     weak var mediaController: MediaController?
     weak var passwordCoordinator: PasswordAutofillCoordinator?
 
@@ -82,6 +87,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             WebExtensionsHub.tabChanged(tab, url: true, loading: true)
 
         case .committed:
+            dialogPolicy.pageDidCommitNewDocument()
             tab.isLoading = event.isLoading
             tab.loadingProgress = event.progress
             if let title = event.title, !title.isEmpty {
@@ -274,49 +280,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         openPanel.allowsMultipleSelection = options.allowsMultipleSelection
         openPanel.begin { result in
             completion(result == .OK ? openPanel.urls : nil)
-        }
-    }
-
-    func browserPage(_ page: BrowserPage, runJavaScriptAlert message: String) {
-        let alert = NSAlert()
-        alert.messageText = "Alert"
-        alert.informativeText = message
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
-    }
-
-    func browserPage(_ page: BrowserPage, runJavaScriptConfirm message: String, completion: @escaping (Bool) -> Void) {
-        let alert = NSAlert()
-        alert.messageText = "Confirm"
-        alert.informativeText = message
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
-        completion(alert.runModal() == .alertFirstButtonReturn)
-    }
-
-    func browserPage(
-        _ page: BrowserPage,
-        runJavaScriptPrompt prompt: String,
-        defaultText: String?,
-        completion: @escaping (String?) -> Void
-    ) {
-        let alert = NSAlert()
-        alert.messageText = "Prompt"
-        alert.informativeText = prompt
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
-
-        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        textField.stringValue = defaultText ?? ""
-        alert.accessoryView = textField
-
-        if alert.runModal() == .alertFirstButtonReturn {
-            completion(textField.stringValue)
-        } else {
-            completion(nil)
         }
     }
 

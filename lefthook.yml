@@ -17,3 +17,8 @@ pre-push:
   commands:
     build:
       run: ./scripts/xcbuild-debug.sh
+
+commit-msg:
+  commands:
+    no-ai-attribution:
+      run: ./scripts/check-commit-msg.sh {1}

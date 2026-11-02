@@ -8,17 +8,50 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
 
 - **Répondre en français**, même si le code, les commits et les PR sont en anglais.
 - **Une étape à la fois** : proposer, attendre son retour. Il trouve vite qu'on va « trop vite ».
+  (Sauf en **mode autonome**, voir plus bas.)
 - Après chaque changement : **étapes de test précises et numérotées**, courtes (pas de longues explications).
 - **Jamais d'attribution IA dans git** : pas de `Co-Authored-By`, aucune mention de Claude/IA dans les
-  commits ni les PR. (Seule exception : les PR vers le projet d'origine, ligne « Code written with Claude
-  (AI) under my direction; I reviewed and tested every change on macOS. » — sans objet désormais.)
-- Commit / push seulement quand Ludo le demande. Jamais de travail direct sur `main`.
-- Pour chaque branche prête : donner le **lien direct de PR**
-  `https://github.com/barto95100/ora-browser/compare/main...<branche>` + titre + description
-  (`## Summary` / `## Testing`). PR **dans le fork**, jamais vers `the-ora/browser`.
+  commits ni les PR. Le hook `commit-msg` de lefthook refuse ces lignes ; l'attribution automatique est
+  désactivée dans `.claude/settings.json`. (Seule exception : les PR vers le projet d'origine, ligne « Code
+  written with Claude (AI) under my direction; I reviewed and tested every change on macOS. » — sans objet
+  désormais.)
+- **git** : Claude peut créer des branches, commiter, pousser, ouvrir et fusionner des PR sur
+  `barto95100/ora-browser` (en mode autonome, ou quand Ludo le demande). Jamais de travail direct sur
+  `main`, jamais de force push, jamais de réécriture d'historique publié.
+- Pour chaque PR : titre + description (`## Summary` / `## Testing`). PR **dans le fork**
+  (`gh pr create --repo barto95100/ora-browser --base main`), jamais vers `the-ora/browser`.
 - **CI verte avant toute fusion** (« Create a merge commit »). CI « Queued » longtemps = panne GitHub
   (runners macOS) : attendre / « Re-run all jobs », ne jamais contourner la règle de `main`.
 - Après fusion : `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
+
+## Mode autonome (quand Ludo le demande : enchaîner une liste de PR sans l'attendre)
+
+Ludo n'intervient que pour les décisions produit, les tests manuels par lots et les blocages. Pour chaque PR :
+
+1. `git switch main && git pull --ff-only && git switch -c <branche> && xcodegen` ; plan écrit dans
+   `docs/audit/journal/<n°>-<branche>.md` (local, hors git), sans attendre de validation.
+2. Code + tests Swift Testing ; un bug à prouver : faire d'abord échouer le test sur le code actuel.
+3. `xcodegen`, compilation, suite complète avec `xcodebuild` (stable) ; SwiftFormat / SwiftLint propres.
+4. Relecture indépendante : un sous-agent neuf, en lecture seule, qui reçoit seulement le diff, les
+   identifiants de l'audit et `CLAUDE.md` (pas le raisonnement). Il vérifie : périmètre, pas de
+   changement de comportement non voulu, tests pertinents, règles du projet, aucune mention d'IA.
+   Corriger ce qu'il trouve ; relancer la relecture si le changement est important.
+5. Commit (Conventional Commits, en anglais, sans mention d'IA), push,
+   `gh pr create --repo barto95100/ora-browser --base main`, description `## Summary` / `## Testing`.
+6. `gh pr checks <n°> --repo barto95100/ora-browser --watch`. CI en échec : corriger et repousser.
+   CI en file d'attente chez GitHub : attendre. Jamais `--admin`, jamais de contournement de la règle
+   de `main`, jamais de force push.
+7. `gh pr merge <n°> --repo barto95100/ora-browser --merge --delete-branch`, puis
+   `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
+8. Ajouter les étapes de test manuelles numérotées de la PR, avec son lien, dans
+   `docs/audit/TESTS-MANUELS.md` (local). Les logs `[DEBUG-…]` de mesure restent hors des commits.
+
+S'arrêter et demander seulement pour : une décision produit (section 5 de `docs/audit/SYNTHESE.md`,
+local, ou nouvelle), un changement nécessaire hors périmètre, un échec inexpliqué après 2 essais, une action irréversible
+(suppression de données, réécriture d'historique). Sinon, prendre la décision la plus raisonnable et la
+noter dans la PR. Pas d'équipe d'agents pour coder : un seul agent qui enchaîne, plus un sous-agent
+relecteur par PR. À la fin du lot (ou en cas d'arrêt) : résumé avec les PR fusionnées et leurs liens, les
+décisions prises, les points ouverts et la liste des tests manuels à faire.
 
 ## Projet et outils
 

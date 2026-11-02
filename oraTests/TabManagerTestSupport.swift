@@ -16,9 +16,11 @@ enum TabManagerTests {}
 /// A window's managers on an in-memory database, like a private window.
 ///
 /// Tabs that load a page are private (nothing kept on disk) and point at a
-/// local port that refuses connections (no network traffic). Pages are real:
-/// opening, activating, closing the active tab, ⌘Z and duplicating all create
-/// one in the current code.
+/// local port that refuses connections (no network traffic), so their load
+/// fails and they keep their address. Not a port WebKit blocks (such as 9):
+/// it loads `about:blank` instead, which then becomes the tab's address, at a
+/// moment tests can't predict. Pages are real: opening, activating, closing
+/// the active tab, ⌘Z and duplicating all create one in the current code.
 @MainActor
 final class TabManagerTestWindow {
     static let offeredKey = "privacy.recommendedProtections.offered"
@@ -84,9 +86,13 @@ final class TabManagerTestWindow {
 
     // MARK: - Tabs
 
+    /// Expected to be closed on the machines running the tests (checked by
+    /// `FailedLoad`).
+    static let refusingPort = 59999
+
     static func url(_ path: String) -> URL {
         // swiftlint:disable:next force_unwrapping
-        URL(string: "http://127.0.0.1:9/\(path)")!
+        URL(string: "http://127.0.0.1:\(refusingPort)/\(path)")!
     }
 
     /// Opens a tab like the launcher does, in the active space.

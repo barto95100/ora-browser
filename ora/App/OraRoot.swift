@@ -11,14 +11,30 @@ final class PrivacyMode: ObservableObject {
     }
 }
 
+/// A browser window: its session (database context and managers) is made
+/// once, when SwiftUI first creates the window's state; `init` itself does
+/// nothing else.
 struct OraRoot: View {
+    @StateObject private var session: WindowSession
+
+    init(isPrivate: Bool = false) {
+        _session = StateObject(wrappedValue: WindowSession(isPrivate: isPrivate))
+    }
+
+    var body: some View {
+        BrowserWindowRoot(session: session)
+    }
+}
+
+/// A browser window's content, with its session's managers.
+private struct BrowserWindowRoot: View {
     @StateObject private var appState = AppState()
     @StateObject private var keyModifierListener = KeyModifierListener()
-    @StateObject private var mediaController: MediaController
-    @StateObject private var tabManager: TabManager
-    @StateObject private var historyManager: HistoryManager
-    @StateObject private var downloadManager: DownloadManager
-    @StateObject private var privacyMode: PrivacyMode
+    @ObservedObject private var mediaController: MediaController
+    @ObservedObject private var tabManager: TabManager
+    @ObservedObject private var historyManager: HistoryManager
+    @ObservedObject private var downloadManager: DownloadManager
+    @ObservedObject private var privacyMode: PrivacyMode
     @StateObject private var sidebarManager = SidebarManager()
     @StateObject private var toolbarManager = ToolbarManager()
     @StateObject private var dialogManager = DialogManager()
@@ -26,41 +42,16 @@ struct OraRoot: View {
 
     @ObserveInjection var inject
 
-    let tabContext: ModelContext
-    let historyContext: ModelContext
-    let downloadContext: ModelContext
+    private let modelContext: ModelContext
     @State private var window: NSWindow?
 
-    init(isPrivate: Bool = false) {
-        _privacyMode = StateObject(wrappedValue: PrivacyMode(isPrivate: isPrivate))
-
-        // Never crashes on the user's data: see `DatabaseRecovery`.
-        let container = isPrivate
-            ? DatabaseRecovery.inMemoryContainer()
-            : DatabaseRecovery.openMainContainer()
-        let modelContext = ModelContext(container)
-
-        self.tabContext = modelContext
-        self.downloadContext = modelContext
-        self.historyContext = modelContext
-        let history = HistoryManager(modelContainer: container, modelContext: modelContext)
-        _historyManager = StateObject(wrappedValue: history)
-
-        let media = MediaController()
-        _mediaController = StateObject(wrappedValue: media)
-
-        let downloads = DownloadManager(modelContainer: container, modelContext: modelContext)
-        _downloadManager = StateObject(wrappedValue: downloads)
-
-        _tabManager = StateObject(
-            wrappedValue: TabManager(
-                modelContainer: container,
-                modelContext: modelContext,
-                mediaController: media,
-                downloadManager: downloads,
-                historyManager: history
-            )
-        )
+    init(session: WindowSession) {
+        modelContext = session.modelContext
+        mediaController = session.mediaController
+        tabManager = session.tabManager
+        historyManager = session.historyManager
+        downloadManager = session.downloadManager
+        privacyMode = session.privacyMode
     }
 
     var body: some View {
@@ -97,9 +88,7 @@ struct OraRoot: View {
             .environmentObject(dialogManager)
             .environmentObject(toastManager)
             .dialogs(manager: dialogManager)
-            .modelContext(tabContext)
-            .modelContext(historyContext)
-            .modelContext(downloadContext)
+            .modelContext(modelContext)
             .withTheme()
             // Private windows are always dark, like Safari's. Through SwiftUI:
             // it manages the window's appearance and reset one set directly.
@@ -177,7 +166,7 @@ struct OraRoot: View {
                 downloadManager.toastManager = toastManager
                 Task {
                     let containerIDs = await MainActor.run {
-                        (try? tabContext.fetch(FetchDescriptor<TabContainer>()))?.map(\.id) ?? []
+                        (try? modelContext.fetch(FetchDescriptor<TabContainer>()))?.map(\.id) ?? []
                     }
                     await AdBlockService.shared.start(containerIDs: containerIDs)
                     if !privacyMode.isPrivate {

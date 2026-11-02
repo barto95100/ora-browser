@@ -588,11 +588,10 @@ final class PasswordManagerService: ObservableObject {
     }
 
     private func legacyMigrationContainerID() -> UUID? {
-        guard let modelContainer = try? ModelConfiguration.createOraContainer(isPrivate: false) else {
-            return nil
-        }
-
-        let context = ModelContext(modelContainer)
+        // The app's database, not one more container on it. Refreshes happen
+        // on the main thread; another thread leaves the migration for later.
+        guard Thread.isMainThread else { return nil }
+        let context = MainActor.assumeIsolated { ModelContext(DatabaseRecovery.mainContainer) }
         let descriptor = FetchDescriptor<TabContainer>(
             sortBy: [SortDescriptor(\TabContainer.createdAt, order: .forward)]
         )

@@ -11,7 +11,6 @@ func openPasswordsWindow() {
 private final class PasswordsWindowController: NSObject, NSWindowDelegate {
     static let shared = PasswordsWindowController()
 
-    private let sharedModelContainer = try? ModelConfiguration.createOraContainer(isPrivate: false)
     private var windowController: NSWindowController?
 
     func show() {
@@ -21,18 +20,10 @@ private final class PasswordsWindowController: NSObject, NSWindowDelegate {
             return
         }
 
-        let rootView = if let sharedModelContainer {
-            AnyView(
-                PasswordsWindowView()
-                    .modelContainer(sharedModelContainer)
-                    .withTheme()
-            )
-        } else {
-            AnyView(
-                PasswordsWindowUnavailableView()
-                    .withTheme()
-            )
-        }
+        // The browser windows' database (never missing, see `DatabaseRecovery`).
+        let rootView = PasswordsWindowView()
+            .modelContainer(DatabaseRecovery.mainContainer)
+            .withTheme()
 
         let hostingController = NSHostingController(rootView: rootView)
         let window = NSWindow(
@@ -62,23 +53,6 @@ private final class PasswordsWindowController: NSObject, NSWindowDelegate {
         }
 
         windowController = nil
-    }
-}
-
-private struct PasswordsWindowUnavailableView: View {
-    @Environment(\.theme) private var theme
-
-    var body: some View {
-        ZStack {
-            theme.background
-                .ignoresSafeArea()
-
-            Text("Passwords are unavailable because the shared data store could not be opened.")
-                .foregroundStyle(.secondary)
-                .padding(24)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        }
-        .frame(minWidth: 960, minHeight: 480)
     }
 }
 

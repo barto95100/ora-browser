@@ -15,6 +15,8 @@ actor AdBlockService {
     private let compileService: ContentBlockerCompileService
     private let artifactStore: ContentBlockerArtifactStore
     private var knownContainerIDs: Set<UUID> = []
+    /// `start` already ran once this launch.
+    private var hasStarted = false
     private var schedulerTask: Task<Void, Never>?
 
     init(
@@ -29,17 +31,31 @@ actor AdBlockService {
         self.artifactStore = artifactStore
     }
 
+    /// Called by each window with its spaces: the lists are set up and the
+    /// background refresh is scheduled once per launch; later windows only
+    /// bring their new spaces (a private window's).
     func start(containerIDs: [UUID]) async {
-        knownContainerIDs.formUnion(containerIDs)
-        await MainActor.run {
-            SettingsStore.shared.setAdBlockFilterLists(SettingsStore.shared.adBlockFilterLists)
+        let isFirstStart = !hasStarted
+        hasStarted = true
+        // The first time, every space known so far (some may have been
+        // registered before); then only the new ones.
+        let newIDs = isFirstStart
+            ? knownContainerIDs.union(containerIDs)
+            : Set(containerIDs).subtracting(knownContainerIDs)
+        knownContainerIDs.formUnion(newIDs)
+        if isFirstStart {
+            await MainActor.run {
+                SettingsStore.shared.setAdBlockFilterLists(SettingsStore.shared.adBlockFilterLists)
+            }
         }
 
-        for containerID in knownContainerIDs where await shouldRefreshOnLaunch(containerId: containerID) {
+        for containerID in newIDs where await shouldRefreshOnLaunch(containerId: containerID) {
             _ = await refreshSpace(containerId: containerID, reason: .startup)
         }
 
-        scheduleBackgroundRefresh()
+        if isFirstStart || !newIDs.isEmpty {
+            scheduleBackgroundRefresh()
+        }
     }
 
     func registerSpace(containerId: UUID) {

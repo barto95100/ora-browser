@@ -32,6 +32,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private(set) var isContentBlockingEnabled = true
     /// Owned here: the content controller only gets a weak proxy to it.
     var notificationBridge: WebNotificationBridge?
+    /// The secret event name the app tells the page's notifications with
+    /// (see `WebNotificationScript`): a page can't guess it.
+    let notificationChannel = "n" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
 
     init(
         profile: BrowserEngineProfile,
@@ -101,14 +104,16 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         ]
 
         // Through a weak proxy: the controller must not keep the page alive.
+        // In the app's world: the page can't post to them.
         for messageName in configuration.scriptMessageNames {
-            contentController.add(WeakScriptMessageHandler(self), name: messageName)
+            contentController.add(WeakScriptMessageHandler(self), contentWorld: Self.appWorld, name: messageName)
         }
         for script in configuration.userScripts {
             let userScript = WKUserScript(
                 source: script.source,
                 injectionTime: mapInjectionTime(script.injectionTime),
-                forMainFrameOnly: script.forMainFrameOnly
+                forMainFrameOnly: script.forMainFrameOnly,
+                in: Self.contentWorld(script.world)
             )
             contentController.addUserScript(userScript)
         }
@@ -242,8 +247,26 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.stopLoading()
     }
 
+    /// Runs `script` in the app's world (see `BrowserScriptWorld`): it sees
+    /// the page's document and the app's scripts, not the page's variables.
     func evaluateJavaScript(_ script: String, completion: ((Any?, Error?) -> Void)? = nil) {
-        webView.evaluateJavaScript(script, completionHandler: completion)
+        webView.evaluateJavaScript(script, in: nil, in: Self.appWorld) { result in
+            guard let completion else { return }
+            switch result {
+            case let .success(value): completion(value, nil)
+            case let .failure(error): completion(nil, error)
+            }
+        }
+    }
+
+    /// The world of the app's scripts, apart from the page's.
+    static let appWorld = WKContentWorld.world(name: "app")
+
+    static func contentWorld(_ world: BrowserScriptWorld) -> WKContentWorld {
+        switch world {
+        case .app: appWorld
+        case .page: .page
+        }
     }
 
     func takeSnapshot(
@@ -281,7 +304,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         let controller = webView.configuration.userContentController
         controller.removeAllUserScripts()
         for messageName in messageNames {
-            controller.removeScriptMessageHandler(forName: messageName)
+            controller.removeScriptMessageHandler(forName: messageName, contentWorld: Self.appWorld)
         }
         controller.removeScriptMessageHandler(forName: WebNotificationBridge.messageName, contentWorld: .page)
         webView.removeFromSuperview()

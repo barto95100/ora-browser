@@ -1,17 +1,35 @@
 /// The standard `Notification` API, which WebKit leaves out of apps, backed by
 /// `WebNotificationBridge`. Secure pages only, like in every browser.
+///
+/// It must run in the page's world (it gives the page an API), so it leaves
+/// nothing else there: its helpers are private to it, and the app tells it
+/// about clicks through an event named after `channel`, a secret of the page.
 enum WebNotificationScript {
-    static let source = #"""
+    static func source(channel: String) -> String {
+        api + clicks(channel: channel) + permissions
+    }
+
+    /// The `Notification` class (its helpers are private to the script).
+    private static let api = #"""
     (() => {
-      const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.oraNotifications;
-      if (!bridge || !window.isSecureContext || window.__oraNotificationEvent) return;
+      const bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.notifications;
+      if (!bridge || !window.isSecureContext) return;
 
       const post = (message) => bridge.postMessage(message);
+      const parse = JSON.parse;
       let permission = 'default';
       post({ action: 'permission' }).then((state) => { permission = state; }, () => {});
 
       const shown = new Map();
+      const ids = new WeakMap();
       let nextID = 1;
+
+      const fire = (notification, type) => {
+        const event = new Event(type, { cancelable: type === 'click' });
+        const handler = notification['on' + type];
+        if (typeof handler === 'function') handler.call(notification, event);
+        notification.dispatchEvent(event);
+      };
 
       class Notification extends EventTarget {
         constructor(title, options = {}) {
@@ -21,7 +39,7 @@ enum WebNotificationScript {
           super();
           options = options || {};
           const id = String(nextID++);
-          Object.defineProperty(this, '__oraID', { value: id });
+          ids.set(this, id);
           this.title = String(title);
           this.body = options.body == null ? '' : String(options.body);
           this.tag = options.tag == null ? '' : String(options.tag);
@@ -39,26 +57,19 @@ enum WebNotificationScript {
             .then((isShown) => {
               if (isShown) {
                 shown.set(id, this);
-                this.__oraFire('show');
+                fire(this, 'show');
               } else {
-                this.__oraFire('error');
+                fire(this, 'error');
               }
-            }, () => this.__oraFire('error'));
+            }, () => fire(this, 'error'));
         }
 
         close() {
-          const id = this.__oraID;
+          const id = ids.get(this);
           if (!shown.has(id)) return;
           shown.delete(id);
           post({ action: 'close', id }).catch(() => {});
-          this.__oraFire('close');
-        }
-
-        __oraFire(type) {
-          const event = new Event(type, { cancelable: type === 'click' });
-          const handler = this['on' + type];
-          if (typeof handler === 'function') handler.call(this, event);
-          this.dispatchEvent(event);
+          fire(this, 'close');
         }
 
         static get permission() { return permission; }
@@ -75,16 +86,30 @@ enum WebNotificationScript {
       }
 
       Object.defineProperty(window, 'Notification', { value: Notification, writable: true, configurable: true });
-      Object.defineProperty(window, '__oraNotificationEvent', {
-        value: (id, type) => {
-          const notification = shown.get(String(id));
-          if (!notification) return;
-          if (type === 'close') shown.delete(String(id));
-          notification.__oraFire(type);
-        }
-      });
 
-      // navigator.permissions.query({ name: 'notifications' }) follows the same choice.
+    """#
+
+    /// A notification clicked or closed in Notification Center.
+    private static func clicks(channel: String) -> String {
+        #"""
+          // A notification clicked or closed in Notification Center (sent from
+          // the app's world, as a JSON string).
+          window.addEventListener('\#(channel)', (event) => {
+            let detail = [];
+            try { detail = typeof event.detail === 'string' ? parse(event.detail) : []; } catch (error) {}
+            const [id, type] = Array.isArray(detail) ? detail : [];
+            const notification = shown.get(String(id));
+            if (!notification) return;
+            if (type === 'close') shown.delete(String(id));
+            fire(notification, type);
+          });
+
+        """#
+    }
+
+    private static let permissions = #"""
+      // navigator.permissions.query({ name: 'notifications' }) follows the same choice
+      // (WebKit itself answers "prompt" for a site denied through this bridge).
       const permissions = navigator.permissions;
       if (permissions && typeof permissions.query === 'function') {
         const query = permissions.query.bind(permissions);

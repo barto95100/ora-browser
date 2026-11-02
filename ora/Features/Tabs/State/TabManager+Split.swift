@@ -131,10 +131,10 @@ extension TabManager {
         let leaving = shownTabs(around: activeTab)
         let coming = shownTabs(around: tab)
         for page in coming where !leaving.contains(where: { $0.id == page.id }) {
-            page.evaluateJavaScript("window.__oraTriggerPiP(true)")
+            page.evaluateJavaScript("window.__triggerPiP(true)")
         }
         for page in leaving where !coming.contains(where: { $0.id == page.id }) {
-            page.evaluateJavaScript("window.__oraTriggerPiP()")
+            page.evaluateJavaScript("window.__triggerPiP()")
         }
     }
 

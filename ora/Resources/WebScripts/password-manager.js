@@ -1,8 +1,8 @@
 (function () {
-    if (window.__oraPasswordManagerInstalled) {
+    if (window.__passwordManagerInstalled) {
         return;
     }
-    window.__oraPasswordManagerInstalled = true;
+    window.__passwordManagerInstalled = true;
 
     const handler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.passwordManager;
     if (!handler) {
@@ -21,17 +21,25 @@
         } catch (error) {}
     }
 
+    // Field ids live in this script's world only: nothing is written in the
+    // page's DOM, which the page could read.
+    const fieldIDs = new WeakMap();
+    const fieldsByID = new Map();
+
     function ensureFieldID(element) {
         if (!element) {
             return null;
         }
-        if (!element.dataset.oraPasswordFieldId) {
+        let fieldID = fieldIDs.get(element);
+        if (!fieldID) {
             const random = window.crypto && window.crypto.randomUUID
                 ? window.crypto.randomUUID()
                 : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-            element.dataset.oraPasswordFieldId = `ora-password-${random}`;
+            fieldID = `field-${random}`;
+            fieldIDs.set(element, fieldID);
+            fieldsByID.set(fieldID, new WeakRef(element));
         }
-        return element.dataset.oraPasswordFieldId;
+        return fieldID;
     }
 
     function isVisible(element) {
@@ -213,6 +221,10 @@
     }
 
     function handleFocus(event) {
+        // Events the page makes up (dispatchEvent) are not the user's.
+        if (!event.isTrusted) {
+            return;
+        }
         const target = event.target;
         if (!(target instanceof HTMLInputElement)) {
             return;
@@ -238,6 +250,9 @@
     }
 
     function handleSubmit(event) {
+        if (!event.isTrusted) {
+            return;
+        }
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) {
             return;
@@ -275,7 +290,7 @@
     }
 
     function handleKeyDown(event) {
-        if (!overlayKeyboardNavigationState.active || !activeField || event.target !== activeField) {
+        if (!event.isTrusted || !overlayKeyboardNavigationState.active || !activeField || event.target !== activeField) {
             return;
         }
 
@@ -342,13 +357,13 @@
         if (!fieldID) {
             return null;
         }
-
-        if (window.CSS && typeof window.CSS.escape === "function") {
-            return document.querySelector(`[data-ora-password-field-id="${window.CSS.escape(fieldID)}"]`);
+        const reference = fieldsByID.get(fieldID);
+        const element = reference && reference.deref();
+        if (!element) {
+            fieldsByID.delete(fieldID);
+            return null;
         }
-
-        return Array.from(document.querySelectorAll("[data-ora-password-field-id]"))
-            .find((element) => element.dataset.oraPasswordFieldId === fieldID) || null;
+        return element.isConnected ? element : null;
     }
 
     function submitFilledForm(request) {
@@ -376,7 +391,7 @@
         }, 0);
     }
 
-    window.__oraPasswordManager = {
+    window.__passwordManager = {
         fillCredentials(payload) {
             const request = typeof payload === "string" ? JSON.parse(payload) : payload;
             const highlightColor = request.highlightColor || "#E8F5E9";

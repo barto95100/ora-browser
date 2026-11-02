@@ -206,7 +206,7 @@ struct HistoryPanel: View {
             entries = []
             return
         }
-        entries = Array(historyManager.search(query, activeContainerId: containerId).prefix(Self.maxEntries))
+        entries = historyManager.search(query, activeContainerId: containerId, limit: Self.maxEntries)
         selection = entries.first?.id
     }
 

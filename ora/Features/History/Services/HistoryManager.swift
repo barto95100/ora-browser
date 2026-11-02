@@ -26,12 +26,13 @@ class HistoryManager: ObservableObject {
 
         // Keep history entries scoped to a space so visits from different spaces
         // do not overwrite each other or become unreachable from space filters.
-        let descriptor = FetchDescriptor<History>(
+        var descriptor = FetchDescriptor<History>(
             predicate: #Predicate { history in
                 history.urlString == urlString && history.container?.id == containerId
             },
             sortBy: [.init(\.lastAccessedAt, order: .reverse)]
         )
+        descriptor.fetchLimit = 1
 
         if let existing = try? modelContext.fetch(descriptor).first {
             existing.visitCount += 1
@@ -60,12 +61,13 @@ class HistoryManager: ObservableObject {
     func updateTitle(_ title: String, for url: URL, container: TabContainer) {
         let urlString = url.absoluteString
         let containerId = container.id
-        let descriptor = FetchDescriptor<History>(
+        var descriptor = FetchDescriptor<History>(
             predicate: #Predicate { history in
                 history.urlString == urlString && history.container?.id == containerId
             },
             sortBy: [.init(\.lastAccessedAt, order: .reverse)]
         )
+        descriptor.fetchLimit = 1
         guard !title.isEmpty,
               let entry = try? modelContext.fetch(descriptor).first,
               entry.title != title
@@ -75,24 +77,28 @@ class HistoryManager: ObservableObject {
         modelContext.saveOrLog("update history title")
     }
 
-    func search(_ text: String, activeContainerId: UUID) -> [History] {
+    /// The space's entries matching `text` (in the address or the title, as
+    /// Safari does), most recent first, at most `limit`. The database does
+    /// the filtering: it is called at each key typed in the launcher, and
+    /// loading the whole history took 0.3 s with 20 000 entries.
+    func search(_ text: String, activeContainerId: UUID, limit: Int) -> [History] {
         let trimmedText = text.trimmingCharacters(in: .whitespaces)
-        let descriptor = FetchDescriptor<History>(
-            predicate: #Predicate { $0.container?.id == activeContainerId },
+        var descriptor = FetchDescriptor<History>(
+            predicate: trimmedText.isEmpty
+                ? #Predicate { $0.container?.id == activeContainerId }
+                : #Predicate
+            {
+                $0.container?.id == activeContainerId && (
+                    $0.urlString.localizedStandardContains(trimmedText) ||
+                        $0.title.localizedStandardContains(trimmedText)
+                )
+            },
             sortBy: [SortDescriptor(\.lastAccessedAt, order: .reverse)]
         )
+        descriptor.fetchLimit = limit
 
         do {
-            let histories = try modelContext.fetch(descriptor)
-
-            guard !trimmedText.isEmpty else {
-                return histories
-            }
-
-            return histories.filter { history in
-                history.urlString.localizedStandardContains(trimmedText) ||
-                    history.title.localizedStandardContains(trimmedText)
-            }
+            return try modelContext.fetch(descriptor)
         } catch {
             logger.error("Error fetching history: \(String(describing: error), privacy: .public)")
             return []

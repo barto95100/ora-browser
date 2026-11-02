@@ -591,12 +591,13 @@ final class PasswordManagerService: ObservableObject {
         // The app's database, not one more container on it. Refreshes happen
         // on the main thread; another thread leaves the migration for later.
         guard Thread.isMainThread else { return nil }
-        let context = MainActor.assumeIsolated { ModelContext(DatabaseRecovery.mainContainer) }
-        let descriptor = FetchDescriptor<TabContainer>(
-            sortBy: [SortDescriptor(\TabContainer.createdAt, order: .forward)]
-        )
-
-        return try? context.fetch(descriptor).first?.id
+        return MainActor.assumeIsolated {
+            let context = ModelContext(DatabaseRecovery.mainContainer)
+            let descriptor = FetchDescriptor<TabContainer>(
+                sortBy: [SortDescriptor(\TabContainer.createdAt, order: .forward)]
+            )
+            return try? context.fetch(descriptor).first?.id
+        }
     }
 
     private func copyToPasteboard(_ value: String, clearingAfter timeout: TimeInterval?) {

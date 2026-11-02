@@ -30,6 +30,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// a site exempted from protections.
     private var contentRuleLists: [WKContentRuleList] = []
     private(set) var isContentBlockingEnabled = true
+    /// Owned here: the content controller only gets a weak proxy to it.
+    var notificationBridge: WebNotificationBridge?
 
     init(
         profile: BrowserEngineProfile,
@@ -98,8 +100,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             }
         ]
 
+        // Through a weak proxy: the controller must not keep the page alive.
         for messageName in configuration.scriptMessageNames {
-            contentController.add(self, name: messageName)
+            contentController.add(WeakScriptMessageHandler(self), name: messageName)
         }
         for script in configuration.userScripts {
             let userScript = WKUserScript(
@@ -273,6 +276,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
+        // The handlers are weak proxies (no cycle to break): removed so no
+        // message reaches the page once it is torn down.
         let controller = webView.configuration.userContentController
         controller.removeAllUserScripts()
         for messageName in messageNames {

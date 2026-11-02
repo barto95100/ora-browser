@@ -31,13 +31,11 @@ protocol BrowserPageDelegate: AnyObject {
         runOpenPanelWith options: BrowserOpenPanelOptions,
         completion: @escaping ([URL]?) -> Void
     )
-    func browserPage(_ page: BrowserPage, runJavaScriptAlert message: String)
-    func browserPage(_ page: BrowserPage, runJavaScriptConfirm message: String, completion: @escaping (Bool) -> Void)
+    /// `alert`, `confirm` or `prompt`: `completion` must be called, once.
     func browserPage(
         _ page: BrowserPage,
-        runJavaScriptPrompt prompt: String,
-        defaultText: String?,
-        completion: @escaping (String?) -> Void
+        runJavaScriptDialog dialog: BrowserJavaScriptDialog,
+        completion: @escaping (BrowserJavaScriptDialogReply) -> Void
     )
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask)
     /// Whether the space's content rules apply to this site (not exempted).
@@ -102,19 +100,12 @@ extension BrowserPageDelegate {
         completion(nil)
     }
 
-    func browserPage(_ page: BrowserPage, runJavaScriptAlert message: String) {}
-
-    func browserPage(_ page: BrowserPage, runJavaScriptConfirm message: String, completion: @escaping (Bool) -> Void) {
-        completion(false)
-    }
-
     func browserPage(
         _ page: BrowserPage,
-        runJavaScriptPrompt prompt: String,
-        defaultText: String?,
-        completion: @escaping (String?) -> Void
+        runJavaScriptDialog dialog: BrowserJavaScriptDialog,
+        completion: @escaping (BrowserJavaScriptDialogReply) -> Void
     ) {
-        completion(nil)
+        completion(.refused)
     }
 
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {}

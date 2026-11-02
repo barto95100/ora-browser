@@ -105,8 +105,8 @@ extension BrowserPage: WKUIDelegate {
         initiatedByFrame frame: WKFrameInfo,
         completionHandler: @escaping () -> Void
     ) {
-        delegate?.browserPage(self, runJavaScriptAlert: message)
-        completionHandler()
+        // Answered once the dialog is closed, not before: the page waits.
+        runDialog(.alert, message: message, frame: frame) { _ in completionHandler() }
     }
 
     func webView(
@@ -115,7 +115,7 @@ extension BrowserPage: WKUIDelegate {
         initiatedByFrame frame: WKFrameInfo,
         completionHandler: @escaping (Bool) -> Void
     ) {
-        delegate?.browserPage(self, runJavaScriptConfirm: message, completion: completionHandler)
+        runDialog(.confirm, message: message, frame: frame) { completionHandler($0.isConfirmed) }
     }
 
     func webView(
@@ -125,11 +125,24 @@ extension BrowserPage: WKUIDelegate {
         initiatedByFrame frame: WKFrameInfo,
         completionHandler: @escaping (String?) -> Void
     ) {
-        delegate?.browserPage(
-            self,
-            runJavaScriptPrompt: prompt,
-            defaultText: defaultText,
-            completion: completionHandler
-        )
+        runDialog(.prompt(defaultText: defaultText ?? ""), message: prompt, frame: frame) { reply in
+            completionHandler(reply.isConfirmed ? reply.text : nil)
+        }
+    }
+
+    private func runDialog(
+        _ kind: BrowserJavaScriptDialog.Kind,
+        message: String,
+        frame: WKFrameInfo,
+        completion: @escaping (BrowserJavaScriptDialogReply) -> Void
+    ) {
+        let origin = frame.securityOrigin
+        let host = origin.host.isEmpty ? origin.protocol : origin.host
+        let dialog = BrowserJavaScriptDialog(kind: kind, message: message, host: host)
+        guard let delegate else {
+            completion(.refused)
+            return
+        }
+        delegate.browserPage(self, runJavaScriptDialog: dialog, completion: completion)
     }
 }

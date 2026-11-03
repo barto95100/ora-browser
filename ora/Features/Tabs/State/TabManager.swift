@@ -435,6 +435,8 @@ class TabManager: ObservableObject {
                 } else {
                     tab.isWebViewReady = false
                     tab.destroyWebView()
+                    // Kept in the sidebar: it can be shown again.
+                    tab.isClosing = false
                 }
                 self.mediaController.removeSession(for: tab.id)
                 self.modelContext.saveOrLog("close tab")

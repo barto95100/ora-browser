@@ -25,7 +25,7 @@ enum PrivacyDefaults {
 
         dialogManager.confirm(
             title: "Block ads and trackers?",
-            message: "Ora can block ads and trackers in your spaces with AdGuard's lists. "
+            message: "Ombre can block ads and trackers in your spaces with AdGuard's lists. "
                 + "You can turn them off for a site from the shield in the address bar, "
                 + "or for a space in Settings › Spaces.",
             confirmLabel: "Turn On",

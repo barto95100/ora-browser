@@ -114,7 +114,7 @@ struct ExtensionDetailView: View {
                             .monospaced()
                     }
                 }
-                Text("Ora's own shortcuts come first.")
+                Text("Ombre's own shortcuts come first.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

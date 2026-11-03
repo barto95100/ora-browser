@@ -33,7 +33,7 @@ private struct ChromeWebStoreBannerContent: View {
                     .foregroundStyle(Color(nsColor: .secondaryLabelColor))
 
                 if let record = manager.installed(storeID: storeID) {
-                    Text("“\(record.name)” is in Ora.")
+                    Text("“\(record.name)” is in Ombre.")
                         .font(.subheadline)
                     Button("Manage…") { BrowserWindows.showSettings(.extensions) }
                         .controlSize(.small)
@@ -47,11 +47,11 @@ private struct ChromeWebStoreBannerContent: View {
                         .controlSize(.small)
                         .pointerStyle(.link)
                 } else {
-                    Text("Add this extension to Ora.")
+                    Text("Add this extension to Ombre.")
                         .font(.subheadline)
                     // The banner's one action: stands out, and the pointer says
                     // it can be clicked.
-                    Button(isDownloading ? "Downloading…" : "Add to Ora…") { add() }
+                    Button(isDownloading ? "Downloading…" : "Add to Ombre…") { add() }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
                         .disabled(isDownloading)

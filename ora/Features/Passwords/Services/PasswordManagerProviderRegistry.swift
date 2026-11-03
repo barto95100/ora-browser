@@ -42,8 +42,8 @@ final class PasswordManagerProviderRegistry {
     let providers: [PasswordManagerProviderDescriptor] = [
         PasswordManagerProviderDescriptor(
             kind: .ora,
-            title: "Ora Passwords",
-            summary: "Store encrypted credentials in Ora and show Ora's autofill overlay.",
+            title: "Ombre Passwords",
+            summary: "Store encrypted credentials in Ombre and show Ombre's autofill overlay.",
             vaultStoredInOra: true,
             autofillMode: .builtInOverlay,
             isAvailable: true

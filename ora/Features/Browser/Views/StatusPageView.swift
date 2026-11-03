@@ -121,7 +121,7 @@ struct StatusPageView: View {
         case .timeout:
             return "The page took too long to load. Try again or check your connection."
         case .crashed:
-            return "This webpage stopped working several times in a row, so Ora didn't reload it again."
+            return "This webpage stopped working several times in a row, so Ombre didn't reload it again."
         case .unknown:
             return "An unexpected error occurred while loading this page."
         }

@@ -55,7 +55,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         var errorDescription: String? {
             switch self {
             case .appRemoved: "The app that brings this extension isn't installed anymore."
-            case .nativeMessagingUnsupported: "Ora can't talk to the extension's app."
+            case .nativeMessagingUnsupported: "Ombre can't talk to the extension's app."
             case .noAnchor: "No window to show the popup in."
             }
         }

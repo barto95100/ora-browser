@@ -394,7 +394,7 @@ private struct PasswordsWindowView: View {
     private func unlockVault() {
         isAuthenticating = true
         Task {
-            let authenticated = await passwordManager.authenticate(reason: "Unlock your saved passwords in Ora")
+            let authenticated = await passwordManager.authenticate(reason: "Unlock your saved passwords in Ombre")
             await MainActor.run {
                 isUnlocked = authenticated
                 isAuthenticating = false

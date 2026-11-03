@@ -6,7 +6,7 @@ struct LinkPreview: View {
 
     private func getAppVersion() -> String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        return "Ora \(version)"
+        return "Ombre \(version)"
     }
 
     var body: some View {

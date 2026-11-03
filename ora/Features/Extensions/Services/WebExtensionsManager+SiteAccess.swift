@@ -76,7 +76,7 @@ extension WebExtensionsManager {
         guard let record = installed.first(where: { $0.id == id })?.record else { return }
         ask(
             title: "Remove “\(record.name)”?",
-            message: "Its data in Ora is deleted. The app that brings it stays installed.",
+            message: "Its data in Ombre is deleted. The app that brings it stays installed.",
             buttons: ["Remove", "Cancel"]
         ) { choice in
             if choice == 0 { self.remove(id: id) }

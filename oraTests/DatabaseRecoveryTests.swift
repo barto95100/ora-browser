@@ -16,7 +16,7 @@ struct DatabaseRecoveryTests {
         deinit { try? FileManager.default.removeItem(at: url) }
 
         var store: URL {
-            url.appending(path: "OraData.sqlite")
+            url.appending(path: "OmbreData.sqlite")
         }
 
         func write(_ text: String, to name: String) throws {
@@ -42,7 +42,7 @@ struct DatabaseRecoveryTests {
         return Calendar(identifier: .gregorian).date(from: components) ?? .distantPast
     }()
 
-    private let backupName = "OraData.corrupt-2026-11-01-153012.sqlite"
+    private let backupName = "OmbreData.corrupt-2026-11-01-153012.sqlite"
 
     @Test func backupIsNamedWithTheDateInTheSameFolder() throws {
         let folder = try Folder()
@@ -56,18 +56,18 @@ struct DatabaseRecoveryTests {
     @Test func takenBackupNameGetsANumber() throws {
         let folder = try Folder()
         try folder.write("old", to: backupName)
-        try folder.write("old", to: "OraData.corrupt-2026-11-01-153012-2.sqlite-wal")
+        try folder.write("old", to: "OmbreData.corrupt-2026-11-01-153012-2.sqlite-wal")
 
         let backup = DatabaseRecovery.backupURL(for: folder.store, date: date)
 
-        #expect(backup.lastPathComponent == "OraData.corrupt-2026-11-01-153012-3.sqlite")
+        #expect(backup.lastPathComponent == "OmbreData.corrupt-2026-11-01-153012-3.sqlite")
     }
 
     @Test func storeAndCompanionFilesAreMovedAside() throws {
         let folder = try Folder()
-        try folder.write("db", to: "OraData.sqlite")
-        try folder.write("wal", to: "OraData.sqlite-wal")
-        try folder.write("shm", to: "OraData.sqlite-shm")
+        try folder.write("db", to: "OmbreData.sqlite")
+        try folder.write("wal", to: "OmbreData.sqlite-wal")
+        try folder.write("shm", to: "OmbreData.sqlite-shm")
 
         let backup = try DatabaseRecovery.moveStoreAside(at: folder.store, date: date)
 
@@ -80,7 +80,7 @@ struct DatabaseRecoveryTests {
 
     @Test func missingCompanionFilesAreNotAnError() throws {
         let folder = try Folder()
-        try folder.write("db", to: "OraData.sqlite")
+        try folder.write("db", to: "OmbreData.sqlite")
 
         try DatabaseRecovery.moveStoreAside(at: folder.store, date: date)
 
@@ -89,32 +89,32 @@ struct DatabaseRecoveryTests {
 
     @Test func corruptDatabaseIsKeptAndReplacedByAnEmptyOne() throws {
         let folder = try Folder()
-        try folder.write("x\n", to: "OraData.sqlite")
+        try folder.write("x\n", to: "OmbreData.sqlite")
 
         let result = DatabaseRecovery.openContainer(at: folder.store, date: date)
 
         #expect(result.outcome == .recovered(backup: folder.url.appending(path: backupName)))
         #expect(try folder.read(backupName) == "x\n")
-        #expect(folder.exists("OraData.sqlite"))
+        #expect(folder.exists("OmbreData.sqlite"))
         let context = ModelContext(result.container)
         #expect(try context.fetchCount(FetchDescriptor<TabContainer>()) == 0)
     }
 
     @Test func corruptDatabaseIsNotMovedTwice() throws {
         let folder = try Folder()
-        try folder.write("x\n", to: "OraData.sqlite")
+        try folder.write("x\n", to: "OmbreData.sqlite")
 
         let result = DatabaseRecovery.openContainer(at: folder.store, mayMoveAside: false, date: date)
 
         #expect(result.outcome == .inMemory(backup: nil))
-        #expect(try folder.read("OraData.sqlite") == "x\n")
+        #expect(try folder.read("OmbreData.sqlite") == "x\n")
         #expect(!folder.exists(backupName))
     }
 
     @Test func healthyDatabaseOpensInPlace() throws {
         let folder = try Folder()
         do {
-            let container = try ModelConfiguration.createOraContainer(at: folder.store)
+            let container = try ModelConfiguration.createMainContainer(at: folder.store)
             let context = ModelContext(container)
             context.insert(TabContainer(name: "Kept", emoji: "🧪"))
             try context.save()

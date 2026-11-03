@@ -14,9 +14,7 @@ final class ContentBlockerArtifactStore {
 
     init(fileManager: FileManager = .default, baseURL: URL? = nil) {
         self.fileManager = fileManager
-        self.baseURL = baseURL ?? fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first!
-            .appendingPathComponent("Ora", isDirectory: true)
+        self.baseURL = baseURL ?? OmbreDataFolder.applicationSupport
             .appendingPathComponent("ContentBlockers", isDirectory: true)
 
         try? fileManager.createDirectory(at: self.baseURL, withIntermediateDirectories: true, attributes: nil)

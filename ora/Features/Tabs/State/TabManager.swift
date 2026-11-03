@@ -199,6 +199,7 @@ class TabManager: ObservableObject {
     @discardableResult
     func createContainer(name: String = "Default", emoji: String = "•") -> TabContainer {
         let newContainer = TabContainer(name: name, emoji: emoji)
+        newContainer.order = nextContainerOrder()
         modelContext.insert(newContainer)
         activeContainer = newContainer
         self.activeTab = nil
@@ -206,6 +207,13 @@ class TabManager: ObservableObject {
         PrivacyDefaults.applyToNewSpace(newContainer.id)
         //        _ = fetchContainers() // Refresh containers
         return newContainer
+    }
+
+    /// The order of a new space: after all the others.
+    func nextContainerOrder() -> Int {
+        var descriptor = FetchDescriptor<TabContainer>(sortBy: [SortDescriptor(\.order, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return ((try? modelContext.fetch(descriptor))?.first?.order ?? -1) + 1
     }
 
     func renameContainer(_ container: TabContainer, name: String, emoji: String) {
@@ -230,12 +238,10 @@ class TabManager: ObservableObject {
 
             let wasActiveContainer = activeContainer?.id == containerId
             prepareForContainerDeletion(isActiveContainer: wasActiveContainer)
-            deleteContainerContents(persistedContainer, containerId: containerId)
+            deleteContainerContents(persistedContainer)
 
-            // Save child deletions before deleting the container.
-            // In practice, SwiftData can fail when the parent and children are
-            // removed in the same save pass while non-optional inverse
-            // relationships still exist.
+            // Save child deletions before deleting the container: SwiftData
+            // could fail when the parent and children went in the same save.
             modelContext.saveOrLog("delete space contents")
 
             guard let containerToDelete = fetchContainer(id: containerId) else {
@@ -390,6 +396,8 @@ class TabManager: ObservableObject {
     }
 
     func closeTab(tab: Tab, shouldTrackForRestore: Bool = true) {
+        // Already being closed (a double click): once is enough.
+        guard !tab.isClosing else { return }
         tab.isClosing = true
         // Closing one side of a split shows the other side alone.
         let partner = splitPartner(of: tab)
@@ -430,6 +438,12 @@ class TabManager: ObservableObject {
         tab.stopMedia { [weak self] in
             DispatchQueue.main.async {
                 guard let self else { return }
+                guard tab.isClosing else {
+                    // ⌘Z brought it back meanwhile (see `restoreLastTab`), but
+                    // its page was torn down: load it again.
+                    self.reloadCancelledClose(of: tab)
+                    return
+                }
                 if tab.type == .normal {
                     self.modelContext.delete(tab)
                 } else {
@@ -458,6 +472,13 @@ class TabManager: ObservableObject {
 
     func restoreLastTab() {
         guard let snapshot = recentlyClosedTabs.popLast() else { return }
+        // Still being closed (its media is stopping): ⌘Z cancels the close.
+        // A new tab would share its id, which is unique.
+        if let closing = closingTab(id: snapshot.id) {
+            closing.isClosing = false
+            activateTab(closing)
+            return
+        }
         let container = fetchContainers()
             .first(where: { $0.id == snapshot.containerID }) ?? activeContainer ?? createContainer()
 
@@ -701,6 +722,19 @@ class TabManager: ObservableObject {
 }
 
 private extension TabManager {
+    func reloadCancelledClose(of tab: Tab) {
+        guard tab.browserPage == nil else { return }
+        tab.isWebViewReady = false
+        if activeTab?.id == tab.id {
+            activateTab(tab)
+        }
+    }
+
+    func closingTab(id: UUID) -> Tab? {
+        let descriptor = FetchDescriptor<Tab>(predicate: #Predicate { $0.id == id })
+        return (try? modelContext.fetch(descriptor))?.first { $0.isClosing }
+    }
+
     func fetchContainer(id: UUID) -> TabContainer? {
         let descriptor = FetchDescriptor<TabContainer>(
             predicate: #Predicate { $0.id == id }
@@ -721,7 +755,7 @@ private extension TabManager {
         activeContainer = nil
     }
 
-    func deleteContainerContents(_ container: TabContainer, containerId: UUID) {
+    func deleteContainerContents(_ container: TabContainer) {
         for tab in Array(container.tabs) {
             if tab.isWebViewReady {
                 tab.destroyWebView()
@@ -733,10 +767,7 @@ private extension TabManager {
         for folder in Array(container.folders) {
             modelContext.delete(folder)
         }
-
-        for history in fetchHistory(for: containerId) {
-            modelContext.delete(history)
-        }
+        // The space's history goes with it (cascade).
     }
 
     func activateFallbackContainerIfNeeded(afterDeletingActiveContainer wasActiveContainer: Bool) {
@@ -746,18 +777,6 @@ private extension TabManager {
             activateContainer(nextContainer)
         } else {
             _ = createContainer()
-        }
-    }
-
-    func fetchHistory(for containerId: UUID) -> [History] {
-        let descriptor = FetchDescriptor<History>(
-            predicate: #Predicate { $0.container?.id == containerId }
-        )
-
-        do {
-            return try modelContext.fetch(descriptor)
-        } catch {
-            return []
         }
     }
 }

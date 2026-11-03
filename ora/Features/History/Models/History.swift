@@ -4,7 +4,10 @@ import SwiftData
 /// SwiftData model for a browsing history entry
 @Model
 final class History {
-    @Attribute(.unique) var id: UUID // Unique identifier
+    // Visits are looked up by address, and listed most recent first.
+    #Index<History>([\.urlString], [\.lastAccessedAt])
+
+    @Attribute(.unique) var id: UUID
     var url: URL
     var urlString: String
     var title: String
@@ -27,14 +30,13 @@ final class History {
         visitCount: Int,
         container: TabContainer? = nil
     ) {
-        let now = Date()
         self.id = id
         self.url = url
         self.urlString = url.absoluteString
         self.title = title
         self.faviconURL = faviconURL
-        self.createdAt = now
-        self.lastAccessedAt = now
+        self.createdAt = createdAt
+        self.lastAccessedAt = lastAccessedAt
         self.visitCount = visitCount
         self.faviconLocalFile = faviconLocalFile
         self.container = container

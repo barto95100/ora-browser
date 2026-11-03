@@ -57,7 +57,7 @@ private final class PasswordsWindowController: NSObject, NSWindowDelegate {
 }
 
 private struct PasswordsWindowView: View {
-    @Query(sort: \TabContainer.lastAccessedAt, order: .reverse) var containers: [TabContainer]
+    @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @Environment(\.theme) private var theme
     @StateObject private var passwordManager = PasswordManagerService.shared

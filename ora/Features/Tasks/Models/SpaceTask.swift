@@ -5,7 +5,7 @@ import SwiftData
 /// day, a reminder (a macOS notification) and a page it is about, if any.
 @Model
 final class SpaceTask {
-    var id: UUID
+    @Attribute(.unique) var id: UUID
     var title: String
     var isDone: Bool
     var createdAt: Date

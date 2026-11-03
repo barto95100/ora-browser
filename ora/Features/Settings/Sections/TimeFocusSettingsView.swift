@@ -6,7 +6,7 @@ import SwiftUI
 struct TimeFocusSettingsView: View {
     @ObservedObject private var settings = TimeTrackingSettings.shared
     @ObservedObject private var focus = FocusSettings.shared
-    @Query(sort: \TabContainer.createdAt) private var spaces: [TabContainer]
+    @Query(sort: TabContainer.displayOrder) private var spaces: [TabContainer]
     @State private var isConfirmingClear = false
 
     var body: some View {

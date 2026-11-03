@@ -35,6 +35,32 @@ extension TabManagerTests {
             }
         }
 
+        /// ⌘Z before the closed tab is deleted (its media is still being
+        /// stopped) cancels the close.
+        @Test func restoreBeforeTheCloseEndsKeepsTheRestoredTab() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                _ = try await window.openLoaded("kept")
+                let closed = try await window.openLoaded("closed")
+                let closedID = closed.id
+                window.tabManager.closeTab(tab: closed)
+
+                window.tabManager.restoreLastTab()
+                // Long enough for the close to have ended.
+                try await Task.sleep(for: .seconds(1))
+                try window.modelContext.save()
+
+                // The close was cancelled: the same tab is back.
+                #expect(window.tabs(withID: closedID).map(ObjectIdentifier.init) == [ObjectIdentifier(closed)])
+                #expect(!closed.isClosing)
+                // Its page was torn down by the close, then loaded again.
+                #expect(closed.browserPage != nil)
+                #expect(closed.isWebViewReady)
+                #expect(space.tabs.contains { $0.id == closedID })
+                #expect(window.tabManager.activeTab?.id == closedID)
+            }
+        }
+
         @Test func restoreShiftsTabsAtOrAboveTheRestoredOrder() async throws {
             try await TabManagerTestWindow.run { window in
                 let space = try window.activeSpace

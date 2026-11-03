@@ -11,7 +11,7 @@ enum DownloadStatus: String, Codable {
 
 @Model
 class Download: ObservableObject, Identifiable {
-    var id: UUID
+    @Attribute(.unique) var id: UUID
     var originalURL: URL
     var originalURLString: String
     var fileName: String

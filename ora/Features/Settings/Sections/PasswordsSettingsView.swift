@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct PasswordsSettingsView: View {
-    @Query(sort: \TabContainer.lastAccessedAt, order: .reverse) var containers: [TabContainer]
+    @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @StateObject private var settings = SettingsStore.shared
     @StateObject private var passwordManager = PasswordManagerService.shared

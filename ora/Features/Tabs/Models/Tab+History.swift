@@ -13,10 +13,10 @@ extension Tab {
     }
 
     func updateHistoryTitle() {
-        guard let historyManager else { return }
+        // No space left (the tab is being deleted): nothing to record.
+        guard let historyManager, let container = parentContainer else { return }
         let title = title
         let url = url
-        let container = container
         Task { @MainActor in
             historyManager.updateTitle(title, for: url, container: container)
         }

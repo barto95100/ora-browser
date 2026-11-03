@@ -24,7 +24,7 @@ enum DatabaseRecovery {
     /// SQLite's companion files, next to the database.
     nonisolated static let companionSuffixes = ["-wal", "-shm"]
 
-    /// `OraData.corrupt-2026-11-01-153012.sqlite` in the database's folder,
+    /// `OmbreData.corrupt-2026-11-01-153012.sqlite` in the database's folder,
     /// with `-2`, `-3`… added when that name is taken.
     nonisolated static func backupURL(
         for storeURL: URL,
@@ -82,7 +82,7 @@ enum DatabaseRecovery {
         date: Date = Date()
     ) -> (container: ModelContainer, outcome: Outcome) {
         do {
-            return try (ModelConfiguration.createOraContainer(at: storeURL), .opened)
+            return try (ModelConfiguration.createMainContainer(at: storeURL), .opened)
         } catch {
             logger.error("Database failed to open: \(String(describing: error), privacy: .public)")
         }
@@ -92,7 +92,7 @@ enum DatabaseRecovery {
             do {
                 let moved = try moveStoreAside(at: storeURL, date: date)
                 backup = moved
-                let container = try ModelConfiguration.createOraContainer(at: storeURL)
+                let container = try ModelConfiguration.createMainContainer(at: storeURL)
                 return (container, .recovered(backup: moved))
             } catch {
                 logger.error("Fresh database failed to open: \(String(describing: error), privacy: .public)")
@@ -103,7 +103,7 @@ enum DatabaseRecovery {
 
     nonisolated static func inMemoryContainer() -> ModelContainer {
         do {
-            return try ModelConfiguration.createInMemoryOraContainer()
+            return try ModelConfiguration.createInMemoryMainContainer()
         } catch {
             // Not a problem with the user's data: the schema itself is invalid,
             // which the tests catch.
@@ -132,7 +132,7 @@ enum DatabaseRecovery {
 
     /// Opens the main database's container (see `mainContainer`).
     @MainActor private static func openMainContainer() -> ModelContainer {
-        let result = openContainer(at: ModelConfiguration.oraDatabaseURL, mayMoveAside: !hasMovedAside)
+        let result = openContainer(at: ModelConfiguration.mainDatabaseURL, mayMoveAside: !hasMovedAside)
         switch result.outcome {
         case .opened:
             break

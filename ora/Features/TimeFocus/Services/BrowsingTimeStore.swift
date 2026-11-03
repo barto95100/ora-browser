@@ -18,7 +18,7 @@ final class BrowsingTimeRecord {
     }
 }
 
-/// The browsing time, in its own database (`Ora/BrowsingTime.sqlite`): kept
+/// The browsing time, in its own database (`Ombre/BrowsingTime.sqlite`): kept
 /// apart from tabs and history, it can be cleared without touching them.
 /// Private windows are never counted.
 @MainActor
@@ -31,8 +31,7 @@ final class BrowsingTimeStore: ObservableObject {
     private let context: ModelContext?
 
     private init() {
-        let folder = URL.applicationSupportDirectory.appending(path: "Ora", directoryHint: .isDirectory)
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let folder = OmbreDataFolder.applicationSupport
         let configuration = ModelConfiguration(
             "BrowsingTime",
             schema: Schema([BrowsingTimeRecord.self]),

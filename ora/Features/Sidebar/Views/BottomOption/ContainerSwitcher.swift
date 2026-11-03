@@ -7,7 +7,7 @@ struct ContainerSwitcher: View {
     @Environment(\.theme) private var theme
     @EnvironmentObject var tabManager: TabManager
     @EnvironmentObject var dialogManager: DialogManager
-    @Query var containers: [TabContainer]
+    @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @State private var hoveredContainer: UUID?
 

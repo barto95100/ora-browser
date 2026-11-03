@@ -8,12 +8,15 @@ extension TabManager {
     @discardableResult
     func importSpaces(_ data: ImportedBrowserData, from browser: String) -> [TabContainer] {
         var names = Set((try? modelContext.fetch(FetchDescriptor<TabContainer>()))?.map(\.name) ?? [])
+        var order = nextContainerOrder()
         let created = data.spaces.map { space in
             let name = Self.importedName(space.name, browser: browser, taken: names)
             names.insert(name)
             let container = TabContainer(name: name, emoji: space.emoji ?? "•")
             // Not the space to open at the next launch.
             container.lastAccessedAt = .distantPast
+            container.order = order
+            order += 1
             modelContext.insert(container)
             PrivacyDefaults.applyToNewSpace(container.id)
 

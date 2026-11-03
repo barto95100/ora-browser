@@ -146,5 +146,13 @@ struct OraApp: App {
         .defaultSize(width: 980, height: 640)
         .handlesExternalEvents(matching: [])
         .commands { OraCommands() }
+
+        Window("Licenses", id: "licenses") {
+            LicensesView()
+        }
+        // Only in the app menu, not in the Window menu.
+        .commandsRemoved()
+        .windowResizability(.contentSize)
+        .handlesExternalEvents(matching: [])
     }
 }

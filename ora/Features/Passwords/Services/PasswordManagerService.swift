@@ -590,9 +590,9 @@ enum PasswordManagerError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidStoredPassword:
-            return "Ora couldn't decode the stored password."
+            return "Ombre couldn't decode the stored password."
         case .invalidCredentialOrigin:
-            return "Ora can only save passwords for web origins."
+            return "Ombre can only save passwords for web origins."
         case let .keychainStatus(status):
             if let message = SecCopyErrorMessageString(status, nil) as String? {
                 return message

@@ -15,4 +15,4 @@ xcodebuild build \
 # This copy is only a build check: keep macOS from registering it as an app,
 # or opening a link or a file could launch it instead of the one run by Xcode.
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-"$LSREGISTER" -u build/DerivedData/Build/Products/Debug/Ora.app >/dev/null 2>&1 || true
+"$LSREGISTER" -u build/DerivedData/Build/Products/Debug/Ombre.app >/dev/null 2>&1 || true

@@ -44,7 +44,7 @@ private struct ExtensionsSettingsContent: View {
 
                 SettingsCard(
                     header: "From Your Apps",
-                    description: "Apps from the App Store can bring Safari extensions. Ora runs them like Safari."
+                    description: "Apps from the App Store can bring Safari extensions. Ombre runs them like Safari."
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(manager.candidates) { candidate in
@@ -81,7 +81,7 @@ private struct ExtensionsSettingsContent: View {
 
                 SettingsCard(
                     header: "Other Extensions",
-                    description: "On an extension's page in the Chrome Web Store, click “Add to Ora”. "
+                    description: "On an extension's page in the Chrome Web Store, click “Add to Ombre”. "
                         + "Some Chrome extensions use features WebKit doesn't have: they may not work fully."
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
@@ -132,7 +132,7 @@ private struct ExtensionsSettingsContent: View {
         ) { item in
             Button("Remove", role: .destructive) { manager.remove(id: item.id) }
         } message: { _ in
-            Text("Its data in Ora is deleted. The app that brings it stays installed.")
+            Text("Its data in Ombre is deleted. The app that brings it stays installed.")
         }
     }
 
@@ -143,7 +143,7 @@ private struct ExtensionsSettingsContent: View {
             do {
                 review = try await manager.reviewFile(at: url)
             } catch {
-                fileError = "Ora couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
+                fileError = "Ombre couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
             }
         }
     }
@@ -154,7 +154,7 @@ private struct ExtensionsSettingsContent: View {
             do {
                 review = try await manager.review(candidate)
             } catch {
-                reviewError = "Ora couldn't read \(candidate.name): \(error.localizedDescription)"
+                reviewError = "Ombre couldn't read \(candidate.name): \(error.localizedDescription)"
             }
         }
     }

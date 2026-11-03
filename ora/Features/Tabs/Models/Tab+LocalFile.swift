@@ -66,7 +66,8 @@ extension Tab {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = "Allow Access"
-        panel.message = "Allow Ora to read “\(folder.lastPathComponent)” so this page can show its images and styles."
+        panel.message =
+            "Allow Ombre to read “\(folder.lastPathComponent)” so this page can show its images and styles."
 
         let completion: (NSApplication.ModalResponse) -> Void = { [weak self] response in
             guard let self, response == .OK, let selected = panel.url else { return }

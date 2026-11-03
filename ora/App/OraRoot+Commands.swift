@@ -54,9 +54,9 @@ private struct WindowAppCommands: ViewModifier {
                     return
                 }
                 dialogManager.confirm(
-                    title: "Quit Ora?",
+                    title: "Quit Ombre?",
                     message: "Are you sure you want to quit?",
-                    iconImage: Image("OraColorLogo"),
+                    iconImage: Image(nsImage: NSApp.applicationIconImage),
                     confirmLabel: "Quit",
                     variant: .destructive,
                     onConfirm: { NSApp.reply(toApplicationShouldTerminate: true) },

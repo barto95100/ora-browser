@@ -166,14 +166,14 @@ enum DatabaseRecovery {
             backup = url
             alert.messageText = "Your tabs couldn't be restored"
             alert.informativeText = """
-            Your browsing data couldn't be opened, so Ora started with fresh data. \
+            Your browsing data couldn't be opened, so Ombre started with fresh data. \
             A copy of the old data was kept: \(url.lastPathComponent).
             """
         case let .inMemory(url):
             backup = url
             alert.messageText = "Your tabs won't be saved"
             var text = "Your browsing data couldn't be opened. Tabs, history and downloads from this "
-                + "session will be lost when Ora quits."
+                + "session will be lost when Ombre quits."
             if let url {
                 text += " A copy of the old data was kept: \(url.lastPathComponent)."
             }

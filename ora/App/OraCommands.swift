@@ -219,7 +219,11 @@ struct OraCommands: Commands {
         }
 
         CommandGroup(replacing: .appInfo) {
-            Button("About Ora") { showAboutWindow() }
+            Button("About Ombre") {
+                NSApp.orderFrontStandardAboutPanel(nil)
+                NSApp.activate()
+            }
+            Button("Licenses") { openWindow(id: "licenses") }
             if UpdateService.isAvailable {
                 Button("Check for Updates") {
                     UpdateService.shared.checkForUpdates()
@@ -239,28 +243,5 @@ struct OraCommands: Commands {
             }
             .keyboardShortcut(",", modifiers: .command)
         }
-    }
-
-    // MARK: - Utility Helpers
-
-    private func showAboutWindow() {
-        let alert = NSAlert()
-        alert.messageText = "Ora Browser"
-        alert.informativeText = """
-        Version \(getAppVersion())
-
-        Fast, secure, and beautiful browser built for macOS.
-
-        © 2025 Ora Browser
-        """
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
-    }
-
-    private func getAppVersion() -> String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
-        return "\(version) (\(build))"
     }
 }

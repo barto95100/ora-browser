@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Ombre</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -61,7 +63,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>Ora Browser</string>
+			<string>Ombre</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>http</string>

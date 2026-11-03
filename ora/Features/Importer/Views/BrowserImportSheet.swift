@@ -35,7 +35,7 @@ struct BrowserImportSheet: View {
     private var start: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(
-                "Ora imports your spaces with their Essentials (as favorites), pinned tabs and folders. "
+                "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. "
                     + "Open tabs are not imported."
             )
             .fixedSize(horizontal: false, vertical: true)
@@ -161,7 +161,7 @@ struct BrowserImportSheet: View {
             data = read
             selected = Set(read.spaces.indices)
         } catch {
-            failure = "Ora couldn't read this Zen session."
+            failure = "Ombre couldn't read this Zen session."
             data = nil
         }
     }

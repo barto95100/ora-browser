@@ -36,7 +36,7 @@ struct SitePermissionPromptView: View {
                 }
             }
 
-            Toggle(isPrivate ? "Remember until Ora quits" : "Remember for this site", isOn: $remember)
+            Toggle(isPrivate ? "Remember until Ombre quits" : "Remember for this site", isOn: $remember)
                 .toggleStyle(.checkbox)
                 .font(.caption)
                 .foregroundStyle(Color(nsColor: .secondaryLabelColor))

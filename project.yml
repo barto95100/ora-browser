@@ -110,11 +110,12 @@ targets:
           ENABLE_HARDENED_RUNTIME: NO
           DEVELOPMENT_TEAM: Q76T6LDBBZ
         Release:
+          # Signed with the same team as Debug. Distributing outside this Mac
+          # needs a Developer ID certificate and notarization (paid program).
           CODE_SIGN_ENTITLEMENTS: Ombre/Info/Ombre.entitlements
-          CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: "Developer ID Application"
-          DEVELOPMENT_TEAM: 3Y566D2A4G
-          PROVISIONING_PROFILE_SPECIFIER: ora-profile-working
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: "Apple Development"
+          DEVELOPMENT_TEAM: Q76T6LDBBZ
           ENABLE_HARDENED_RUNTIME: YES
 
   OmbreTests:

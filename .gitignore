@@ -66,8 +66,6 @@ appcast.xml.bak
 dsa_priv.pem
 dsa_pub.pem
 exportOptions.plist
-Ombre.dmg
-rw.*.Ombre.dmg
 
 # Sparkle and signing (SECURITY: Never commit private keys!)
 *_private.pem

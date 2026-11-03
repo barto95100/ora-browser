@@ -37,6 +37,7 @@ open Ombre.xcodeproj
   `xcodegen` after adding or removing files.
 - Tests (Swift Testing): `xcodebuild test -scheme Ombre -destination 'platform=macOS,arch=arm64'`
 - Git hooks ([lefthook](https://github.com/evilmartians/lefthook)) run SwiftFormat and SwiftLint before each commit.
+- Release build: `./scripts/build.sh` builds a signed `Ombre.app` and `build/Ombre-<version>.dmg`.
 
 ## License
 

@@ -65,7 +65,11 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - **Avant chaque push : lancer les tests** :
   `xcodebuild test -scheme Ombre -destination 'platform=macOS,arch=arm64' 2>&1 | xcbeautify`
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
-- Signature Debug : Personal Team `Q76T6LDBBZ`. Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).
+- Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` fait
+  `Ombre.app` + DMG. Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
+  `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à
+  Apple : pas encore demandé, donc absent (pas de clés d'accès d'ici là).
+  Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).
 - Branches : `feat/…`, `fix/…`, `perf/…`, `refactor/…`, `ci/…`, `build/…`, `docs/…`. Depuis `main`, sauf
   si elle dépend d'une PR non fusionnée (alors depuis celle-ci, et fusionner dans l'ordre).
 - Commits atomiques, Conventional Commits, en anglais ; chaque commit compile et passe ses tests.

@@ -80,7 +80,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .spm
-          key: ${{ runner.os }}-spm-${{ hashFiles('Ora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          key: ${{ runner.os }}-spm-${{ hashFiles('Ombre.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
 
@@ -91,8 +91,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test \
-            -project Ora.xcodeproj \
-            -scheme ora \
+            -project Ombre.xcodeproj \
+            -scheme Ombre \
             -destination "platform=macOS,arch=arm64" \
             -clonedSourcePackagesDirPath .spm \
             -disableAutomaticPackageResolution \

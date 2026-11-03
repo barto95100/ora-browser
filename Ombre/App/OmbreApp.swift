@@ -1,0 +1,158 @@
+import AppKit
+import Foundation
+import SwiftData
+import SwiftUI
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        ExternalFileOpener.shared.install()
+        // The sidebar's hidden state is no longer remembered between launches.
+        SidebarManager.removeObsoleteDefaults()
+        // Before launch ends: a click on a notification can be what launches Ombre.
+        WebNotificationCenter.shared.install()
+        // Before the first page: pages get the extension controller.
+        WebExtensionsHub.start()
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        ExternalFileOpener.shared.applicationDidFinishLaunching()
+        // Disable automatic window tabbing for all NSWindow instances
+        NSWindow.allowsAutomaticWindowTabbing = false
+        AppearanceManager.shared.updateAppearance()
+        ShortcutOverrideMonitor.shared.start()
+        // Once per launch, not per window; does nothing when updates are unavailable.
+        if UpdateService.isAvailable, SettingsStore.shared.autoUpdateEnabled {
+            UpdateService.shared.checkForUpdatesInBackground()
+        }
+        #if DEBUG
+            Bundle(path: "/Applications/InjectionIII.app/Contents/Resources/macOSInjection.bundle")?.load()
+            Bundle(path: "/Applications/InjectionIII.app/Contents/Resources/macOSSwiftUISupport.bundle")?.load()
+        #endif
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Only a browser window shows the confirmation: from the settings or
+        // passwords window, nothing answered and the app never quit.
+        let targetWindow = BrowserWindows.quitTarget(
+            keyWindow: NSApp.keyWindow,
+            orderedWindows: NSApp.orderedWindows,
+            browserWindows: BrowserWindows.browsing.allObjects
+        )
+        guard let targetWindow else { return .terminateNow }
+        if !targetWindow.isKeyWindow {
+            targetWindow.makeKeyAndOrderFront(nil)
+        }
+        NotificationCenter.default.post(name: .quitRequested, object: targetWindow)
+        return .terminateLater
+    }
+
+    // Links opened from other apps are routed by SwiftUI to a browser window
+    // (see `handlesExternalEvents` on the scenes and in `OmbreRoot`), so the app
+    // delegate deliberately does not implement `application(_:open:)`. Files
+    // from Finder go through `ExternalFileOpener`.
+}
+
+enum SidePanel {
+    case tabNote
+    case tasks
+    case time
+}
+
+class AppState: ObservableObject {
+    @Published var showLauncher: Bool = false
+    /// The history panel (⌘Y), see `HistoryPanel`.
+    @Published var showHistory: Bool = false
+    /// The space's notes (⌥⌘N), see `NotesPanel`.
+    @Published var showNotes: Bool = false
+    /// The browsing time (⌥⌘Y), see `TimePanel`.
+    @Published var showTime: Bool = false
+    /// The settings in place of the page, see `InWindowSettingsView`.
+    @Published var showSettings: Bool = false
+    /// Import from another browser, see `BrowserImportSheet`.
+    @Published var showImport: Bool = false
+    /// What is shown at the right of the page, one at a time: the tab's note
+    /// (`TabNotePanel`), the space's tasks (`TasksPanel`) or today's browsing
+    /// time (`TimeSidePanel`).
+    @Published var sidePanel: SidePanel?
+
+    var showTabNote: Bool {
+        get { sidePanel == .tabNote }
+        set { setSidePanel(.tabNote, shown: newValue) }
+    }
+
+    var showTasks: Bool {
+        get { sidePanel == .tasks }
+        set { setSidePanel(.tasks, shown: newValue) }
+    }
+
+    var showTimeSummary: Bool {
+        get { sidePanel == .time }
+        set { setSidePanel(.time, shown: newValue) }
+    }
+
+    private func setSidePanel(_ panel: SidePanel, shown: Bool) {
+        if shown {
+            sidePanel = panel
+        } else if sidePanel == panel {
+            sidePanel = nil
+        }
+    }
+    /// An area of the page to trace for a note, see `AreaCaptureOverlay`.
+    @Published var areaCapture: AreaCaptureRequest?
+    @Published var launcherSearchText: String = ""
+    @Published var showFinderIn: UUID?
+    @Published var isFloatingTabSwitchVisible: Bool = false
+    @Published var isFullscreen: Bool = false
+    @Published var isURLBarEditing: Bool = false
+}
+
+@main
+struct OmbreApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+    var body: some Scene {
+        WindowGroup(id: "normal") {
+            OmbreRoot()
+                .frame(minWidth: 500, minHeight: 360)
+                .environmentObject(DefaultBrowserManager.shared)
+        }
+        .defaultSize(width: 1440, height: 900)
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentMinSize)
+        // Links opened from other apps (Ombre as default browser) go to a regular
+        // window; SwiftUI creates one if none is open, e.g. on a cold launch.
+        .handlesExternalEvents(matching: ["*"])
+
+        WindowGroup("Private", id: "private") {
+            OmbreRoot(isPrivate: true)
+                .frame(minWidth: 500, minHeight: 360)
+                .environmentObject(DefaultBrowserManager.shared)
+        }
+        .defaultSize(width: 1440, height: 900)
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentMinSize)
+        .handlesExternalEvents(matching: [])
+
+        WindowGroup("Settings", id: "settings") {
+            // The browser windows' database (never missing, see `DatabaseRecovery`).
+            SettingsWindowRoot()
+                .environmentObject(AppearanceManager.shared)
+                .environmentObject(UpdateService.shared)
+                .environmentObject(DefaultBrowserManager.shared)
+                .modelContainer(DatabaseRecovery.mainContainer)
+        }
+        .windowToolbarStyle(UnifiedCompactWindowToolbarStyle())
+        .windowResizability(.contentSize)
+        .defaultSize(width: 980, height: 640)
+        .handlesExternalEvents(matching: [])
+        .commands { OmbreCommands() }
+
+        Window("Licenses", id: "licenses") {
+            LicensesView()
+        }
+        // Only in the app menu, not in the Window menu.
+        .commandsRemoved()
+        .windowResizability(.contentSize)
+        .handlesExternalEvents(matching: [])
+    }
+}

@@ -2,7 +2,7 @@
 
 ## Our Commitment
 
-We are committed to providing a welcoming, respectful, and inclusive environment for everyone participating in the Ora community, regardless of experience level, background, or identity.
+We are committed to providing a welcoming, respectful, and inclusive environment for everyone participating in the Ombre community, regardless of experience level, background, or identity.
 
 ## Expected Behavior
 
@@ -26,8 +26,7 @@ We are committed to providing a welcoming, respectful, and inclusive environment
 This Code of Conduct applies to all project spaces, including:
 
 - GitHub repository (issues, PRs, discussions)
-- Discord community
-- Any other official Ora communication channels
+- Any other official Ombre communication channels
 
 ## Enforcement
 
@@ -41,7 +40,7 @@ Project maintainers are responsible for clarifying standards and will take appro
 
 If you experience or witness unacceptable behavior, please report it by:
 
-- Contacting the maintainers privately through Discord
+- Contacting the maintainers privately through a GitHub security advisory
 
 All reports will be handled confidentially and reviewed promptly.
 
@@ -51,4 +50,4 @@ This Code of Conduct is adapted from the [Contributor Covenant](https://www.cont
 
 ---
 
-By participating in the Ora community, you agree to abide by this Code of Conduct.
+By participating in the Ombre community, you agree to abide by this Code of Conduct.

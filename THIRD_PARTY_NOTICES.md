@@ -21,7 +21,7 @@ in the app (Ombre menu › Licenses).
 | Swift Argument Parser (via SafariConverterLib) | 1.5.0 | Apache-2.0 | https://github.com/apple/swift-argument-parser |
 | Inject | 1.6.0 | MIT | https://github.com/krzysztofzablocki/Inject |
 
-Exact versions are pinned in `Ora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`.
+Exact versions are pinned in `Ombre.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`.
 
 ## Vendored source
 
@@ -29,11 +29,11 @@ Exact versions are pinned in `Ora.xcodeproj/project.xcworkspace/xcshareddata/swi
 
 - Upstream project: [stevengharris/SplitView](https://github.com/stevengharris/SplitView)
 - Upstream source path: `Sources/SplitView`
-- Local path: `ora/Shared/Layout/SplitView`
+- Local path: `Ombre/Shared/Layout/SplitView`
 - License: MIT
 - Included license text: `Vendor/SplitView/LICENSE`
 
-The files in `ora/Shared/Layout/SplitView` were copied from the upstream `SplitView` project and may include local
+The files in `Ombre/Shared/Layout/SplitView` were copied from the upstream `SplitView` project and may include local
 modifications.
 
 ## Data downloaded at runtime

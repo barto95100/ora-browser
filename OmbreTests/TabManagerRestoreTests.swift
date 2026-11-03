@@ -43,19 +43,20 @@ extension TabManagerTests {
                 _ = try await window.openLoaded("kept")
                 let closed = try await window.openLoaded("closed")
                 let closedID = closed.id
+                let closedPage = try #require(closed.browserPage)
                 window.tabManager.closeTab(tab: closed)
 
                 window.tabManager.restoreLastTab()
-                // Long enough for the close to have ended.
-                try await Task.sleep(for: .seconds(1))
+                // The close goes on (its page is torn down), then the page is
+                // loaded again.
+                await window.waitUntil("page loaded again", timeout: .seconds(20)) {
+                    closed.isWebViewReady && closed.browserPage.map { $0 !== closedPage } ?? false
+                }
                 try window.modelContext.save()
 
                 // The close was cancelled: the same tab is back.
                 #expect(window.tabs(withID: closedID).map(ObjectIdentifier.init) == [ObjectIdentifier(closed)])
                 #expect(!closed.isClosing)
-                // Its page was torn down by the close, then loaded again.
-                #expect(closed.browserPage != nil)
-                #expect(closed.isWebViewReady)
                 #expect(space.tabs.contains { $0.id == closedID })
                 #expect(window.tabManager.activeTab?.id == closedID)
             }

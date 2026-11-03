@@ -12,7 +12,7 @@ enum TabType: String, Codable {
 
 @Model
 class Tab: ObservableObject, Identifiable {
-    var id: UUID
+    @Attribute(.unique) var id: UUID
     var url: URL
     var urlString: String
     var savedURL: URL?
@@ -80,7 +80,20 @@ class Tab: ObservableObject, Identifiable {
     /// `Tab+Protections.swift`).
     @Transient @Published var blockedContent: [String: Int] = [:]
 
-    @Relationship(inverse: \TabContainer.tabs) var container: TabContainer
+    /// The space, optional in the database so deleting a space never leaves a
+    /// tab pointing at nothing. Nil only once the tab or its space is deleted:
+    /// code that runs later (after an animation, a page callback) reads this,
+    /// the rest uses `container`.
+    @Relationship(inverse: \TabContainer.tabs) var parentContainer: TabContainer?
+
+    /// The tab's space. Never read it on a deleted tab: see `parentContainer`.
+    var container: TabContainer {
+        get {
+            guard let parentContainer else { preconditionFailure("Tab \(id) has no space: it was deleted") }
+            return parentContainer
+        }
+        set { parentContainer = newValue }
+    }
 
     /// Whether this tab is considered alive (recently accessed)
     var isAlive: Bool {
@@ -114,7 +127,7 @@ class Tab: ObservableObject, Identifiable {
         self.lastAccessedAt = nowDate
         self.type = type
         self.isPlayingMedia = isPlayingMedia
-        self.container = container
+        self.parentContainer = container
         self.order = order
         self.historyManager = historyManager
         self.downloadManager = downloadManager
@@ -156,16 +169,20 @@ class Tab: ObservableObject, Identifiable {
     }
 
     func updateHistory() {
-        if let historyManager = self.historyManager {
-            Task { @MainActor in
-                historyManager.record(
-                    title: self.title,
-                    url: self.url,
-                    faviconURL: self.favicon,
-                    faviconLocalFile: self.faviconLocalFile,
-                    container: self.container
-                )
-            }
+        // No space left (the tab is being deleted): nothing to record.
+        guard let historyManager, let container = parentContainer else { return }
+        let title = title
+        let url = url
+        let favicon = favicon
+        let faviconLocalFile = faviconLocalFile
+        Task { @MainActor in
+            historyManager.record(
+                title: title,
+                url: url,
+                faviconURL: favicon,
+                faviconLocalFile: faviconLocalFile,
+                container: container
+            )
         }
     }
 
@@ -442,12 +459,7 @@ class Tab: ObservableObject, Identifiable {
 
 extension FileManager {
     var faviconDirectory: URL {
-        let dir = urls(for: .cachesDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Favicons")
-        if !fileExists(atPath: dir.path) {
-            try? createDirectory(at: dir, withIntermediateDirectories: true)
-        }
-        return dir
+        OmbreDataFolder.subfolder("Favicons", of: OmbreDataFolder.caches)
     }
 }
 

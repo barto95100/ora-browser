@@ -205,21 +205,26 @@ extension TabManagerTests {
             }
         }
 
-        @Test func closingSameTabTwiceRemembersItTwice() async throws {
+        @Test func closingSameTabTwiceRemembersItOnce() async throws {
             try await TabManagerTestWindow.run { window in
+                let earlier = try window.open("earlier", focus: false)
+                let earlierID = earlier.id
                 let closed = try window.open("closed", focus: false)
                 let closedID = closed.id
                 try window.open("active")
+                await window.close(earlier)
 
-                // BUG: (ONG-12) `isClosing` is set but never checked: a second
-                // close (double click) runs again and records a second ⌘Z entry.
+                // A double click on the close button (ONG-12).
                 window.tabManager.closeTab(tab: closed)
                 window.tabManager.closeTab(tab: closed)
                 await window.waitUntilClosed(closed)
                 window.tabManager.restoreLastTab()
                 window.tabManager.restoreLastTab()
+                try window.modelContext.save()
 
-                #expect(window.tabs(withID: closedID).count == 2)
+                // The second ⌘Z brings back the tab closed before.
+                #expect(window.tabs(withID: closedID).count == 1)
+                #expect(window.tabs(withID: earlierID).count == 1)
             }
         }
     }

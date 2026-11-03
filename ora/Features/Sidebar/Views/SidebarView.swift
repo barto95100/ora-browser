@@ -15,7 +15,7 @@ struct SidebarView: View {
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toolbarManager: ToolbarManager
 
-    @Query var containers: [TabContainer]
+    @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @ObserveInjection var inject
 

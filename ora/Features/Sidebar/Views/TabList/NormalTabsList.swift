@@ -16,7 +16,7 @@ struct NormalTabsList: View {
             TabContainer
         ) -> Void
     let onAddNewTab: () -> Void
-    @Query var containers: [TabContainer]
+    @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
     @EnvironmentObject var tabManager: TabManager
     @State private var previousTabIds: [UUID] = []
     /// Tab under the mouse, closed by a middle click like in every browser.

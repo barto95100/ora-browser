@@ -5,7 +5,7 @@ import SwiftData
 
 @Model
 class TabContainer: ObservableObject, Identifiable {
-    var id: UUID
+    @Attribute(.unique) var id: UUID
     var name: String
     var emoji: String
     /// SF Symbol shown instead of the emoji (see `SpaceIcon`).
@@ -16,12 +16,14 @@ class TabContainer: ObservableObject, Identifiable {
     var themeName: String?
     var createdAt: Date
     var lastAccessedAt: Date
+    /// Place among the spaces (see `displayOrder`): new spaces go last.
+    var order: Int = 0
 
     @Relationship(deleteRule: .cascade) var tabs: [Tab] = []
     @Relationship(deleteRule: .cascade) var folders: [Folder] = []
     /// The space's tasks (subtasks hang from their task), see `TasksPanel`.
     @Relationship(deleteRule: .cascade, inverse: \SpaceTask.container) var tasks: [SpaceTask] = []
-    @Relationship var history: [History] = []
+    @Relationship(deleteRule: .cascade) var history: [History] = []
 
     init(
         id: UUID = UUID(),
@@ -36,6 +38,9 @@ class TabContainer: ObservableObject, Identifiable {
         self.createdAt = nowDate
         self.lastAccessedAt = nowDate
     }
+
+    /// The order every list of spaces uses: `order`, then creation.
+    static let displayOrder = [SortDescriptor(\TabContainer.order), SortDescriptor(\TabContainer.createdAt)]
 
     /// Identifies the space's page in the sidebar: unique, unlike the name,
     /// and kept when the space is renamed.

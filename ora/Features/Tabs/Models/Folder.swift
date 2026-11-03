@@ -5,7 +5,7 @@ import SwiftData
 
 @Model
 class Folder: ObservableObject, Identifiable {
-    var id: UUID
+    @Attribute(.unique) var id: UUID
     var name: String
     var isOpened: Bool
     /// Place in the pinned section, shared with the pinned tabs outside
@@ -14,7 +14,18 @@ class Folder: ObservableObject, Identifiable {
     /// The folder it is in; nil: the pinned section itself.
     var parentID: UUID?
 
-    @Relationship(inverse: \TabContainer.folders) var container: TabContainer
+    /// The space, optional in the database like `Tab.parentContainer`.
+    @Relationship(inverse: \TabContainer.folders) var parentContainer: TabContainer?
+
+    /// The folder's space. Never read it on a deleted folder.
+    var container: TabContainer {
+        get {
+            guard let parentContainer else { preconditionFailure("Folder \(id) has no space: it was deleted") }
+            return parentContainer
+        }
+        set { parentContainer = newValue }
+    }
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -24,6 +35,6 @@ class Folder: ObservableObject, Identifiable {
         self.id = id
         self.name = name
         self.isOpened = isOpened
-        self.container = container
+        self.parentContainer = container
     }
 }

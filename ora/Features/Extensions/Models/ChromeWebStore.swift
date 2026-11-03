@@ -72,7 +72,7 @@ enum CRXArchive {
     }
 }
 
-/// Extension packages kept by Ora: `Application Support/Extensions/Packages`,
+/// Extension packages kept by Ombre: `Application Support/Ombre/Extensions/Packages`,
 /// one `.zip` or folder per extension, named after it.
 enum ExtensionPackages {
     static var folder: URL {

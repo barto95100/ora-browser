@@ -15,10 +15,10 @@ struct Note: Identifiable, Hashable {
     }
 }
 
-/// Notes are Markdown files, one folder per space, named after it, in Ora's
+/// Notes are Markdown files, one folder per space, named after it, in Ombre's
 /// Application Support folder (in its sandbox container), so they can be
 /// opened from the Finder or another editor:
-/// `Notes/<Space name>/<Note title>.md`.
+/// `Ombre/Notes/<Space name>/<Note title>.md`.
 final class NotesStore {
     static let shared = NotesStore()
 
@@ -32,8 +32,7 @@ final class NotesStore {
     }
 
     var rootFolder: URL {
-        let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return support.appendingPathComponent("Notes", isDirectory: true)
+        OmbreDataFolder.applicationSupport.appendingPathComponent("Notes", isDirectory: true)
     }
 
     /// The space's folder, created if needed, renamed if the space was.

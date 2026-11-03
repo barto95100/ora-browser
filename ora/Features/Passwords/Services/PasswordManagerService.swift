@@ -73,7 +73,9 @@ final class PasswordManagerService: ObservableObject {
     @Published private(set) var entries: [SavedPasswordSummary] = []
     @Published private(set) var lastErrorMessage: String?
 
-    private let serviceName = "com.orabrowser.app.passwords"
+    /// The Keychain items' service. Ombre started with fresh data: the
+    /// passwords saved by Ora, under another service, are not read.
+    private let serviceName = "Ombre Passwords"
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
@@ -83,12 +85,7 @@ final class PasswordManagerService: ObservableObject {
 
     func refresh() {
         do {
-            let loadedEntries = try loadEntries()
-            if try migrateLegacyEntriesIfNeeded(loadedEntries) {
-                entries = try loadEntries()
-            } else {
-                entries = loadedEntries
-            }
+            entries = try loadEntries()
             lastErrorMessage = nil
         } catch {
             entries = []
@@ -192,7 +189,7 @@ final class PasswordManagerService: ObservableObject {
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()
 
-        if let existing = scopedEntries(for: containerID, includeLegacyFallback: true).first(where: {
+        if let existing = scopedEntries(for: containerID).first(where: {
             let originMatches = $0.origin == normalizedOrigin
             let legacyHostMatches = $0.origin == nil && Self.normalizeHost($0.host) == normalizedHost
             return (originMatches || legacyHostMatches) && $0.username == trimmedUsername
@@ -536,68 +533,11 @@ final class PasswordManagerService: ObservableObject {
         try encoder.encode(metadata)
     }
 
-    private func scopedEntries(for containerID: UUID?, includeLegacyFallback: Bool = false) -> [SavedPasswordSummary] {
+    private func scopedEntries(for containerID: UUID?) -> [SavedPasswordSummary] {
         guard let containerID else {
             return entries
         }
-
-        return entries.filter { entry in
-            if entry.containerID == containerID {
-                return true
-            }
-
-            return includeLegacyFallback && entry.containerID == nil
-        }
-    }
-
-    private func migrateLegacyEntriesIfNeeded(_ loadedEntries: [SavedPasswordSummary]) throws -> Bool {
-        let legacyEntries = loadedEntries.filter { $0.containerID == nil }
-        guard !legacyEntries.isEmpty,
-              let destinationContainerID = legacyMigrationContainerID()
-        else {
-            return false
-        }
-
-        for entry in legacyEntries {
-            let metadata = SavedPasswordMetadata(
-                id: entry.id,
-                origin: entry.origin,
-                host: entry.host,
-                username: entry.username,
-                createdAt: entry.createdAt,
-                updatedAt: entry.updatedAt,
-                lastUsedAt: entry.lastUsedAt,
-                containerID: destinationContainerID
-            )
-
-            let attributes: [String: Any] = try [
-                kSecAttrGeneric as String: encode(metadata: metadata)
-            ]
-            let query: [String: Any] = [
-                kSecClass as String: kSecClassGenericPassword,
-                kSecValuePersistentRef as String: entry.persistentReference
-            ]
-
-            let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-            guard status == errSecSuccess else {
-                throw PasswordManagerError.keychainStatus(status)
-            }
-        }
-
-        return true
-    }
-
-    private func legacyMigrationContainerID() -> UUID? {
-        // The app's database, not one more container on it. Refreshes happen
-        // on the main thread; another thread leaves the migration for later.
-        guard Thread.isMainThread else { return nil }
-        return MainActor.assumeIsolated {
-            let context = ModelContext(DatabaseRecovery.mainContainer)
-            let descriptor = FetchDescriptor<TabContainer>(
-                sortBy: [SortDescriptor(\TabContainer.createdAt, order: .forward)]
-            )
-            return try? context.fetch(descriptor).first?.id
-        }
+        return entries.filter { $0.containerID == containerID }
     }
 
     private func copyToPasteboard(_ value: String, clearingAfter timeout: TimeInterval?) {

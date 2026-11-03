@@ -1,11 +1,11 @@
 import Foundation
 
-/// The installed extensions, in `Application Support/Extensions/extensions.json`.
+/// The installed extensions, in `Application Support/Ombre/Extensions/extensions.json`.
 struct ExtensionRegistry {
     let fileURL: URL
 
     static let standard = ExtensionRegistry(
-        fileURL: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        fileURL: OmbreDataFolder.applicationSupport
             .appendingPathComponent("Extensions", isDirectory: true)
             .appendingPathComponent("extensions.json")
     )

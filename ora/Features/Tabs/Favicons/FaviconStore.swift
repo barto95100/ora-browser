@@ -13,7 +13,7 @@ actor FaviconStore {
     private let session: URLSession
     private let directory = FileManager.default.faviconDirectory
     private let privateDirectory = FileManager.default.temporaryDirectory
-        .appendingPathComponent("OraPrivateFavicons", isDirectory: true)
+        .appendingPathComponent("OmbrePrivateFavicons", isDirectory: true)
     private var downloads: [URL: Task<URL?, Never>] = [:]
 
     /// Safari's full user agent (WebKit's prefix + `SafariUserAgent.current`).

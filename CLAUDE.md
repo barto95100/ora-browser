@@ -70,6 +70,11 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à
   Apple : pas encore demandé, donc absent (pas de clés d'accès d'ici là).
   Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).
+- **Distribution** : DMG seulement. Mac App Store exclu (ses conditions sont incompatibles avec la GPL-3.0).
+  Un DMG signé Apple Development ne tourne que sur les Macs de Ludo ; pour le partager, il faut un certificat
+  Developer ID et la notarisation (programme payant). Version : `MARKETING_VERSION` dans `project.yml`,
+  `CURRENT_PROJECT_VERSION` toujours en hausse ; toute version distribuée reçoit l'étiquette git `v<version>`
+  (`build.sh` le rappelle, Ludo la crée).
 - Branches : `feat/…`, `fix/…`, `perf/…`, `refactor/…`, `ci/…`, `build/…`, `docs/…`. Depuis `main`, sauf
   si elle dépend d'une PR non fusionnée (alors depuis celle-ci, et fusionner dans l'ordre).
 - Commits atomiques, Conventional Commits, en anglais ; chaque commit compile et passe ses tests.

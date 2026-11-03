@@ -45,4 +45,10 @@ Ombre is licensed under the [GNU General Public License v3.0](LICENSE).
 
 Ombre is derived from [Ora Browser](https://github.com/the-ora/browser) (the-ora/browser), licensed under GPL-3.0.
 
+Ombre is a modified version of Ora Browser, forked on September 17, 2026. The changes are described in the git history.
+
+Copyright (C) 2026 Ludo (barto95100)
+
+Copyright (C) 2025-2026 the Ora Browser contributors (the-ora/browser)
+
 Third-party components keep their own licenses: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

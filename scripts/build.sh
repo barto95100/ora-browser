@@ -70,3 +70,6 @@ for copy in "$APP_PATH" "$ARCHIVE_PATH/Products/Applications/Ombre.app"; do
 done
 
 green "Build complete: ${DMG_PATH} ($(du -h "$DMG_PATH" | cut -f1))"
+
+# GPL-3.0: the source of every distributed version must stay findable.
+yellow "Distributing this DMG? Tag the commit it was built from: git tag v${VERSION} && git push origin v${VERSION}"

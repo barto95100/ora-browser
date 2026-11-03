@@ -18,14 +18,6 @@ Optional: if no testing is needed, leave blank.
 
 ---
 
-### AI Assistance Disclosure
-
-If AI was used for any part of this PR, please disclose it here:
-
-> Example: "Used Claude Code for writing <this part of the code>."
-
----
-
 ### Checklist
 
 - [ ] Code builds successfully  

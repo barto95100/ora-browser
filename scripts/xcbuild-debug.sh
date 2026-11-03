@@ -5,7 +5,7 @@
 set -eo pipefail
 
 xcodebuild build \
-  -scheme ora \
+  -scheme Ombre \
   -destination "platform=macOS" \
   -configuration Debug \
   -derivedDataPath build/DerivedData \

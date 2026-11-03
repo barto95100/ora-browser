@@ -1,4 +1,4 @@
-name: Ora
+name: Ombre
 options:
   bundleIdPrefix: com.barto95100
 
@@ -22,18 +22,18 @@ packages:
     from: 1.1.0
 
 targets:
-  ora:
+  Ombre:
     type: application
     platform: "macOS"
     deploymentTarget: "15.0"
     sources:
-      - path: ora
+      - path: Ombre
       # Shown in the Licenses window.
       - path: LICENSE
         buildPhase: resources
     resources:
-      - path: ora/Shared/EmojiPicker/emoji-set.json
-      - path: ora/Resources
+      - path: Ombre/Shared/EmojiPicker/emoji-set.json
+      - path: Ombre/Resources
         optional: true
     dependencies:
       - package: Sparkle
@@ -45,7 +45,7 @@ targets:
         product: PublicSuffixList
 
     info:
-      path: ora/Info/Info.plist
+      path: Ombre/Info/Info.plist
       properties:
         # Web pages may load over plain HTTP, like in any browser (WebKit then
         # marks them as not secure); the app's own requests keep App Transport
@@ -92,19 +92,17 @@ targets:
         MARKETING_VERSION: 0.2.14
         CURRENT_PROJECT_VERSION: 105
         PRODUCT_NAME: Ombre
-        # The Swift module keeps its name until the code is renamed.
-        PRODUCT_MODULE_NAME: Ora
         PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        # Icon Composer file: ora/Assets/Icons/Ombre.icon (light, dark, mono).
+        # Icon Composer file: Ombre/Assets/Icons/Ombre.icon (light, dark, mono).
         ASSETCATALOG_COMPILER_APPICON_NAME: Ombre
         SUEnableAutomaticChecks: NO
         SUEnableInstallerLauncherService: YES
       configs:
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora.dev
-          CODE_SIGN_ENTITLEMENTS: ora/Info/ora-dev.entitlements
+          CODE_SIGN_ENTITLEMENTS: Ombre/Info/Ombre-dev.entitlements
           CODE_SIGN_STYLE: Automatic
           CODE_SIGN_IDENTITY: "Apple Development"
           EMIT_FRONTEND_COMMAND_LINES: YES
@@ -112,21 +110,21 @@ targets:
           ENABLE_HARDENED_RUNTIME: NO
           DEVELOPMENT_TEAM: Q76T6LDBBZ
         Release:
-          CODE_SIGN_ENTITLEMENTS: ora/Info/ora.entitlements
+          CODE_SIGN_ENTITLEMENTS: Ombre/Info/Ombre.entitlements
           CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: "Developer ID Application"
           DEVELOPMENT_TEAM: 3Y566D2A4G
           PROVISIONING_PROFILE_SPECIFIER: ora-profile-working
           ENABLE_HARDENED_RUNTIME: YES
 
-  oraTests:
+  OmbreTests:
     type: bundle.unit-test
     platform: "macOS"
     deploymentTarget: "15.0"
     sources:
-      - path: oraTests
+      - path: OmbreTests
     dependencies:
-      - target: ora
+      - target: Ombre
     settings:
       base:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Ombre.app/Contents/MacOS/Ombre"
@@ -136,17 +134,17 @@ targets:
         DEVELOPMENT_TEAM: Q76T6LDBBZ
 
 schemes:
-  ora:
+  Ombre:
     shared: true
     build:
       targets:
-        ora: all
+        Ombre: all
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - oraTests
+        - OmbreTests
     profile:
       config: Release
     analyze:

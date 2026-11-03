@@ -1,32 +1,19 @@
-# Ora Browser Roadmap
+# Ombre Roadmap
 
-Ora Browser is in active development. This roadmap is intended to show current product direction, not to serve as an exhaustive issue tracker.
+Ombre is in active development. This roadmap shows the current direction, not every planned change.
 
-## Available Today
+## In Progress
 
-- Spaces, tab pinning and reordering, floating tab switching, and inactive tab cleanup
-- Vertical tabs, picture in picture, settings
-- Session restore, private browsing, and iCloud Keychain password autofill
-- Developer tools and keyboard shortcuts for core browsing workflows
+- Rename to Ombre: app name, icon, code and tooling, release signing
+- Code audit follow-ups: tab state, page engine, security, concurrency and performance
 
-## Near-Term Priorities
+## Next
 
-- Split-view and preview-oriented browsing workflows
-- Download experience improvements
-- Passkeys, site permissions, and stronger privacy controls
-- Folders
-- Browser extension support in beta
-- Web notifications
-- History
-
-## Longer-Term Direction
-
-- A broader extensions ecosystem
-- More interface polish and personalization options
-- Continued stability and performance work across the core browsing experience
+- First-launch assistant, with import from Zen
+- Import from Arc, Chrome, Firefox and Safari
+- A domain of its own, and the app identifier that comes with it
 
 ## Feedback
 
-If you want to discuss roadmap priorities or propose a feature, open an issue or join the [Discord community](https://discord.gg/9aZWH52Zjm). For contribution workflow details, see [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-_Last updated: March 2026_
+Open an issue to discuss priorities or propose a feature. For the contribution workflow, see
+[CONTRIBUTING.md](./CONTRIBUTING.md).

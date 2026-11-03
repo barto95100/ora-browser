@@ -1,6 +1,6 @@
-# Contributing to Ora
+# Contributing to Ombre
 
-This guide covers the workflow and expectations for contributing to Ora Browser.
+This guide covers the workflow and expectations for contributing to Ombre.
 
 ## Before You Start
 
@@ -19,10 +19,10 @@ This guide covers the workflow and expectations for contributing to Ora Browser.
 ### Getting Started
 
 ```bash
-git clone https://github.com/the-ora/browser.git
-cd browser
+git clone https://github.com/barto95100/ora-browser.git
+cd ora-browser
 ./scripts/setup.sh
-open Ora.xcodeproj
+open Ombre.xcodeproj
 ```
 
 The setup script installs required tooling, installs git hooks, and generates the Xcode project.
@@ -55,7 +55,7 @@ You can run the main checks manually:
 swiftformat . --quiet
 swiftlint lint --fix
 ./scripts/xcbuild-debug.sh
-xcodebuild test -scheme ora -destination "platform=macOS"
+xcodebuild test -scheme Ombre -destination "platform=macOS"
 ```
 
 You can also run tests in Xcode with `Product > Test`.
@@ -83,4 +83,4 @@ If you use AI assistance for code generation, documentation, issue comments, or 
 
 ## Questions
 
-If you are unsure whether a change is a good fit, open an issue before investing significant time. For general discussion, you can also join the [Discord community](https://discord.gg/9aZWH52Zjm).
+If you are unsure whether a change is a good fit, open an issue before investing significant time.

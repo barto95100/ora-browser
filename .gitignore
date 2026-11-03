@@ -66,8 +66,8 @@ appcast.xml.bak
 dsa_priv.pem
 dsa_pub.pem
 exportOptions.plist
-Ora-Browser.dmg
-rw.*.Ora-Browser.dmg
+Ombre.dmg
+rw.*.Ombre.dmg
 
 # Sparkle and signing (SECURITY: Never commit private keys!)
 *_private.pem
@@ -102,10 +102,10 @@ Vendor/CEF
 # Pinned Swift package versions: committed so every build (local and CI)
 # uses the same ones. XcodeGen keeps this file when it regenerates the
 # project. Must stay last: it overrides the patterns above.
-!Ora.xcodeproj/project.xcworkspace/
-Ora.xcodeproj/project.xcworkspace/*
-!Ora.xcodeproj/project.xcworkspace/xcshareddata/
-Ora.xcodeproj/project.xcworkspace/xcshareddata/*
-!Ora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
-Ora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
-!Ora.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+!Ombre.xcodeproj/project.xcworkspace/
+Ombre.xcodeproj/project.xcworkspace/*
+!Ombre.xcodeproj/project.xcworkspace/xcshareddata/
+Ombre.xcodeproj/project.xcworkspace/xcshareddata/*
+!Ombre.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+Ombre.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
+!Ombre.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

@@ -1,0 +1,582 @@
+import Foundation
+@preconcurrency import WebKit
+
+// swiftlint:disable type_body_length function_body_length
+/// What the fingerprinting protection randomizes or normalizes.
+///
+/// Navigator and screen properties are deliberately left alone: WebKit already
+/// reports them like Safari does (capped core count, no `deviceMemory`, real
+/// language and screen). Overriding them only made Ombre stand out from Safari
+/// users and look inconsistent (language differing from the Accept-Language
+/// header, a screen smaller than the window), which bot detection flags; it
+/// broke YouTube playback after a few minutes.
+///
+/// WebGL is left alone for the same reason: WebKit already hides the GPU like
+/// Safari ("Apple GPU"), and fixed values contradicted it ("Apple Inc." vendor,
+/// WebGL 1.0 reported for WebGL 2 contexts).
+struct FingerprintingProtectionProfile: Equatable {
+    let canvasShift: Int
+    let audioNoise: Double
+    let audioBucketSize: Int
+
+    static let balanced = FingerprintingProtectionProfile(
+        canvasShift: 1,
+        audioNoise: 0.000_015_258_789_062_5,
+        audioBucketSize: 64
+    )
+
+    /// - Parameter seed: secret mixed with each site's origin in the page to
+    ///   derive its noise (see `FingerprintingNoiseSeed`).
+    func scriptSource(seed: UInt32) -> String {
+        let profileObject: [String: Any] = [
+            "seed": seed,
+            "audioBucketSize": audioBucketSize,
+            "audioNoise": audioNoise,
+            "canvasShift": canvasShift
+        ]
+
+        guard JSONSerialization.isValidJSONObject(profileObject),
+              let data = try? JSONSerialization.data(withJSONObject: profileObject, options: [.sortedKeys]),
+              let profileJSON = String(data: data, encoding: .utf8)
+        else {
+            return ""
+        }
+
+        return """
+        (function () {
+            // Once per window: a frame's first blank document and the page it
+            // then loads can share their window. The marker's name is random
+            // per launch, so it names nothing.
+            if (window.\(BrowserPrivacyService.installMarker)) {
+                return;
+            }
+            Object.defineProperty(window, '\(BrowserPrivacyService.installMarker)', { value: true });
+
+            const profile = \(profileJSON);
+
+            // Noise varies per session and per site ("farbling"): a secret
+            // seed, new at every launch and different per space, is mixed with
+            // the top-level site and this frame's origin. Within a session a
+            // site always reads the same values (nothing breaks), but two sites
+            // — or the same tracker embedded on two sites — never get the same
+            // noise, so readings cannot be linked across sites or sessions.
+            function hashString(value, seed) {
+                let hash = (0x811c9dc5 ^ seed) >>> 0;
+                for (let index = 0; index < value.length; index += 1) {
+                    hash ^= value.charCodeAt(index);
+                    hash = Math.imul(hash, 0x01000193) >>> 0;
+                }
+                return hash >>> 0;
+            }
+
+            function mix(seed, value) {
+                let hash = Math.imul((seed ^ value) >>> 0, 0x9e3779b1) >>> 0;
+                hash ^= hash >>> 16;
+                hash = Math.imul(hash, 0x85ebca6b) >>> 0;
+                hash ^= hash >>> 13;
+                return hash >>> 0;
+            }
+
+            const ancestorOrigins = location.ancestorOrigins;
+            const topOrigin = ancestorOrigins && ancestorOrigins.length
+                ? ancestorOrigins[ancestorOrigins.length - 1]
+                : location.origin;
+            const siteSeed = hashString(topOrigin + '|' + location.origin, profile.seed);
+
+            function noiseSign(index) {
+                return (mix(siteSeed, index) & 2) ? 1 : -1;
+            }
+
+            function touches(index) {
+                return (mix(siteSeed, index) & 1) === 0;
+            }
+
+            function clampByte(value) {
+                return Math.max(0, Math.min(255, value));
+            }
+
+            function wrapMethod(target, property, wrapper) {
+                if (!target || typeof target[property] !== 'function') return;
+                const original = target[property];
+                try {
+                    Object.defineProperty(target, property, {
+                        configurable: true,
+                        value: wrapper(original)
+                    });
+                } catch (error) {}
+            }
+
+            function shouldSanitizeCanvas(canvas) {
+                if (!canvas) return false;
+                const width = canvas.width || 0;
+                const height = canvas.height || 0;
+                const area = width * height;
+                return width > 0 && height > 0 && area <= 262144;
+            }
+
+            function mutatePixelData(data, step) {
+                if (!data || !data.length) return;
+                const stride = Math.max(8, step * 16);
+                for (let index = 0; index < data.length; index += stride) {
+                    if (!touches(index)) continue;
+                    const delta = noiseSign(index) * profile.canvasShift;
+                    data[index] = clampByte(data[index] + delta);
+                    if (index + 1 < data.length) {
+                        data[index + 1] = clampByte(data[index + 1] + delta);
+                    }
+                }
+            }
+
+            function cloneAndSanitizeCanvas(canvas) {
+                if (!shouldSanitizeCanvas(canvas)) return canvas;
+
+                try {
+                    const clone = document.createElement('canvas');
+                    clone.width = canvas.width;
+                    clone.height = canvas.height;
+                    const context = clone.getContext('2d');
+                    if (!context) return canvas;
+
+                    context.drawImage(canvas, 0, 0);
+                    const imageData = context.getImageData(0, 0, clone.width, clone.height);
+                    mutatePixelData(imageData.data, Math.max(1, clone.width % 13));
+                    context.putImageData(imageData, 0, 0);
+                    return clone;
+                } catch (error) {
+                    return canvas;
+                }
+            }
+
+            function sanitizeImageData(imageData, widthHint) {
+                if (!imageData || !imageData.data) return imageData;
+                mutatePixelData(imageData.data, Math.max(1, widthHint % 11));
+                return imageData;
+            }
+
+            function sanitizeAudioBuffer(buffer) {
+                if (!buffer || typeof buffer.numberOfChannels !== 'number') return buffer;
+
+                for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+                    let samples;
+                    try {
+                        samples = buffer.getChannelData(channel);
+                    } catch (error) {
+                        continue;
+                    }
+
+                    const stride = Math.max(profile.audioBucketSize, 32);
+                    for (let index = 0; index < samples.length; index += stride) {
+                        const sample = samples[index] || 0;
+                        samples[index] = Math.fround(sample + noiseSign(channel * 1000003 + index) * profile.audioNoise);
+                    }
+                }
+
+                return buffer;
+            }
+
+            function sanitizeArrayValues(values, mode) {
+                if (!values || typeof values.length !== 'number') return values;
+                const stride = Math.max(profile.audioBucketSize, 16);
+                for (let index = 0; index < values.length; index += stride) {
+                    if (mode === 'float') {
+                        values[index] = Math.fround((values[index] || 0) + noiseSign(index) * profile.audioNoise);
+                    } else {
+                        values[index] = clampByte((values[index] || 0) + noiseSign(index));
+                    }
+                }
+                return values;
+            }
+
+            wrapMethod(HTMLCanvasElement.prototype, 'toDataURL', function (original) {
+                return function () {
+                    const sanitizedCanvas = cloneAndSanitizeCanvas(this);
+                    return original.apply(sanitizedCanvas, arguments);
+                };
+            });
+
+            wrapMethod(HTMLCanvasElement.prototype, 'toBlob', function (original) {
+                return function () {
+                    const sanitizedCanvas = cloneAndSanitizeCanvas(this);
+                    return original.apply(sanitizedCanvas, arguments);
+                };
+            });
+
+            wrapMethod(CanvasRenderingContext2D && CanvasRenderingContext2D.prototype, 'getImageData', function (original) {
+                return function () {
+                    const result = original.apply(this, arguments);
+                    if (!this || !this.canvas || !shouldSanitizeCanvas(this.canvas)) {
+                        return result;
+                    }
+                    return sanitizeImageData(result, this.canvas.width || 1);
+                };
+            });
+
+            if (window.OfflineAudioContext && window.OfflineAudioContext.prototype) {
+                wrapMethod(window.OfflineAudioContext.prototype, 'startRendering', function (original) {
+                    return function () {
+                        const rendering = original.apply(this, arguments);
+                        return Promise.resolve(rendering).then(function (buffer) {
+                            return sanitizeAudioBuffer(buffer);
+                        });
+                    };
+                });
+            }
+
+            wrapMethod(window.AnalyserNode && window.AnalyserNode.prototype, 'getFloatFrequencyData', function (original) {
+                return function (array) {
+                    const response = original.apply(this, arguments);
+                    sanitizeArrayValues(array, 'float');
+                    return response;
+                };
+            });
+
+            wrapMethod(window.AnalyserNode && window.AnalyserNode.prototype, 'getFloatTimeDomainData', function (original) {
+                return function (array) {
+                    const response = original.apply(this, arguments);
+                    sanitizeArrayValues(array, 'float');
+                    return response;
+                };
+            });
+
+            wrapMethod(window.AnalyserNode && window.AnalyserNode.prototype, 'getByteFrequencyData', function (original) {
+                return function (array) {
+                    const response = original.apply(this, arguments);
+                    sanitizeArrayValues(array, 'byte');
+                    return response;
+                };
+            });
+
+            wrapMethod(window.AnalyserNode && window.AnalyserNode.prototype, 'getByteTimeDomainData', function (original) {
+                return function (array) {
+                    const response = original.apply(this, arguments);
+                    sanitizeArrayValues(array, 'byte');
+                    return response;
+                };
+            });
+        })();
+        """
+    }
+}
+
+// swiftlint:enable type_body_length function_body_length
+
+/// Secret behind the fingerprinting noise of a space.
+///
+/// A new random secret is drawn at every launch, so noise differs from one
+/// session to the next, and it is mixed with the space and browsing mode, so
+/// spaces (which have separate website data) and private browsing do not share
+/// noise either. The page then mixes it with each site's origin.
+enum FingerprintingNoiseSeed {
+    private static let sessionSecret = UInt64.random(in: .min ... .max)
+
+    static func seed(spaceID: UUID?, isPrivate: Bool) -> UInt32 {
+        seed(spaceID: spaceID, isPrivate: isPrivate, secret: sessionSecret)
+    }
+
+    /// Deterministic for a given secret (FNV-1a), so it is testable.
+    static func seed(spaceID: UUID?, isPrivate: Bool, secret: UInt64) -> UInt32 {
+        var hash: UInt64 = 0xCBF29CE484222325
+        func combine(_ bytes: some Sequence<UInt8>) {
+            for byte in bytes {
+                hash ^= UInt64(byte)
+                hash = hash &* 0x00000100000001B3
+            }
+        }
+        withUnsafeBytes(of: secret.littleEndian) { combine($0) }
+        combine((spaceID?.uuidString ?? "global").utf8)
+        combine([isPrivate ? 1 : 0])
+        return UInt32(truncatingIfNeeded: hash ^ (hash >> 32))
+    }
+}
+
+final class BrowserPrivacyService {
+    private enum StaticRuleListIdentifier: String {
+        case trackers = "privacy.trackers.v1"
+        case thirdPartyCookies = "privacy.cookies.third-party.v1"
+        case allCookies = "privacy.cookies.all.v1"
+
+        /// The rule list's identifier in WebKit's store.
+        var identifier: String {
+            AppIdentity.identifier(rawValue)
+        }
+    }
+
+    static let shared = BrowserPrivacyService()
+
+    private let ruleListStore = WKContentRuleListStore.default()!
+    private let cacheLock = NSLock()
+    private let artifactStore = ContentBlockerArtifactStore.shared
+    private var cachedRuleLists: [String: WKContentRuleList] = [:]
+    private var pendingRuleListCallbacks: [String: [(WKContentRuleList?) -> Void]] = [:]
+
+    func activeRuleListIdentifiers(for spaceID: UUID) -> [String] {
+        let privacySettings = SettingsStore.shared.privacySettings(for: spaceID)
+        guard privacySettings.adBlock.enabled else { return [] }
+
+        return SettingsStore.shared.adBlockFilterLists
+            .filter { privacySettings.adBlock.enabledListIDs.contains($0.id) }
+            .flatMap { record -> [String] in
+                guard let revision = record.activeRevision else { return [] }
+                return artifactStore.ruleListIdentifiers(for: record.id, revision: revision)
+            }
+    }
+
+    /// Adds the space's content rule lists to the configuration, and gives
+    /// them to `completion` (a page can take them off for a site, see
+    /// `BrowserPage.setContentBlocking(enabled:)`).
+    func prepareConfiguration(
+        _ configuration: WKWebViewConfiguration,
+        spaceID: UUID,
+        completion: @escaping ([WKContentRuleList]) -> Void
+    ) {
+        let privacySettings = SettingsStore.shared.privacySettings(for: spaceID)
+        let enabledRuleLists = enabledRuleLists(for: spaceID, privacySettings: privacySettings)
+        let group = DispatchGroup()
+        var addedRuleLists: [WKContentRuleList] = []
+
+        for identifier in enabledRuleLists {
+            group.enter()
+            contentRuleList(for: identifier) { ruleList in
+                DispatchQueue.main.async {
+                    if let ruleList {
+                        configuration.userContentController.add(ruleList)
+                        addedRuleLists.append(ruleList)
+                    }
+                    group.leave()
+                }
+            }
+        }
+
+        group.enter()
+        applyCookiePolicy(privacySettings.cookiesPolicy, to: configuration.websiteDataStore) {
+            group.leave()
+        }
+
+        group.notify(queue: .main) { completion(addedRuleLists) }
+    }
+
+    /// Whether an action of this rule list is content kept from the page (ads,
+    /// trackers), as opposed to cookies only, for the count of the shield.
+    static func blocksContent(ruleListIdentifier identifier: String) -> Bool {
+        identifier != StaticRuleListIdentifier.thirdPartyCookies.identifier
+            && identifier != StaticRuleListIdentifier.allCookies.identifier
+    }
+
+    /// Whether a space blocks anything with content rules.
+    static func hasContentBlocking(_ settings: SpacePrivacySettings) -> Bool {
+        settings.blockThirdPartyTrackers || settings.adBlock.enabled || settings.cookiesPolicy != .allowAll
+    }
+
+    static func privacyScripts(
+        for privacySettings: SpacePrivacySettings,
+        spaceID: UUID? = nil,
+        isPrivate: Bool = false
+    ) -> [BrowserUserScript] {
+        guard privacySettings.blockFingerprinting else { return [] }
+
+        return [
+            BrowserUserScript(
+                name: "ombre-fingerprinting-protection",
+                source: fingerprintingProtectionScriptSource(
+                    seed: FingerprintingNoiseSeed.seed(spaceID: spaceID, isPrivate: isPrivate)
+                ),
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: false,
+                // It changes the APIs the page itself calls.
+                world: .page
+            )
+        ]
+    }
+
+    /// A window property name that says nothing of the app, new at each launch.
+    static let installMarker = "_" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12).lowercased()
+
+    static func fingerprintingProtectionScriptSource(
+        seed: UInt32 = FingerprintingNoiseSeed.seed(spaceID: nil, isPrivate: false)
+    ) -> String {
+        FingerprintingProtectionProfile.balanced.scriptSource(seed: seed)
+    }
+
+    private func enabledRuleLists(for spaceID: UUID, privacySettings: SpacePrivacySettings) -> [String] {
+        var identifiers: [String] = []
+
+        if privacySettings.blockThirdPartyTrackers {
+            identifiers.append(StaticRuleListIdentifier.trackers.identifier)
+        }
+
+        switch privacySettings.cookiesPolicy {
+        case .allowAll:
+            break
+        case .blockThirdParty:
+            identifiers.append(StaticRuleListIdentifier.thirdPartyCookies.identifier)
+        case .blockAll:
+            identifiers.append(StaticRuleListIdentifier.allCookies.identifier)
+        }
+
+        return identifiers + activeRuleListIdentifiers(for: spaceID)
+    }
+
+    private func applyCookiePolicy(
+        _ policy: CookiesPolicy,
+        to dataStore: WKWebsiteDataStore,
+        completion: @escaping () -> Void
+    ) {
+        guard #available(macOS 14.0, *) else {
+            completion()
+            return
+        }
+
+        let cookiePolicy: WKHTTPCookieStore.CookiePolicy = switch policy {
+        case .blockAll:
+            .disallow
+        case .allowAll, .blockThirdParty:
+            .allow
+        }
+
+        dataStore.httpCookieStore.setCookiePolicy(cookiePolicy, completionHandler: completion)
+    }
+
+    private func contentRuleList(
+        for identifier: String,
+        completion: @escaping (WKContentRuleList?) -> Void
+    ) {
+        cacheLock.lock()
+        if let cachedRuleList = cachedRuleLists[identifier] {
+            cacheLock.unlock()
+            completion(cachedRuleList)
+            return
+        }
+
+        if pendingRuleListCallbacks[identifier] != nil {
+            pendingRuleListCallbacks[identifier, default: []].append(completion)
+            cacheLock.unlock()
+            return
+        }
+
+        pendingRuleListCallbacks[identifier] = [completion]
+        cacheLock.unlock()
+
+        ruleListStore.lookUpContentRuleList(forIdentifier: identifier) { [weak self] ruleList, _ in
+            guard let self else { return }
+
+            if let ruleList {
+                self.finishLoadingRuleList(identifier, ruleList: ruleList)
+                return
+            }
+
+            guard let encodedRuleList = Self.encodedRuleList(for: identifier, artifactStore: self.artifactStore) else {
+                self.finishLoadingRuleList(identifier, ruleList: nil)
+                return
+            }
+
+            self.ruleListStore.compileContentRuleList(
+                forIdentifier: identifier,
+                encodedContentRuleList: encodedRuleList
+            ) { [weak self] compiledRuleList, error in
+                if let error {
+                    print("Failed to compile privacy rule list \(identifier): \(error.localizedDescription)")
+                }
+                self?.finishLoadingRuleList(identifier, ruleList: compiledRuleList)
+            }
+        }
+    }
+
+    private func finishLoadingRuleList(_ identifier: String, ruleList: WKContentRuleList?) {
+        cacheLock.lock()
+        if let ruleList {
+            cachedRuleLists[identifier] = ruleList
+        }
+        let callbacks = pendingRuleListCallbacks.removeValue(forKey: identifier) ?? []
+        cacheLock.unlock()
+
+        callbacks.forEach { $0(ruleList) }
+    }
+
+    private static func encodedRuleList(
+        for identifier: String,
+        artifactStore: ContentBlockerArtifactStore
+    ) -> String? {
+        switch identifier {
+        case StaticRuleListIdentifier.trackers.identifier:
+            return encodeRules(networkBlockingRules(for: trackerDomains))
+        case StaticRuleListIdentifier.thirdPartyCookies.identifier:
+            return encodeRules([
+                [
+                    "trigger": [
+                        "url-filter": ".*",
+                        "load-type": ["third-party"]
+                    ],
+                    "action": ["type": "block-cookies"]
+                ]
+            ])
+        case StaticRuleListIdentifier.allCookies.identifier:
+            return encodeRules([
+                [
+                    "trigger": ["url-filter": ".*"],
+                    "action": ["type": "block-cookies"]
+                ]
+            ])
+        default:
+            return artifactStore.encodedRuleList(for: identifier)
+        }
+    }
+
+    private static func networkBlockingRules(for domains: [String]) -> [[String: Any]] {
+        domains.map { domain in
+            [
+                "trigger": [
+                    "url-filter": regexForDomain(domain),
+                    "load-type": ["third-party"]
+                ],
+                "action": ["type": "block"]
+            ]
+        }
+    }
+
+    /// The domain and its subdomains, whatever the path or port. Without "|":
+    /// WebKit's content rules reject a disjunction, and with it the whole list
+    /// ("Disjunctions are not supported yet"). An address always has a "/"
+    /// after its host, so `[/:]` ends the domain.
+    static func regexForDomain(_ domain: String) -> String {
+        let escapedDomain = NSRegularExpression.escapedPattern(for: domain)
+        return "^https?://([^/:]+\\.)?\(escapedDomain)[/:]"
+    }
+
+    private static func encodeRules(_ rules: [[String: Any]]) -> String {
+        guard let data = try? JSONSerialization.data(withJSONObject: rules, options: []),
+              let encoded = String(data: data, encoding: .utf8)
+        else {
+            return "[]"
+        }
+
+        return encoded
+    }
+
+    private static let trackerDomains = [
+        "google-analytics.com",
+        "googletagmanager.com",
+        "doubleclick.net",
+        "googleadservices.com",
+        "facebook.net",
+        "connect.facebook.net",
+        "analytics.twitter.com",
+        "ads-twitter.com",
+        "snap.licdn.com",
+        "px.ads.linkedin.com",
+        "bat.bing.com",
+        "clarity.ms",
+        "cdn.segment.com",
+        "api.segment.io",
+        "api.amplitude.com",
+        "cdn.amplitude.com",
+        "mixpanel.com",
+        "api.mixpanel.com",
+        "fullstory.com",
+        "edge.fullstory.com",
+        "static.hotjar.com",
+        "script.hotjar.com",
+        "intercom.io",
+        "widget.intercom.io",
+        "static.intercomassets.com"
+    ]
+}

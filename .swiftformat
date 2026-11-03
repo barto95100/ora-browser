@@ -21,7 +21,7 @@
 --disable consecutiveSpaces
 --disable redundantReturn
 # Règles apparues dans les versions récentes de SwiftFormat : désactivées pour
-# garder le formatage d'origine (et éviter les conflits avec the-ora/browser)
+# garder le formatage existant
 --disable wrapIfStatementBodies
 --disable nestedIf
 --disable repeatedGuard

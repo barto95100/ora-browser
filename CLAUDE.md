@@ -1,4 +1,4 @@
-# Ombre (ex-fork d'Ora Browser) — consignes pour Claude
+# Ombre — consignes pour Claude
 
 Navigateur macOS façon Arc, sur WebKit. Dépôt : `barto95100/ora-browser` (sera renommé `ombre-browser`),
 local `~/Developer/ora-browser`. Dérivé d'Ora Browser (`the-ora/browser`, GPL-3.0, plus maintenu).
@@ -63,7 +63,7 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   `file_length` > 800, `identifier_name` < 3 caractères, `large_tuple` > 2 ; avertissement ligne > 120).
   Le pre-push compile l'app (pas les tests) dans `build/DerivedData`.
 - **Avant chaque push : lancer les tests** :
-  `xcodebuild test -scheme ora -destination 'platform=macOS,arch=arm64' 2>&1 | xcbeautify`
+  `xcodebuild test -scheme Ombre -destination 'platform=macOS,arch=arm64' 2>&1 | xcbeautify`
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
 - Signature Debug : Personal Team `Q76T6LDBBZ`. Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).
 - Branches : `feat/…`, `fix/…`, `perf/…`, `refactor/…`, `ci/…`, `build/…`, `docs/…`. Depuis `main`, sauf
@@ -111,8 +111,9 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
    (SwiftData, démarrage, mémoire). Livrer un rapport classé par priorité (problème, risque, solution,
    effort), puis refontes ciblées, une PR à la fois, avec tests. Pas de réécriture d'un bloc.
 2. **Renommage en « Ombre »** (« Ombre Browser » seulement pour le dépôt, le site, les sous-titres) :
-   - retirer « Ora » de tout ce qui est visible et du code (types `Ora…`, dossier `ora/`, projet, schéma,
-     tests, CI, Sparkle, logger `com.orabrowser…`) ;
+   - l'ancien nom retiré de tout ce qui est visible et du code (types, dossiers `Ombre/` et `OmbreTests/`,
+     projet `Ombre.xcodeproj`, schéma `Ombre`, CI) ; sous-système des logs et identifiants internes dérivés
+     de l'identifiant de bundle (`AppIdentity`) : l'étape 4 ne changera que `project.yml` ;
    - icône prête : `~/Developer/ombre-icon/Ombre.icon` (Icon Composer, apparences claire/sombre/mono) et
      calques `1-globe.svg`, `2-voile.svg`, `3-vague.svg` ;
    - **pas de migration de données** : nouvel identifiant, Ombre démarre à neuf (Ludo est d'accord, ça

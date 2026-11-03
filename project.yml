@@ -89,8 +89,8 @@ targets:
       base:
         SWIFT_VERSION: 5.9
         CODE_SIGN_STYLE: Automatic
-        MARKETING_VERSION: 0.2.14
-        CURRENT_PROJECT_VERSION: 105
+        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 106
         PRODUCT_NAME: Ombre
         PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora
         GENERATE_INFOPLIST_FILE: YES

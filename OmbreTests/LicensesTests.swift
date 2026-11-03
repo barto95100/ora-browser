@@ -13,6 +13,11 @@ struct LicensesTests {
         return pins.compactMap { $0["location"] as? String }
     }
 
+    private func repositoryFile(_ name: String) throws -> String {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        return try String(contentsOf: root.appending(path: name), encoding: .utf8)
+    }
+
     private func normalized(_ location: String) -> String {
         location.lowercased().replacingOccurrences(of: ".git", with: "")
     }
@@ -31,5 +36,14 @@ struct LicensesTests {
         let text = try String(contentsOf: url, encoding: .utf8)
         #expect(text.contains("GNU GENERAL PUBLIC LICENSE"))
         #expect(text.contains("Version 3"))
+    }
+
+    @Test(arguments: ["README.md", "THIRD_PARTY_NOTICES.md"])
+    func theDocumentsCarryTheSameNotices(file: String) throws {
+        let text = try repositoryFile(file)
+        #expect(text.contains(LicensesView.modificationNotice))
+        for notice in LicensesView.copyrightNotices {
+            #expect(text.contains(notice), "\(file) is missing \"\(notice)\"")
+        }
     }
 }

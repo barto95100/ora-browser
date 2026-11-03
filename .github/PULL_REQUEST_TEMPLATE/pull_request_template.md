@@ -31,14 +31,6 @@ Attach screenshots or recordings if your changes modify the UI or user experienc
 
 ---
 
-### AI Assistance Disclosure
-
-If AI assistance was used for any part of this PR (code, docs, commit messages, or descriptions), please disclose it here:
-
-Example: “Used Claude Code for writing <this part of the code>.”
-
----
-
 ### Checklist
 
 Before submitting, ensure the following:

@@ -16,6 +16,18 @@ struct LicensesView: View {
     static let gplURL = URL(string: "https://www.gnu.org/licenses/gpl-3.0.html")!
     static let upstreamURL = URL(string: "https://github.com/the-ora/browser")!
 
+    /// GPL-3.0 section 5a: the work is modified, with a relevant date.
+    /// The same wording is in README.md and THIRD_PARTY_NOTICES.md.
+    nonisolated static let modificationNotice = "Ombre is a modified version of Ora Browser, forked on "
+        + "September 17, 2026. The changes are described in the git history."
+
+    /// Copyright notices kept with the work (Ora's repository has no explicit
+    /// notice: its authors are its contributors).
+    nonisolated static let copyrightNotices = [
+        "Copyright (C) 2026 Ludo (barto95100)",
+        "Copyright (C) 2025-2026 the Ora Browser contributors (the-ora/browser)"
+    ]
+
     /// Libraries built into the app (see THIRD_PARTY_NOTICES.md).
     nonisolated static let components: [Component] = [
         Component(
@@ -69,6 +81,11 @@ struct LicensesView: View {
                     Text("Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0.")
                         .foregroundStyle(.secondary)
                     Link("github.com/the-ora/browser", destination: Self.upstreamURL)
+                    Text(Self.modificationNotice)
+                        .foregroundStyle(.secondary)
+                    ForEach(Self.copyrightNotices, id: \.self) { notice in
+                        Text(notice).font(.caption).foregroundStyle(.secondary)
+                    }
                 }
 
                 Divider()

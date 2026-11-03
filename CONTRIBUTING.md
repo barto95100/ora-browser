@@ -71,10 +71,6 @@ Each pull request should:
 - include screenshots or recordings for UI changes
 - stay scoped to a single change where possible
 
-## AI Assistance
-
-If you use AI assistance for code generation, documentation, issue comments, or pull request content, disclose that use and describe the extent of the assistance. Contributors are still expected to understand and stand behind the submitted work.
-
 ## Security and Conduct
 
 - Never commit secrets, signing keys, or other sensitive data.

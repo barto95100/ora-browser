@@ -2,7 +2,7 @@ import SwiftUI
 
 struct OmbreCommands: Commands {
     @AppStorage("AppAppearance") private var appearanceRaw: String = AppAppearance.system.rawValue
-    @AppStorage("ui.sidebar.position") private var sidebarPosition: SidebarPosition = .primary
+    @AppStorage(SidebarPosition.defaultsKey) private var sidebarPosition: SidebarPosition = .primary
     @AppStorage("ui.toolbar.hidden") private var isToolbarHidden: Bool = false
     @AppStorage("ui.toolbar.showfullurl") private var showFullURL: Bool = false
     @Environment(\.openWindow) private var openWindow
@@ -162,6 +162,12 @@ struct OmbreCommands: Commands {
                 }
             #endif
         }
+
+        #if DEBUG
+            CommandMenu("Debug") {
+                Button("Show Onboarding Again") { openWindow(id: "onboarding") }
+            }
+        #endif
 
         CommandMenu("Tabs") {
             Button("Open Peek in New Tab") {

@@ -23,8 +23,6 @@ enum TabManagerTests {}
 /// the active tab, ⌘Z and duplicating all create one in the current code.
 @MainActor
 final class TabManagerTestWindow {
-    static let offeredKey = "privacy.recommendedProtections.offered"
-
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController
@@ -33,10 +31,8 @@ final class TabManagerTestWindow {
     let tabManager: TabManager
     /// Spaces whose settings to remove at the end, deleted ones included.
     private var spaceIDs: Set<UUID> = []
-    private let savedOfferedValue: Any?
 
     init() {
-        savedOfferedValue = UserDefaults.standard.object(forKey: Self.offeredKey)
         modelContainer = DatabaseRecovery.inMemoryContainer()
         modelContext = ModelContext(modelContainer)
         mediaController = MediaController()
@@ -208,11 +204,6 @@ final class TabManagerTestWindow {
         }
         for id in spaceIDs {
             SettingsStore.shared.removeContainerSettings(for: id)
-        }
-        if let savedOfferedValue {
-            UserDefaults.standard.set(savedOfferedValue, forKey: Self.offeredKey)
-        } else {
-            UserDefaults.standard.removeObject(forKey: Self.offeredKey)
         }
     }
 }

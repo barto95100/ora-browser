@@ -164,16 +164,15 @@ private struct BrowserWindowRoot: View {
             )
             .onAppear {
                 downloadManager.toastManager = toastManager
+                // The first-launch assistant's choices, before the spaces are read below.
+                if !privacyMode.isPrivate, let onboarding = OnboardingHandoff.take() {
+                    OnboardingApplier.apply(onboarding, tabManager: tabManager)
+                }
                 Task {
                     let containerIDs = await MainActor.run {
                         (try? modelContext.fetch(FetchDescriptor<TabContainer>()))?.map(\.id) ?? []
                     }
                     await AdBlockService.shared.start(containerIDs: containerIDs)
-                    if !privacyMode.isPrivate {
-                        await MainActor.run {
-                            PrivacyDefaults.offerIfNeeded(containerIDs: containerIDs, dialogManager: dialogManager)
-                        }
-                    }
                 }
 
                 // Dialog keyboard shortcuts (highest priority — checked first)

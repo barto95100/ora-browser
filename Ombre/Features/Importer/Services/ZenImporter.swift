@@ -45,6 +45,20 @@ enum ZenImporter {
             .sorted { modified($0) > modified($1) }
     }
 
+    /// A profile's name as Zen shows it: its folder name without the random
+    /// prefix ("8kss89t1.Default (release)" → "Default (release)").
+    static func profileName(_ folder: URL) -> String {
+        let name = folder.lastPathComponent
+        guard let dot = name.firstIndex(of: "."), name.index(after: dot) < name.endIndex else { return name }
+        return String(name[name.index(after: dot)...])
+    }
+
+    /// When the profile's session was last saved.
+    static func lastUsed(_ folder: URL) -> Date? {
+        guard let file = sessionFile(inProfile: folder) else { return nil }
+        return try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    }
+
     static func read(profile folder: URL) throws -> ImportedBrowserData {
         guard let file = sessionFile(inProfile: folder) else { throw Failure.noSession }
         return try read(sessionFile: file)

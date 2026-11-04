@@ -122,6 +122,23 @@ struct OmbreApp: App {
         // Links opened from other apps (Ombre as default browser) go to a regular
         // window; SwiftUI creates one if none is open, e.g. on a cold launch.
         .handlesExternalEvents(matching: ["*"])
+        // Until the first-launch assistant is done, it opens instead.
+        .defaultLaunchBehavior(OnboardingStatus.isNeeded() ? .suppressed : .automatic)
+
+        Window("Welcome to Ombre", id: "onboarding") {
+            OnboardingView(
+                modelContext: DatabaseRecovery.mainContainer.mainContext,
+                isDefaultBrowser: DefaultBrowserManager.shared.isDefault
+            )
+            .modifier(ThemeProvider())
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultLaunchBehavior(OnboardingStatus.isNeeded() ? .presented : .suppressed)
+        .restorationBehavior(.disabled)
+        // Not in the Window menu.
+        .commandsRemoved()
+        .handlesExternalEvents(matching: [])
 
         WindowGroup("Private", id: "private") {
             OmbreRoot(isPrivate: true)

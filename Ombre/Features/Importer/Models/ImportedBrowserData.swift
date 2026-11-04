@@ -21,6 +21,11 @@ struct ImportedBrowserData: Equatable {
     var isEmpty: Bool {
         spaces.allSatisfy { $0.favorites.isEmpty && $0.pinned.isEmpty }
     }
+
+    /// The spaces at these positions, in their order; unknown positions are ignored.
+    func selecting(_ positions: [Int]) -> ImportedBrowserData {
+        ImportedBrowserData(spaces: positions.sorted().filter(spaces.indices.contains).map { spaces[$0] })
+    }
 }
 
 struct ImportedSpace: Equatable {

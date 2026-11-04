@@ -1,33 +1,34 @@
-import Foundation
+import SwiftData
 
-/// Name, icon and color of a space (see `SpaceEditorView`).
 extension TabManager {
-    func updateSpace(
-        _ container: TabContainer,
-        name: String,
-        emoji: String,
-        iconSymbol: String?,
-        color: SpaceColor?,
-        theme: SpaceTheme?
-    ) {
-        container.name = name
-        container.emoji = emoji
-        container.iconSymbol = iconSymbol
-        container.colorName = color?.rawValue
-        container.themeName = theme?.rawValue
+    /// Name, emoji, symbol, color and theme of a space.
+    func updateSpace(_ container: TabContainer, look: SpaceLook) {
+        container.name = look.name
+        container.emoji = look.emoji
+        container.iconSymbol = look.iconSymbol
+        container.colorName = look.color?.rawValue
+        container.themeName = look.theme?.rawValue
         modelContext.saveOrLog("update space style")
     }
 
+    /// A new space, which becomes the active one.
     @discardableResult
-    func createSpace(
-        name: String,
-        emoji: String,
-        iconSymbol: String?,
-        color: SpaceColor?,
-        theme: SpaceTheme?
-    ) -> TabContainer {
-        let container = createContainer(name: name, emoji: emoji)
-        updateSpace(container, name: name, emoji: emoji, iconSymbol: iconSymbol, color: color, theme: theme)
+    func createSpace(look: SpaceLook) -> TabContainer {
+        let container = createContainer(name: look.name, emoji: look.emoji)
+        updateSpace(container, look: look)
+        return container
+    }
+
+    /// A new space after the others, without leaving the active one.
+    @discardableResult
+    func addSpace(look: SpaceLook) -> TabContainer {
+        let container = TabContainer(name: look.name, emoji: look.emoji)
+        container.order = nextContainerOrder()
+        // Not the space to open at the next launch.
+        container.lastAccessedAt = .distantPast
+        modelContext.insert(container)
+        updateSpace(container, look: look)
+        PrivacyDefaults.applyToNewSpace(container.id)
         return container
     }
 }

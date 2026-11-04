@@ -372,7 +372,8 @@ final class BrowserPrivacyService {
         spaceID: UUID? = nil,
         isPrivate: Bool = false
     ) -> [BrowserUserScript] {
-        guard privacySettings.blockFingerprinting else { return [] }
+        // Private windows are always protected, like Safari's.
+        guard privacySettings.blockFingerprinting || isPrivate else { return [] }
 
         return [
             BrowserUserScript(

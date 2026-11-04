@@ -2,6 +2,9 @@ import Combine
 import SwiftUI
 
 enum SidebarPosition: String, Hashable {
+    /// Where the position is kept (shared by every window).
+    static let defaultsKey = "ui.sidebar.position"
+
     case primary
     case secondary
 
@@ -20,7 +23,7 @@ class SidebarManager: ObservableObject {
     /// and launches.
     nonisolated static let obsoleteDefaultsKeys = ["ui.sidebar.hidden", "ui.sidebar.visibility"]
 
-    @AppStorage("ui.sidebar.position") var sidebarPosition: SidebarPosition = .primary
+    @AppStorage(SidebarPosition.defaultsKey) var sidebarPosition: SidebarPosition = .primary
 
     @Published var primaryFraction = FractionHolder.usingUserDefaults(0.2, key: "ui.sidebar.fraction.primary")
     @Published var secondaryFraction = FractionHolder.usingUserDefaults(0.2, key: "ui.sidebar.fraction.secondary")

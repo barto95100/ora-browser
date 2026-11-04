@@ -5,7 +5,7 @@ import SwiftUI
 
 // MARK: - 1. Welcome
 
-/// Golden hour: the planet rises in full sun, then the words come.
+/// Golden hour, already violet: the planet rises in full sun, then the words come.
 struct OnboardingWelcomeStep: View {
     /// False after Back: the screen shows as it ended.
     var playsEntrance = true
@@ -17,9 +17,9 @@ struct OnboardingWelcomeStep: View {
         ZStack {
             OnboardingClock { time in
                 ZStack {
-                    cloud(width: 170, height: 34, opacity: 0.45, time: time)
+                    cloud(width: 170, height: 34, opacity: 0.16, time: time)
                         .position(x: 155, y: 87)
-                    cloud(width: 130, height: 26, opacity: 0.35, time: time + 6)
+                    cloud(width: 130, height: 26, opacity: 0.12, time: time + 6)
                         .position(x: 625, y: 133)
                     orbit(time: time)
                         .position(x: 400, y: 600)
@@ -52,16 +52,16 @@ struct OnboardingWelcomeStep: View {
             Text("Bonjour, Hello, Hola".uppercased())
                 .font(.system(size: 13, weight: .heavy))
                 .tracking(2.9)
-                .foregroundStyle(Color(hex: "#A63E73"))
+                .foregroundStyle(Color(hex: "#FFE0CC"))
                 .onboardingFadeUp(delay: 1.2, distance: 14, isEnabled: playsEntrance)
             Text("Welcome to Ombre")
                 .font(.system(size: 58, weight: .black))
                 .tracking(-1.2)
                 .foregroundStyle(LinearGradient(
                     stops: [
-                        .init(color: Color(hex: "#3A1F6E"), location: 0.1),
-                        .init(color: Color(hex: "#8E2F7C"), location: 0.6),
-                        .init(color: Color(hex: "#C9466E"), location: 1)
+                        .init(color: Color(hex: "#FFF6EE"), location: 0.1),
+                        .init(color: Color(hex: "#FFD2B6"), location: 0.6),
+                        .init(color: Color(hex: "#FFB0CB"), location: 1)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -70,7 +70,7 @@ struct OnboardingWelcomeStep: View {
                 .accessibilityAddTraits(.isHeader)
             Text("A calm little planet for the whole web.")
                 .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(Color(hex: "#5A3F78"))
+                .foregroundStyle(Color(hex: "#FBE9F2"))
                 .onboardingFadeUp(delay: 1.9, distance: 14, isEnabled: playsEntrance)
         }
         .multilineTextAlignment(.center)
@@ -89,11 +89,11 @@ struct OnboardingWelcomeStep: View {
     private func orbit(time: TimeInterval) -> some View {
         ZStack(alignment: .top) {
             Circle()
-                .strokeBorder(OnboardingInk.dark.opacity(0.16), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                .strokeBorder(Color.white.opacity(0.14), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
             Circle()
-                .fill(Color(hex: "#FFFBF5"))
+                .fill(Color(hex: "#FFFBF5").opacity(0.8))
                 .frame(width: 10, height: 10)
-                .shadow(color: Color(hex: "#FFFBF5").opacity(0.9), radius: 8)
+                .shadow(color: Color(hex: "#FFFBF5").opacity(0.6), radius: 8)
                 .offset(y: -5)
         }
         .frame(width: 1100, height: 1100)
@@ -107,8 +107,8 @@ struct OnboardingWelcomeStep: View {
         return Circle()
             .fill(RadialGradient(
                 stops: [
-                    .init(color: Color(hex: "#FFF6E1").opacity(0.95), location: 0),
-                    .init(color: Color(hex: "#FFD6AA").opacity(0.55), location: 0.3),
+                    .init(color: Color(hex: "#FFF6E1").opacity(0.5), location: 0),
+                    .init(color: Color(hex: "#FFD6AA").opacity(0.28), location: 0.3),
                     .init(color: Color(hex: "#FFB38A").opacity(0), location: 0.62)
                 ],
                 center: .center,

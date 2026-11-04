@@ -317,18 +317,26 @@ struct OnboardingNightfallTests {
         }
     }
 
+    /// Never a light sky (the text is light on every step), nor an almost
+    /// black night.
     @Test(arguments: OnboardingStep.allCases)
-    func aSkyIsNeverWhiteNorBlack(step: OnboardingStep) {
+    func aSkyIsNeverLightNorAlmostBlack(step: OnboardingStep) {
         let sky = OnboardingNightfall.sky(for: step)
         #expect(sky.colors.count == sky.locations.count)
+        #expect(sky.locations.first == 0)
+        #expect(sky.locations.last == 1)
         for color in sky.colors {
-            #expect(luminance(color) > 0.004)
-            #expect(luminance(color) < 0.85)
+            #expect(luminance(color) > 0.015)
+            #expect(luminance(color) < 0.5)
         }
     }
 
-    @Test func onlyTheWelcomeSkyIsLight() {
-        #expect(Self.order.filter(OnboardingNightfall.isLight) == [.welcome])
+    /// The first and last skies stay in the same violet-pink family (the
+    /// golden-to-black evening they replace was about 100 times apart).
+    @Test func theFirstAndLastSkiesStayClose() {
+        let first = meanLuminance(.welcome)
+        let last = meanLuminance(.ready)
+        #expect(first / last < 12)
     }
 
     @Test func starsComeOutAndTheShadowRises() {

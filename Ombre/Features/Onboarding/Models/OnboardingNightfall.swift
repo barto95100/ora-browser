@@ -1,7 +1,8 @@
 import Foundation
 
 /// The assistant follows an evening: each step has its sky, from golden hour
-/// to a violet night, more stars, and the planet's shadow a little higher,
+/// to a violet night, all in the same violet-pink family (never a light sky
+/// nor an almost black night), more stars, and the planet's shadow a little higher,
 /// until it looks exactly like the icon.
 enum OnboardingNightfall {
     /// A sky from top to bottom: colors as `#RRGGBB` and where they sit.
@@ -13,23 +14,18 @@ enum OnboardingNightfall {
     static func sky(for step: OnboardingStep) -> Sky {
         switch step {
         // Golden hour.
-        case .welcome: Sky(colors: ["#CBB6F0", "#F2B3CF", "#FFD0B2", "#FFE8D4"], locations: [0, 0.42, 0.72, 1])
+        case .welcome: Sky(colors: ["#5B3FA0", "#8E4C9E", "#D2708E", "#F09C82"], locations: [0, 0.42, 0.76, 1])
         // Sunset.
-        case .importZen: Sky(colors: ["#5A3394", "#9C4690", "#D9677A", "#F09A7A"], locations: [0, 0.45, 0.78, 1])
+        case .importZen: Sky(colors: ["#503496", "#7E4796", "#B25E88", "#CF7A84"], locations: [0, 0.45, 0.8, 1])
         // Dusk.
-        case .spaces: Sky(colors: ["#3B2A7A", "#4A2C78", "#5A2F6E", "#6E3A6A"], locations: [0, 0.35, 0.8, 1])
+        case .spaces: Sky(colors: ["#42307F", "#6A3E8C", "#9E5582", "#B2647F"], locations: [0, 0.58, 0.92, 1])
         // Nightfall.
-        case .protection: Sky(colors: ["#161046", "#2A1B66", "#4E2A72", "#7A3A6E"], locations: [0, 0.5, 0.82, 1])
+        case .protection: Sky(colors: ["#382A76", "#4A2F80", "#6A3B7C", "#7E467A"], locations: [0, 0.52, 0.86, 1])
         // Night.
-        case .defaultBrowser: Sky(colors: ["#1B1150", "#2C1C70", "#21165A", "#170F44"], locations: [0, 0.4, 0.75, 1])
+        case .defaultBrowser: Sky(colors: ["#30246C", "#3C2B78", "#573576"], locations: [0, 0.5, 1])
         // Violet night.
-        case .ready: Sky(colors: ["#25115C", "#1B0C4C", "#13083E", "#200D46"], locations: [0, 0.35, 0.75, 1])
+        case .ready: Sky(colors: ["#33246F", "#251B5C", "#2E1F60"], locations: [0, 0.55, 1])
         }
-    }
-
-    /// Only the welcome sky is light: its text is dark.
-    static func isLight(_ step: OnboardingStep) -> Bool {
-        step == .welcome
     }
 
     /// How many of the star field's stars show: none at golden hour, many

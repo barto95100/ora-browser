@@ -22,7 +22,10 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
   (`gh pr create --repo barto95100/ora-browser --base main`), jamais vers `the-ora/browser`.
 - **CI verte avant toute fusion** (« Create a merge commit »), ne jamais contourner la règle de `main`.
   La CI tourne sur le Mac de Ludo (runner auto-hébergé) : « Queued » = runner occupé ou arrêté, Mac
-  éteint ou en veille. Les PR venant d'autres comptes passent par GitHub ; le réglage « Require approval
+  éteint ou en veille (runner dans `~/actions-runner`, service `./svc.sh start|stop` ; après un
+  `./svc.sh install`, retirer `SessionCreate` du plist du service, sinon la signature n'accède pas au
+  trousseau : `plutil -remove SessionCreate ~/Library/LaunchAgents/actions.runner.*.plist`).
+  Les PR venant d'autres comptes passent par GitHub ; le réglage « Require approval
   for all external contributors » (Settings › Actions › General) doit rester actif. Avant chaque version
   distribuée : la lancer aussi sur GitHub (Actions › Build and Test › Run workflow, runner `github`).
 - Après fusion : `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.

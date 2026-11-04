@@ -122,8 +122,9 @@ jobs:
       # GitHub's runners have no signing identity: sign ad hoc ("-") there,
       # which is enough to build, run the host app and load the test bundle.
       # The self-hosted Mac signs as usual, like a local `xcodebuild test`
-      # (an ad hoc app would ask for its sandbox container there); codesign
-      # needs "Always Allow" on the signing key once.
+      # (an ad hoc app would ask for its sandbox container there). Its
+      # service must not set SessionCreate, or codesign can't reach the
+      # login keychain.
       # Packages are the versions pinned in Package.resolved, never newer ones.
       - name: Build and run unit tests
         env:

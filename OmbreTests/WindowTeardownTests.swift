@@ -110,7 +110,7 @@ extension TabManagerTests {
         @Test func pageDestroyedBeforeItsLoadIsNotLoaded() async throws {
             try await TabManagerTestWindow.run { window in
                 let tab = try window.open("destroyed")
-                weak var weakPage = tab.browserPage
+                weak let weakPage = tab.browserPage
                 #expect(weakPage != nil)
                 #expect(!tab.isWebViewReady)
 
@@ -127,7 +127,7 @@ extension TabManagerTests {
         @Test func replacedPageIsNotLoadedButItsReplacementIs() async throws {
             try await TabManagerTestWindow.run { window in
                 let tab = try window.open("replaced")
-                weak var weakOldPage = tab.browserPage
+                weak let weakOldPage = tab.browserPage
 
                 // As a reload for new privacy settings does.
                 tab.destroyWebView()

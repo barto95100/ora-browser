@@ -1,5 +1,8 @@
+import os
 import SwiftData
 import SwiftUI
+
+private let logger = Logger(category: "TabManager")
 
 // MARK: - Tab Manager
 
@@ -225,7 +228,12 @@ class TabManager: ObservableObject {
     func deleteContainer(_ container: TabContainer) {
         let containerId = container.id
         Task { @MainActor in
-            try PasswordManagerService.shared.deleteEntries(for: containerId)
+            // A keychain error must not keep the space: it would stay, half deleted.
+            do {
+                try PasswordManagerService.shared.deleteEntries(for: containerId)
+            } catch {
+                logger.error("Deleting the space's passwords failed: \(error.localizedDescription, privacy: .public)")
+            }
             BrowsingTimeStore.shared.delete(spaceID: containerId)
             FocusSettings.shared.removeSpace(containerId)
 

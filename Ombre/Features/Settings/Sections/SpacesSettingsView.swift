@@ -551,7 +551,7 @@ struct SpacesSettingsView: View {
                     toastManager.show("Added \(record.name)", icon: .system("checkmark.circle"))
                 }
             } catch {
-                await MainActor.run {
+                _ = await MainActor.run {
                     toastManager.show(error.localizedDescription, type: .error)
                 }
             }

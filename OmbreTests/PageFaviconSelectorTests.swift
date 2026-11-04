@@ -20,10 +20,10 @@ struct PageFaviconSelectorTests {
         #expect(try urls == [#require(URL(string: "https://docs.example.com/favicon.ico"))])
     }
 
-    @Test func relativeIconsResolveAgainstThePage() throws {
+    @Test func relativeIconsResolveAgainstThePage() {
         let urls = PageFaviconSelector.orderedIconURLs(from: [icon("/img/icon.png")], pageURL: page)
 
-        #expect(try urls.first == #require(URL(string: "https://docs.example.com/img/icon.png")))
+        #expect(urls.first?.absoluteString == "https://docs.example.com/img/icon.png")
     }
 
     @Test func closestSizeAboveSidebarSizeWins() {

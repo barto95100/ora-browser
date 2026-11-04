@@ -267,7 +267,7 @@ struct KeyModifierListenerTests {
     @Test func releasedListenerRemovesItsMonitors() {
         let monitoring = FakeMonitoring()
         var listener: KeyModifierListener? = KeyModifierListener(monitoring: monitoring)
-        weak var released = listener
+        weak let released = listener
         listener?.registerKeyDownHandler { _ in false }
         #expect(monitoring.added.count == 2)
         #expect(monitoring.removed.isEmpty)

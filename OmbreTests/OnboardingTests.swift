@@ -291,23 +291,124 @@ struct OnboardingModelTests {
     }
 }
 
-struct LogoStageTests {
-    @Test func reduceMotionShowsTheFinishedLogoAtOnce() {
-        let timeline = LogoStage.timeline(reduceMotion: true)
-        #expect(timeline.map(\.stage) == [.wave])
-        #expect(LogoStage.duration(reduceMotion: true) == .zero)
+@MainActor
+struct OnboardingNightfallTests {
+    private static let order = OnboardingStep.allCases
+
+    /// Relative luminance of a `#RRGGBB` color.
+    private func luminance(_ hex: String) -> Double {
+        let value = Int(hex.dropFirst(), radix: 16) ?? 0
+        let channels = [(value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF].map { channel -> Double in
+            let srgb = Double(channel) / 255
+            return srgb <= 0.039_28 ? srgb / 12.92 : pow((srgb + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
     }
 
-    @Test func stagesAreOrdered() {
-        #expect(LogoStage.hidden < .globe)
-        #expect(LogoStage.globe < .veil)
-        #expect(LogoStage.veil < .wave)
+    private func meanLuminance(_ step: OnboardingStep) -> Double {
+        let colors = OnboardingNightfall.sky(for: step).colors
+        return colors.map(luminance).reduce(0, +) / Double(colors.count)
     }
 
-    @Test func theVeilComesDownAfterTheGlobeThenTheWave() {
-        let timeline = LogoStage.timeline(reduceMotion: false)
-        #expect(timeline.map(\.stage) == [.globe, .veil, .wave])
-        #expect(LogoStage.duration(reduceMotion: false) > .milliseconds(1000))
-        #expect(LogoStage.duration(reduceMotion: false) < .seconds(2))
+    @Test func theSkiesDarkenFromStepToStep() {
+        let values = Self.order.map(meanLuminance)
+        for (earlier, later) in zip(values, values.dropFirst()) {
+            #expect(later < earlier)
+        }
+    }
+
+    @Test(arguments: OnboardingStep.allCases)
+    func aSkyIsNeverWhiteNorBlack(step: OnboardingStep) {
+        let sky = OnboardingNightfall.sky(for: step)
+        #expect(sky.colors.count == sky.locations.count)
+        for color in sky.colors {
+            #expect(luminance(color) > 0.004)
+            #expect(luminance(color) < 0.85)
+        }
+    }
+
+    @Test func onlyTheWelcomeSkyIsLight() {
+        #expect(Self.order.filter(OnboardingNightfall.isLight) == [.welcome])
+    }
+
+    @Test func starsComeOutAndTheShadowRises() {
+        let stars = Self.order.map(OnboardingNightfall.starCount)
+        let shadows = Self.order.map(OnboardingNightfall.shadow)
+        #expect(stars.first == 0)
+        #expect(stars.last == OnboardingNightfall.starField.count)
+        #expect(zip(stars, stars.dropFirst()).allSatisfy { $0 < $1 })
+        #expect(shadows.first == 0)
+        // The planet ends exactly like the icon.
+        #expect(shadows.last == 1)
+        #expect(zip(shadows, shadows.dropFirst()).allSatisfy { $0 < $1 })
+    }
+
+    @Test func inFullSunNoShadowShowsAndAtTheEndItIsTheIcons() {
+        // The shadow's highest point is 0.45 of the globe down: pushed below it.
+        #expect(0.45 + OmbrePlanet.shadowOffset(0) > 1)
+        #expect(OmbrePlanet.shadowOffset(1) == 0)
+        #expect(OmbrePlanet.shadowOffset(1.6) < 0)
+    }
+
+    @Test func starsAppearOneAfterTheOther() {
+        #expect(OnboardingNightfall.visibility(ofStar: 0, shown: 0) == 0)
+        #expect(OnboardingNightfall.visibility(ofStar: 5, shown: 5.5) == 0.5)
+        #expect(OnboardingNightfall.visibility(ofStar: 5, shown: 12) == 1)
+        #expect(OnboardingNightfall.visibility(ofStar: 12, shown: 12) == 0)
+    }
+
+    @Test func starsTwinkleBetweenFaintAndBright() {
+        let star = OnboardingNightfall.starField[0]
+        let values = stride(from: 0.0, to: 3.4, by: 0.1).map { OnboardingNightfall.twinkle(star, at: $0) }
+        #expect(values.allSatisfy { $0 >= 0.2 - 1e-9 && $0 <= 1 + 1e-9 })
+        #expect((values.max() ?? 0) - (values.min() ?? 0) > 0.7)
+    }
+
+    @Test func theStarsStayPutAndInTheWindow() {
+        #expect(OnboardingNightfall.starField.count == 80)
+        for star in OnboardingNightfall.starField {
+            #expect((0 ..< 1).contains(star.left))
+            #expect((0 ..< 1).contains(star.top))
+        }
+        var first = SeededRandom(seed: 3)
+        var second = SeededRandom(seed: 3)
+        #expect(first.next() == second.next())
+    }
+}
+
+@MainActor
+struct OnboardingWordsTests {
+    @Test func shadeLevelsKeepTheirSettingsNames() {
+        #expect(OnboardingProtectionStep.levels == [.off, .standard, .strict])
+        #expect(OnboardingProtectionStep.levels.map(\.shadeTitle) == ["Sunny", "Ombre", "Deep shade"])
+        #expect(OnboardingProtectionStep.levels.map(\.title) == ["Off", "Standard", "Strict"])
+        #expect(OnboardingProtectionStep.levels.map(\.shadeShadow) == [0, 1, 1.6])
+    }
+
+    @Test func theImportButtonCountsTheSpaces() {
+        #expect(OnboardingView.importLabel(count: 0) == "Continue")
+        #expect(OnboardingView.importLabel(count: 1) == "Bring 1 space")
+        #expect(OnboardingView.importLabel(count: 2) == "Bring 2 spaces")
+    }
+
+    @Test func theOfferedLooksExist() {
+        #expect(OnboardingSpacesStep.symbols.allSatisfy(SpaceIcon.symbols.contains))
+        #expect(OnboardingSpacesStep.symbols.allSatisfy { OnboardingSpacesStep.symbolNames[$0] != nil })
+        #expect(OnboardingSpacesStep.symbols.count <= OnboardingSpacesStep.rowLength)
+        #expect(Set(OnboardingSpacesStep.colors).count == 6)
+    }
+
+    @Test func theSpacesOwnLookStaysOfferedInOneRow() {
+        let symbols = OnboardingSpacesStep.symbols
+        // Already offered, or none: the list as it is.
+        #expect(OnboardingSpacesStep.choices(symbols, keeping: "house") == symbols)
+        #expect(OnboardingSpacesStep.choices(symbols, keeping: nil) == symbols)
+        // A full row: the space's own takes the last place.
+        let withLeaf = OnboardingSpacesStep.choices(symbols, keeping: "leaf")
+        #expect(withLeaf.count == OnboardingSpacesStep.rowLength)
+        #expect(withLeaf.last == "leaf")
+        // Room left: added at the end.
+        let colors = OnboardingSpacesStep.choices(OnboardingSpacesStep.colors, keeping: SpaceColor.teal)
+        #expect(colors == OnboardingSpacesStep.colors + [.teal])
     }
 }

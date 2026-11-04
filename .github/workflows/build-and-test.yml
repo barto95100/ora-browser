@@ -1,6 +1,12 @@
-# Lint, format check, build and unit tests on every push and pull request.
-# Also runnable on demand (used by Upstream Sync, whose PRs cannot trigger
-# workflows by themselves).
+# Lint, format check, build and unit tests on every push and pull request,
+# also runnable on demand.
+#
+# It runs on the maintainer's own Mac (a self-hosted runner): GitHub's macOS
+# runners often left it queued for hours. Run it on demand with runner
+# "github" to check a clean machine, before each distributed version.
+# Pull requests from someone else's fork run on GitHub's runners, never on
+# the Mac (with "Require approval for all external contributors" set in the
+# repository's Actions settings, as a fork could edit this file).
 name: Build and Test
 
 on:
@@ -9,6 +15,12 @@ on:
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+    inputs:
+      runner:
+        description: Where to run
+        type: choice
+        options: [self-hosted, github]
+        default: self-hosted
 
 concurrency:
   group: build-and-test-${{ github.ref }}
@@ -24,14 +36,21 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: macos-latest
+    # GitHub's runner when asked, or for a pull request from someone else's
+    # fork (it would run their code on the Mac); the Mac otherwise.
+    runs-on: >-
+      ${{ fromJSON((inputs.runner == 'github' || (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name != github.repository))
+      && '"macos-latest"' || '["self-hosted", "macOS", "ARM64"]') }}
     timeout-minutes: 45
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # The self-hosted Mac keeps its own Xcode: switching it needs sudo.
       - name: Setup Xcode
+        if: runner.environment == 'github-hosted'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
@@ -60,8 +79,20 @@ jobs:
             "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
           echo "$bin" >> "$GITHUB_PATH"
 
+      # The self-hosted Mac uses its own: nothing is installed or upgraded there.
       - name: Install XcodeGen and xcbeautify
-        run: brew install xcodegen xcbeautify
+        env:
+          GITHUB_HOSTED: ${{ runner.environment == 'github-hosted' }}
+        run: |
+          for tool in xcodegen xcbeautify; do
+            if command -v "$tool" >/dev/null; then continue; fi
+            if [ "$GITHUB_HOSTED" = true ]; then
+              brew install "$tool"
+            else
+              echo "::error::$tool is missing on this Mac: brew install $tool"
+              exit 1
+            fi
+          done
 
       - name: Lint
         run: |
@@ -76,7 +107,11 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen
 
+      # The self-hosted Mac keeps its packages and builds between runs
+      # instead, outside the checkout (which is cleaned each time); one
+      # runner only, or two runs would share them.
       - name: Cache Swift packages
+        if: runner.environment == 'github-hosted'
         uses: actions/cache@v6
         with:
           path: .spm
@@ -84,24 +119,45 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      # The CI has no signing identity: sign ad hoc ("-") instead, which is
-      # enough to build, run the host app and load the test bundle.
+      # GitHub's runners have no signing identity: sign ad hoc ("-") there,
+      # which is enough to build, run the host app and load the test bundle.
+      # The self-hosted Mac signs as usual, like a local `xcodebuild test`
+      # (an ad hoc app would ask for its sandbox container there). Its
+      # service must not set SessionCreate, or codesign can't reach the
+      # login keychain.
       # Packages are the versions pinned in Package.resolved, never newer ones.
       - name: Build and run unit tests
+        env:
+          GITHUB_HOSTED: ${{ runner.environment == 'github-hosted' }}
         run: |
           set -o pipefail
+          if [ "$GITHUB_HOSTED" = true ]; then
+            places=(-clonedSourcePackagesDirPath .spm)
+            signing=(CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER="")
+          else
+            places=(
+              -clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm"
+              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData"
+            )
+            signing=()
+          fi
           xcodebuild test \
             -project Ombre.xcodeproj \
             -scheme Ombre \
             -destination "platform=macOS,arch=arm64" \
-            -clonedSourcePackagesDirPath .spm \
+            "${places[@]}" \
             -disableAutomaticPackageResolution \
             -resultBundlePath "$RUNNER_TEMP/TestResults.xcresult" \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
+            "${signing[@]}" \
             | xcbeautify --renderer github-actions
+
+      # Otherwise clicking a notification could open this copy of the app.
+      - name: Unregister the built app
+        if: always() && runner.environment == 'self-hosted'
+        run: |
+          app="$RUNNER_WORKSPACE/DerivedData/Build/Products/Debug/Ombre.app"
+          lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+          if [ -d "$app" ]; then "$lsregister" -u "$app" || true; fi
 
       - name: Upload test results
         if: failure()

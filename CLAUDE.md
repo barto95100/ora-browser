@@ -20,8 +20,11 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
   `main`, jamais de force push, jamais de réécriture d'historique publié.
 - Pour chaque PR : titre + description (`## Summary` / `## Testing`). PR **dans le fork**
   (`gh pr create --repo barto95100/ora-browser --base main`), jamais vers `the-ora/browser`.
-- **CI verte avant toute fusion** (« Create a merge commit »). CI « Queued » longtemps = panne GitHub
-  (runners macOS) : attendre / « Re-run all jobs », ne jamais contourner la règle de `main`.
+- **CI verte avant toute fusion** (« Create a merge commit »), ne jamais contourner la règle de `main`.
+  La CI tourne sur le Mac de Ludo (runner auto-hébergé) : « Queued » = runner occupé ou arrêté, Mac
+  éteint ou en veille. Les PR venant d'autres comptes passent par GitHub ; le réglage « Require approval
+  for all external contributors » (Settings › Actions › General) doit rester actif. Avant chaque version
+  distribuée : la lancer aussi sur GitHub (Actions › Build and Test › Run workflow, runner `github`).
 - Après fusion : `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
 
 ## Mode autonome (quand Ludo le demande : enchaîner une liste de PR sans l'attendre)
@@ -39,8 +42,8 @@ Ludo n'intervient que pour les décisions produit, les tests manuels par lots et
 5. Commit (Conventional Commits, en anglais, sans mention d'IA), push,
    `gh pr create --repo barto95100/ora-browser --base main`, description `## Summary` / `## Testing`.
 6. `gh pr checks <n°> --repo barto95100/ora-browser --watch`. CI en échec : corriger et repousser.
-   CI en file d'attente chez GitHub : attendre. Jamais `--admin`, jamais de contournement de la règle
-   de `main`, jamais de force push.
+   CI en file d'attente : runner du Mac de Ludo occupé, arrêté ou Mac en veille ; le lui signaler.
+   Jamais `--admin`, jamais de contournement de la règle de `main`, jamais de force push.
 7. `gh pr merge <n°> --repo barto95100/ora-browser --merge --delete-branch`, puis
    `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
 8. Ajouter les étapes de test manuelles numérotées de la PR, avec son lien, dans

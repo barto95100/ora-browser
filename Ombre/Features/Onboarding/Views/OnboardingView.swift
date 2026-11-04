@@ -28,10 +28,6 @@ struct OnboardingView: View {
         model.flow.current
     }
 
-    private var onLightSky: Bool {
-        OnboardingNightfall.isLight(step)
-    }
-
     var body: some View {
         Color.clear
             .frame(width: 800, height: 600 - titleBarHeight)
@@ -44,7 +40,7 @@ struct OnboardingView: View {
             .fontDesign(.rounded)
             // The skies have fixed colors: text fields, menus and scroll
             // bars follow them, not the system appearance.
-            .environment(\.colorScheme, onLightSky ? .light : .dark)
+            .environment(\.colorScheme, .dark)
             .background(WindowVisibilityReader(isVisible: $isWindowVisible))
             .environment(\.onboardingAnimationsPaused, !isWindowVisible)
             .task {
@@ -123,8 +119,7 @@ struct OnboardingView: View {
         ZStack {
             OnboardingProgressDots(
                 count: model.flow.steps.count,
-                index: model.flow.index,
-                onLightSky: onLightSky
+                index: model.flow.index
             )
             HStack(spacing: 10) {
                 leadingButton
@@ -139,7 +134,7 @@ struct OnboardingView: View {
     private var leadingButton: some View {
         if step == .welcome {
             Button("Skip setup") { finish(asConfirmed: false) }
-                .buttonStyle(OnboardingSecondaryButtonStyle(onLightSky: true))
+                .buttonStyle(OnboardingSecondaryButtonStyle())
         } else if model.flow.canGoBack {
             Button("Back") { model.back() }
                 .buttonStyle(OnboardingTextButtonStyle())
@@ -150,7 +145,7 @@ struct OnboardingView: View {
     private var buttons: some View {
         switch step {
         case .welcome:
-            primary("Let's go", onLightSky: true) { model.goOn() }
+            primary("Let's go") { model.goOn() }
         case .importZen:
             secondary("Skip") { model.skip() }
             primary(importLabel) { model.goOn() }
@@ -174,11 +169,10 @@ struct OnboardingView: View {
     private func primary(
         _ label: String,
         isLarge: Bool = false,
-        onLightSky: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(label, action: action)
-            .buttonStyle(OnboardingPrimaryButtonStyle(isLarge: isLarge, onLightSky: onLightSky))
+            .buttonStyle(OnboardingPrimaryButtonStyle(isLarge: isLarge))
             .keyboardShortcut(.defaultAction)
     }
 

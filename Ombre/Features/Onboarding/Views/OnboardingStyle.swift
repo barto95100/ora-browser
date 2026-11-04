@@ -2,9 +2,9 @@ import SwiftUI
 
 /// The assistant's colors, outside the skies.
 enum OnboardingInk {
-    /// Text on the night skies.
+    /// Text on the skies.
     static let light = Color(hex: "#FFF6EE")
-    /// Text on the golden-hour sky.
+    /// Text on the peach buttons and badges.
     static let dark = Color(hex: "#2A1240")
     static let muted = Color(hex: "#D4CAF2")
     static let eyebrow = Color(hex: "#FFC9A6")
@@ -67,29 +67,18 @@ extension View {
 
 // MARK: - Buttons
 
-/// The main button: peach to pink with dark text, or dark on the light sky.
+/// The main button: peach to pink with dark text.
 struct OnboardingPrimaryButtonStyle: ButtonStyle {
     var isLarge = false
-    var onLightSky = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: isLarge ? 17 : 16, weight: .black))
-            .foregroundStyle(onLightSky ? Color(hex: "#FFE8D4") : OnboardingInk.dark)
+            .foregroundStyle(OnboardingInk.dark)
             .padding(.horizontal, isLarge ? 30 : 24)
             .frame(height: isLarge ? 52 : 48)
-            .background {
-                if onLightSky {
-                    Capsule().fill(OnboardingInk.dark)
-                } else {
-                    Capsule().fill(OnboardingInk.primaryGradient)
-                }
-            }
-            .shadow(
-                color: onLightSky ? OnboardingInk.dark.opacity(0.3) : Color(hex: "#F06BA8").opacity(0.4),
-                radius: 15,
-                y: 10
-            )
+            .background(Capsule().fill(OnboardingInk.primaryGradient))
+            .shadow(color: Color(hex: "#F06BA8").opacity(0.4), radius: 15, y: 10)
             .brightness(configuration.isPressed ? -0.06 : 0)
             .contentShape(Capsule())
     }
@@ -97,19 +86,14 @@ struct OnboardingPrimaryButtonStyle: ButtonStyle {
 
 /// A translucent button beside the main one.
 struct OnboardingSecondaryButtonStyle: ButtonStyle {
-    var onLightSky = false
-
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .heavy))
-            .foregroundStyle(onLightSky ? OnboardingInk.dark : Color(hex: "#F3EEFF"))
+            .foregroundStyle(Color(hex: "#F3EEFF"))
             .padding(.horizontal, 18)
             .frame(height: 44)
-            .background(Capsule().fill(Color.white.opacity(onLightSky ? 0.5 : 0.06)))
-            .overlay(Capsule().strokeBorder(
-                onLightSky ? OnboardingInk.dark.opacity(0.18) : Color.white.opacity(0.16),
-                lineWidth: 1
-            ))
+            .background(Capsule().fill(Color.white.opacity(0.06)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.16), lineWidth: 1))
             .opacity(configuration.isPressed ? 0.75 : 1)
             .contentShape(Capsule())
     }
@@ -134,7 +118,6 @@ struct OnboardingTextButtonStyle: ButtonStyle {
 struct OnboardingProgressDots: View {
     let count: Int
     let index: Int
-    let onLightSky: Bool
 
     var body: some View {
         HStack(spacing: 8) {
@@ -142,7 +125,7 @@ struct OnboardingProgressDots: View {
                 Capsule()
                     .fill(color(dot))
                     .frame(width: dot == index ? 22 : 8, height: 8)
-                    .shadow(color: dot == index && !onLightSky ? OnboardingInk.peach.opacity(0.7) : .clear, radius: 5)
+                    .shadow(color: dot == index ? OnboardingInk.peach.opacity(0.7) : .clear, radius: 5)
             }
         }
         .accessibilityElement()
@@ -150,9 +133,6 @@ struct OnboardingProgressDots: View {
     }
 
     private func color(_ dot: Int) -> Color {
-        if onLightSky {
-            return dot == index ? OnboardingInk.dark : OnboardingInk.dark.opacity(0.22)
-        }
         if dot == index { return OnboardingInk.peach }
         return dot < index ? OnboardingInk.peach.opacity(0.6) : Color.white.opacity(0.25)
     }

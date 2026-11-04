@@ -1,11 +1,16 @@
 import SwiftUI
 
-/// A step's title and text, the same on every screen.
+/// A step's title and text, the same on every screen. They rise into place
+/// when the screen appears (they fade in only, with Reduce Motion).
 struct OnboardingHeader: View {
     let title: String
     var text: String?
+    /// The welcome screen waits for its logo.
+    var delay: Duration = .zero
 
     @Environment(\.theme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isShown = false
 
     var body: some View {
         VStack(spacing: 8) {
@@ -21,25 +26,33 @@ struct OnboardingHeader: View {
             }
         }
         .frame(maxWidth: 520)
+        .opacity(isShown ? 1 : 0)
+        .offset(y: isShown || reduceMotion ? 0 : 10)
+        .task {
+            do {
+                try await Task.sleep(for: delay)
+            } catch {
+                return
+            }
+            withAnimation(.easeOut(duration: reduceMotion ? 0.2 : 0.45)) { isShown = true }
+        }
     }
 }
 
 // MARK: - 1. Welcome
 
 struct OnboardingWelcomeStep: View {
-    @Environment(\.theme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 28) {
             Spacer()
-            Image("ombre-mark")
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .frame(width: 112, height: 112)
-                .foregroundColor(theme.foreground.opacity(0.85))
-                .accessibilityHidden(true)
-            OnboardingHeader(title: "Welcome to Ombre", text: "A calm, private browser for your Mac.")
+            OmbreAnimatedLogo(size: 128)
+            OnboardingHeader(
+                title: "Welcome to Ombre",
+                text: "A calm, private browser for your Mac.",
+                delay: LogoStage.duration(reduceMotion: reduceMotion)
+            )
             Spacer()
         }
     }

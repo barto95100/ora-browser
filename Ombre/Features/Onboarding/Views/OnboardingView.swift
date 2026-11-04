@@ -23,7 +23,12 @@ struct OnboardingView: View {
             ZStack {
                 stepView(model.flow.current)
                     .id(model.flow.current)
-                    .transition(.opacity)
+                    // Opacity only: the screens hold AppKit controls,
+                    // which don't follow moves.
+                    .transition(.asymmetric(
+                        insertion: .opacity.animation(.easeOut(duration: reduceMotion ? 0.15 : 0.3).delay(0.1)),
+                        removal: .opacity.animation(.easeIn(duration: 0.15))
+                    ))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, 40)
@@ -35,7 +40,9 @@ struct OnboardingView: View {
         }
         .frame(width: 800, height: 600)
         .background(VisualEffectBackground())
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: model.flow.current)
+        // The footer's buttons change in place with Reduce Motion; the screens
+        // keep their own short fade (see the transition).
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: model.flow.current)
         .preferredColorScheme(model.choices.appearance.colorScheme)
         .onDisappear {
             // Closed with the window's button: the defaults, done all the same.

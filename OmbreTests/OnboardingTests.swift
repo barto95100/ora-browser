@@ -290,3 +290,24 @@ struct OnboardingModelTests {
         #expect(OnboardingHandoff.take() == nil)
     }
 }
+
+struct LogoStageTests {
+    @Test func reduceMotionShowsTheFinishedLogoAtOnce() {
+        let timeline = LogoStage.timeline(reduceMotion: true)
+        #expect(timeline.map(\.stage) == [.wave])
+        #expect(LogoStage.duration(reduceMotion: true) == .zero)
+    }
+
+    @Test func stagesAreOrdered() {
+        #expect(LogoStage.hidden < .globe)
+        #expect(LogoStage.globe < .veil)
+        #expect(LogoStage.veil < .wave)
+    }
+
+    @Test func theVeilComesDownAfterTheGlobeThenTheWave() {
+        let timeline = LogoStage.timeline(reduceMotion: false)
+        #expect(timeline.map(\.stage) == [.globe, .veil, .wave])
+        #expect(LogoStage.duration(reduceMotion: false) > .milliseconds(1000))
+        #expect(LogoStage.duration(reduceMotion: false) < .seconds(2))
+    }
+}

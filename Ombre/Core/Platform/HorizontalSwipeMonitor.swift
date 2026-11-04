@@ -24,10 +24,12 @@ final class HorizontalSwipeMonitor {
     ) {
         stop()
         monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-            MainActor.assumeIsolated {
-                guard let self else { return event }
-                return self.process(event, accepts: accepts, handler: handler) ? nil : event
+            // Local monitors run on the main thread. Only a Bool leaves the
+            // isolated closure: NSEvent is not Sendable.
+            let swallowed = MainActor.assumeIsolated {
+                self?.process(event, accepts: accepts, handler: handler) ?? false
             }
+            return swallowed ? nil : event
         }
     }
 

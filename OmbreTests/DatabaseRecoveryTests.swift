@@ -3,6 +3,8 @@ import Foundation
 import SwiftData
 import Testing
 
+/// Serialized: `withoutStandardError` redirects the process-wide standard error.
+@Suite(.serialized)
 struct DatabaseRecoveryTests {
     /// A fresh folder per test, removed afterwards.
     private final class Folder {
@@ -34,6 +36,28 @@ struct DatabaseRecoveryTests {
         func names() throws -> [String] {
             try FileManager.default.contentsOfDirectory(atPath: url.path).sorted()
         }
+    }
+
+    /// Runs `body` with the process's standard error sent to /dev/null: opening
+    /// a corrupt database makes Core Data log errors there, which the CI turns
+    /// into error annotations although the test expects them.
+    private func withoutStandardError<T>(_ body: () throws -> T) rethrows -> T {
+        fflush(stderr)
+        let saved = dup(STDERR_FILENO)
+        let devNull = open("/dev/null", O_WRONLY)
+        guard saved >= 0, devNull >= 0 else {
+            if saved >= 0 { close(saved) }
+            if devNull >= 0 { close(devNull) }
+            return try body()
+        }
+        dup2(devNull, STDERR_FILENO)
+        close(devNull)
+        defer {
+            fflush(stderr)
+            dup2(saved, STDERR_FILENO)
+            close(saved)
+        }
+        return try body()
     }
 
     /// 1 November 2026, 15:30:12 local time.
@@ -91,7 +115,7 @@ struct DatabaseRecoveryTests {
         let folder = try Folder()
         try folder.write("x\n", to: "OmbreData.sqlite")
 
-        let result = DatabaseRecovery.openContainer(at: folder.store, date: date)
+        let result = withoutStandardError { DatabaseRecovery.openContainer(at: folder.store, date: date) }
 
         #expect(result.outcome == .recovered(backup: folder.url.appending(path: backupName)))
         #expect(try folder.read(backupName) == "x\n")
@@ -104,7 +128,9 @@ struct DatabaseRecoveryTests {
         let folder = try Folder()
         try folder.write("x\n", to: "OmbreData.sqlite")
 
-        let result = DatabaseRecovery.openContainer(at: folder.store, mayMoveAside: false, date: date)
+        let result = withoutStandardError {
+            DatabaseRecovery.openContainer(at: folder.store, mayMoveAside: false, date: date)
+        }
 
         #expect(result.outcome == .inMemory(backup: nil))
         #expect(try folder.read("OmbreData.sqlite") == "x\n")

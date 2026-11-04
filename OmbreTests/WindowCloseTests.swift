@@ -14,8 +14,8 @@ extension TabManagerTests {
             try await TabManagerTestWindow.run { window in
                 let first = try await window.openLoaded("first")
                 let second = try await window.openLoaded("second")
-                weak var firstPage = first.browserPage
-                weak var secondPage = second.browserPage
+                weak let firstPage = first.browserPage
+                weak let secondPage = second.browserPage
                 #expect(window.tabManager.cleanupTimer != nil)
                 #expect(window.tabManager.memoryPressureSource != nil)
 
@@ -34,7 +34,7 @@ extension TabManagerTests {
             try await TabManagerTestWindow.run { window in
                 let tab = try await window.openLoaded("opener")
                 tab.openPeek(TabManagerTestWindow.url("peeked"))
-                weak var peekPage = window.tabManager.peek?.page
+                weak let peekPage = window.tabManager.peek?.page
                 #expect(peekPage != nil)
 
                 window.tabManager.tearDown()

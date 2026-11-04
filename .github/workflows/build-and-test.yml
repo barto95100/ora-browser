@@ -77,7 +77,7 @@ jobs:
         run: xcodegen
 
       - name: Cache Swift packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .spm
           key: ${{ runner.os }}-spm-${{ hashFiles('Ombre.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload test results
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: TestResults
           path: ${{ runner.temp }}/TestResults.xcresult

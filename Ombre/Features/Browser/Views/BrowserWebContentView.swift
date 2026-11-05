@@ -17,12 +17,9 @@ struct BrowserWebContentView: View {
                     onSidebarToggle: { sidebarManager.toggleSidebar() }
                 )
                 .zIndex(1)
-                .transition(
-                    .asymmetric(
-                        insertion: .push(from: .top),
-                        removal: .push(from: .bottom)
-                    )
-                )
+                // Its address field is an AppKit view, which doesn't follow a
+                // push: it fades (CLAUDE.md).
+                .transition(.opacity)
             }
 
             HStack(spacing: 0) {
@@ -75,9 +72,9 @@ struct BrowserWebContentView: View {
                 }
 
                 // The tab's note, the space's tasks or today's browsing time,
-                // beside the page. The side slides in and out; from one to the
-                // other it fades (a slide left the note's images, drawn by
-                // AppKit, ahead of the rest).
+                // beside the page. It fades in and out, and from one to the
+                // other: AppKit content (the note's text view and images)
+                // doesn't follow a slide.
                 if let sidePanel = appState.sidePanel, !privacyMode.isPrivate {
                     Group {
                         switch sidePanel {
@@ -87,7 +84,7 @@ struct BrowserWebContentView: View {
                         }
                     }
                     .frame(width: 320)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(.opacity)
                 }
             }
         }

@@ -22,7 +22,8 @@ struct FloatingURLBar: View {
                         .foregroundColor(Color(.separatorColor)),
                     alignment: .bottom
                 )
-                .transition(.move(edge: .top).combined(with: .opacity))
+                // Its address field is an AppKit view: a fade, not a move.
+                .transition(.opacity)
                 .zIndex(1)
             }
 

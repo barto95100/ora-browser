@@ -264,7 +264,8 @@ struct URLBar: View {
                     if isEditing {
                         suggestionsOverlay()
                             .offset(y: 38)
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            // AppKit content (its blurred background): a fade, not a move.
+                            .transition(.opacity)
                     }
                 }
                 .zIndex(1)

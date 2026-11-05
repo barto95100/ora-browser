@@ -155,7 +155,8 @@ jobs:
       - name: Unregister the built app
         if: always() && runner.environment == 'self-hosted'
         run: |
-          app="$RUNNER_WORKSPACE/DerivedData/Build/Products/Debug/Ombre.app"
+          # The tests' app (the "Test" configuration, see `TestHost`).
+          app="$RUNNER_WORKSPACE/DerivedData/Build/Products/Test/Ombre.app"
           lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
           if [ -d "$app" ]; then "$lsregister" -u "$app" || true; fi
 

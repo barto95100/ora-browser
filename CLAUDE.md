@@ -68,6 +68,13 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - **lefthook** : pre-commit SwiftFormat + SwiftLint (erreurs bloquantes : `type_body_length` > 500,
   `file_length` > 800, `identifier_name` < 3 caractères, `large_tuple` > 2 ; avertissement ligne > 120).
   Le pre-push compile l'app (pas les tests) dans `build/DerivedData`.
+- **Tests isolés des données de Ludo** : `xcodebuild test` construit la configuration « Test »
+  (identifiant `com.barto95100.ora.tests`, son propre conteneur) et l'app détecte qu'elle tourne sous les
+  tests (`TestHost`) : base en mémoire, aucune fenêtre ni assistant, service à part dans le trousseau.
+  Un test ne doit jamais agir sur un singleton qui verrait de vraies fenêtres ou de vraies données.
+  Après des tests en local, désinscrire l'app de test (elle se déclare navigateur) :
+  `lsregister -u build/DerivedData/Build/Products/Test/Ombre.app` (`lsregister` est dans
+  `/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/`).
 - **Avant chaque push : lancer les tests** :
   `xcodebuild test -scheme Ombre -destination 'platform=macOS,arch=arm64' 2>&1 | xcbeautify`
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).

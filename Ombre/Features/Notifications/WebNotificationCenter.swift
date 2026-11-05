@@ -23,6 +23,8 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
 
     /// Asks macOS, the first time only, to let Ombre show notifications.
     func requestAuthorizationIfNeeded() {
+        // The tests' app never asks (it would be a new app to the system).
+        guard !TestHost.isActive else { return }
         center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 

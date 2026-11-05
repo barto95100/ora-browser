@@ -47,6 +47,8 @@ enum BrowserPermissionKind {
     case cameraAndMicrophone
     /// Web notifications, see `WebNotificationBridge`.
     case notifications
+    /// The device's location (`navigator.geolocation`).
+    case geolocation
 }
 
 /// A notification a page asked to show (`new Notification(...)`).

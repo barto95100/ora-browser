@@ -1,3 +1,4 @@
+import CoreLocation
 import AppKit
 import Foundation
 @preconcurrency import WebKit
@@ -21,6 +22,50 @@ extension BrowserPage: WKUIDelegate {
         }
     }
 
+    /// A page asks for the device's location: the site's permission in its
+    /// space, asked in the page like the camera. macOS 27's public method;
+    /// before it, WebKit's private delegate method below (the one Safari
+    /// implements), the only way there.
+    @available(macOS 27.0, *)
+    func webView(
+        _ webView: WKWebView,
+        requestGeolocationPermissionFor origin: WKSecurityOrigin,
+        initiatedBy frame: WKFrameInfo,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        requestGeolocation(for: origin, decisionHandler: decisionHandler)
+    }
+
+    /// Before macOS 27 (WKUIDelegatePrivate, macOS 12+): see above.
+    /// `GeolocationPermissionTests` fails if WebKit no longer declares it.
+    @objc(_webView:requestGeolocationPermissionForOrigin:initiatedByFrame:decisionHandler:)
+    func requestGeolocationBeforeMacOS27(
+        _ webView: WKWebView,
+        origin: WKSecurityOrigin,
+        frame: WKFrameInfo,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        requestGeolocation(for: origin, decisionHandler: decisionHandler)
+    }
+
+    static var isLocationDeniedBySystem: Bool {
+        let status = CLLocationManager().authorizationStatus
+        return status == .denied || status == .restricted
+    }
+
+    private func requestGeolocation(
+        for origin: WKSecurityOrigin,
+        decisionHandler: @escaping (WKPermissionDecision) -> Void
+    ) {
+        guard let delegate else {
+            decisionHandler(.deny)
+            return
+        }
+        delegate.browserPage(self, requestPermission: .geolocation, origin: url(of: origin)) { decision in
+            decisionHandler(Self.webKitDecision(decision))
+        }
+    }
+
     /// Answers `navigator.permissions.query()`. Private WebKit delegate method
     /// (WKUIDelegatePrivate, macOS 13+), the one Safari implements: without it,
     /// WebKit's answer ignores the user's per-site decisions. WebKit then adjusts
@@ -37,11 +82,18 @@ extension BrowserPage: WKUIDelegate {
         case "camera": .camera
         case "microphone": .microphone
         case "notifications": .notifications
+        case "geolocation": .geolocation
         default: nil
         }
         guard let permission, let delegate else {
             // Other permissions: WebKit's own default answer.
             completionHandler(.prompt)
+            return
+        }
+        // Location refused to Ombre in macOS's settings: the site can't have
+        // it either, whatever it was allowed.
+        if permission == .geolocation, Self.isLocationDeniedBySystem {
+            completionHandler(.deny)
             return
         }
         let decision = delegate.browserPage(self, queryPermission: permission, origin: url(of: origin))

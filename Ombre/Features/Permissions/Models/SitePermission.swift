@@ -5,6 +5,7 @@ enum SitePermissionType: String, Codable, CaseIterable, Identifiable {
     case camera
     case microphone
     case notifications
+    case location
 
     var id: String {
         rawValue
@@ -91,15 +92,18 @@ struct SitePermissions: Codable, Hashable {
     var camera: SitePermissionState = .ask
     var microphone: SitePermissionState = .ask
     var notifications: SitePermissionState = .ask
+    var location: SitePermissionState = .ask
 
     init(
         camera: SitePermissionState = .ask,
         microphone: SitePermissionState = .ask,
-        notifications: SitePermissionState = .ask
+        notifications: SitePermissionState = .ask,
+        location: SitePermissionState = .ask
     ) {
         self.camera = camera
         self.microphone = microphone
         self.notifications = notifications
+        self.location = location
     }
 
     /// Tolerate missing keys so that capabilities added later decode as `.ask`.
@@ -108,6 +112,7 @@ struct SitePermissions: Codable, Hashable {
         camera = try container.decodeIfPresent(SitePermissionState.self, forKey: .camera) ?? .ask
         microphone = try container.decodeIfPresent(SitePermissionState.self, forKey: .microphone) ?? .ask
         notifications = try container.decodeIfPresent(SitePermissionState.self, forKey: .notifications) ?? .ask
+        location = try container.decodeIfPresent(SitePermissionState.self, forKey: .location) ?? .ask
     }
 
     subscript(type: SitePermissionType) -> SitePermissionState {
@@ -116,6 +121,7 @@ struct SitePermissions: Codable, Hashable {
             case .camera: camera
             case .microphone: microphone
             case .notifications: notifications
+            case .location: location
             }
         }
         set {
@@ -123,6 +129,7 @@ struct SitePermissions: Codable, Hashable {
             case .camera: camera = newValue
             case .microphone: microphone = newValue
             case .notifications: notifications = newValue
+            case .location: location = newValue
             }
         }
     }
@@ -154,6 +161,7 @@ extension SitePermissionType {
         case .camera: "Camera"
         case .microphone: "Microphone"
         case .notifications: "Notifications"
+        case .location: "Location"
         }
     }
 }
@@ -178,6 +186,7 @@ extension BrowserPermissionKind {
         case .microphone: [.microphone]
         case .cameraAndMicrophone: [.camera, .microphone]
         case .notifications: [.notifications]
+        case .geolocation: [.location]
         }
     }
 }

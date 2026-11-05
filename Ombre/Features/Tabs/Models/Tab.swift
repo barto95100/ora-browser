@@ -494,3 +494,29 @@ extension NSColor {
             : String(format: "#%02X%02X%02X", r, g, b)
     }
 }
+
+extension Tab {
+    /// Another window saved this tab: a fetch refreshed its values without
+    /// telling the views reading them. Tells them, without changing anything
+    /// (setting the values again would mark the tab as changed here).
+    func noteChangedElsewhere() {
+        note(\.url)
+        note(\.urlString)
+        note(\.savedURL)
+        note(\.title)
+        note(\.favicon)
+        note(\.faviconLocalFile)
+        note(\.lastAccessedAt)
+        note(\.type)
+        note(\.order)
+        note(\.backgroundColorHex)
+        note(\.splitRightTabID)
+        note(\.splitFraction)
+        note(\.folderID)
+        note(\.parentContainer)
+    }
+
+    private func note(_ keyPath: KeyPath<Tab, some Any>) {
+        _$observationRegistrar.withMutation(of: self, keyPath: keyPath) {}
+    }
+}

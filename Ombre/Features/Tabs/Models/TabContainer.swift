@@ -146,3 +146,24 @@ enum TabReordering {
         return result
     }
 }
+
+extension TabContainer {
+    /// Another window saved this space (or its tabs, folders): a fetch
+    /// refreshed it without telling the views reading it (see `Tab`).
+    func noteChangedElsewhere() {
+        note(\.name)
+        note(\.emoji)
+        note(\.iconSymbol)
+        note(\.colorName)
+        note(\.themeName)
+        note(\.lastAccessedAt)
+        note(\.order)
+        note(\.tabs)
+        note(\.folders)
+        note(\.tasks)
+    }
+
+    private func note(_ keyPath: KeyPath<TabContainer, some Any>) {
+        _$observationRegistrar.withMutation(of: self, keyPath: keyPath) {}
+    }
+}

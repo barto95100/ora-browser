@@ -38,3 +38,18 @@ class Folder: ObservableObject, Identifiable {
         self.parentContainer = container
     }
 }
+
+extension Folder {
+    /// Another window saved this folder: tells the views reading it (see `Tab`).
+    func noteChangedElsewhere() {
+        note(\.name)
+        note(\.isOpened)
+        note(\.order)
+        note(\.parentID)
+        note(\.parentContainer)
+    }
+
+    private func note(_ keyPath: KeyPath<Folder, some Any>) {
+        _$observationRegistrar.withMutation(of: self, keyPath: keyPath) {}
+    }
+}

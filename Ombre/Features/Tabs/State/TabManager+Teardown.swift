@@ -8,6 +8,7 @@ extension TabManager {
     func tearDown() {
         isTornDown = true
         TabCleaner.shared.unregister(self)
+        stopSyncingWithOtherWindows()
         memoryPressureSource?.cancel()
         memoryPressureSource = nil
 

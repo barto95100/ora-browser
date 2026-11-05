@@ -63,6 +63,16 @@ struct FolderItem: View {
             }
         }
         .onHover { isHovering = $0 }
+        // One element: a button that opens or closes the folder (its name
+        // field stays reachable while it is renamed).
+        .accessibilityElement(children: isRenaming ? .contain : .ignore)
+        .accessibilityLabel(folder.name)
+        .accessibilityValue(folder.isOpened ? "Open" : "Closed")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction {
+            guard !isRenaming else { return }
+            tabManager.toggleFolder(folder)
+        }
         .contextMenu {
             Button(action: startRenaming) {
                 Label("Rename Folder", systemImage: "pencil")

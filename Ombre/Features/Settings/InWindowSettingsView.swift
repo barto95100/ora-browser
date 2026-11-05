@@ -80,6 +80,7 @@ struct InWindowSettingsView: View {
             }
             .buttonStyle(.plain)
             .help("Close Settings (⌘,)")
+            .accessibilityLabel("Close Settings")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)

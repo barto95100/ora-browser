@@ -72,6 +72,12 @@ struct SidebarURLDisplay: View {
                             startWheelAnimation: $startWheelAnimation
                         )
                     }
+                    // The address alone, as a button that edits it (VoiceOver).
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Address")
+                    .accessibilityValue(tab.url.absoluteString)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { openLauncher() }
                 }
                 Spacer(minLength: 0)
 
@@ -101,6 +107,8 @@ struct SidebarURLDisplay: View {
                 Text("Search or enter URL")
                     .font(.system(size: 14))
                     .foregroundColor(theme.mutedForeground)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { openLauncher() }
                 Spacer(minLength: 0)
             }
         }

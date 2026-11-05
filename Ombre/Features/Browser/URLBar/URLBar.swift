@@ -379,6 +379,13 @@ struct URLBar: View {
             .font(.system(size: 14))
             .foregroundColor(buttonForegroundColor)
             .frame(maxWidth: .infinity, alignment: .leading)
+            // The address alone, as a button that edits it (VoiceOver); the
+            // bar's other buttons stay reachable.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Address")
+            .accessibilityValue(tab.url.absoluteString)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { startEditing() }
 
             if privacyMode.isPrivate {
                 PrivateBrowsingBadge(foregroundColor: buttonForegroundColor)

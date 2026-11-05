@@ -137,6 +137,18 @@ struct SplitTabItem: View {
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
         .background(isFocused ? theme.activeTabBackground : .clear, in: .rect(cornerRadius: 7))
+        // Each side, a tab of its own for VoiceOver (the row's tap picks a
+        // side by where it lands).
+        .tabAccessibility(tab: tab, isSelected: isFocused, activate: { onSelect(tab) }, actions: [
+            (name: "Close Tab", action: { onClose(tab) }),
+            (name: tab.type == .pinned ? "Unpin Tab" : "Pin Tab", action: { onPinToggle(tab) }),
+            (name: tab.type == .fav ? "Remove from Favorites" : "Add to Favorites", action: { onFavoriteToggle(tab) }),
+            (name: "Separate Tabs", action: { tabManager.separateSplit(containing: left) }),
+            (name: "Close Both Tabs", action: {
+                onClose(right)
+                onClose(left)
+            })
+        ])
         .onHover { hovering in
             if hovering {
                 hoveredTabID = tab.id

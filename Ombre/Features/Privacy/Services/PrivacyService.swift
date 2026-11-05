@@ -49,11 +49,33 @@ class PrivacyService {
         )
     }
 
-    static func clearCookiesForHost(for host: String, container: TabContainer, completion: (() -> Void)? = nil) {
-        self.clearData(container, [.cookies], host: host, completion)
+    /// A tab's website: in the tab's own store (its private window's
+    /// session in private), or its space's when the tab isn't loaded.
+    static func clearCookiesForHost(for host: String, tab: Tab, completion: (() -> Void)? = nil) {
+        clearSite(host, [.cookies], tab: tab, completion)
     }
 
-    static func clearCacheForHost(for host: String, container: TabContainer, completion: (() -> Void)? = nil) {
-        self.clearData(container, [.cache], host: host, completion)
+    static func clearCacheForHost(for host: String, tab: Tab, completion: (() -> Void)? = nil) {
+        clearSite(host, [.cache], tab: tab, completion)
+    }
+
+    private static func clearSite(
+        _ host: String,
+        _ types: Set<BrowserWebsiteDataType>,
+        tab: Tab,
+        _ completion: (() -> Void)?
+    ) {
+        if let page = tab.browserPage {
+            page.clearWebsiteData(ofTypes: types, forHost: host, completion: completion)
+        } else {
+            // The same store its page would use: the space's, or its private
+            // window's session.
+            BrowserEngine.shared.makeProfile(
+                identifier: tab.container.id,
+                isPrivate: tab.isPrivate,
+                privateSession: tab.tabManager?.privateSessionID
+            )
+            .clearData(ofTypes: types, forHost: host, completion: completion)
+        }
     }
 }

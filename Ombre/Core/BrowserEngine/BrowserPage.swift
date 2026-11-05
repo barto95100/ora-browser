@@ -142,6 +142,18 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         }
     }
 
+    /// Clears this page's own store (a private window's session included),
+    /// all of it or one website's.
+    func clearWebsiteData(
+        ofTypes types: Set<BrowserWebsiteDataType>,
+        forHost host: String?,
+        completion: (() -> Void)? = nil
+    ) {
+        BrowserEngineProfile.clearData(
+            in: webView.configuration.websiteDataStore, ofTypes: types, forHost: host, completion: completion
+        )
+    }
+
     var contentView: NSView {
         webView
     }

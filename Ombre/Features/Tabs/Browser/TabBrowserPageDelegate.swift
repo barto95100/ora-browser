@@ -56,6 +56,23 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         return .cancel
     }
 
+    /// A `target="_blank"` link clicked in a pinned or favorite tab, to
+    /// another site: Peek when the setting asks for it, like a plain link.
+    func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool {
+        guard let tab, SettingsStore.shared.pinnedLinkBehavior == .peek,
+              PeekPolicy.opensInPeek(
+                  tabType: tab.type,
+                  isLinkClick: true,
+                  modifierFlags: modifierFlags,
+                  from: tab.url,
+                  to: url,
+                  isEnabled: true
+              )
+        else { return false }
+        tab.openPeek(url)
+        return true
+    }
+
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
         guard let tab, let tabManager = tab.tabManager else { return }
         MainActor.assumeIsolated {

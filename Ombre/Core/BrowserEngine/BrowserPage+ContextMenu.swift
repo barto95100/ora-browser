@@ -92,13 +92,17 @@ extension BrowserPage {
         NSApp.sendAction(action, to: opening.original.target, from: opening.original)
     }
 
+    /// An item of the context menu just asked for a new tab.
+    var hasPendingNewTabDisposition: Bool {
+        guard let pending = pendingNewTabDisposition else { return false }
+        return Date().timeIntervalSince(pending.date) < 2
+    }
+
     /// How the new tab WebKit asks for opens: as chosen in the context menu
     /// just before (WebKit asks a moment later), or in front.
     func takeNewTabDisposition() -> BrowserNewTabDisposition {
         defer { pendingNewTabDisposition = nil }
-        guard let pending = pendingNewTabDisposition, Date().timeIntervalSince(pending.date) < 2 else {
-            return .foreground
-        }
+        guard hasPendingNewTabDisposition, let pending = pendingNewTabDisposition else { return .foreground }
         return pending.disposition
     }
 }

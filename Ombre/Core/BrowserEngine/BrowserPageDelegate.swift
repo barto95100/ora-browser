@@ -7,6 +7,9 @@ protocol BrowserPageDelegate: AnyObject {
         decidePolicyFor navigationAction: BrowserNavigationAction
     ) -> BrowserNavigationActionDisposition
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition)
+    /// The user clicked a link that opens a new window (`target="_blank"`):
+    /// true if the delegate opened it itself (Peek), else it opens in a new tab.
+    func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent)
     /// The page's address changed, including same-page navigations.
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?)
@@ -80,6 +83,9 @@ extension BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {}
 
     func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {}
+    func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool {
+        false
+    }
     func browserPage(
         _ page: BrowserPage,
         authenticate request: HTTPAuthenticationRequest,

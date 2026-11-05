@@ -71,6 +71,9 @@ struct SitePermissionPromptView: View {
         if request.types == [.notifications] {
             return "wants to send you notifications"
         }
+        if request.types == [.location] {
+            return "wants to know your location"
+        }
         return "wants to use your \(capabilityDescription)"
     }
 
@@ -85,6 +88,9 @@ struct SitePermissionPromptView: View {
     private var symbolName: String {
         if request.types.contains(.notifications) {
             return "bell.fill"
+        }
+        if request.types.contains(.location) {
+            return "location.fill"
         }
         return request.types.contains(.camera) ? "video.fill" : "mic.fill"
     }

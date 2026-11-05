@@ -62,6 +62,8 @@ targets:
           NSAllowsArbitraryLoadsInWebContent: true
         NSCameraUsageDescription: "Allows websites to use the camera, for example during video calls."
         NSMicrophoneUsageDescription: "Allows websites to use the microphone, for example during calls or dictation."
+        NSLocationUsageDescription: "Lets websites you approve know your location, for example for maps or nearby stores."
+        NSLocationWhenInUseUsageDescription: "Lets websites you approve know your location, for example for maps or nearby stores."
         SUEnableAutomaticChecks: NO
         SUEnableInstallerLauncherService: YES
         CFBundleURLTypes:

@@ -86,6 +86,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Allows websites to use the camera, for example during video calls.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Lets websites you approve know your location, for example for maps or nearby stores.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Lets websites you approve know your location, for example for maps or nearby stores.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allows websites to use the microphone, for example during calls or dictation.</string>
 	<key>NSUserActivityTypes</key>

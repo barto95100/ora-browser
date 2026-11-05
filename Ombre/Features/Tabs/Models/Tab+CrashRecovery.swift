@@ -11,9 +11,8 @@ extension Tab {
         // Whatever the dead page was showing or asking for is gone.
         cancelPermissionRequest()
         passwordCoordinator?.clearAutofillState()
-        if hoveredLinkURL != nil { hoveredLinkURL = nil }
+        runtime?.setHoveredLink(nil)
         isLoading = false
-        loadingProgress = 0
         isReloadingAfterCrash = false
         if showsCrashRecoveryNotice { showsCrashRecoveryNotice = false }
         if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }

@@ -50,12 +50,7 @@ class Tab: ObservableObject, Identifiable {
     @Transient var browserPage: BrowserPage?
     @Transient var pageDelegate: TabBrowserPageDelegate?
     @Transient @Published var isWebViewReady: Bool = false
-    @Transient @Published var loadingProgress: Double = 10.0
     @Transient var maybeIsActive = false
-    @Transient @Published var hasNavigationError: Bool = false
-    @Transient @Published var navigationError: Error?
-    @Transient @Published var failedURL: URL?
-    @Transient @Published var hoveredLinkURL: String?
     @Transient var isPrivate: Bool = false
     @Transient var passwordCoordinator: PasswordAutofillCoordinator?
     @Transient @Published var passwordOverlayState: PasswordAutofillOverlayState?
@@ -370,27 +365,40 @@ class Tab: ObservableObject, Identifiable {
         pageDelegate = nil
         isWebViewReady = false
         endFileAccess()
+        MainActor.assumeIsolated { runtime?.reset() }
     }
 
+    /// The tab's state in its window, if it has one (see `TabRuntime`):
+    /// reading it never makes one.
+    @MainActor var runtime: TabRuntime? {
+        tabManager?.existingRuntime(for: id)
+    }
+
+    /// Shown by the page's error view; only while the tab has a page in an
+    /// open window (an error arriving after it went is dropped).
     func setNavigationError(_ error: Error, for url: URL?) {
         DispatchQueue.main.async {
-            self.hasNavigationError = true
-            self.navigationError = error
-            self.failedURL = url
+            MainActor.assumeIsolated {
+                guard self.browserPage != nil, let tabManager = self.tabManager, !tabManager.isTornDown else { return }
+                tabManager.runtime(for: self).navigationFailed(error, url: url)
+            }
         }
     }
 
     func clearNavigationError() {
         DispatchQueue.main.async {
-            self.hasNavigationError = false
-            self.navigationError = nil
-            self.failedURL = nil
+            MainActor.assumeIsolated { self.runtime?.clearNavigationFailure() }
         }
     }
 
-    func retryNavigation() {
+    /// The address that failed to load, if the page shows an error.
+    @MainActor var failedURL: URL? {
+        runtime?.navigationFailure?.url
+    }
+
+    @MainActor func retryNavigation() {
         // A crashed page reloads in place, keeping its back/forward history.
-        if navigationError is PageCrashError {
+        if runtime?.navigationFailure?.error is PageCrashError {
             crashRecovery.recordReload()
             browserPage?.reload()
             return
@@ -404,7 +412,7 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
-    func continueToInsecureSite() {
+    @MainActor func continueToInsecureSite() {
         let url = failedURL ?? self.url
         guard let host = url.host else { return }
         browserPage?.bypassSSL(for: host)

@@ -98,6 +98,11 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     var privateSiteDecisions = PrivateSiteDecisions()
     private var privateWindowsObserver: NSObjectProtocol?
     private var scanTask: Task<Void, Never>?
+    /// Extensions settings views on screen now: only then is a return to
+    /// Ombre (from the App Store) worth a new scan.
+    private(set) var candidateViewers = 0
+    /// Scans started, for the tests.
+    private(set) var scansStarted = 0
 
     override private init() {
         let configuration = WKWebExtensionController.Configuration(identifier: Self.storeIdentifier)
@@ -163,9 +168,10 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             let handled = MainActor.assumeIsolated { self.handleShortcut(keyEvent) }
             return handled ? nil : event
         }
-        // Back from the App Store: a new app may bring an extension.
+        // Back from the App Store, with the extensions' settings open: a new
+        // app may bring an extension. Not at every ⌘Tab otherwise.
         center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { self.refreshCandidates() }
+            MainActor.assumeIsolated { self.appBecameActive() }
         }
     }
 
@@ -175,8 +181,23 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         installed.compactMap { item in item.context.map { (record: item.record, context: $0) } }
     }
 
+    /// The extensions' settings appear (and scan) or go.
+    func candidatesAppeared() {
+        candidateViewers += 1
+        refreshCandidates()
+    }
+
+    func candidatesDisappeared() {
+        candidateViewers = max(0, candidateViewers - 1)
+    }
+
+    func appBecameActive() {
+        if candidateViewers > 0 { refreshCandidates() }
+    }
+
     /// Looks for Safari extensions in the installed apps, off the main thread.
     func refreshCandidates() {
+        scansStarted += 1
         scanTask?.cancel()
         scanTask = Task {
             let found = await Task.detached(priority: .utility) { SafariExtensionScanner.scan() }.value
@@ -243,7 +264,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             guard !own.isEmpty else { return }
             controller.removeData(ofTypes: types, from: own) {}
         }
-        refreshCandidates()
+        // Its app's extension can be offered again, if the settings show it.
+        if candidateViewers > 0 { refreshCandidates() }
     }
 
     /// Clicks the extension's button: its popup under `anchor`, or its action.

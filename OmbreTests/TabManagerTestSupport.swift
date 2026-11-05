@@ -205,5 +205,7 @@ final class TabManagerTestWindow {
         for id in spaceIDs {
             SettingsStore.shared.removeContainerSettings(for: id)
         }
+        // Out of the app's tab cleaner, like a closed window.
+        tabManager.tearDown()
     }
 }

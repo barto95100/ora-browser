@@ -32,8 +32,6 @@ class TabManager: ObservableObject {
     /// Note: Could be made injectable via init parameter if preferred
     let tabSearchingService: TabSearchingProviding
 
-    /// Stopped with the window, see `tearDown()`.
-    var cleanupTimer: Timer?
     /// The window closed: its pages are gone and must not come back.
     var isTornDown = false
     /// macOS memory pressure events, see `TabManager+MemoryPressure.swift`.
@@ -64,8 +62,8 @@ class TabManager: ObservableObject {
         // undone through the window's undo manager instead.
         initializeActiveContainerAndTab()
 
-        // Start automatic cleanup timer (every minute)
-        startCleanupTimer()
+        // Old tabs unloaded and closed with the other windows' (one timer).
+        TabCleaner.shared.register(self)
         startMemoryPressureMonitoring()
     }
 
@@ -341,7 +339,6 @@ class TabManager: ObservableObject {
     }
 
     deinit {
-        cleanupTimer?.invalidate()
         memoryPressureSource?.cancel()
     }
 

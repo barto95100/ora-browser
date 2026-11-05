@@ -16,7 +16,7 @@ extension TabManagerTests {
                 let second = try await window.openLoaded("second")
                 weak let firstPage = first.browserPage
                 weak let secondPage = second.browserPage
-                #expect(window.tabManager.cleanupTimer != nil)
+                #expect(TabCleaner.shared.isCleaning(window.tabManager))
                 #expect(window.tabManager.memoryPressureSource != nil)
 
                 window.tabManager.tearDown()
@@ -24,7 +24,7 @@ extension TabManagerTests {
                 #expect(first.browserPage == nil)
                 #expect(second.browserPage == nil)
                 #expect(!first.isWebViewReady)
-                #expect(window.tabManager.cleanupTimer == nil)
+                #expect(!TabCleaner.shared.isCleaning(window.tabManager))
                 #expect(window.tabManager.memoryPressureSource == nil)
                 await window.waitUntil("pages freed") { firstPage == nil && secondPage == nil }
             }
@@ -63,7 +63,7 @@ extension TabManagerTests {
                 try await window.openLoaded("once")
                 window.tabManager.tearDown()
                 window.tabManager.tearDown()
-                #expect(window.tabManager.cleanupTimer == nil)
+                #expect(!TabCleaner.shared.isCleaning(window.tabManager))
             }
         }
     }
@@ -116,7 +116,7 @@ extension TabManagerTests {
                 window.close()
 
                 #expect(tab.browserPage == nil)
-                #expect(managers.tabManager.cleanupTimer == nil)
+                #expect(!TabCleaner.shared.isCleaning(managers.tabManager))
                 window.contentView = nil
             }
         }
@@ -136,7 +136,7 @@ extension TabManagerTests {
                 other.close()
 
                 #expect(tab.browserPage != nil)
-                #expect(managers.tabManager.cleanupTimer != nil)
+                #expect(TabCleaner.shared.isCleaning(managers.tabManager))
                 // Its own closing does reach it.
                 window.close()
                 #expect(tab.browserPage == nil)

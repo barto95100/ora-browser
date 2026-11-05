@@ -15,6 +15,40 @@ import SwiftUI
         }
     }
 
+    /// What the pager does with a new set of pages and selection. An animated
+    /// transition only to show another page the user asked for, with pages
+    /// in place and on screen; never while one runs (the new state waits for
+    /// its end); never with no page or an index out of range (AppKit then
+    /// crashes inside its animation).
+    enum PagerUpdate: Equatable {
+        case none
+        /// No page left: the pager shows nothing.
+        case clear
+        case show(index: Int)
+        case animate(index: Int)
+        /// A transition runs: applied once it ends.
+        case wait
+
+        static func plan(
+            currentCount: Int,
+            currentIndex: Int,
+            newCount: Int,
+            newIndex: Int,
+            pagesChanged: Bool,
+            wantsAnimation: Bool,
+            isAnimating: Bool,
+            isOnScreen: Bool
+        ) -> PagerUpdate {
+            if isAnimating { return .wait }
+            guard newCount > 0 else { return currentCount == 0 ? .none : .clear }
+            let index = min(max(newIndex, 0), newCount - 1)
+            if !pagesChanged, index == currentIndex { return .none }
+            let canAnimate = wantsAnimation && !pagesChanged && isOnScreen
+                && currentCount == newCount && currentIndex >= 0 && currentIndex < currentCount
+            return canAnimate ? .animate(index: index) : .show(index: index)
+        }
+    }
+
     /// A ``NSViewControllerRepresentable`` for showing ``NSPageController``.
     /// Use ``init(selection:pageObjects:idKeyPath:contentView:)`` to initialize a view and add it to a SwiftUI view
     /// hierarchy.
@@ -67,6 +101,8 @@ import SwiftUI
                 }
             }
             controller.transitionStyle = .horizontalStrip
+            // Its first page is the selected one, not page 0 animated to it.
+            controller.initialIndex = selection.wrappedValue
             return controller
         }
 
@@ -75,21 +111,13 @@ import SwiftUI
                 return
             }
 
-            if controller.pageObjects != pageObjects || controller.selectedIndex != selection.wrappedValue {
-                let selectionAnimation = selection.transaction.animation
-                let contextAnimation = context.transaction.animation
-                let animated = selectionAnimation != nil || contextAnimation != nil
-                logger.log(
-                    "updateNSViewController new \(selection.wrappedValue), count: \(pageObjects.count), animated: \(animated)"
-                )
-                logger.log(
-                    "updateNSViewController old \(controller.selectedIndex), count: \(controller.pageObjects.count)"
-                )
-
-                controller.pageObjects = pageObjects
-                controller.updateDataSource()
-                controller.updateSelectedIndex(selection.wrappedValue, animated: animated)
-            }
+            let selectionAnimation = selection.transaction.animation
+            let contextAnimation = context.transaction.animation
+            controller.request(
+                pageObjects: pageObjects,
+                index: selection.wrappedValue,
+                animated: selectionAnimation != nil || contextAnimation != nil
+            )
         }
     }
 
@@ -118,7 +146,22 @@ import SwiftUI
 
         var onSelectedIndexChanged: ((Int) -> Void)?
         var onContentPrepared: ((T) -> Void)?
+        var initialIndex = 0
         private var previousBoundsSize: CGSize = .zero
+        private(set) var isAnimating = false
+
+        /// Pages and selection SwiftUI asked for.
+        struct Request {
+            let pages: [T]
+            let index: Int
+            let animated: Bool
+        }
+
+        /// The latest request, applied outside of the SwiftUI update that
+        /// asked (a transition started while a page's view lays out found no
+        /// page to animate), or after a transition.
+        private var requested: Request?
+        private var isApplyScheduled = false
 
         override func loadView() {
             let view = ResizeAwareNSView()
@@ -135,6 +178,9 @@ import SwiftUI
             super.viewDidLoad()
             self.delegate = self
             self.updateDataSource()
+            if !pageObjects.isEmpty {
+                self.selectedIndex = min(max(initialIndex, 0), pageObjects.count - 1)
+            }
             self.view.wantsLayer = true
         }
 
@@ -156,10 +202,49 @@ import SwiftUI
             logger.log("NSPageView updateDataSource \(self.arrangedObjects.count)")
         }
 
-        func updateSelectedIndex(_ index: Int, animated: Bool) {
-            logger.log("NSPageView updateSelectedIndex \(index), animated \(animated)")
+        func request(pageObjects pages: [T], index: Int, animated: Bool) {
+            requested = Request(pages: pages, index: index, animated: animated)
+            guard !isApplyScheduled else { return }
+            isApplyScheduled = true
+            DispatchQueue.main.async { [weak self] in
+                self?.isApplyScheduled = false
+                self?.applyRequest()
+            }
+        }
 
-            if animated {
+        private func applyRequest() {
+            guard let requested else { return }
+            let pagesChanged = !Self.samePages(pageObjects, requested.pages, idFromObject)
+            let plan = PagerUpdate.plan(
+                currentCount: arrangedObjects.count,
+                currentIndex: selectedIndex,
+                newCount: requested.pages.count,
+                newIndex: requested.index,
+                pagesChanged: pagesChanged,
+                wantsAnimation: requested.animated,
+                isAnimating: isAnimating,
+                isOnScreen: view.window != nil && view.bounds.width > 0
+            )
+            logger.log("NSPageView \(String(describing: plan)), \(requested.pages.count) pages")
+            switch plan {
+            case .wait:
+                return
+            case .none:
+                self.requested = nil
+            case .clear:
+                self.requested = nil
+                pageObjects = []
+                updateDataSource()
+            case let .show(index):
+                self.requested = nil
+                pageObjects = requested.pages
+                updateDataSource()
+                selectedIndex = index
+                completeTransition()
+            case let .animate(index: index):
+                self.requested = nil
+                pageObjects = requested.pages
+                isAnimating = true
                 NSAnimationContext.runAnimationGroup { context in
                     // Short and easing out, like the downloads panel.
                     context.duration = 0.3
@@ -167,11 +252,17 @@ import SwiftUI
                     self.animator().selectedIndex = index
                 } completionHandler: {
                     self.completeTransition()
+                    self.isAnimating = false
+                    // What was asked meanwhile.
+                    self.applyRequest()
                 }
-            } else {
-                self.selectedIndex = index
-                self.completeTransition()
             }
+        }
+
+        /// Same pages in the same order, by identifier.
+        private static func samePages(_ lhs: [T], _ rhs: [T], _ identifier: ((T) -> String)?) -> Bool {
+            guard let identifier else { return false }
+            return lhs.map(identifier) == rhs.map(identifier)
         }
 
         func pageController(
@@ -198,8 +289,11 @@ import SwiftUI
             return controller
         }
 
+        /// A page reached (a swipe at the ends): told back, unless the pager
+        /// is still on its way to another one asked for.
         func pageController(_ pageController: NSPageController, didTransitionTo object: Any) {
             DispatchQueue.main.async {
+                guard !self.isAnimating, self.requested == nil else { return }
                 self.onSelectedIndexChanged?(self.selectedIndex)
             }
         }

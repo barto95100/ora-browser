@@ -89,7 +89,9 @@ extension BrowserPage: WKUIDelegate {
                 BrowserPopupWindow.open(
                     configuration: configuration,
                     windowFeatures: windowFeatures,
-                    openerWindow: webView.window
+                    openerWindow: webView.window,
+                    opener: self,
+                    openerOrigin: PopupTitle.origin(of: navigationAction.sourceFrame)
                 )
             }
         }

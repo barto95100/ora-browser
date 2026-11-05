@@ -234,10 +234,7 @@ extension BrowserPage: WKNavigationDelegate {
     ) {
         // Shown unless WebKit can't, or the server says it is a file to save
         // ("Content-Disposition: attachment"), like Safari.
-        let isAttachment = (navigationResponse.response as? HTTPURLResponse)?
-            .value(forHTTPHeaderField: "Content-Disposition")?
-            .trimmingCharacters(in: .whitespaces).lowercased().hasPrefix("attachment") ?? false
-        if navigationResponse.canShowMIMEType, !isAttachment {
+        if !BrowserDownloadPolicy.isDownload(navigationResponse) {
             isDownloadNavigation = false
             originalURL = nil
             decisionHandler(.allow)

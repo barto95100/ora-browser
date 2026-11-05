@@ -56,6 +56,13 @@ protocol BrowserPageDelegate: AnyObject {
     /// The page's theme color (`<meta name="theme-color">`) changed; nil when
     /// it declares none.
     func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?)
+    /// The server asks for a name and password: `completion` gets them, or
+    /// nil (the page shows the server's refusal). Called once each.
+    func browserPage(
+        _ page: BrowserPage,
+        authenticate request: HTTPAuthenticationRequest,
+        completion: @escaping (URLCredential?) -> Void
+    )
 }
 
 extension BrowserPageDelegate {
@@ -73,6 +80,13 @@ extension BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {}
 
     func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {}
+    func browserPage(
+        _ page: BrowserPage,
+        authenticate request: HTTPAuthenticationRequest,
+        completion: @escaping (URLCredential?) -> Void
+    ) {
+        completion(nil)
+    }
 
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {}
 

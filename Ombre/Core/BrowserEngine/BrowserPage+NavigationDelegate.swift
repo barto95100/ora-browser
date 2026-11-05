@@ -181,8 +181,48 @@ extension BrowserPage: WKNavigationDelegate {
            )
         {
             completionHandler(.useCredential, URLCredential(trust: serverTrust))
+        } else if authenticate(challenge, completionHandler: completionHandler) {
+            return
         } else {
             completionHandler(.performDefaultHandling, nil)
+        }
+    }
+
+    /// A login the server asks for (HTTP Basic, Digest, NTLM): asked to the
+    /// user through the delegate. False for any other challenge.
+    private func authenticate(
+        _ challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) -> Bool {
+        let space = challenge.protectionSpace
+        // A proxy's login stays WebKit's (the sheet speaks of a site).
+        guard !space.isProxy() else { return false }
+        switch HTTPAuthentication.decision(
+            method: space.authenticationMethod, previousFailureCount: challenge.previousFailureCount
+        ) {
+        case .defaultHandling:
+            return false
+        case .giveUp:
+            completionHandler(.performDefaultHandling, nil)
+            return true
+        case .ask:
+            guard let delegate else {
+                completionHandler(.performDefaultHandling, nil)
+                return true
+            }
+            let request = HTTPAuthenticationRequest(
+                host: space.host,
+                realm: space.realm,
+                isSecure: space.receivesCredentialSecurely,
+                previousFailureCount: challenge.previousFailureCount,
+                proposedUser: challenge.proposedCredential?.user
+            )
+            delegate.browserPage(self, authenticate: request) { credential in
+                // No name and password: the server's refusal shows, as when
+                // the login is cancelled in Safari.
+                completionHandler(credential == nil ? .performDefaultHandling : .useCredential, credential)
+            }
+            return true
         }
     }
 

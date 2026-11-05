@@ -46,3 +46,24 @@ final class SpaceTask {
         subtasks.sorted { $0.order < $1.order }
     }
 }
+
+extension SpaceTask {
+    /// Another window saved this task: tells the views reading it (see `Tab`).
+    func noteChangedElsewhere() {
+        note(\.title)
+        note(\.isDone)
+        note(\.completedAt)
+        note(\.dueDate)
+        note(\.reminderDate)
+        note(\.pageURLString)
+        note(\.pageTitle)
+        note(\.order)
+        note(\.parent)
+        note(\.subtasks)
+        note(\.container)
+    }
+
+    private func note(_ keyPath: KeyPath<SpaceTask, some Any>) {
+        _$observationRegistrar.withMutation(of: self, keyPath: keyPath) {}
+    }
+}

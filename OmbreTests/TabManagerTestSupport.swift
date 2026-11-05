@@ -32,8 +32,10 @@ final class TabManagerTestWindow {
     /// Spaces whose settings to remove at the end, deleted ones included.
     private var spaceIDs: Set<UUID> = []
 
-    init() {
-        modelContainer = DatabaseRecovery.inMemoryContainer()
+    /// A window on a database of its own, or on `other`'s (another window of
+    /// the same app).
+    init(sharingDatabaseWith other: TabManagerTestWindow? = nil) {
+        modelContainer = other?.modelContainer ?? DatabaseRecovery.inMemoryContainer()
         modelContext = ModelContext(modelContainer)
         mediaController = MediaController()
         downloadManager = DownloadManager(modelContainer: modelContainer, modelContext: modelContext)
@@ -57,6 +59,20 @@ final class TabManagerTestWindow {
             throw error
         }
         await window.tearDown()
+    }
+
+    /// Runs `body` with two windows on the same database.
+    static func runTwo(_ body: (TabManagerTestWindow, TabManagerTestWindow) async throws -> Void) async throws {
+        try await run { first in
+            let second = TabManagerTestWindow(sharingDatabaseWith: first)
+            do {
+                try await body(first, second)
+            } catch {
+                await second.tearDown()
+                throw error
+            }
+            await second.tearDown()
+        }
     }
 
     // MARK: - Spaces

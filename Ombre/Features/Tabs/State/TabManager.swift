@@ -40,6 +40,9 @@ class TabManager: ObservableObject {
     var recentlyClosedTabs: [ClosedTabSnapshot] = []
     /// The loaded tabs' state in this window (see `TabRuntime`).
     var runtimes: [UUID: TabRuntime] = [:]
+    /// Other windows' saves (see `TabManager+WindowSync`).
+    var windowSyncObserver: NSObjectProtocol?
+    var pendingSync: PendingSync?
     let maxRecentlyClosedTabs = 5
 
     init(
@@ -67,6 +70,7 @@ class TabManager: ObservableObject {
         // Old tabs unloaded and closed with the other windows' (one timer).
         TabCleaner.shared.register(self)
         startMemoryPressureMonitoring()
+        startSyncingWithOtherWindows()
     }
 
     // MARK: - Public API's
@@ -343,6 +347,7 @@ class TabManager: ObservableObject {
 
     deinit {
         memoryPressureSource?.cancel()
+        if let windowSyncObserver { NotificationCenter.default.removeObserver(windowSyncObserver) }
     }
 
     /// Activate a tab by its persistent id. If the tab is in a

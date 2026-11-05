@@ -76,11 +76,10 @@ extension TabManagerTests {
                 let work = window.createSpace("Work")
                 window.addUnloadedTab("work", order: 1, in: work)
                 window.tabManager.activateContainer(defaultSpace)
-                window.addUnloadedTab("stays", order: 1, in: defaultSpace)
+                let stays = window.addUnloadedTab("stays", order: 1, in: defaultSpace)
                 let moved = try await window.openLoaded("moved")
                 window.tabManager.togglePinTab(moved)
                 window.tabManager.createFolder(in: defaultSpace, with: moved)
-                let order = moved.order
 
                 window.tabManager.moveTabToContainer(moved, toContainer: work)
 
@@ -89,11 +88,61 @@ extension TabManagerTests {
                 #expect(!defaultSpace.tabs.contains { $0.id == moved.id })
                 #expect(moved.folderID == nil)
                 #expect(moved.type == .pinned)
-                #expect(moved.order == order)
-                // BUG: the moved tab stays active while the active space is still
-                // the old one: the window shows a tab of a space it does not show.
-                #expect(window.tabManager.activeTab?.id == moved.id)
+                // Last of the space's pinned tabs.
+                #expect(work.visiblePinnedTabs(activeTabID: nil).last?.id == moved.id)
+                // The window stays in its space and shows its next tab (before:
+                // it kept showing the moved tab, of a space it didn't show).
                 #expect(window.tabManager.activeContainer?.id == defaultSpace.id)
+                #expect(window.tabManager.activeTab?.id == stays.id)
+                #expect(stays.browserPage != nil)
+                #expect(!moved.maybeIsActive)
+            }
+        }
+    }
+
+    /// Moving tabs of each section to another space.
+    @MainActor
+    struct MoveToSpace {
+        @Test func aNormalTabGoesOnTopOfTheOtherSpace() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let work = window.createSpace("Work")
+                let there = window.addUnloadedTab("there", order: 7, in: work)
+                let tab = window.addUnloadedTab("tab", order: 1, in: space)
+                window.addUnloadedTab("other", order: 2, in: space)
+
+                window.tabManager.moveTabToContainer(tab, toContainer: work)
+
+                #expect(tab.order > there.order)
+            }
+        }
+
+        @Test func aFavoriteGoesLastOfTheOtherSpacesFavorites() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let work = window.createSpace("Work")
+                let first = window.addUnloadedTab("fav", type: .fav, order: 1, in: work)
+                let tab = window.addUnloadedTab("tab", type: .fav, order: 4, in: space)
+
+                window.tabManager.moveTabToContainer(tab, toContainer: work)
+
+                let favorites = work.tabs.filter { $0.type == .fav }.sorted { $0.order > $1.order }
+                #expect(favorites.map(\.id) == [first.id, tab.id])
+            }
+        }
+
+        @Test func movingTheSpacesLastTabLeavesItEmpty() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let work = window.createSpace("Work")
+                window.tabManager.activateContainer(space)
+                let moved = try await window.openLoaded("moved")
+
+                window.tabManager.moveTabToContainer(moved, toContainer: work)
+
+                #expect(window.tabManager.activeContainer?.id == space.id)
+                #expect(window.tabManager.activeTab == nil)
+                #expect(!moved.maybeIsActive)
             }
         }
     }

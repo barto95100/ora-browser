@@ -137,6 +137,11 @@ class Tab: ObservableObject, Identifiable {
         self.isWebViewReady = false
     }
 
+    /// When it was last shown; never shown counts as the oldest.
+    var lastAccessedOrDistantPast: Date {
+        lastAccessedAt ?? .distantPast
+    }
+
     func syncBackgroundColorFromHex() {
         backgroundColor = Color(hex: backgroundColorHex)
     }

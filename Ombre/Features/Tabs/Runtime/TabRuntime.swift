@@ -29,6 +29,26 @@ final class TabRuntime {
     var isReloadingAfterCrash = false
     var showsCrashRecoveryNotice = false
 
+    /// Passwords: filling the page's forms, and what it shows over the page.
+    var passwordCoordinator: PasswordAutofillCoordinator?
+    var passwordOverlayState: PasswordAutofillOverlayState?
+    var passwordTriggerOverlayState: PasswordAutofillOverlayState?
+    /// Permission prompt shown for the page (see `Tab+SitePermissions`).
+    var permissionRequest: SitePermissionRequest?
+    /// Camera and microphone in use by the page.
+    var mediaCaptureState = BrowserMediaCaptureState()
+    /// Site the shown favicon belongs to (see `Tab+Favicon.swift`).
+    var faviconSiteHost: String?
+    /// Last page recorded in the history (see `Tab+History.swift`).
+    var lastRecordedVisitURL: URL?
+    /// Local file the tab has sandbox access to (see `Tab+LocalFile.swift`).
+    var fileAccessURL: URL?
+    /// Folder of a local page whose images and styles are blocked, offered to
+    /// the user (see `Tab+LocalFile.swift`).
+    var folderAccessRequest: URL?
+    /// Loads kept from the page by content rules, by host (see `Tab+Protections.swift`).
+    var blockedContent: [String: Int] = [:]
+
     private(set) var navigationFailure: NavigationFailure?
     /// The link under the mouse, shown at the bottom of the page.
     private(set) var hoveredLinkURL: String?

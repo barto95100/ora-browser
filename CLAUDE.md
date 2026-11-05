@@ -115,6 +115,9 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - Extensions (`WKWebExtension*`, macOS 15.4+, façade `WebExtensionsHub`) : les pages des extensions doivent
   s'annoncer comme Safari (user-agent), toutes les pages chargées doivent appartenir à un onglet annoncé,
   Bitwarden Safari envoie `sleep` en boucle (répondre après 10 s).
+- Sur un `@Model` SwiftData, une propriété `@Transient` n'est suivie par l'interface (Observation) que si elle est
+  aussi `@Published`. L'état de page d'un onglet vit dans `TabRuntime` (`@Observable`, un par onglet et par fenêtre),
+  lu à travers les propriétés de transition de `Tab+Runtime.swift` ; ne jamais créer un runtime dans le `body` d'une vue.
 - `TabManager` est isolé `@MainActor` (déclaré explicitement) : marquer les suites de tests `@MainActor` ou les
   fonctions pures `nonisolated`.
 

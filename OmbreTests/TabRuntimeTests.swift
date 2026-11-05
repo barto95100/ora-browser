@@ -150,6 +150,40 @@ extension TabManagerTests {
             }
         }
 
+        /// The page's prompts, capture and passwords live in the runtime too:
+        /// a loaded tab fills forms, a tab only created doesn't get a runtime.
+        @Test func promptsLiveInTheRuntime() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await window.openLoaded("page")
+                let runtime = try #require(tab.runtime)
+                #expect(runtime.passwordCoordinator != nil)
+                #expect(tab.pageDelegate?.passwordCoordinator === runtime.passwordCoordinator)
+
+                tab.blockedContent = ["tracker.example": 2]
+                tab.folderAccessRequest = URL(fileURLWithPath: "/tmp")
+                #expect(runtime.blockedContent == ["tracker.example": 2])
+                #expect(runtime.folderAccessRequest != nil)
+
+                // Unloading keeps what the next page needs: the coordinator,
+                // the last visit (not recorded twice), the icon's site.
+                let coordinator = runtime.passwordCoordinator
+                tab.lastRecordedVisitURL = tab.url
+                tab.faviconSiteHost = "example.com"
+                tab.destroyWebView()
+                #expect(tab.passwordCoordinator === coordinator)
+                #expect(tab.lastRecordedVisitURL == tab.url)
+                #expect(tab.faviconSiteHost == "example.com")
+
+                let space = try #require(window.tabManager.activeContainer)
+                let created = window.addUnloadedTab("created", order: 9, in: space)
+                #expect(created.runtime == nil)
+                #expect(created.passwordCoordinator == nil)
+                created.blockedContent = [:]
+                created.mediaCaptureState = BrowserMediaCaptureState()
+                #expect(created.runtime == nil)
+            }
+        }
+
         /// Every change redraws the page's overlays: only real ones count.
         @Test func hoveredLinkChangesOnlyWhenDifferent() {
             let runtime = TabRuntime()

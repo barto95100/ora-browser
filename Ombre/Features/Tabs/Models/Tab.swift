@@ -388,10 +388,15 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    /// Trusts the certificate the page refused, for its host only.
     @MainActor func continueToInsecureSite() {
         let url = failedURL ?? self.url
-        guard let host = url.host else { return }
-        browserPage?.bypassSSL(for: host)
+        guard let host = url.host,
+              let error = runtime?.navigationFailure?.error,
+              let trust = CertificateException.trust(in: error),
+              let digest = CertificateException.digest(of: trust)
+        else { return }
+        browserPage?.allowCertificate(digest: digest, for: host)
         clearNavigationError()
         browserPage?.load(URLRequest(url: url))
     }

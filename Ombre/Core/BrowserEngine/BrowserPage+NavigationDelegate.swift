@@ -172,7 +172,13 @@ extension BrowserPage: WKNavigationDelegate {
     ) {
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
            let serverTrust = challenge.protectionSpace.serverTrust,
-           sslBypassedHosts.contains(challenge.protectionSpace.host)
+           // A digest only for a host with an exception, not every connection.
+           certificateExceptions[challenge.protectionSpace.host] != nil,
+           CertificateException.isAccepted(
+               digest: CertificateException.digest(of: serverTrust),
+               host: challenge.protectionSpace.host,
+               exceptions: certificateExceptions
+           )
         {
             completionHandler(.useCredential, URLCredential(trust: serverTrust))
         } else {

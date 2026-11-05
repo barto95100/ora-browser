@@ -16,7 +16,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     var originalURL: URL?
     var lastCommittedURL: URL?
     var isDownloadNavigation = false
-    private(set) var sslBypassedHosts: Set<String> = []
+    /// Certificates the user chose to trust anyway, by host (SHA-256, see
+    /// `CertificateException`).
+    private(set) var certificateExceptions: [String: String] = [:]
     private var isReadyForNavigation = false
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
@@ -353,8 +355,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.removeFromSuperview()
     }
 
-    func bypassSSL(for host: String) {
-        sslBypassedHosts.insert(host)
+    /// Trusts this certificate for `host`, and no other one it may present.
+    func allowCertificate(digest: String, for host: String) {
+        certificateExceptions[host] = digest
     }
 
     private func flushPendingNavigationIfNeeded() {

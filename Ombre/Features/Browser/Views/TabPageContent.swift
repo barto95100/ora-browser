@@ -30,7 +30,9 @@ struct TabPageContent: View {
                             tab.goBack()
                             tab.clearNavigationError()
                         } : nil,
-                    onContinueAnyway: {
+                    // Only for a refused certificate it can trust (see
+                    // `CertificateException`): never a button that does nothing.
+                    onContinueAnyway: CertificateException.trust(in: failure.error) == nil ? nil : {
                         tab.continueToInsecureSite()
                     }
                 )

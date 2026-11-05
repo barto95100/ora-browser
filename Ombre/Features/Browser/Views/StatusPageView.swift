@@ -88,6 +88,8 @@ struct StatusPageView: View {
             return "clock.badge.exclamationmark"
         case .crashed:
             return "exclamationmark.octagon"
+        case .restrictedPort:
+            return "nosign"
         case .unknown:
             return "exclamationmark.triangle"
         }
@@ -105,6 +107,8 @@ struct StatusPageView: View {
             return "Request Timed Out"
         case .crashed:
             return "A Problem Repeatedly Occurred"
+        case .restrictedPort:
+            return "Can't Open This Page"
         case .unknown:
             return "Something Went Wrong"
         }
@@ -122,6 +126,8 @@ struct StatusPageView: View {
             return "The page took too long to load. Try again or check your connection."
         case .crashed:
             return "This webpage stopped working several times in a row, so Ombre didn't reload it again."
+        case .restrictedPort:
+            return "Its address uses a network port reserved for other services, which browsers don't open."
         case .unknown:
             return "An unexpected error occurred while loading this page."
         }
@@ -157,7 +163,7 @@ struct StatusPageView: View {
 
         // WebKit errors
         if nsError.domain == "WebKitErrorDomain" {
-            return .notFound
+            return nsError.code == RestrictedPort.errorCode ? .restrictedPort : .notFound
         }
 
         return .unknown
@@ -169,6 +175,7 @@ struct StatusPageView: View {
         case security
         case timeout
         case crashed
+        case restrictedPort
         case unknown
     }
 }

@@ -33,6 +33,16 @@ extension BrowserPage: WKNavigationDelegate {
 
         switch delegate?.browserPage(self, decidePolicyFor: action) ?? .allow {
         case .allow:
+            // A page on a port browsers never open: WebKit would show a blank
+            // page without a word; an error page says why, like Safari. Here,
+            // once the app kept the link in this page (not a new tab, Peek).
+            if navigationAction.targetFrame?.isMainFrame ?? true, let url = navigationAction.request.url,
+               RestrictedPort.isRestricted(url)
+            {
+                decisionHandler(.cancel)
+                delegate?.browserPage(self, didFailNavigationWith: RestrictedPort.error(for: url), failingURL: url)
+                return
+            }
             // A site exempted from protections loads without content rules.
             if navigationAction.targetFrame?.isMainFrame ?? true, let url = navigationAction.request.url {
                 setContentBlocking(enabled: delegate?.browserPage(self, allowsContentBlockingFor: url) ?? true)

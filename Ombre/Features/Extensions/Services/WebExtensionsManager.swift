@@ -231,6 +231,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         record.otherSites = allowAllSites ? .allow : .ask
         installed.append(Installed(record: record))
         save()
+        // The last check didn't know this one.
+        if record.storeID != nil { resetUpdateStatus() }
         if let bundleIdentifier = record.bundleIdentifier {
             candidates.removeAll { $0.bundleIdentifier == bundleIdentifier }
         }
@@ -254,6 +256,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         unload(at: index)
         let record = installed.remove(at: index).record
         save()
+        if record.storeID != nil { resetUpdateStatus() }
         if let pending = pendingUpdates.removeValue(forKey: id) {
             ExtensionPackages.remove(path: pending.package.path)
         }

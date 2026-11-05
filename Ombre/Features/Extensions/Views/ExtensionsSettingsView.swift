@@ -98,7 +98,7 @@ private struct ExtensionsSettingsContent: View {
                             }
                             .disabled(manager.isCheckingUpdates)
                         }
-                        Text(manager.updateStatus ?? "Updates are checked once a day, like Chrome.")
+                        Text(manager.updateSummary)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         if let fileError {

@@ -19,7 +19,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Certificates the user chose to trust anyway, by host (SHA-256, see
     /// `CertificateException`).
     private(set) var certificateExceptions: [String: String] = [:]
-    private var isReadyForNavigation = false
+    private(set) var isReadyForNavigation = false
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
     private var observations: [NSKeyValueObservation] = []
@@ -33,18 +33,67 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// a site exempted from protections.
     private var contentRuleLists: [WKContentRuleList] = []
     private(set) var isContentBlockingEnabled = true
+
+    /// The content rules applied to the page now (none on an exempted site).
+    var activeContentRuleLists: [WKContentRuleList] {
+        isContentBlockingEnabled ? contentRuleLists : []
+    }
+
+    /// The space's content rules, applied or not on the current site (an
+    /// exemption is for one site, not the next page).
+    var spaceContentRuleLists: [WKContentRuleList] {
+        contentRuleLists
+    }
     /// Owned here: the content controller only gets a weak proxy to it.
     var notificationBridge: WebNotificationBridge?
     /// The secret event name the app tells the page's notifications with
     /// (see `WebNotificationScript`): a page can't guess it.
     let notificationChannel = "n" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
 
+    /// `webKitConfiguration`: the one WebKit gives for a window a page opens
+    /// (`window.open`), which the new page must use to stay linked to it
+    /// (same process and data, `window.opener`); it is the opener's, so the
+    /// page only gets its own scripts and handlers.
     init(
         profile: BrowserEngineProfile,
         configuration: BrowserPageConfiguration,
-        delegate: BrowserPageDelegate?
+        delegate: BrowserPageDelegate?,
+        webKitConfiguration: WKWebViewConfiguration? = nil,
+        inheritedRuleLists: [WKContentRuleList] = []
     ) {
-        let webConfiguration = WKWebViewConfiguration()
+        let webConfiguration = webKitConfiguration ?? WKWebViewConfiguration()
+        if webKitConfiguration == nil {
+            Self.configure(webConfiguration, profile: profile, configuration: configuration)
+        }
+
+        let contentController = WKUserContentController()
+        // A window a page opens loads at once: its opener's protections apply
+        // from the first request, not once its own are ready.
+        inheritedRuleLists.forEach(contentController.add)
+        webConfiguration.userContentController = contentController
+        contentRuleLists = inheritedRuleLists
+        messageNames = configuration.scriptMessageNames
+        let ombreWebView = OmbreWebView(frame: .zero, configuration: webConfiguration)
+        webView = ombreWebView
+        self.delegate = delegate
+
+        super.init()
+        setUp(
+            ombreWebView,
+            contentController: contentController,
+            configuration: configuration,
+            webConfiguration: webConfiguration,
+            profile: profile
+        )
+    }
+
+    /// A new page's own settings (not for a window a page opens: those come
+    /// with WebKit's configuration, from its opener).
+    private static func configure(
+        _ webConfiguration: WKWebViewConfiguration,
+        profile: BrowserEngineProfile,
+        configuration: BrowserPageConfiguration
+    ) {
         webConfiguration.applicationNameForUserAgent = configuration.applicationNameForUserAgent
         webConfiguration.websiteDataStore = profile.dataStore
         webConfiguration.allowsAirPlayForMediaPlayback = configuration.allowsAirPlayForMediaPlayback
@@ -62,8 +111,6 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webpagePreferences.allowsContentJavaScript = configuration.allowsJavaScript
         webConfiguration.defaultWebpagePreferences = webpagePreferences
 
-        let contentController = WKUserContentController()
-        webConfiguration.userContentController = contentController
         // Extensions: in private windows (a non-persistent store), WebKit runs
         // only those allowed in private browsing (`hasAccessToPrivateData`).
         if #available(macOS 15.4, *),
@@ -71,12 +118,15 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         {
             webConfiguration.webExtensionController = controller
         }
-        messageNames = configuration.scriptMessageNames
-        let ombreWebView = OmbreWebView(frame: .zero, configuration: webConfiguration)
-        webView = ombreWebView
-        self.delegate = delegate
+    }
 
-        super.init()
+    private func setUp(
+        _ ombreWebView: OmbreWebView,
+        contentController: WKUserContentController,
+        configuration: BrowserPageConfiguration,
+        webConfiguration: WKWebViewConfiguration,
+        profile: BrowserEngineProfile
+    ) {
         ombreWebView.contextMenuOwner = self
 
         observations = [

@@ -1,4 +1,5 @@
 import AppKit
+@preconcurrency import WebKit
 import SwiftUI
 
 final class TabBrowserPageDelegate: BrowserPageDelegate {
@@ -71,6 +72,18 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         else { return false }
         tab.openPeek(url)
         return true
+    }
+
+    func browserPage(
+        _ page: BrowserPage,
+        linkedPageWith configuration: WKWebViewConfiguration,
+        for url: URL?,
+        disposition: BrowserNewTabDisposition
+    ) -> WKWebView? {
+        guard let tab, let tabManager = tab.tabManager else { return nil }
+        return MainActor.assumeIsolated {
+            tabManager.openLinkedTab(url: url, from: tab, configuration: configuration, disposition: disposition)
+        }
     }
 
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {

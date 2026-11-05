@@ -8,6 +8,10 @@ struct OmbreCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        // The system's File › Close (⌘W too) goes: ⌘W is "Close Tab" only,
+        // and closes any other window itself (see `CloseCommand`).
+        CommandGroup(replacing: .saveItem) {}
+
         CommandGroup(replacing: .newItem) {
             Button("New Window") { openWindow(id: "normal") }
                 .keyboardShortcut(KeyboardShortcuts.Window.new.keyboardShortcut)
@@ -26,24 +30,13 @@ struct OmbreCommands: Commands {
             Divider()
 
             Button("Close Tab") {
-                // A popup ("Sign in with…" window) has no tabs: ⌘W closes it.
-                if let keyWindow = NSApp.keyWindow, BrowserPopupWindow.isPopupWindow(keyWindow) {
-                    keyWindow.performClose(nil)
-                } else {
-                    NotificationCenter.default.post(name: .closeActiveTab, object: NSApp.keyWindow)
-                }
+                CloseCommand.closeTab()
             }.keyboardShortcut(KeyboardShortcuts.Tabs.close.keyboardShortcut)
 
             Button("Close Window") {
-                if let keyWindow = NSApp.keyWindow, ["Settings", "Passwords"].contains(keyWindow.title) {
-                    keyWindow.performClose(nil)
-                }
+                NSApp.keyWindow?.performClose(nil)
             }
-            .keyboardShortcut("w", modifiers: .command)
-            .disabled({
-                guard let keyWindow = NSApp.keyWindow else { return true }
-                return !["Settings", "Passwords"].contains(keyWindow.title)
-            }())
+            .keyboardShortcut(KeyboardShortcuts.Window.close.keyboardShortcut)
         }
 
         CommandGroup(after: .undoRedo) {

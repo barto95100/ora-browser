@@ -39,6 +39,9 @@ struct TabPageContent: View {
                 .id(tab.id)
             } else if let page = tab.browserPage {
                 BrowserPageView(page: page).id(tab.id)
+                    .background {
+                        if let runtime { PageTranslationHost(tab: tab, runtime: runtime) }
+                    }
                     .overlay(alignment: .topLeading) {
                         if let triggerState = tab.passwordTriggerOverlayState {
                             PasswordAutofillTriggerView(overlay: triggerState, tab: tab)

@@ -17,6 +17,8 @@ enum OmbreBrowserScripts {
             )
         ]
 
+        scripts.append(PageTranslatorScript.userScript)
+
         if let passwordManagerScript = loadResourceScript(named: "password-manager") {
             scripts.append(
                 BrowserUserScript(

@@ -113,6 +113,8 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
         case .committed:
             dialogPolicy.pageDidCommitNewDocument()
+            // A new document: its language is checked once it has loaded.
+            MainActor.assumeIsolated { tab.runtime?.translation = .unavailable }
             tab.isLoading = event.isLoading
             if let title = event.title, !title.isEmpty {
                 tab.title = title
@@ -137,6 +139,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                 tab.updateURL(url)
                 tab.recordVisit()
                 tab.updateHeaderColor()
+                MainActor.assumeIsolated { tab.checkPageLanguage() }
                 if url.isFileURL { tab.offerFolderAccessIfNeeded() }
             }
             WebExtensionsHub.tabChanged(tab, url: true, title: true, loading: true)

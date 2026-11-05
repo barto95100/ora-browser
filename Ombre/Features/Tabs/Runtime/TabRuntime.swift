@@ -49,6 +49,9 @@ final class TabRuntime {
     /// Loads kept from the page by content rules, by host (see `Tab+Protections.swift`).
     var blockedContent: [String: Int] = [:]
 
+    /// Translating the page into the Mac's language (see `Tab+Translation`).
+    var translation: PageTranslationState = .unavailable
+
     private(set) var navigationFailure: NavigationFailure?
     /// The link under the mouse, shown at the bottom of the page.
     private(set) var hoveredLinkURL: String?
@@ -65,6 +68,7 @@ final class TabRuntime {
     func reset() {
         clearNavigationFailure()
         setHoveredLink(nil)
+        translation = .unavailable
     }
 
     /// Changes only a different link: every change redraws the page's overlays.

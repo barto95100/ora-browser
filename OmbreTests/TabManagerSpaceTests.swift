@@ -2,6 +2,7 @@ import Foundation
 @testable import Ombre
 import SwiftData
 import Testing
+import WebKit
 
 extension TabManagerTests {
     /// Spaces: creating, switching, activating a tab of another space, deleting.
@@ -133,12 +134,12 @@ extension TabManagerTests {
                 try window.modelContext.save()
                 #expect(window.tabManager.activeTab?.id == loaded.id)
 
-                window.tabManager.deleteContainer(deleted)
+                let cleanup = window.tabManager.deleteContainer(deleted)
 
-                await window.waitUntil("space deleted") {
-                    !window.spaces().contains { $0.id == deletedID }
-                        && window.tabManager.activeContainer != nil
-                }
+                // Gone at once, before its cleanup: never shown half deleted.
+                #expect(!window.spaces().contains { $0.id == deletedID })
+                #expect(window.tabManager.activeContainer != nil)
+                await cleanup.value
                 let tabs = try window.modelContext.fetch(FetchDescriptor<Tab>())
                 let folders = try window.modelContext.fetch(FetchDescriptor<Folder>())
                 let histories = try window.modelContext.fetch(FetchDescriptor<History>())
@@ -146,12 +147,31 @@ extension TabManagerTests {
                 #expect(tabs.first?.container.id == work.id)
                 #expect(folders.isEmpty)
                 #expect(histories.isEmpty)
-                // The page of the deleted tab is torn down.
+                // The page of the deleted tab is torn down, and the space's
+                // data store is gone from the disk.
                 #expect(loaded.browserPage == nil)
+                #expect(await !WKWebsiteDataStore.allDataStoreIdentifiers.contains(deletedID))
                 // The most recently accessed space takes over; its last tab is
                 // not loaded, so none is active.
                 #expect(window.tabManager.activeContainer?.id == work.id)
                 #expect(window.tabManager.activeTab == nil)
+            }
+        }
+
+        @Test func deletingASpaceRemovesItsWebsiteDataStore() async throws {
+            try await TabManagerTestWindow.run { window in
+                let deleted = window.createSpace("Deleted")
+                let deletedID = deleted.id
+                window.remember(deleted)
+                // The space's persistent store, as its pages use it.
+                _ = BrowserEngine.shared.makeProfile(identifier: deletedID, isPrivate: false)
+                await PrivacyService.clearAllWebsiteData(for: deletedID)
+                #expect(await WKWebsiteDataStore.allDataStoreIdentifiers.contains(deletedID))
+
+                await window.tabManager.deleteContainer(deleted).value
+
+                #expect(!BrowserEngine.shared.hasCachedProfile(identifier: deletedID))
+                #expect(await !WKWebsiteDataStore.allDataStoreIdentifiers.contains(deletedID))
             }
         }
     }

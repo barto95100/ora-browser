@@ -1,4 +1,8 @@
 import Foundation
+import os
+@preconcurrency import WebKit
+
+private let logger = Logger(category: "BrowserEngine")
 
 struct BrowserPageConfiguration {
     /// Appended by WebKit to its own user agent prefix: see `SafariUserAgent`.
@@ -75,6 +79,27 @@ final class BrowserEngine {
         let profile = BrowserEngineProfile(identifier: identifier, isPrivate: false)
         profileCache[key] = profile
         return profile
+    }
+
+    /// A deleted space's profile: forgotten, and its website data store
+    /// removed from the disk (unless a page still uses it: logged).
+    @MainActor
+    func removeProfile(identifier: UUID) async {
+        profileCacheLock.lock()
+        profileCache[ProfileKey(identifier: identifier, isPrivate: false)] = nil
+        profileCacheLock.unlock()
+        do {
+            try await WKWebsiteDataStore.remove(forIdentifier: identifier)
+        } catch {
+            logger.error("Removing a space's data store failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Whether the profile of a space is kept, for the tests.
+    func hasCachedProfile(identifier: UUID) -> Bool {
+        profileCacheLock.lock()
+        defer { profileCacheLock.unlock() }
+        return profileCache[ProfileKey(identifier: identifier, isPrivate: false)] != nil
     }
 
     func makePage(

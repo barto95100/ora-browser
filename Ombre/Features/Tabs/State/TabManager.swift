@@ -225,25 +225,18 @@ class TabManager: ObservableObject {
         modelContext.saveOrLog("rename space")
     }
 
-    func deleteContainer(_ container: TabContainer) {
+    /// Deletes the space at once (it can't be used half deleted), then cleans
+    /// up what it leaves outside the database: passwords, browsing time,
+    /// focus settings and website data. Each cleanup step goes on when
+    /// another fails. Returns the cleanup, for the tests.
+    @discardableResult
+    func deleteContainer(_ container: TabContainer) -> Task<Void, Never> {
         let containerId = container.id
-        Task { @MainActor in
-            // A keychain error must not keep the space: it would stay, half deleted.
-            do {
-                try PasswordManagerService.shared.deleteEntries(for: containerId)
-            } catch {
-                logger.error("Deleting the space's passwords failed: \(error.localizedDescription, privacy: .public)")
+        if let persistedContainer = fetchContainer(id: containerId) {
+            // A Peek opened from the space uses its data store.
+            if let peek, persistedContainer.tabs.contains(where: { $0.id == peek.openerTabID }) {
+                closePeek()
             }
-            BrowsingTimeStore.shared.delete(spaceID: containerId)
-            FocusSettings.shared.removeSpace(containerId)
-
-            await PrivacyService.clearAllWebsiteData(for: containerId)
-
-            guard let persistedContainer = fetchContainer(id: containerId) else {
-                SettingsStore.shared.removeContainerSettings(for: containerId)
-                return
-            }
-
             let wasActiveContainer = activeContainer?.id == containerId
             prepareForContainerDeletion(isActiveContainer: wasActiveContainer)
             deleteContainerContents(persistedContainer)
@@ -252,17 +245,25 @@ class TabManager: ObservableObject {
             // could fail when the parent and children went in the same save.
             modelContext.saveOrLog("delete space contents")
 
-            guard let containerToDelete = fetchContainer(id: containerId) else {
-                SettingsStore.shared.removeContainerSettings(for: containerId)
-                activateFallbackContainerIfNeeded(afterDeletingActiveContainer: wasActiveContainer)
-                return
+            if let containerToDelete = fetchContainer(id: containerId) {
+                modelContext.delete(containerToDelete)
+                modelContext.saveOrLog("delete space")
             }
-
-            modelContext.delete(containerToDelete)
-            modelContext.saveOrLog("delete space")
-            SettingsStore.shared.removeContainerSettings(for: containerId)
-
             activateFallbackContainerIfNeeded(afterDeletingActiveContainer: wasActiveContainer)
+        }
+        SettingsStore.shared.removeContainerSettings(for: containerId)
+
+        return Task { @MainActor in
+            do {
+                try PasswordManagerService.shared.deleteEntries(for: containerId)
+            } catch {
+                logger.error("Deleting the space's passwords failed: \(error.localizedDescription, privacy: .public)")
+            }
+            BrowsingTimeStore.shared.delete(spaceID: containerId)
+            FocusSettings.shared.removeSpace(containerId)
+            // Its website data, then its store on disk.
+            await PrivacyService.clearAllWebsiteData(for: containerId)
+            await BrowserEngine.shared.removeProfile(identifier: containerId)
         }
     }
 

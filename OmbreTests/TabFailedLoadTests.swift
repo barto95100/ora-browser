@@ -18,7 +18,7 @@ extension TabManagerTests {
                 let tab = try await window.openLoaded("refused")
 
                 // The network error can take several seconds on a busy CI machine.
-                await window.waitUntil("load refused", timeout: .seconds(20)) { tab.hasNavigationError }
+                await window.waitUntil("load refused", timeout: .seconds(20)) { tab.runtime?.navigationFailure != nil }
 
                 #expect(tab.failedURL == url)
                 #expect(tab.url == url)

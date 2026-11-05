@@ -6,6 +6,8 @@ struct TabPageContent: View {
     @Environment(\.theme) var theme
     @EnvironmentObject private var appState: AppState
     let tab: Tab
+    /// The tab's state in this window: its error page, the hovered link.
+    @ObservedObject var runtime: TabRuntime
 
     var body: some View {
         content
@@ -14,10 +16,10 @@ struct TabPageContent: View {
     @ViewBuilder
     private var content: some View {
         if tab.isWebViewReady {
-            if tab.hasNavigationError, let error = tab.navigationError {
+            if let failure = runtime.navigationFailure {
                 StatusPageView(
-                    error: error,
-                    failedURL: tab.failedURL,
+                    error: failure.error,
+                    failedURL: failure.url,
                     onRetry: { tab.retryNavigation() },
                     onGoBack: tab.canGoBack
                         ? {
@@ -49,7 +51,7 @@ struct TabPageContent: View {
                         }
                     }
                     .overlay(alignment: .bottomLeading) {
-                        if let hovered = tab.hoveredLinkURL, !hovered.isEmpty {
+                        if let hovered = runtime.hoveredLinkURL {
                             LinkPreview(text: hovered)
                         }
                     }
@@ -69,7 +71,7 @@ struct TabPageContent: View {
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
-                    .animation(.easeOut(duration: 0.12), value: tab.hoveredLinkURL)
+                    .animation(.easeOut(duration: 0.12), value: runtime.hoveredLinkURL)
                     .animation(.easeOut(duration: 0.2), value: tab.permissionRequest)
                     .overlay(alignment: .top) {
                         if let folder = tab.folderAccessRequest {

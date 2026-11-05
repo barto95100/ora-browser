@@ -38,6 +38,8 @@ class TabManager: ObservableObject {
     var memoryPressureSource: DispatchSourceMemoryPressure?
     /// Closed tabs ⌘Z brings back, see `TabManager+ClosedTabs.swift`.
     var recentlyClosedTabs: [ClosedTabSnapshot] = []
+    /// The loaded tabs' state in this window (see `TabRuntime`).
+    var runtimes: [UUID: TabRuntime] = [:]
     let maxRecentlyClosedTabs = 5
 
     init(
@@ -283,6 +285,7 @@ class TabManager: ObservableObject {
                     return
                 }
                 if tab.type == .normal {
+                    self.dropRuntime(for: tab.id)
                     self.modelContext.delete(tab)
                 } else {
                     tab.isWebViewReady = false

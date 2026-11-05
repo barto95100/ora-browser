@@ -11,8 +11,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
     weak var mediaController: MediaController?
     weak var passwordCoordinator: PasswordAutofillCoordinator?
 
-    private var progressResetWorkItem: DispatchWorkItem?
-
     func browserPage(
         _ page: BrowserPage,
         decidePolicyFor navigationAction: BrowserNavigationAction
@@ -70,7 +68,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
         switch event.phase {
         case .started:
-            progressResetWorkItem?.cancel()
             // A prompt belongs to the page that asked; leaving it denies.
             tab.cancelPermissionRequest()
             tab.clearNavigationError()
@@ -79,7 +76,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             if !tab.blockedContent.isEmpty { tab.blockedContent = [:] }
             passwordCoordinator?.clearAutofillState()
             tab.isLoading = event.isLoading
-            tab.loadingProgress = event.progress
             if let url = event.url {
                 tab.updateURL(url)
             }
@@ -88,7 +84,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         case .committed:
             dialogPolicy.pageDidCommitNewDocument()
             tab.isLoading = event.isLoading
-            tab.loadingProgress = event.progress
             if let title = event.title, !title.isEmpty {
                 tab.title = title
             }
@@ -102,7 +97,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         case .finished:
             tab.crashRecoveryNavigationDidFinish()
             tab.isLoading = event.isLoading
-            tab.loadingProgress = event.progress
             if let title = event.title, !title.isEmpty {
                 tab.title = title
                 MainActor.assumeIsolated {
@@ -116,12 +110,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                 if url.isFileURL { tab.offerFolderAccessIfNeeded() }
             }
             WebExtensionsHub.tabChanged(tab, url: true, title: true, loading: true)
-
-            let workItem = DispatchWorkItem { [weak tab] in
-                tab?.loadingProgress = 0
-            }
-            progressResetWorkItem = workItem
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
         }
     }
 
@@ -132,7 +120,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
     func browserPageWebContentProcessDidTerminate(_ page: BrowserPage) {
         guard let tab else { return }
 
-        progressResetWorkItem?.cancel()
         MainActor.assumeIsolated {
             // The media (and Picture in Picture) of the dead page is gone.
             mediaController?.removeSession(for: tab.id)
@@ -188,11 +175,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         case "linkHover":
             let hovered = (message.body as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let newValue: String? = hovered.isEmpty ? nil : hovered
-            // Avoid publishing an identical value, which would needlessly
-            // invalidate the views observing the tab.
-            if tab.hoveredLinkURL != newValue {
-                tab.hoveredLinkURL = newValue
-            }
+            MainActor.assumeIsolated { tab.runtime?.setHoveredLink(newValue) }
         case "mediaEvent":
             handleMediaEventMessage(message.body, for: tab)
         case "favicon":

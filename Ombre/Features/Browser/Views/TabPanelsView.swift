@@ -58,7 +58,7 @@ struct TabPanelsView: View {
 
     private func panel(_ tab: Tab) -> some View {
         let cornerRadius: CGFloat = isSplit ? 8 : 0
-        return TabPageContent(tab: tab)
+        return TabPageContent(tab: tab, runtime: tabManager.runtime(for: tab))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Filled while a page catches up with a new width (divider dragged).
             .background(theme.background)

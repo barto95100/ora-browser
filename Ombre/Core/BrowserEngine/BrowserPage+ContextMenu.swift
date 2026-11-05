@@ -73,6 +73,10 @@ extension BrowserPage {
         if let openImage = menu.items.first(where: { $0.identifier?.rawValue == Self.openImageIdentifier }) {
             openImage.title = "Open Image in New Tab"
         }
+        if let items = delegate?.browserPageContextMenuItems(self), !items.isEmpty {
+            menu.addItem(.separator())
+            items.forEach(menu.addItem)
+        }
     }
 
     private func openingItem(

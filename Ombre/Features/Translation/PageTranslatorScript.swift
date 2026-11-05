@@ -53,13 +53,21 @@ enum PageTranslatorScript {
                     translated: translatedValues.some((value) => value !== undefined)
                 });
             },
-            /// The page's text pieces to translate, in order.
+            /// The page's text pieces to translate: those on screen first
+            /// (shown translated within a second or two), then the others
+            /// in the page's order.
             collect() {
                 this.restore();
-                textNodes(() => nodes.length < maximum, (node) => {
-                    nodes.push(node);
-                    originals.push(node.nodeValue);
+                const visible = [];
+                const others = [];
+                const height = window.innerHeight;
+                textNodes(() => visible.length + others.length < maximum, (node) => {
+                    const box = node.parentElement.getBoundingClientRect();
+                    const onScreen = box.width > 0 && box.bottom > 0 && box.top < height;
+                    (onScreen ? visible : others).push(node);
                 });
+                nodes = visible.concat(others);
+                originals = nodes.map((node) => node.nodeValue);
                 translatedValues = new Array(nodes.length);
                 return JSON.stringify(originals.map((text) => text.trim()));
             },

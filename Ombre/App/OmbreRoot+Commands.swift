@@ -277,6 +277,12 @@ private struct WindowPageCommands: ViewModifier {
                     page.pageZoom = PageZoom.level(after: page.pageZoom, step: step)
                 }
             }
+            .onNotification(.translatePage) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                    tabManager.activeTab?.showTranslationPanel()
+                }
+            }
             .onNotification(.findInPage) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

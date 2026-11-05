@@ -27,12 +27,11 @@ extension WebExtensionsManager {
     /// show what it asks for before adding it.
     func reviewFromWebStore(_ storeID: String) async throws -> Review {
         guard let url = ChromeWebStore.downloadURL(for: storeID) else { throw PackageFailure.download }
-        let (data, response) = try await URLSession.shared.data(for: Self.chromeRequest(url))
-        guard (response as? HTTPURLResponse)?.statusCode == 200, !data.isEmpty else {
-            throw PackageFailure.download
-        }
+        let data = try await ChromeWebStore.downloadPackage(Self.chromeRequest(url))
+        // Signed by its developer, and the extension asked for.
+        let zip = try CRXVerifier.verifiedZip(from: data, extensionID: storeID)
         let id = UUID().uuidString
-        let package = try ExtensionPackages.store(zip: CRXArchive.zipData(from: data), id: id)
+        let package = try ExtensionPackages.store(zip: zip, id: id)
         return try await review(
             package: package,
             id: id,

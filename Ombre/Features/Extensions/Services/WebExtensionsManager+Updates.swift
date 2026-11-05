@@ -65,7 +65,12 @@ extension WebExtensionsManager {
                       ExtensionVersion.isNewer(update.version, than: item.version),
                       let record = installed.first(where: { $0.record.storeID == item.storeID })?.record
                 else { continue }
-                if try await prepare(update, for: record) { updated.append(record.name) }
+                // A refused package (not signed, too large…) doesn't stop the others.
+                do {
+                    if try await prepare(update, for: record) { updated.append(record.name) }
+                } catch {
+                    logger.error("Extension update refused: \(error.localizedDescription, privacy: .public)")
+                }
             }
             let waiting = pendingUpdates.count
             updateStatus = switch (updated.isEmpty, waiting) {
@@ -83,9 +88,11 @@ extension WebExtensionsManager {
     /// Downloads an update; installs it if it asks for nothing more (true),
     /// else keeps it for review.
     private func prepare(_ update: ChromeWebStoreUpdates.Update, for record: ExtensionRecord) async throws -> Bool {
-        let (data, response) = try await URLSession.shared.data(for: Self.chromeRequest(update.downloadURL))
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw PackageFailure.download }
-        let package = try ExtensionPackages.store(zip: CRXArchive.zipData(from: data), id: "\(record.id).update")
+        guard let storeID = record.storeID else { throw PackageFailure.download }
+        let data = try await ChromeWebStore.downloadPackage(Self.chromeRequest(update.downloadURL))
+        // The same extension, signed by its developer: never another one.
+        let zip = try CRXVerifier.verifiedZip(from: data, extensionID: storeID)
+        let package = try ExtensionPackages.store(zip: zip, id: "\(record.id).update")
         let webExtension = try await WKWebExtension(resourceBaseURL: package)
 
         let newPermissions = webExtension.requestedPermissions.map(\.rawValue)

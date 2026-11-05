@@ -75,7 +75,8 @@ final class PasswordManagerService: ObservableObject {
 
     /// The Keychain items' service. Ombre started with fresh data: the
     /// passwords saved before the rename, under another service, are not read.
-    private let serviceName = "Ombre Passwords"
+    /// The tests use their own, never the user's passwords.
+    let serviceName = TestHost.isActive ? "Ombre Passwords (tests)" : "Ombre Passwords"
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 

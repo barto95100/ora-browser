@@ -123,15 +123,19 @@ enum DatabaseRecovery {
     /// settings and passwords windows all use it. Opened on first use.
     @MainActor static var mainContainer: ModelContainer {
         if let openedMainContainer { return openedMainContainer }
-        let container = openMainContainer()
+        // The tests never open the user's database.
+        let container = TestHost.isActive ? inMemoryContainer() : openMainContainer()
         openedMainContainer = container
         return container
     }
 
     @MainActor private static var openedMainContainer: ModelContainer?
+    /// Whether the database on disk was opened, for the tests.
+    @MainActor private(set) static var hasOpenedDatabaseOnDisk = false
 
     /// Opens the main database's container (see `mainContainer`).
     @MainActor private static func openMainContainer() -> ModelContainer {
+        hasOpenedDatabaseOnDisk = true
         let result = openContainer(at: ModelConfiguration.mainDatabaseURL, mayMoveAside: !hasMovedAside)
         switch result.outcome {
         case .opened:

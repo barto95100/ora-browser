@@ -21,7 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AppearanceManager.shared.updateAppearance()
         ShortcutOverrideMonitor.shared.start()
         // Once per launch, not per window; does nothing when updates are unavailable.
-        if UpdateService.isAvailable, SettingsStore.shared.autoUpdateEnabled {
+        if UpdateService.isAvailable, !TestHost.isActive, SettingsStore.shared.autoUpdateEnabled {
             UpdateService.shared.checkForUpdatesInBackground()
         }
         #if DEBUG
@@ -122,8 +122,10 @@ struct OmbreApp: App {
         // Links opened from other apps (Ombre as default browser) go to a regular
         // window; SwiftUI creates one if none is open, e.g. on a cold launch.
         .handlesExternalEvents(matching: ["*"])
-        // Until the first-launch assistant is done, it opens instead.
-        .defaultLaunchBehavior(OnboardingStatus.isNeeded() ? .suppressed : .automatic)
+        // Until the first-launch assistant is done, it opens instead. None
+        // under the tests.
+        .defaultLaunchBehavior(TestHost.isActive || OnboardingStatus.isNeeded() ? .suppressed : .automatic)
+        .restorationBehavior(TestHost.isActive ? .disabled : .automatic)
 
         Window("Welcome to Ombre", id: "onboarding") {
             OnboardingView(
@@ -134,7 +136,7 @@ struct OmbreApp: App {
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
-        .defaultLaunchBehavior(OnboardingStatus.isNeeded() ? .presented : .suppressed)
+        .defaultLaunchBehavior(!TestHost.isActive && OnboardingStatus.isNeeded() ? .presented : .suppressed)
         .restorationBehavior(.disabled)
         // Not in the Window menu.
         .commandsRemoved()
@@ -149,6 +151,7 @@ struct OmbreApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
         .handlesExternalEvents(matching: [])
+        .restorationBehavior(TestHost.isActive ? .disabled : .automatic)
 
         WindowGroup("Settings", id: "settings") {
             // The browser windows' database (never missing, see `DatabaseRecovery`).
@@ -162,6 +165,7 @@ struct OmbreApp: App {
         .windowResizability(.contentSize)
         .defaultSize(width: 980, height: 640)
         .handlesExternalEvents(matching: [])
+        .restorationBehavior(TestHost.isActive ? .disabled : .automatic)
         .commands { OmbreCommands() }
 
         Window("Licenses", id: "licenses") {
@@ -171,5 +175,6 @@ struct OmbreApp: App {
         .commandsRemoved()
         .windowResizability(.contentSize)
         .handlesExternalEvents(matching: [])
+        .restorationBehavior(TestHost.isActive ? .disabled : .automatic)
     }
 }

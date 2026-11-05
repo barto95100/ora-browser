@@ -2,6 +2,14 @@ name: Ombre
 options:
   bundleIdPrefix: com.barto95100
 
+# "Test": the app the unit tests run in, built like Debug but with its own
+# bundle identifier, so its preferences, files and Keychain items never mix
+# with the Debug app's (see `TestHost`).
+configs:
+  Debug: debug
+  Test: debug
+  Release: release
+
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
@@ -109,6 +117,13 @@ targets:
           OTHER_LDFLAGS: "-Xlinker -interposable"
           ENABLE_HARDENED_RUNTIME: NO
           DEVELOPMENT_TEAM: Q76T6LDBBZ
+        Test:
+          PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora.tests
+          CODE_SIGN_ENTITLEMENTS: Ombre/Info/Ombre-dev.entitlements
+          CODE_SIGN_STYLE: Automatic
+          CODE_SIGN_IDENTITY: "Apple Development"
+          ENABLE_HARDENED_RUNTIME: NO
+          DEVELOPMENT_TEAM: Q76T6LDBBZ
         Release:
           # Signed with the same team as Debug. Distributing outside this Mac
           # needs a Developer ID certificate and notarization (paid program).
@@ -143,7 +158,7 @@ schemes:
     run:
       config: Debug
     test:
-      config: Debug
+      config: Test
       targets:
         - OmbreTests
     profile:

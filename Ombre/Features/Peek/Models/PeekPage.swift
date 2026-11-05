@@ -90,6 +90,19 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         }
     }
 
+    /// The opener's space protections, as in a tab: an exempted site isn't
+    /// blocked (MOT-19).
+    func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool {
+        guard let opener else { return true }
+        return opener.areProtectionsEnabled(for: url)
+    }
+
+    /// Tracking parameters taken off links, as in a tab of the same space.
+    func browserPage(_ page: BrowserPage, removesLinkTrackingFrom url: URL) -> Bool {
+        guard let opener else { return false }
+        return opener.privacySettings.blockThirdPartyTrackers && opener.areProtectionsEnabled(for: url)
+    }
+
     private func openTab(_ url: URL, inFront: Bool) {
         guard let opener, let tabManager = opener.tabManager else { return }
         MainActor.assumeIsolated {

@@ -87,6 +87,13 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            SettingsCard(header: "Developer") {
+                Toggle("Allow Web Inspector", isOn: $settings.developerToolsEnabled)
+                Text("Inspect pages from Safari's Develop menu (Safari › Settings › Advanced).")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             if UpdateService.isAvailable {
                 SettingsCard(header: "Updates") {
                     Toggle("Auto-check for updates", isOn: $settings.autoUpdateEnabled)

@@ -21,6 +21,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
     private var observations: [NSKeyValueObservation] = []
+    private var inspectionObserver: NSObjectProtocol?
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.
     var httpsUpgrade = HTTPSUpgradePolicy()
     /// How the next new tab asked by the page opens (context menu items, see
@@ -45,19 +46,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webConfiguration.applicationNameForUserAgent = configuration.applicationNameForUserAgent
         webConfiguration.websiteDataStore = profile.dataStore
         webConfiguration.allowsAirPlayForMediaPlayback = configuration.allowsAirPlayForMediaPlayback
-        webConfiguration.preferences.setValue(
-            configuration.allowsInspectableDebugging,
-            forKey: "developerExtrasEnabled"
-        )
-        webConfiguration.preferences.setValue(
-            configuration.allowsPictureInPicture,
-            forKey: "allowsPictureInPictureMediaPlayback"
-        )
-        webConfiguration.preferences.setValue(configuration.allowsJavaScript, forKey: "javaScriptEnabled")
-        webConfiguration.preferences.setValue(
-            configuration.allowsJavaScriptWindowsAutomatically,
-            forKey: "javaScriptCanOpenWindowsAutomatically"
-        )
+        // Public preferences only (picture in picture is on by default on
+        // macOS; JavaScript is set per page below), except the Debug-only
+        // inspector key: see `applyInspection`.
         webConfiguration.preferences.javaScriptCanOpenWindowsAutomatically =
             configuration.allowsJavaScriptWindowsAutomatically
         webConfiguration.preferences.isElementFullscreenEnabled = true
@@ -126,7 +117,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.allowsMagnification = true
         webView.allowsBackForwardNavigationGestures = configuration.allowsBackForwardNavigationGestures
         webView.wantsLayer = true
-        webView.isInspectable = configuration.allowsInspectableDebugging
+        applyInspection()
+        inspectionObserver = NotificationCenter.default.addObserver(
+            forName: BrowserEngine.inspectionDidChange, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.applyInspection() }
+        }
         if let layer = webView.layer {
             layer.isOpaque = true
             layer.drawsAsynchronously = true
@@ -285,9 +281,30 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.closeAllMediaPresentations(completionHandler: completion)
     }
 
+    /// Safari's Web Inspector, through the public `isInspectable` (its Develop
+    /// menu). Debug builds also get "Inspect Element" in the context menu,
+    /// a private preference.
+    private func applyInspection() {
+        let allowsInspection = BrowserEngine.shared.allowsInspection
+        webView.isInspectable = allowsInspection
+        #if DEBUG
+            webView.configuration.preferences.setValue(allowsInspection, forKey: "developerExtrasEnabled")
+        #endif
+    }
+
+    deinit {
+        if let inspectionObserver {
+            NotificationCenter.default.removeObserver(inspectionObserver)
+        }
+    }
+
     func teardown() {
         observations.forEach { $0.invalidate() }
         observations = []
+        if let inspectionObserver {
+            NotificationCenter.default.removeObserver(inspectionObserver)
+            self.inspectionObserver = nil
+        }
         // Release the camera and microphone right away, not when WebKit frees
         // the page later (the camera light would stay on after closing a tab).
         if webView.cameraCaptureState != .none {
@@ -323,7 +340,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
         if pendingReload {
             pendingReload = false
-            webView.reload()
+            // Through `reload()`: a local file keeps its read access.
+            reload()
         }
     }
 

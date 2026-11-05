@@ -3,11 +3,9 @@ import Foundation
 struct BrowserPageConfiguration {
     /// Appended by WebKit to its own user agent prefix: see `SafariUserAgent`.
     let applicationNameForUserAgent: String?
-    let allowsPictureInPicture: Bool
     let allowsJavaScript: Bool
     let allowsJavaScriptWindowsAutomatically: Bool
     let allowsAirPlayForMediaPlayback: Bool
-    let allowsInspectableDebugging: Bool
     let allowsBackForwardNavigationGestures: Bool
     let mediaPlaybackRequiresUserAction: Bool
     let scriptMessageNames: [String]
@@ -23,11 +21,9 @@ struct BrowserPageConfiguration {
     ) -> BrowserPageConfiguration {
         BrowserPageConfiguration(
             applicationNameForUserAgent: SafariUserAgent.current,
-            allowsPictureInPicture: true,
             allowsJavaScript: true,
             allowsJavaScriptWindowsAutomatically: false,
             allowsAirPlayForMediaPlayback: true,
-            allowsInspectableDebugging: true,
             allowsBackForwardNavigationGestures: true,
             mediaPlaybackRequiresUserAction: false,
             scriptMessageNames: ["linkHover", "mediaEvent", "passwordManager", "favicon"],
@@ -45,6 +41,18 @@ final class BrowserEngine {
     }
 
     static let shared = BrowserEngine()
+    /// Posted when `allowsInspection` changes: open pages follow it.
+    static let inspectionDidChange = Notification.Name("BrowserEngine.inspectionDidChange")
+
+    /// Whether pages can be inspected with Safari's Web Inspector (Develop
+    /// menu): the "Allow Web Inspector" setting.
+    var allowsInspection = false {
+        didSet {
+            guard allowsInspection != oldValue else { return }
+            NotificationCenter.default.post(name: Self.inspectionDidChange, object: self)
+        }
+    }
+
     /// Set at launch on macOS 15.4+ (see `WebExtensionsManager`): pages of
     /// normal windows run the enabled extensions. A `WKWebExtensionController`.
     var webExtensionController: AnyObject?

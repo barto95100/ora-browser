@@ -69,12 +69,13 @@ extension TabManagerTests {
                 let above = window.addUnloadedTab("above", order: 2, in: space)
                 await window.close(closed)
                 let newcomer = try window.open("newcomer", focus: false)
-                #expect(newcomer.order == 2)
+                // On top of the section.
+                #expect(newcomer.order == 3)
 
                 window.tabManager.restoreLastTab()
 
                 #expect(above.order == 3)
-                #expect(newcomer.order == 3)
+                #expect(newcomer.order == 4)
                 #expect(window.tabs(withID: closed.id).first?.order == 1)
             }
         }

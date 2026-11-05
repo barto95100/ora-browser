@@ -208,7 +208,9 @@ class TabManager: ObservableObject {
             favicon: favicon,
             container: container,
             type: type,
-            order: order ?? container.tabs.count + 1,
+            // On top of its section; `tabs.count + 1` could equal an
+            // existing order after a close.
+            order: order ?? container.topOrder(of: type),
             historyManager: historyManager,
             downloadManager: downloadManager,
             tabManager: self,

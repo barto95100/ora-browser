@@ -112,10 +112,12 @@ extension TabManagerTests {
 
                 #expect(tab.type == .pinned)
                 #expect(tab.savedURL == tab.url)
-                // BUG: (ONG-14) the tab keeps its order from the normal section, so
-                // it lands anywhere among the pinned tabs, here tied with "pinned1".
-                #expect(tab.order == 2)
-                #expect(firstPinned.order == 2)
+                // Last of the pinned tabs, every order distinct (before: it kept
+                // its normal order, 2, tied with "pinned1").
+                let pinnedIDs = space.visiblePinnedTabs(activeTabID: nil).map(\.id)
+                #expect(pinnedIDs.last == tab.id)
+                #expect(Set(space.tabs.filter { $0.type == .pinned }.map(\.order)).count == 3)
+                #expect(firstPinned.order > tab.order)
 
                 let folder = window.tabManager.createFolder(in: space, with: tab)
                 #expect(tab.folderID == folder.id)
@@ -142,6 +144,39 @@ extension TabManagerTests {
                 window.tabManager.toggleFavTab(tab)
                 #expect(tab.type == .normal)
                 #expect(tab.savedURL == nil)
+            }
+        }
+
+        @Test(arguments: [TabType.pinned, .fav])
+        func aTabTakenOutGoesOnTopOfTheTabs(from type: TabType) async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let tab = window.addUnloadedTab("tab", type: type, order: 1, in: space)
+                let other = window.addUnloadedTab("other", order: 5, in: space)
+
+                if type == .pinned {
+                    window.tabManager.togglePinTab(tab)
+                } else {
+                    window.tabManager.toggleFavTab(tab)
+                }
+
+                // Above "other" (before: it kept its order, 1, at the bottom).
+                #expect(tab.type == .normal)
+                #expect(tab.order > other.order)
+            }
+        }
+
+        @Test func aNewFavoriteGoesLast() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let first = window.addUnloadedTab("fav1", type: .fav, order: 2, in: space)
+                let second = window.addUnloadedTab("fav2", type: .fav, order: 1, in: space)
+                let tab = window.addUnloadedTab("tab", order: 5, in: space)
+
+                window.tabManager.toggleFavTab(tab)
+
+                let favorites = space.tabs.filter { $0.type == .fav }.sorted { $0.order > $1.order }
+                #expect(favorites.map(\.id) == [first.id, second.id, tab.id])
             }
         }
 

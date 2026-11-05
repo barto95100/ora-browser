@@ -149,7 +149,7 @@ extension TabManager {
                 tab.destroyWebView()
             }
             mediaController.removeSession(for: tab.id)
-            dropRuntime(for: tab.id)
+            dropRuntime(for: tab)
             modelContext.delete(tab)
         }
 

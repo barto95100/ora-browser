@@ -35,10 +35,8 @@ class Tab: ObservableObject, Identifiable {
     /// Folder of the pinned section this tab is in (see `TabFolders`).
     var folderID: UUID?
 
-    //    @Transient @Published var backgroundColor: Color = Color(.black)
     /// Published so the sidebar's speaker icon follows playback.
     @Transient @Published var isPlayingMedia: Bool = false
-    @Transient var isLoading: Bool = false
     /// Set while the tab is being closed, so it is not picked as the next tab.
     @Transient var isClosing = false
     @Transient @Published var backgroundColor: Color = .black
@@ -47,9 +45,10 @@ class Tab: ObservableObject, Identifiable {
     @Transient weak var historyManager: HistoryManager?
     @Transient weak var downloadManager: DownloadManager?
     @Transient weak var tabManager: TabManager?
-    @Transient var browserPage: BrowserPage?
-    @Transient var pageDelegate: TabBrowserPageDelegate?
-    @Transient @Published var isWebViewReady: Bool = false
+    /// The tab's state in its window (`TabManager.runtimes`), held here too so
+    /// views notice when it is made: of the transient properties, only the
+    /// published ones are observed.
+    @Transient @Published var pageRuntime: TabRuntime?
     @Transient var maybeIsActive = false
     @Transient var isPrivate: Bool = false
     @Transient var passwordCoordinator: PasswordAutofillCoordinator?
@@ -57,9 +56,6 @@ class Tab: ObservableObject, Identifiable {
     @Transient @Published var passwordTriggerOverlayState: PasswordAutofillOverlayState?
     /// Permission prompt currently shown for this tab, see `Tab+SitePermissions`.
     @Transient @Published var permissionRequest: SitePermissionRequest?
-    @Transient var crashRecovery = PageCrashRecoveryPolicy()
-    @Transient var isReloadingAfterCrash = false
-    @Transient @Published var showsCrashRecoveryNotice = false
     @Transient @Published var mediaCaptureState = BrowserMediaCaptureState()
     /// Site the shown favicon belongs to (see `Tab+Favicon.swift`).
     @Transient var faviconSiteHost: String?
@@ -128,7 +124,6 @@ class Tab: ObservableObject, Identifiable {
         self.tabManager = tabManager
         self.isPrivate = isPrivate
         self.passwordCoordinator = PasswordAutofillCoordinator(tab: self)
-        self.isWebViewReady = false
     }
 
     /// When it was last shown; never shown counts as the oldest.
@@ -349,7 +344,7 @@ class Tab: ObservableObject, Identifiable {
     func destroyWebView() {
         cancelPermissionRequest()
         // A new page loads from scratch: nothing left to recover.
-        crashRecovery = PageCrashRecoveryPolicy()
+        MainActor.assumeIsolated { runtime?.crashRecovery = PageCrashRecoveryPolicy() }
         isReloadingAfterCrash = false
         showsCrashRecoveryNotice = false
         if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }
@@ -371,7 +366,7 @@ class Tab: ObservableObject, Identifiable {
     /// The tab's state in its window, if it has one (see `TabRuntime`):
     /// reading it never makes one.
     @MainActor var runtime: TabRuntime? {
-        tabManager?.existingRuntime(for: id)
+        pageRuntime
     }
 
     /// Shown by the page's error view; only while the tab has a page in an

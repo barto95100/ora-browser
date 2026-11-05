@@ -21,10 +21,11 @@ extension Tab {
         if passwordCoordinator == nil {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }
+        // First: the page is kept in the window's runtime.
+        self.tabManager = tabManager
         browserPage = page
         self.historyManager = historyManager
         self.downloadManager = downloadManager
-        self.tabManager = tabManager
         setupBrowserPageDelegate(for: page)
         syncBackgroundColorFromHex()
         isWebViewReady = true

@@ -25,6 +25,13 @@ struct ContainerView: View {
     @Environment(\.window) private var window: NSWindow?
 
     var body: some View {
+        content
+            // This page is hosted apart (`NSPageView`): files dropped on its
+            // tab lists open as tabs here too, not lost to them.
+            .onDrop(of: [.fileURL], delegate: FileDropDelegate(window: window))
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
             if toolbarManager.isToolbarHidden {
                 SidebarURLDisplay()

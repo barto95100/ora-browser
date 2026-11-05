@@ -112,6 +112,10 @@ struct BrowserView: View {
             }
         }
         .edgesIgnoringSafeArea(.all)
+        // Files dropped on the window (its sidebar, address bar, empty page)
+        // open as tabs, like Finder's Open With; on a page, the page gets
+        // them first (WebKit), as in Safari.
+        .onDrop(of: [.fileURL], delegate: FileDropDelegate(window: window))
         // A space with a theme is shown dark, like Arc (private windows are
         // made dark by `OmbreRoot`).
         .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)

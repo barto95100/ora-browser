@@ -102,6 +102,8 @@ class AppState: ObservableObject {
     @Published var launcherSearchText: String = ""
     @Published var showFinderIn: UUID?
     @Published var isFloatingTabSwitchVisible: Bool = false
+    /// Opened with Previous Tab: the switcher starts from the oldest tab.
+    var isFloatingTabSwitchBackward = false
     @Published var isFullscreen: Bool = false
     @Published var isURLBarEditing: Bool = false
 }

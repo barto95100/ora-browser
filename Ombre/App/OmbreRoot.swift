@@ -196,15 +196,16 @@ private struct BrowserWindowRoot: View {
                 keyModifierListener.registerKeyDownHandler { event in
                     guard !appState.isFloatingTabSwitchVisible else { return false }
 
-                    if event.keyCode == 48 {
-                        if event.modifierFlags.contains(.control) {
-                            DispatchQueue.main.async {
-                                appState.isFloatingTabSwitchVisible = true
-                            }
-                            return true
-                        }
+                    // Next and Previous Tab (⌃Tab, ⌃⇧Tab by default, customizable):
+                    // here, before the menu, which text fields would take them from.
+                    let chord = KeyChord(fromEvent: event)
+                    let backward = chord == KeyboardShortcuts.Tabs.previous.currentChord
+                    guard backward || chord == KeyboardShortcuts.Tabs.next.currentChord else { return false }
+                    DispatchQueue.main.async {
+                        appState.isFloatingTabSwitchBackward = backward
+                        appState.isFloatingTabSwitchVisible = true
                     }
-                    return false
+                    return true
                 }
 
                 // Full screen: macOS only offers Globe+F in the View menu, which
@@ -216,6 +217,19 @@ private struct BrowserWindowRoot: View {
                           let targetWindow = event.window
                     else { return false }
                     targetWindow.toggleFullScreen(nil)
+                    return true
+                }
+
+                // Zoom In is ⌘+, which needs ⇧ on most keyboards: ⌘= zooms in
+                // too, like Safari, while the shortcut is the default one.
+                keyModifierListener.registerKeyDownHandler { event in
+                    let zoomIn = KeyboardShortcuts.Zoom.zoomIn
+                    guard zoomIn.currentChord.isSameKeys(as: zoomIn.defaultChord),
+                          let chord = KeyChord(fromEvent: event),
+                          chord.isSameKeys(as: KeyChord(keyEquivalent: .init("="), modifiers: [.command])),
+                          let targetWindow = event.window
+                    else { return false }
+                    NotificationCenter.default.post(name: .zoomPage, object: targetWindow, userInfo: ["step": 1])
                     return true
                 }
             }

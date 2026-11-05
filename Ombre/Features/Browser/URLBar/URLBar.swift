@@ -227,7 +227,6 @@ struct URLBar: View {
                     foregroundColor: buttonForegroundColor,
                     action: { tabManager.activeTab?.goBack() }
                 )
-                .ombreShortcut(KeyboardShortcuts.Navigation.back)
                 .ombreShortcutHelp("Go Back", for: KeyboardShortcuts.Navigation.back)
 
                 // Forward button
@@ -237,7 +236,6 @@ struct URLBar: View {
                     foregroundColor: buttonForegroundColor,
                     action: { tabManager.activeTab?.goForward() }
                 )
-                .ombreShortcut(KeyboardShortcuts.Navigation.forward)
                 .ombreShortcutHelp("Go Forward", for: KeyboardShortcuts.Navigation.forward)
 
                 // Reload button
@@ -247,7 +245,6 @@ struct URLBar: View {
                     foregroundColor: buttonForegroundColor,
                     action: { tabManager.activeTab?.reload() }
                 )
-                .ombreShortcut(KeyboardShortcuts.Navigation.reload)
                 .ombreShortcutHelp("Reload This Page", for: KeyboardShortcuts.Navigation.reload)
 
                 // URL field area - morphs between display and launcher input

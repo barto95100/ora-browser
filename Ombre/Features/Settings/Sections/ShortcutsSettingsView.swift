@@ -4,6 +4,8 @@ import SwiftUI
 struct ShortcutsSettingsView: View {
     @StateObject private var shortcutManager = CustomKeyboardShortcutManager.shared
     @State private var editingShortcut: KeyboardShortcutDefinition?
+    /// A shortcut typed that another one already uses: not kept.
+    @State private var conflictMessage: String?
 
     private var sections: [(category: String, items: [KeyboardShortcutDefinition])] {
         return KeyboardShortcuts.itemsByCategory
@@ -35,12 +37,25 @@ struct ShortcutsSettingsView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .alert(
+            "Shortcut Already Used",
+            isPresented: Binding(get: { conflictMessage != nil }, set: { if !$0 { conflictMessage = nil } })
+        ) {
+            Button("OK") { conflictMessage = nil }
+        } message: {
+            Text(conflictMessage ?? "")
+        }
     }
 
     private func handleAction(for item: KeyboardShortcutDefinition, action: ShortcutRowView.Action) {
         switch action {
         case .resetTapped:
-            shortcutManager.removeCustomShortcut(for: item)
+            // Its default may have been given to another one meanwhile.
+            if let other = KeyboardShortcuts.conflict(for: item.defaultChord, excluding: item.id) {
+                conflictMessage = Self.conflictText(item.defaultChord, other)
+            } else {
+                shortcutManager.removeCustomShortcut(for: item)
+            }
             cancelEditing()
         case .editTapped:
             if editingShortcut == item {
@@ -52,11 +67,17 @@ struct ShortcutsSettingsView: View {
     }
 
     private func handleKeyCapture(_ event: NSEvent) {
-        guard let editingShortcut else { return }
-        if KeyChord(fromEvent: event) != nil {
+        guard let editingShortcut, let chord = KeyChord(fromEvent: event) else { return }
+        if let other = KeyboardShortcuts.conflict(for: chord, excluding: editingShortcut.id) {
+            conflictMessage = Self.conflictText(chord, other)
+        } else {
             shortcutManager.setCustomShortcut(for: editingShortcut, event: event)
-            cancelEditing()
         }
+        cancelEditing()
+    }
+
+    private static func conflictText(_ chord: KeyChord, _ other: KeyboardShortcutDefinition) -> String {
+        "\(chord.display) is already the shortcut for “\(other.name)”. Change that one first."
     }
 
     private func cancelEditing() {

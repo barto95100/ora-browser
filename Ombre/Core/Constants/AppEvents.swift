@@ -18,6 +18,10 @@ extension Notification.Name {
     /// A task reminder clicked; `userInfo["spaceID"]` is the task's space.
     static let openTaskReminder = Notification.Name("OpenTaskReminder")
     static let closeActiveTab = Notification.Name("CloseActiveTab")
+    static let findNext = Notification.Name("FindNext")
+    static let findPrevious = Notification.Name("FindPrevious")
+    /// `userInfo["step"]`: 1 zooms in, -1 out, 0 back to actual size.
+    static let zoomPage = Notification.Name("ZoomPage")
     static let openPeekInTab = Notification.Name("OpenPeekInTab")
     static let newSplitView = Notification.Name("NewSplitView")
     static let restoreLastTab = Notification.Name("RestoreLastTab")

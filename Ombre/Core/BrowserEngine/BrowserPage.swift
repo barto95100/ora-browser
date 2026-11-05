@@ -165,6 +165,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView
     }
 
+    /// The page's zoom (1: actual size), kept across its navigations.
+    var pageZoom: Double {
+        get { Double(webView.pageZoom) }
+        set { webView.pageZoom = CGFloat(newValue) }
+    }
+
     /// Hides the mouse from the page under a floating panel (nil: no panel).
     func setMouseShield(_ shield: MouseShield?) {
         (webView as? OmbreWebView)?.mouseShield = shield

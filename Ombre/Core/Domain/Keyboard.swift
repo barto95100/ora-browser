@@ -43,6 +43,13 @@ struct KeyChord: Equatable, Codable {
         self.characterString = String(keyEquivalent.character)
     }
 
+    /// Same keys pressed: a letter typed with ⇧ is captured uppercase ("R"
+    /// with ⌘⇧) while a definition says "r" with ⌘⇧.
+    func isSameKeys(as other: KeyChord) -> Bool {
+        modifiers == other.modifiers
+            && String(keyEquivalent.character).lowercased() == String(other.keyEquivalent.character).lowercased()
+    }
+
     init?(fromEvent event: NSEvent) {
         var mods: SwiftUI.EventModifiers = []
         let flags = event.modifierFlags

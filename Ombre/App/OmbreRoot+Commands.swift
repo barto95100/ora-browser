@@ -220,10 +220,12 @@ private struct WindowTabCommands: ViewModifier {
             }
             .onNotification(.nextTab) { note in
                 guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                appState.isFloatingTabSwitchBackward = false
                 appState.isFloatingTabSwitchVisible = true
             }
             .onNotification(.previousTab) { note in
                 guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                appState.isFloatingTabSwitchBackward = true
                 appState.isFloatingTabSwitchVisible = true
             }
             .onNotification(.selectTabAtIndex) { note in
@@ -266,6 +268,15 @@ private struct WindowPageCommands: ViewModifier {
         let toolbarManager = targets.toolbarManager
 
         content
+            .onNotification(.zoomPage) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === window ?? NSApp.keyWindow,
+                          let page = tabManager.activeTab?.browserPage,
+                          let step = note.userInfo?["step"] as? Int
+                    else { return }
+                    page.pageZoom = PageZoom.level(after: page.pageZoom, step: step)
+                }
+            }
             .onNotification(.findInPage) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

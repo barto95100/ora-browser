@@ -38,10 +38,7 @@ struct FloatingTabSwitcher: View {
         }
         .onAppear {
             preloadSnapshots()
-            if !recentTabs.isEmpty {
-                let to = recentTabs.count == 1 ? 0 : 1
-                focusedTab = recentTabs[to].id
-            }
+            focusFirstTab()
             startMouseMonitor()
         }
         .onDisappear {
@@ -50,10 +47,7 @@ struct FloatingTabSwitcher: View {
         .onChange(of: appState.isFloatingTabSwitchVisible) { _, isVisible in
             if isVisible {
                 preloadSnapshots()
-                if !recentTabs.isEmpty {
-                    let to = recentTabs.count == 1 ? 0 : 1
-                    focusedTab = recentTabs[to].id
-                }
+                focusFirstTab()
                 startMouseMonitor()
             } else {
                 stopMouseMonitor()
@@ -205,9 +199,11 @@ struct FloatingTabSwitcher: View {
 
     private var keyboardHandler: some View {
         KeyCaptureView(onKeyDown: { event in
-            if event.modifierFlags.contains([.control, .shift]) {
+            // Next and Previous Tab again, as customized (⌃Tab, ⌃⇧Tab).
+            guard let chord = KeyChord(fromEvent: event) else { return }
+            if chord.isSameKeys(as: KeyboardShortcuts.Tabs.previous.currentChord) {
                 focusPreviousTab()
-            } else if event.modifierFlags.contains(.control) {
+            } else if chord.isSameKeys(as: KeyboardShortcuts.Tabs.next.currentChord) {
                 focusNextTab()
                 preWarmSnapshotsIfNeeded()
             }
@@ -233,6 +229,14 @@ struct FloatingTabSwitcher: View {
     }
 
     // MARK: - Methods
+
+    /// The tab used just before (Next Tab), or the oldest one shown
+    /// (Previous Tab).
+    private func focusFirstTab() {
+        guard !recentTabs.isEmpty else { return }
+        let index = TabSwitcherStart.index(count: recentTabs.count, backward: appState.isFloatingTabSwitchBackward)
+        focusedTab = recentTabs[index].id
+    }
 
     private func focusNextTab() {
         guard let currentFocusedTab = focusedTab,
@@ -356,5 +360,13 @@ struct FloatingTabSwitcher: View {
 
     private func closeFloatingTabSwitch() {
         appState.isFloatingTabSwitchVisible = false
+    }
+}
+
+/// Where the tab switcher starts in its list (most recent first).
+enum TabSwitcherStart {
+    static func index(count: Int, backward: Bool) -> Int {
+        guard count > 1 else { return 0 }
+        return backward ? count - 1 : 1
     }
 }

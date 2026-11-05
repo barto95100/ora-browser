@@ -391,6 +391,10 @@ struct URLBar: View {
                 PrivateBrowsingBadge(foregroundColor: buttonForegroundColor)
             }
 
+            if let runtime = tab.runtime {
+                PageTranslationButton(tab: tab, runtime: runtime, foregroundColor: buttonForegroundColor)
+            }
+
             PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
 
             if !privacyMode.isPrivate {

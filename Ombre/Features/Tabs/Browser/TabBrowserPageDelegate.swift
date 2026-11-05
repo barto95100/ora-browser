@@ -77,7 +77,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             tab.crashRecoveryNavigationDidStart()
             if tab.folderAccessRequest != nil { tab.folderAccessRequest = nil }
             if !tab.blockedContent.isEmpty { tab.blockedContent = [:] }
-            tab.maintainSnapShots()
             passwordCoordinator?.clearAutofillState()
             tab.isLoading = event.isLoading
             tab.loadingProgress = event.progress
@@ -322,6 +321,17 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
     }
 
+    func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {
+        guard let tab else { return }
+        if let color {
+            tab.updateBackgroundColor(Color(nsColor: color))
+        } else if !page.isLoading {
+            // It no longer declares one: read its top again (after a load,
+            // `.finished` does).
+            tab.updateHeaderColor()
+        }
+    }
+
     func takeSnapshotAfterLoad(_ page: BrowserPage) {
         guard !page.isLoading, page.contentView.bounds.width > 0 else { return }
 
@@ -337,7 +347,6 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             let color = self.extractDominantColor(from: cgImage) ?? .black
             DispatchQueue.main.async {
                 self.tab?.updateBackgroundColor(Color(nsColor: color))
-                self.tab?.colorUpdated = true
             }
         }
     }

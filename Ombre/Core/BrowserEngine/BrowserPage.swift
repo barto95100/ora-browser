@@ -85,6 +85,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             webView.observe(\.title) { [weak self] _, _ in
                 self?.notifyOnMain { $0.delegate?.browserPage($0, didChangeTitle: $0.webView.title) }
             },
+            // The header color the page asks for, without polling it.
+            webView.observe(\.themeColor) { [weak self] _, _ in
+                self?.notifyOnMain { $0.delegate?.browserPage($0, didChangeThemeColor: $0.webView.themeColor) }
+            },
             // Camera/microphone use, to show it and let the user pause it.
             webView.observe(\.cameraCaptureState) { [weak self] _, _ in
                 self?.mediaCaptureStateDidChange()
@@ -275,6 +279,11 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         case .app: appWorld
         case .page: .page
         }
+    }
+
+    /// The color the page asks the browser's chrome to use, if any.
+    var themeColor: NSColor? {
+        webView.themeColor
     }
 
     func takeSnapshot(

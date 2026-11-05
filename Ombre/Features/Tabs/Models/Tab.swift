@@ -51,7 +51,6 @@ class Tab: ObservableObject, Identifiable {
     @Transient var pageDelegate: TabBrowserPageDelegate?
     @Transient @Published var isWebViewReady: Bool = false
     @Transient @Published var loadingProgress: Double = 10.0
-    @Transient var colorUpdated = false
     @Transient var maybeIsActive = false
     @Transient @Published var hasNavigationError: Bool = false
     @Transient @Published var navigationError: Error?
@@ -165,11 +164,18 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    /// The header's color: the page's theme color when it has one (like
+    /// Safari's tinted tab bar), else the top of the page, read a second
+    /// later once it has drawn (after a load, a switch to the tab, back or
+    /// forward); nothing is polled while a page loads.
     func updateHeaderColor() {
+        if let themeColor = browserPage?.themeColor {
+            updateBackgroundColor(Color(nsColor: themeColor))
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            if let page = self?.browserPage {
-                self?.pageDelegate?.takeSnapshotAfterLoad(page)
-            }
+            guard let self, let page = browserPage, page.themeColor == nil else { return }
+            pageDelegate?.takeSnapshotAfterLoad(page)
         }
     }
 
@@ -188,17 +194,6 @@ class Tab: ObservableObject, Identifiable {
                 faviconLocalFile: faviconLocalFile,
                 container: container
             )
-        }
-    }
-
-    func maintainSnapShots() {
-        if !self.colorUpdated || self.browserPage?.isLoading == true, self.maybeIsActive {
-            self.updateHeaderColor()
-
-            Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { [weak self] _ in
-                guard let tab = self else { return }
-                tab.maintainSnapShots()
-            }
         }
     }
 

@@ -106,11 +106,18 @@ import SwiftUI
             return controller
         }
 
+        /// Pages made from now on show the current content, not the one of
+        /// when the pager was made.
+        func refresh(_ controller: NSPageViewContainerController<T, V>) {
+            controller.objectToView = { object in contentView(object) }
+        }
+
         public func updateNSViewController(_ nsViewController: some NSViewController, context: Context) {
             guard let controller = nsViewController as? NSPageViewContainerController<T, V> else {
                 return
             }
 
+            refresh(controller)
             let selectionAnimation = selection.transaction.animation
             let contextAnimation = context.transaction.animation
             controller.request(

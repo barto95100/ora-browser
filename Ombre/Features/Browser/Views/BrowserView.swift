@@ -34,46 +34,26 @@ struct BrowserView: View {
     @State private var isMouseOverSidebar = false
     @State private var showFloatingSidebar = false
 
-    // MARK: - Sidebar mouse shield
-
-    /// The shield is held by the app's script world, not found by an id the
-    /// page could read.
-    private static let removeShieldJS = "window.__sidebarShield?.remove(); window.__sidebarShield = null;"
-
-    private var clampedSidebarFraction: CGFloat {
-        min(sidebarManager.currentFraction.value, SidebarLayout.maximumFraction)
-    }
-
     /// Whether a menu command was chosen for this window.
     private func isForThisWindow(_ note: Notification) -> Bool {
         NotificationWindowScope.concerns(target: note.object, window: window, keyWindow: NSApp.keyWindow)
     }
 
-    /// Injects/removes a transparent shield div in the web page to block
-    /// hover effects and cursor changes behind the floating sidebar.
-    private func injectSidebarMouseShield(visible: Bool) {
-        guard let activeTab = tabManager.activeTab else { return }
-        if visible {
-            let side = sidebarManager.sidebarPosition == .primary ? "left" : "right"
-            let widthVW = clampedSidebarFraction * 100
-            activeTab.evaluateJavaScript(
-                """
-                window.__sidebarShield?.remove();
-                var d = document.createElement('div');
-                window.__sidebarShield = d;
-                d.style.position = 'fixed';
-                d.style.top = '0';
-                d.style.\(side) = '0';
-                d.style.width = 'max(\(widthVW)vw, \(Int(SidebarLayout.minimumWidth))px)';
-                d.style.height = '100vh';
-                d.style.zIndex = '2147483647';
-                d.style.pointerEvents = 'auto';
-                d.style.cursor = 'default';
-                document.documentElement.appendChild(d);
-                """
-            )
-        } else {
-            activeTab.evaluateJavaScript(Self.removeShieldJS)
+    // MARK: - Sidebar mouse shield
+
+    /// Hides the mouse from the pages under the floating sidebar (hover
+    /// effects, cursor), in their web views, never in the pages (SEC-26).
+    /// Both sides of a split view; `previousTab`'s pages are released.
+    private func updateSidebarMouseShield(previousTab: Tab? = nil) {
+        for tab in tabManager.shownTabs(around: previousTab) {
+            tab.browserPage?.setMouseShield(nil)
+        }
+        let shield = showFloatingSidebar && sidebarManager.isSidebarHidden ? MouseShield(
+            edge: sidebarManager.sidebarPosition == .primary ? .leading : .trailing,
+            fraction: sidebarManager.currentFraction.value
+        ) : nil
+        for tab in tabManager.shownTabs(around: tabManager.activeTab) {
+            tab.browserPage?.setMouseShield(shield)
         }
     }
 
@@ -137,9 +117,9 @@ struct BrowserView: View {
         .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)
         .enableInjection()
         .animation(.easeOut(duration: 0.1), value: showFloatingSidebar)
-        .onChange(of: showFloatingSidebar) { _, visible in
-            injectSidebarMouseShield(visible: visible)
-        }
+        .onChange(of: showFloatingSidebar) { updateSidebarMouseShield() }
+        .onChange(of: sidebarManager.isSidebarHidden) { updateSidebarMouseShield() }
+        .onReceive(sidebarManager.currentFraction.$value) { _ in updateSidebarMouseShield() }
         .onReceive(NotificationCenter.default.publisher(for: .toggleSidebar)) { note in
             guard isForThisWindow(note) else { return }
             sidebarManager.toggleSidebar()
@@ -152,6 +132,7 @@ struct BrowserView: View {
         // sidebar hidden or shown.
         .onChange(of: sidebarManager.sidebarPosition) { oldPosition, newPosition in
             sidebarManager.sidebarPositionChanged(from: oldPosition, to: newPosition)
+            updateSidebarMouseShield()
         }
         .onChange(of: downloadManager.isShowingDownloadsHistory) { _, isOpen in
             if sidebarManager.isSidebarHidden {
@@ -164,8 +145,7 @@ struct BrowserView: View {
         }
         .onChange(of: tabManager.activeTab) { oldTab, newTab in
             if showFloatingSidebar {
-                oldTab?.evaluateJavaScript(Self.removeShieldJS)
-                injectSidebarMouseShield(visible: true)
+                updateSidebarMouseShield(previousTab: oldTab)
             }
             if let tab = newTab, !tab.isWebViewReady {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {

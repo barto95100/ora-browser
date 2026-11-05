@@ -1,9 +1,47 @@
 import AppKit
 @preconcurrency import WebKit
 
-/// The page's web view: lets the page adjust WebKit's context menu.
+/// The page's web view: lets the page adjust WebKit's context menu, and
+/// hides the mouse from the page under a floating panel (`MouseShield`).
 final class OmbreWebView: WKWebView {
     weak var contextMenuOwner: BrowserPage?
+
+    private var shieldTracker = MouseShieldTracker()
+
+    var mouseShield: MouseShield? {
+        get { shieldTracker.shield }
+        set { shieldTracker.shield = newValue }
+    }
+
+    private var windowWidth: CGFloat? {
+        window?.contentView?.bounds.width
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        switch shieldTracker.mouseMoved(toX: event.locationInWindow.x, windowWidth: windowWidth) {
+        case .forward:
+            super.mouseMoved(with: event)
+        case .ignore:
+            break
+        case .leavePage:
+            // As if the mouse left the page, at a point just outside it (the
+            // page reads where it went): its hover effects end.
+            let outside = NSPoint(x: convert(bounds, to: nil).minX - 1, y: event.locationInWindow.y)
+            if let exit = NSEvent.enterExitEvent(
+                with: .mouseExited, location: outside, modifierFlags: event.modifierFlags,
+                timestamp: event.timestamp, windowNumber: event.windowNumber, context: nil,
+                eventNumber: 0, trackingNumber: 0, userData: nil
+            ) {
+                super.mouseExited(with: exit)
+            }
+            NSCursor.arrow.set()
+        }
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        guard !shieldTracker.isCovered(windowX: event.locationInWindow.x, windowWidth: windowWidth) else { return }
+        super.mouseEntered(with: event)
+    }
 
     override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
         super.willOpenMenu(menu, with: event)

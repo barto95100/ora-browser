@@ -162,6 +162,11 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView
     }
 
+    /// Hides the mouse from the page under a floating panel (nil: no panel).
+    func setMouseShield(_ shield: MouseShield?) {
+        (webView as? OmbreWebView)?.mouseShield = shield
+    }
+
     /// The web view, for the extensions' tabs API only (`ExtensionTab`).
     var extensionWebView: WKWebView {
         webView

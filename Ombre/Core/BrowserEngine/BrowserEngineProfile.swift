@@ -6,11 +6,12 @@ final class BrowserEngineProfile {
     let isPrivate: Bool
     let dataStore: WKWebsiteDataStore
 
-    init(identifier: UUID, isPrivate: Bool) {
+    /// `privateDataStore`: the private window's session, shared by its tabs.
+    init(identifier: UUID, isPrivate: Bool, privateDataStore: WKWebsiteDataStore? = nil) {
         self.identifier = identifier
         self.isPrivate = isPrivate
         if isPrivate {
-            dataStore = WKWebsiteDataStore.nonPersistent()
+            dataStore = privateDataStore ?? WKWebsiteDataStore.nonPersistent()
         } else {
             dataStore = WKWebsiteDataStore(forIdentifier: identifier)
         }

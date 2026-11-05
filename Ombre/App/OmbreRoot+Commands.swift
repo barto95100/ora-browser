@@ -383,6 +383,7 @@ private struct WindowLifecycle: ViewModifier {
                     if isPrivate {
                         let spaces = (try? tabManager.modelContext.fetch(FetchDescriptor<TabContainer>())) ?? []
                         PrivateWindows.shared.closed(tabManager, spaceIDs: spaces.map(\.id))
+                        BrowserEngine.shared.endPrivateSession(tabManager.privateSessionID)
                     }
                 }
             }

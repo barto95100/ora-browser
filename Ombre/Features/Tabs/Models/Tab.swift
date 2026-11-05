@@ -222,7 +222,11 @@ class Tab: ObservableObject, Identifiable {
     /// space's privacy settings.
     func makeBrowserPage(isPrivate: Bool) -> BrowserPage {
         let engine = BrowserEngine.shared
-        let profile = engine.makeProfile(identifier: container.id, isPrivate: isPrivate)
+        let profile = engine.makeProfile(
+            identifier: container.id,
+            isPrivate: isPrivate,
+            privateSession: tabManager?.privateSessionID
+        )
         let privacySettings = SettingsStore.shared.privacySettings(for: container.id)
         let userScripts = OmbreBrowserScripts.userScripts() + BrowserPrivacyService.privacyScripts(
             for: privacySettings,
@@ -253,12 +257,13 @@ class Tab: ObservableObject, Identifiable {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }
 
+        // First: the page takes the window's private session from it.
+        self.tabManager = tabManager
         let page = makeBrowserPage(isPrivate: isPrivate)
         browserPage = page
 
         self.historyManager = historyManager
         self.downloadManager = downloadManager
-        self.tabManager = tabManager
         self.isWebViewReady = false
         self.setupBrowserPageDelegate(for: page)
         self.syncBackgroundColorFromHex()

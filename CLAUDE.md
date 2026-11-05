@@ -106,6 +106,10 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   (`PictureInPicturePreference`), sans laquelle aucune page n'a de PiP sur macOS (aucun réglage public) ;
   acceptable car Ombre n'est pas sur le Mac App Store. Posée seulement si WebKit la connaît encore ; un test
   échoue sinon.
+  **Deuxième exception tolérée** (décision de Ludo, 05/11/2026) : le partage d'écran (`ScreenSharing`), réglage
+  `screenCaptureEnabled` (seulement lu : actif par défaut) et méthode de délégué
+  `_webView:requestDisplayCapturePermissionForOrigin:…` (aucune API publique sur macOS) ; un test échoue si WebKit
+  perd l'un ou l'autre. Le sélecteur de macOS donne l'accès : pas de permission « Enregistrement de l'écran ».
   Géolocalisation (décision de Ludo) : méthode publique de macOS 27, et avant elle la méthode **de délégué** privée
   `_webView:requestGeolocationPermissionForOrigin:…` (test qui échoue si WebKit ne la déclare plus).
 

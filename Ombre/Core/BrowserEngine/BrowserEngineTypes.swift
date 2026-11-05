@@ -49,6 +49,8 @@ enum BrowserPermissionKind {
     case notifications
     /// The device's location (`navigator.geolocation`).
     case geolocation
+    /// A screen or a window (`getDisplayMedia`).
+    case screen
 }
 
 /// A notification a page asked to show (`new Notification(...)`).

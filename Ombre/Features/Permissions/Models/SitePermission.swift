@@ -6,6 +6,7 @@ enum SitePermissionType: String, Codable, CaseIterable, Identifiable {
     case microphone
     case notifications
     case location
+    case screen
 
     var id: String {
         rawValue
@@ -93,17 +94,20 @@ struct SitePermissions: Codable, Hashable {
     var microphone: SitePermissionState = .ask
     var notifications: SitePermissionState = .ask
     var location: SitePermissionState = .ask
+    var screen: SitePermissionState = .ask
 
     init(
         camera: SitePermissionState = .ask,
         microphone: SitePermissionState = .ask,
         notifications: SitePermissionState = .ask,
-        location: SitePermissionState = .ask
+        location: SitePermissionState = .ask,
+        screen: SitePermissionState = .ask
     ) {
         self.camera = camera
         self.microphone = microphone
         self.notifications = notifications
         self.location = location
+        self.screen = screen
     }
 
     /// Tolerate missing keys so that capabilities added later decode as `.ask`.
@@ -113,6 +117,7 @@ struct SitePermissions: Codable, Hashable {
         microphone = try container.decodeIfPresent(SitePermissionState.self, forKey: .microphone) ?? .ask
         notifications = try container.decodeIfPresent(SitePermissionState.self, forKey: .notifications) ?? .ask
         location = try container.decodeIfPresent(SitePermissionState.self, forKey: .location) ?? .ask
+        screen = try container.decodeIfPresent(SitePermissionState.self, forKey: .screen) ?? .ask
     }
 
     subscript(type: SitePermissionType) -> SitePermissionState {
@@ -122,6 +127,7 @@ struct SitePermissions: Codable, Hashable {
             case .microphone: microphone
             case .notifications: notifications
             case .location: location
+            case .screen: screen
             }
         }
         set {
@@ -130,6 +136,7 @@ struct SitePermissions: Codable, Hashable {
             case .microphone: microphone = newValue
             case .notifications: notifications = newValue
             case .location: location = newValue
+            case .screen: screen = newValue
             }
         }
     }
@@ -162,6 +169,7 @@ extension SitePermissionType {
         case .microphone: "Microphone"
         case .notifications: "Notifications"
         case .location: "Location"
+        case .screen: "Screen Sharing"
         }
     }
 }
@@ -187,6 +195,7 @@ extension BrowserPermissionKind {
         case .cameraAndMicrophone: [.camera, .microphone]
         case .notifications: [.notifications]
         case .geolocation: [.location]
+        case .screen: [.screen]
         }
     }
 }

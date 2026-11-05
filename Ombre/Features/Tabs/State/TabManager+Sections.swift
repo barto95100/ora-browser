@@ -5,12 +5,15 @@ import SwiftUI
 extension TabManager {
     func togglePinTab(_ tab: Tab) {
         if tab.type == .pinned {
+            // Back on top of the tabs, like Arc.
+            tab.order = tab.container.topOrder(of: .normal)
             tab.type = .normal
             tab.savedURL = nil
             tab.folderID = nil
         } else {
             tab.type = .pinned
             tab.savedURL = tab.url
+            tab.container.appendPinned(tab)
         }
 
         modelContext.saveOrLog("toggle pin tab")
@@ -19,11 +22,13 @@ extension TabManager {
     func toggleFavTab(_ tab: Tab) {
         tab.folderID = nil
         if tab.type == .fav {
+            tab.order = tab.container.topOrder(of: .normal)
             tab.type = .normal
             tab.savedURL = nil
         } else {
             tab.type = .fav
             tab.savedURL = tab.url
+            tab.container.appendFavorite(tab)
         }
 
         modelContext.saveOrLog("toggle favorite tab")

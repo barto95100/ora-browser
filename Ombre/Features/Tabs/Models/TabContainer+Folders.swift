@@ -103,6 +103,13 @@ extension TabContainer {
         renumberPinned(TabReordering.reordered(ids, moving: moved.id, onto: target.id))
     }
 
+    /// A newly pinned tab: last of the section, outside folders (like Arc).
+    func appendPinned(_ tab: Tab) {
+        tab.folderID = nil
+        let ids = contentIDs(of: nil).filter { $0 != tab.id } + [tab.id]
+        renumberPinned(ids)
+    }
+
     /// Puts a tab right after a pinned tab, in the same folder (a duplicate).
     func placePinned(_ tab: Tab, after target: Tab) {
         guard tab.id != target.id else { return }

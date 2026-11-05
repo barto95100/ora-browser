@@ -93,7 +93,7 @@ extension TabManagerTests {
             }
         }
 
-        @Test func newTabOrderCanEqualAnExistingOne() async throws {
+        @Test func aNewTabGoesOnTopAfterAClose() async throws {
             try await TabManagerTestWindow.run { window in
                 let first = try window.open("first", focus: false)
                 try window.open("second", focus: false)
@@ -102,11 +102,10 @@ extension TabManagerTests {
 
                 let fourth = try window.open("fourth", focus: false)
 
-                // BUG: (ONG-14) the order is `tabs.count + 1`, so after a close the
-                // new tab gets the order of an existing one (3, like "third"):
-                // it is not necessarily shown on top.
+                // Above every tab of its section (before: `tabs.count + 1`, 3,
+                // the same order as "third").
                 #expect(third.order == 3)
-                #expect(fourth.order == 3)
+                #expect(fourth.order == 4)
             }
         }
     }

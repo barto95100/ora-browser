@@ -96,6 +96,17 @@ class TabContainer: ObservableObject, Identifiable {
 
     /// A section's tabs in the order the sidebar shows them: same sort as the
     /// sidebar lists, so tabs sharing an order are seen in the same places.
+    /// A new favorite: last of the favorites.
+    func appendFavorite(_ tab: Tab) {
+        renumber(displayedTabs(of: .fav).map(\.id).filter { $0 != tab.id } + [tab.id])
+    }
+
+    /// The order that puts a tab on top of a section of tabs only (normal
+    /// or favorites; pinned tabs share their numbering with folders).
+    func topOrder(of type: TabType) -> Int {
+        (tabs.filter { $0.type == type }.map(\.order).max() ?? 0) + 1
+    }
+
     private func displayedTabs(of type: TabType) -> [Tab] {
         tabs
             .sorted { $0.order > $1.order }

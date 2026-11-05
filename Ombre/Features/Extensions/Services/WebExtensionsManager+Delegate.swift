@@ -25,7 +25,13 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionTab)?, (any Error)?) -> Void
     ) {
-        let window = (configuration.window as? ExtensionWindow) ?? focusedWindow
+        // Not in a private window for an extension not allowed there.
+        let window = Self.window(
+            for: configuration.window as? ExtensionWindow,
+            focused: focusedWindow,
+            focusedNormal: focusedNormalWindow,
+            allowsPrivate: extensionContext.hasAccessToPrivateData
+        )
         guard let tabManager = window?.tabManager, let url = configuration.url else {
             completionHandler(nil, nil)
             return
@@ -114,7 +120,12 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
             completionHandler([], nil)
             return
         }
-        askSites(hosts: hosts, allSites: false, for: extensionContext) { allowed, expiresAt in
+        askSites(
+            hosts: hosts,
+            allSites: false,
+            isPrivate: isPrivate(tab),
+            for: extensionContext
+        ) { allowed, expiresAt in
             completionHandler(allowed ? urls : [], expiresAt)
         }
     }
@@ -132,10 +143,11 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
             completionHandler([], nil)
             return
         }
-        askSites(hosts: hosts, allSites: allSites, for: extensionContext) { allowed, expiresAt in
+        let isPrivate = isPrivate(tab)
+        askSites(hosts: hosts, allSites: allSites, isPrivate: isPrivate, for: extensionContext) { allowed, expiresAt in
             // All websites allowed: kept with the websites it asked for at
-            // install, which follow "Other Websites".
-            if allowed, allSites {
+            // install, which follow "Other Websites" (not from private).
+            if allowed, allSites, !isPrivate {
                 let patterns = matchPatterns.map(\.string)
                 self.updateRecord(id: extensionContext.uniqueIdentifier) { record in
                     record.grantedMatchPatterns = Array(Set(record.grantedMatchPatterns).union(patterns)).sorted()
@@ -143,6 +155,27 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
             }
             completionHandler(allowed ? matchPatterns : [], expiresAt)
         }
+    }
+
+    /// Whether the extension asks from a private tab (or, without a tab,
+    /// while a private window is in front).
+    func isPrivate(_ tab: (any WKWebExtensionTab)?) -> Bool {
+        if let tab = (tab as? ExtensionTab)?.tab { return tab.isPrivate }
+        return focusedWindow?.isPrivateWindow ?? false
+    }
+
+    /// Where a tab the extension opens goes: the window it named, or the
+    /// front one; never a private window when it isn't allowed there.
+    static func window(
+        for requested: ExtensionWindow?,
+        focused: ExtensionWindow?,
+        focusedNormal: ExtensionWindow?,
+        allowsPrivate: Bool
+    ) -> ExtensionWindow? {
+        if let requested {
+            return requested.isPrivateWindow && !allowsPrivate ? nil : requested
+        }
+        return allowsPrivate ? focused : focusedNormal
     }
 
     // MARK: - Messages to the extension's app

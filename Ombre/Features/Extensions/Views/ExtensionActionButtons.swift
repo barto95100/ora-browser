@@ -129,7 +129,9 @@ private struct ExtensionActionButton: View {
         ), arrowEdge: .bottom) {
             if let host = askingHost {
                 ExtensionAccessPrompt(name: record.name, host: host) { decision, forOneDay in
-                    manager.setSite(host, decision, forOneDay: forOneDay, id: record.id)
+                    manager.decideSite(
+                        host, decision, forOneDay: forOneDay, id: record.id, isPrivate: tab?.isPrivate ?? false
+                    )
                     askingHost = nil
                     // Then what the click was for: its popup.
                     DispatchQueue.main.async {
@@ -161,14 +163,22 @@ private struct ExtensionMenuItems: View {
             Button("Options…") { manager.openOptions(context) }
         }
         if let host = ExtensionSiteAccess.host(of: tab?.browserPage?.extensionWebView.url ?? tab?.url) {
-            let current = ExtensionSiteAccess.decision(for: host, in: record)
+            // From a private tab: kept in memory only.
+            let isPrivate = tab?.isPrivate ?? false
+            let current = manager.siteDecision(for: host, in: record, isPrivate: isPrivate)
             Menu("Access on \(host)") {
-                choice("Allow", checked: current == .allow) { manager.setSite(host, .allow, id: record.id) }
-                choice("Allow for One Day", checked: false) {
-                    manager.setSite(host, .allow, forOneDay: true, id: record.id)
+                choice("Allow", checked: current == .allow) {
+                    manager.decideSite(host, .allow, id: record.id, isPrivate: isPrivate)
                 }
-                choice("Ask", checked: current == .ask) { manager.setSite(host, .ask, id: record.id) }
-                choice("Don't Allow", checked: current == .deny) { manager.setSite(host, .deny, id: record.id) }
+                choice("Allow for One Day", checked: false) {
+                    manager.decideSite(host, .allow, forOneDay: true, id: record.id, isPrivate: isPrivate)
+                }
+                choice("Ask", checked: current == .ask) {
+                    manager.decideSite(host, .ask, id: record.id, isPrivate: isPrivate)
+                }
+                choice("Don't Allow", checked: current == .deny) {
+                    manager.decideSite(host, .deny, id: record.id, isPrivate: isPrivate)
+                }
             }
         }
         Button(record.isPinned ? "Move to Extensions Menu" : "Pin Next to the Sidebar Button") {

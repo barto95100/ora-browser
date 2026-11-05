@@ -94,6 +94,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     private var keyMonitor: Any?
     private var activeTabIDs: [ObjectIdentifier: UUID] = [:]
     private var isStarted = false
+    /// Decided from private windows, never saved (see `PrivateSiteDecisions`).
+    var privateSiteDecisions = PrivateSiteDecisions()
+    private var privateWindowsObserver: NSObjectProtocol?
     private var scanTask: Task<Void, Never>?
 
     override private init() {
@@ -107,6 +110,11 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         controller = WKWebExtensionController(configuration: configuration)
         super.init()
         controller.delegate = self
+        privateWindowsObserver = NotificationCenter.default.addObserver(
+            forName: PrivateWindows.lastWindowDidClose, object: PrivateWindows.shared, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.forgetPrivateSiteDecisions() }
+        }
     }
 
     /// Where the extensions keep their data, the same at every launch.
@@ -401,7 +409,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         windows.values.first { $0.tabManager === tabManager }
     }
 
-    /// Normal windows, front to back.
+    /// The windows, private ones included, front to back.
     var orderedWindows: [ExtensionWindow] {
         NSApp.orderedWindows.compactMap { windows[ObjectIdentifier($0)] }
     }

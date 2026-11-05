@@ -5,6 +5,8 @@ import Foundation
 @MainActor
 final class PrivateWindows {
     static let shared = PrivateWindows()
+    /// Posted when the last private window has closed.
+    static let lastWindowDidClose = Notification.Name("PrivateWindows.lastWindowDidClose")
 
     private var openWindows: Set<ObjectIdentifier> = []
     private let permissions: SitePermissionStore
@@ -38,6 +40,7 @@ final class PrivateWindows {
         permissions.forgetPrivatePermissions(in: spaceIDs)
         if openWindows.isEmpty {
             forgetIcons()
+            NotificationCenter.default.post(name: Self.lastWindowDidClose, object: self)
         }
     }
 }

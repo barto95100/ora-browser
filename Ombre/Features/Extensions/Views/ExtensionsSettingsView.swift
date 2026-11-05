@@ -112,7 +112,8 @@ private struct ExtensionsSettingsContent: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .onAppear { manager.refreshCandidates() }
+        .onAppear { manager.candidatesAppeared() }
+        .onDisappear { manager.candidatesDisappeared() }
         .sheet(item: $review) { review in
             ExtensionReviewSheet(review: review) { allowAllSites in
                 manager.install(review, allowAllSites: allowAllSites)

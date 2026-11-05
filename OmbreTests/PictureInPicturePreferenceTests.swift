@@ -65,7 +65,7 @@ struct PictureInPicturePreferenceTests {
         )
         window.isReleasedWhenClosed = false
         window.contentView = page.contentView
-        window.orderFrontRegardless()
+        // Never shown: the tests check that no window is (`TestHostIsolationTests`).
         defer {
             page.teardown()
             window.close()

@@ -151,6 +151,7 @@ class SettingsStore: ObservableObject {
     private let passwordAutofillSubmitEnabledKey = "settings.passwords.autofillSubmitEnabled"
     private let passwordSavePromptsEnabledKey = "settings.passwords.savePromptsEnabled"
     private let suppressedPasswordSavePromptHostsKey = "settings.passwords.suppressedSavePromptHosts"
+    private let developerToolsEnabledKey = "settings.developerToolsEnabled"
 
     // MARK: - Per-Container
 
@@ -248,6 +249,23 @@ class SettingsStore: ObservableObject {
         didSet { defaults.set(passwordSavePromptsEnabled, forKey: passwordSavePromptsEnabledKey) }
     }
 
+    /// Pages can be inspected with Safari's Web Inspector. Off by default, like
+    /// Safari's Develop menu; on in Debug builds.
+    @Published var developerToolsEnabled: Bool {
+        didSet {
+            defaults.set(developerToolsEnabled, forKey: developerToolsEnabledKey)
+            BrowserEngine.shared.allowsInspection = developerToolsEnabled
+        }
+    }
+
+    static var developerToolsDefault: Bool {
+        #if DEBUG
+            true
+        #else
+            false
+        #endif
+    }
+
     @Published private(set) var suppressedPasswordSavePromptHosts: Set<String> {
         didSet { defaults.set(
             Array(suppressedPasswordSavePromptHosts).sorted(),
@@ -327,6 +345,9 @@ class SettingsStore: ObservableObject {
         passwordSavePromptsEnabled = defaults.object(forKey: passwordSavePromptsEnabledKey) as? Bool ?? true
         suppressedPasswordSavePromptHosts = Set(defaults
             .stringArray(forKey: suppressedPasswordSavePromptHostsKey) ?? [])
+        developerToolsEnabled = defaults.object(forKey: developerToolsEnabledKey) as? Bool
+            ?? Self.developerToolsDefault
+        BrowserEngine.shared.allowsInspection = developerToolsEnabled
     }
 
     // MARK: - Per-container helpers

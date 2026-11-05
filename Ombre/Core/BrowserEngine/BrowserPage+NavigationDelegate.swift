@@ -214,10 +214,6 @@ extension BrowserPage: WKNavigationDelegate {
         delegate?.browserPage(self, didStartDownload: BrowserDownloadTask(download: download, originalURL: downloadURL))
     }
 
-    /// "Download Image", "Download Linked File" and "Download Video" from the
-    /// page's context menu. Private WebKit delegate method
-    /// (WKNavigationDelegatePrivate, macOS 12+): without it, WebKit creates the
-    /// download but nothing takes care of it, so it never starts.
     /// A content rule acted on a load (WKNavigationDelegatePrivate, the method
     /// Safari's privacy report uses). Counted for the shield of the address
     /// bar, except cookie-only rules.
@@ -232,6 +228,10 @@ extension BrowserPage: WKNavigationDelegate {
         notifyOnMain { $0.delegate?.browserPage($0, didBlockContentFrom: url) }
     }
 
+    /// "Download Image", "Download Linked File" and "Download Video" from the
+    /// page's context menu. Private WebKit delegate method
+    /// (WKNavigationDelegatePrivate, macOS 12+): without it, WebKit creates the
+    /// download but nothing takes care of it, so it never starts.
     @objc(_webView:contextMenuDidCreateDownload:)
     func webView(_ webView: WKWebView, contextMenuDidCreate download: WKDownload) {
         guard let downloadURL = download.originalRequest?.url else { return }

@@ -53,6 +53,9 @@ protocol BrowserPageDelegate: AnyObject {
     /// The process rendering the page ended (crash, or macOS reclaiming memory).
     /// The page is blank until it is reloaded.
     func browserPageWebContentProcessDidTerminate(_ page: BrowserPage)
+    /// The page's theme color (`<meta name="theme-color">`) changed; nil when
+    /// it declares none.
+    func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?)
 }
 
 extension BrowserPageDelegate {
@@ -68,6 +71,8 @@ extension BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {}
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {}
+
+    func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {}
 
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {}
 

@@ -49,8 +49,19 @@ final class TabRuntime {
     /// Loads kept from the page by content rules, by host (see `Tab+Protections.swift`).
     var blockedContent: [String: Int] = [:]
 
-    /// Translating the page into the Mac's language (see `Tab+Translation`).
-    var translation: PageTranslationState = .unavailable
+    /// The page's language, once read after it loaded (see `Tab+Translation`).
+    var pageLanguage: Locale.Language?
+    /// Whether the page shows translated (see `Tab+Translation`).
+    var translation: PageTranslationState = .original
+    /// The translation panel, shown over the page.
+    var showsTranslationPanel = false
+    /// A translation waiting for a session from the page's view (see
+    /// `PageTranslationHost`): to download a language, or before macOS 26.
+    var translationRequest: PageTranslationRequest?
+    /// The running translation: a later one, or the page going, ends it.
+    @ObservationIgnored var translationRunID: UUID?
+    @ObservationIgnored var translationTask: Task<Void, Never>?
+    @ObservationIgnored private var translationRequestCount = 0
 
     private(set) var navigationFailure: NavigationFailure?
     /// The link under the mouse, shown at the bottom of the page.
@@ -68,7 +79,34 @@ final class TabRuntime {
     func reset() {
         clearNavigationFailure()
         setHoveredLink(nil)
-        translation = .unavailable
+        resetTranslation()
+    }
+
+    /// A new document: its language is read again once loaded, and a
+    /// translation of the previous one stops.
+    func resetTranslation() {
+        stopTranslation()
+        pageLanguage = nil
+        if translation != .original { translation = .original }
+        if showsTranslationPanel { showsTranslationPanel = false }
+    }
+
+    /// Asks the page's view for a session (see `PageTranslationHost`). Each
+    /// request differs from the one before, even for the same languages, so
+    /// the view's task always starts again.
+    func requestTranslationSession(id: UUID, pair: PageTranslationPair, needsDownload: Bool) {
+        translationRequestCount += 1
+        translationRequest = PageTranslationRequest(
+            id: id, pair: pair, needsDownload: needsDownload, version: translationRequestCount % 2
+        )
+    }
+
+    /// Ends the running translation, if any: its late results are dropped.
+    func stopTranslation() {
+        translationRunID = nil
+        translationTask?.cancel()
+        translationTask = nil
+        if translationRequest != nil { translationRequest = nil }
     }
 
     /// Changes only a different link: every change redraws the page's overlays.

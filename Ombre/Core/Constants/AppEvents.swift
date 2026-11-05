@@ -22,6 +22,7 @@ extension Notification.Name {
     static let findPrevious = Notification.Name("FindPrevious")
     /// `userInfo["step"]`: 1 zooms in, -1 out, 0 back to actual size.
     static let zoomPage = Notification.Name("ZoomPage")
+    static let translatePage = Notification.Name("TranslatePage")
     static let openPeekInTab = Notification.Name("OpenPeekInTab")
     static let newSplitView = Notification.Name("NewSplitView")
     static let restoreLastTab = Notification.Name("RestoreLastTab")

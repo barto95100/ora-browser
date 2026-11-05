@@ -1,15 +1,15 @@
 import SwiftUI
 import Translation
 
-/// Runs a page's translation with Apple's Translation, on the Mac: the
-/// session (and the offer to download a language) comes with the view.
+/// Gives a translation the session of the page's view, when it needs one:
+/// macOS shows its prompt to download a language over this view, and before
+/// macOS 26 a session only comes from a view.
 struct PageTranslationHost: View {
     let tab: Tab
     let runtime: TabRuntime
 
     private var configuration: TranslationSession.Configuration? {
-        guard case let .translating(source) = runtime.translation else { return nil }
-        return TranslationSession.Configuration(source: source, target: PageLanguage.userLanguage)
+        runtime.translationRequest?.configuration
     }
 
     var body: some View {
@@ -18,55 +18,62 @@ struct PageTranslationHost: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
             .translationTask(configuration) { session in
-                await tab.translatePage(with: session)
+                guard let request = runtime.translationRequest else { return }
+                await tab.runTranslation(with: session, for: request)
             }
     }
 }
 
 /// The address bar's translate button: shown when the page is in another
-/// language than the Mac's; shows the original again once translated.
+/// language than the Mac's, or translated; opens the translation panel.
+/// Turns while translating (with the share done), never without end.
 struct PageTranslationButton: View {
     let tab: Tab
     let runtime: TabRuntime
     let foregroundColor: Color
 
-    private var isTranslated: Bool {
-        if case .translated = runtime.translation { return true }
-        return false
-    }
-
     private var help: String {
-        let target = Locale.current
-            .localizedString(forLanguageCode: PageLanguage.userLanguage.languageCode?.identifier ?? "")
-            ?? "your language"
         switch runtime.translation {
-        case .translated: return "Show Original"
-        case .translating: return "Translating…"
-        default: return "Translate to \(target)"
+        case .original: "Translate this page"
+        case .preparing: "Waiting for the language download…"
+        case let .translating(_, done, total): total > 0 ? "Translating… \(done) of \(total)" : "Translating…"
+        case .translated: "Translated: show the original or change the language"
+        case .failed: "The translation failed"
         }
     }
 
     var body: some View {
-        if runtime.translation != .unavailable {
+        if tab.showsTranslationButton {
             Button {
-                tab.toggleTranslation()
+                runtime.showsTranslationPanel.toggle()
             } label: {
-                Group {
-                    if case .translating = runtime.translation {
-                        ProgressView().scaleEffect(0.45)
-                    } else {
-                        Image(systemName: "translate")
-                            .font(.system(size: 11, weight: .medium))
-                            .symbolVariant(isTranslated ? .fill : .none)
-                    }
-                }
-                .foregroundColor(foregroundColor)
-                .frame(width: 16, height: 16)
-                .contentShape(Rectangle())
+                icon
+                    .foregroundColor(foregroundColor)
+                    .frame(width: 16, height: 16)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .help(help)
             .accessibilityLabel(help)
+        }
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        switch runtime.translation {
+        case let .translating(_, done, total) where total > 0:
+            ProgressView(value: Double(done), total: Double(total))
+                .progressViewStyle(.circular)
+                .scaleEffect(0.45)
+        case .preparing, .translating:
+            ProgressView().scaleEffect(0.45)
+        case .failed:
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 11, weight: .medium))
+        default:
+            Image(systemName: "translate")
+                .font(.system(size: 11, weight: .medium))
+                .symbolVariant(runtime.translation.showsTranslation ? .fill : .none)
         }
     }
 }

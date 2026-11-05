@@ -88,32 +88,3 @@ struct PageTranslationTests {
         #expect(await evaluate(page, "typeof window.__translator") as? String == "undefined")
     }
 }
-
-extension TabManagerTests {
-    /// The address bar's button: translate, then show the original again; a
-    /// new page starts without an offer until its language is known.
-    @MainActor
-    struct TranslationButton {
-        @Test func buttonTranslatesThenShowsTheOriginal() async throws {
-            try await TabManagerTestWindow.run { window in
-                let tab = try await window.openLoaded("page")
-                let runtime = try #require(tab.runtime)
-                let english = Locale.Language(identifier: "en")
-                runtime.translation = .offered(from: english)
-
-                tab.toggleTranslation()
-                #expect(runtime.translation == .translating(from: english))
-                // Stopped while translating.
-                tab.toggleTranslation()
-                #expect(runtime.translation == .offered(from: english))
-
-                runtime.translation = .translated(from: english)
-                tab.toggleTranslation()
-                #expect(runtime.translation == .offered(from: english))
-
-                tab.destroyWebView()
-                #expect(runtime.translation == .unavailable)
-            }
-        }
-    }
-}

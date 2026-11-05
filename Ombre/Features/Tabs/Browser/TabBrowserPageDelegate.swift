@@ -114,7 +114,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         case .committed:
             dialogPolicy.pageDidCommitNewDocument()
             // A new document: its language is checked once it has loaded.
-            MainActor.assumeIsolated { tab.runtime?.translation = .unavailable }
+            MainActor.assumeIsolated { tab.runtime?.resetTranslation() }
             tab.isLoading = event.isLoading
             if let title = event.title, !title.isEmpty {
                 tab.title = title
@@ -158,6 +158,11 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             mediaController?.removeSession(for: tab.id)
             tab.handleWebContentProcessTermination()
         }
+    }
+
+    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
+        guard let tab else { return [] }
+        return MainActor.assumeIsolated { tab.translationMenuItems() }
     }
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {

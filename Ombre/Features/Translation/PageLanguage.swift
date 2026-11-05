@@ -1,5 +1,6 @@
 import Foundation
 import NaturalLanguage
+import Translation
 
 /// Which language a page is in, and whether to offer translating it: when
 /// it isn't one of the Mac's languages (like Safari).
@@ -38,4 +39,27 @@ enum PageLanguage {
         guard let pageCode = page?.languageCode else { return false }
         return !userLanguages.contains { $0.languageCode == pageCode }
     }
+
+    /// The language's name in the Mac's language ("German").
+    static func name(of language: Locale.Language) -> String {
+        let code = language.languageCode?.identifier ?? language.minimalIdentifier
+        return Locale.current.localizedString(forLanguageCode: code) ?? code
+    }
+
+    /// A language Apple's Translation knows (any of its pairs).
+    static func canTranslate(_ language: Locale.Language) async -> Bool {
+        let languages = await supportedLanguages()
+        return languages.contains { $0.languageCode == language.languageCode }
+    }
+
+    /// The languages Apple's Translation knows, read once.
+    @MainActor
+    static func supportedLanguages() async -> [Locale.Language] {
+        if let supported { return supported }
+        let languages = await LanguageAvailability().supportedLanguages
+        supported = languages
+        return languages
+    }
+
+    @MainActor private static var supported: [Locale.Language]?
 }

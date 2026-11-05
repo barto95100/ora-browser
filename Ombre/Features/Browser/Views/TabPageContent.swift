@@ -59,6 +59,15 @@ struct TabPageContent: View {
                                 .padding(.trailing, 16)
                         }
                     }
+                    .overlay(alignment: .topTrailing) {
+                        if let runtime, runtime.showsTranslationPanel {
+                            PageTranslationPanel(tab: tab, runtime: runtime)
+                                .padding(.top, 12)
+                                .padding(.trailing, 12)
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(.easeOut(duration: 0.15), value: runtime?.showsTranslationPanel)
                     .overlay(alignment: .bottomLeading) {
                         if let hovered = runtime?.hoveredLinkURL {
                             LinkPreview(text: hovered)

@@ -103,6 +103,12 @@ struct OmbreCommands: Commands {
 
             Divider()
 
+            Button("Translate Page…") {
+                NotificationCenter.default.post(name: .translatePage, object: NSApp.keyWindow)
+            }
+
+            Divider()
+
             Button("Toggle Sidebar") {
                 NotificationCenter.default.post(name: .toggleSidebar, object: NSApp.keyWindow)
             }

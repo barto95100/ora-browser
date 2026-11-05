@@ -13,6 +13,7 @@ struct FindView: View {
     @State private var currentMatch = 0
     @FocusState private var isTextFieldFocused: Bool
     @EnvironmentObject private var appState: AppState
+    @Environment(\.window) private var window
     @EnvironmentObject var toolbarManager: ToolbarManager
     @Environment(\.theme) var theme
     @Environment(\.colorScheme) var colorScheme
@@ -32,6 +33,13 @@ struct FindView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
+        // ⌘G and ⇧⌘G, from the menu, for this window's find bar.
+        .onReceive(NotificationCenter.default.publisher(for: .findNext)) { note in
+            moveToMatch(forward: true, for: note)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .findPrevious)) { note in
+            moveToMatch(forward: false, for: note)
+        }
         .background(backgroundView)
         .overlay(borderView)
         .shadow(
@@ -291,6 +299,18 @@ struct FindView: View {
             controller.nextMatch()
             updateCurrentMatch()
         }
+    }
+
+    private func moveToMatch(forward: Bool, for note: Notification) {
+        guard note.object as? NSWindow === window ?? NSApp.keyWindow,
+              !searchText.isEmpty, matchCount > 0
+        else { return }
+        if forward {
+            controller.nextMatch()
+        } else {
+            controller.previousMatch()
+        }
+        updateCurrentMatch()
     }
 
     private func handleEscapeKey() {

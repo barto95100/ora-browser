@@ -6,6 +6,8 @@ struct OmbreCommands: Commands {
     @AppStorage("ui.toolbar.hidden") private var isToolbarHidden: Bool = false
     @AppStorage("ui.toolbar.showfullurl") private var showFullURL: Bool = false
     @Environment(\.openWindow) private var openWindow
+    /// Customized shortcuts show in the menus at once.
+    @ObservedObject private var shortcuts = CustomKeyboardShortcutManager.shared
 
     var body: some Commands {
         // The system's File › Close (⌘W too) goes: ⌘W is "Close Tab" only,
@@ -45,6 +47,16 @@ struct OmbreCommands: Commands {
             }
             .keyboardShortcut(KeyboardShortcuts.Edit.find.keyboardShortcut)
 
+            Button("Find Next") {
+                NotificationCenter.default.post(name: .findNext, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Edit.findNext.keyboardShortcut)
+
+            Button("Find Previous") {
+                NotificationCenter.default.post(name: .findPrevious, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Edit.findPrevious.keyboardShortcut)
+
             Divider()
 
             Button("Copy URL") {
@@ -74,6 +86,23 @@ struct OmbreCommands: Commands {
             Divider()
 
             // VISIBILITY
+            Button("Zoom In") {
+                NotificationCenter.default.post(name: .zoomPage, object: NSApp.keyWindow, userInfo: ["step": 1])
+            }
+            .keyboardShortcut(KeyboardShortcuts.Zoom.zoomIn.keyboardShortcut)
+
+            Button("Zoom Out") {
+                NotificationCenter.default.post(name: .zoomPage, object: NSApp.keyWindow, userInfo: ["step": -1])
+            }
+            .keyboardShortcut(KeyboardShortcuts.Zoom.zoomOut.keyboardShortcut)
+
+            Button("Actual Size") {
+                NotificationCenter.default.post(name: .zoomPage, object: NSApp.keyWindow, userInfo: ["step": 0])
+            }
+            .keyboardShortcut(KeyboardShortcuts.Zoom.reset.keyboardShortcut)
+
+            Divider()
+
             Button("Toggle Sidebar") {
                 NotificationCenter.default.post(name: .toggleSidebar, object: NSApp.keyWindow)
             }
@@ -106,12 +135,12 @@ struct OmbreCommands: Commands {
             Button("Clear Cache & Reload") {
                 NotificationCenter.default.post(name: .clearCacheAndReload, object: NSApp.keyWindow)
             }
-            .keyboardShortcut("r", modifiers: [.command, .shift])
+            .keyboardShortcut(KeyboardShortcuts.Navigation.hardReload.keyboardShortcut)
 
             Button("Clear Cookies & Reload") {
                 NotificationCenter.default.post(name: .clearCookiesAndReload, object: NSApp.keyWindow)
             }
-            .keyboardShortcut("r", modifiers: [.command, .option, .shift])
+            .keyboardShortcut(KeyboardShortcuts.Navigation.clearCookiesAndReload.keyboardShortcut)
 
             Divider()
 
@@ -166,7 +195,7 @@ struct OmbreCommands: Commands {
             Button("Open Peek in New Tab") {
                 NotificationCenter.default.post(name: .openPeekInTab, object: NSApp.keyWindow)
             }
-            .keyboardShortcut("o", modifiers: .command)
+            .keyboardShortcut(KeyboardShortcuts.Navigation.openPeekInNewTab.keyboardShortcut)
 
             Button("New Split View") {
                 NotificationCenter.default.post(name: .newSplitView, object: NSApp.keyWindow)
@@ -240,7 +269,7 @@ struct OmbreCommands: Commands {
                     openWindow(id: "settings")
                 }
             }
-            .keyboardShortcut(",", modifiers: .command)
+            .keyboardShortcut(KeyboardShortcuts.App.preferences.keyboardShortcut)
         }
     }
 }

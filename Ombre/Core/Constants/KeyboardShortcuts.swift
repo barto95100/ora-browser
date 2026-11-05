@@ -35,18 +35,6 @@ enum KeyboardShortcuts {
             category: "Tabs",
             defaultChord: KeyChord(keyEquivalent: .tab, modifiers: [.control, .shift])
         )
-        static let moveRight = KeyboardShortcutDefinition(
-            id: "tabs.moveRight",
-            name: "Move Tab Right",
-            category: "Tabs",
-            defaultChord: KeyChord(keyEquivalent: .rightArrow, modifiers: [.option, .command])
-        )
-        static let moveLeft = KeyboardShortcutDefinition(
-            id: "tabs.moveLeft",
-            name: "Move Tab Left",
-            category: "Tabs",
-            defaultChord: KeyChord(keyEquivalent: .leftArrow, modifiers: [.option, .command])
-        )
         static let pin = KeyboardShortcutDefinition(
             id: "tabs.pin",
             name: "Pin Tab",
@@ -153,11 +141,24 @@ enum KeyboardShortcuts {
             category: "Navigation",
             defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command])
         )
+        /// Reloads the page from the network, its cached files cleared.
         static let hardReload = KeyboardShortcutDefinition(
             id: "navigation.hardReload",
-            name: "Hard Reload",
+            name: "Clear Cache & Reload",
             category: "Navigation",
             defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .shift])
+        )
+        static let clearCookiesAndReload = KeyboardShortcutDefinition(
+            id: "navigation.clearCookiesAndReload",
+            name: "Clear Cookies & Reload",
+            category: "Navigation",
+            defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .option, .shift])
+        )
+        static let openPeekInNewTab = KeyboardShortcutDefinition(
+            id: "navigation.openPeekInNewTab",
+            name: "Open Peek in New Tab",
+            category: "Navigation",
+            defaultChord: KeyChord(keyEquivalent: .init("o"), modifiers: [.command])
         )
     }
 
@@ -281,26 +282,9 @@ enum KeyboardShortcuts {
         )
         static let reset = KeyboardShortcutDefinition(
             id: "zoom.reset",
-            name: "Reset Zoom",
+            name: "Actual Size",
             category: "Zoom",
             defaultChord: KeyChord(keyEquivalent: .init("0"), modifiers: [.command])
-        )
-    }
-
-    // MARK: - Developer
-
-    enum Developer {
-        static let toggleDevTools = KeyboardShortcutDefinition(
-            id: "developer.toggleDevTools",
-            name: "Toggle DevTools",
-            category: "Developer",
-            defaultChord: KeyChord(keyEquivalent: .init("i"), modifiers: [.command, .option])
-        )
-        static let reloadIgnoringCache = KeyboardShortcutDefinition(
-            id: "developer.reloadIgnoringCache",
-            name: "Reload (Ignoring Cache)",
-            category: "Developer",
-            defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .shift])
         )
     }
 
@@ -343,12 +327,13 @@ enum KeyboardShortcuts {
     static let allShortcuts: [KeyboardShortcutDefinition] = [
         // Tabs
         Tabs.new, Tabs.close, Tabs.restore, Tabs.next, Tabs.previous,
-        Tabs.moveRight, Tabs.moveLeft, Tabs.pin, Tabs.newSplit,
+        Tabs.pin, Tabs.newSplit,
         Tabs.tab1, Tabs.tab2, Tabs.tab3, Tabs.tab4, Tabs.tab5,
         Tabs.tab6, Tabs.tab7, Tabs.tab8, Tabs.tab9,
 
         // Navigation
         Navigation.back, Navigation.forward, Navigation.reload, Navigation.hardReload,
+        Navigation.clearCookiesAndReload, Navigation.openPeekInNewTab,
 
         // Window
         Window.new, Window.newPrivate, Window.close, Window.fullscreen,
@@ -368,12 +353,20 @@ enum KeyboardShortcuts {
         // Zoom
         Zoom.zoomIn, Zoom.zoomOut, Zoom.reset,
 
-        // Developer
-        Developer.toggleDevTools, Developer.reloadIgnoringCache,
-
         // App
         App.quit, App.hide, App.preferences, App.toggleSidebar, App.toggleToolbar
     ]
+
+    /// The other shortcut already using `chord`, if any: a new shortcut that
+    /// takes it would leave one of them doing nothing.
+    static func conflict(
+        for chord: KeyChord,
+        excluding id: String,
+        in shortcuts: [KeyboardShortcutDefinition] = allShortcuts,
+        chord current: (KeyboardShortcutDefinition) -> KeyChord = { $0.currentChord }
+    ) -> KeyboardShortcutDefinition? {
+        shortcuts.first { $0.id != id && current($0).isSameKeys(as: chord) }
+    }
 
     /// Get shortcuts grouped by category for settings display
     static var itemsByCategory: [(category: String, items: [KeyboardShortcutDefinition])] {

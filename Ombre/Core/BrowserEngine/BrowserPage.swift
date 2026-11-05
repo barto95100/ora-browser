@@ -48,9 +48,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webConfiguration.applicationNameForUserAgent = configuration.applicationNameForUserAgent
         webConfiguration.websiteDataStore = profile.dataStore
         webConfiguration.allowsAirPlayForMediaPlayback = configuration.allowsAirPlayForMediaPlayback
-        // Public preferences only (picture in picture is on by default on
-        // macOS; JavaScript is set per page below), except the Debug-only
-        // inspector key: see `applyInspection`.
+        // Public preferences only (JavaScript is set per page below), except
+        // Picture in Picture (`PictureInPicturePreference`, the one private
+        // setting shipped) and the Debug-only inspector key (`applyInspection`).
+        PictureInPicturePreference.enable(in: webConfiguration.preferences)
         webConfiguration.preferences.javaScriptCanOpenWindowsAutomatically =
             configuration.allowsJavaScriptWindowsAutomatically
         webConfiguration.preferences.isElementFullscreenEnabled = true

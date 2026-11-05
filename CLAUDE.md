@@ -102,6 +102,10 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   incohérence, navigation privée sans rien de durable sur le disque.
 - Méthodes privées WebKit : seulement des méthodes de **délégué** stables, documentées ; jamais d'appel
   direct de méthode privée hors `#if DEBUG`.
+  **Unique exception tolérée** (décision de Ludo, 05/11/2026) : la préférence `allowsPictureInPictureMediaPlayback`
+  (`PictureInPicturePreference`), sans laquelle aucune page n'a de PiP sur macOS (aucun réglage public) ;
+  acceptable car Ombre n'est pas sur le Mac App Store. Posée seulement si WebKit la connaît encore ; un test
+  échoue sinon.
 
 ## Leçons apprises (éviter de les refaire)
 

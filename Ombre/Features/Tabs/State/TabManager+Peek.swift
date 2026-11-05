@@ -36,7 +36,7 @@ extension TabManager {
         let tab = Tab(
             url: peek.url,
             title: peek.title.isEmpty ? placeholder?.title ?? peek.url.absoluteString : peek.title,
-            favicon: placeholder?.favicon,
+            favicon: peek.isPrivate ? nil : placeholder?.favicon,
             container: container,
             type: .normal,
             isPlayingMedia: false,

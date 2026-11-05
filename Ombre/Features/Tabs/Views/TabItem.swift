@@ -38,6 +38,10 @@ struct LocalFavIcon: View {
 
     private static func loadImage(at url: URL?) async -> NSImage? {
         guard let url else { return nil }
+        // A private tab's icon, kept in memory.
+        if url.scheme == FaviconStore.privateScheme {
+            return await FaviconStore.shared.privateIconData(for: url).flatMap(NSImage.init(data:))
+        }
         return await Task.detached(priority: .utility) {
             NSImage(contentsOf: url)
         }.value

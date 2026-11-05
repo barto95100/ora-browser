@@ -85,7 +85,7 @@ extension TabManagerTests {
             var body: some View {
                 Color.clear
                     .background(WindowReader(window: $window))
-                    .windowLifecycle(window: window, tabManager: tabManager)
+                    .windowLifecycle(window: window, tabManager: tabManager, isPrivate: false)
                     .onChange(of: window) { _, newWindow in probe.isWindowKnown = newWindow != nil }
             }
         }

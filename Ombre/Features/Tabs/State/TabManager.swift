@@ -350,7 +350,9 @@ class TabManager: ObservableObject {
                 let newTab = Tab(
                     url: url,
                     title: title,
-                    favicon: faviconURL,
+                    // A private tab loads no icon from outside its page (the
+                    // shared URL cache would keep it on the disk).
+                    favicon: isPrivate ? nil : faviconURL,
                     container: container,
                     type: .normal,
                     isPlayingMedia: false,

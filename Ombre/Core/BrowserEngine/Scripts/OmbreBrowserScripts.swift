@@ -140,35 +140,34 @@ enum OmbreBrowserScripts {
             } catch (error) {}
         }
 
-        function findNextButton() {
-            const selectors = [
-                '.ytp-next-button',
-                'button[aria-label*="Next" i]',
-                'button[title*="Next" i]',
-                '[data-testid="control-button-skip-forward"]'
-            ];
+        // Next/previous only on the players known to have such buttons: a
+        // generic "Next" (a carousel, a form step) is not the next track.
+        const nextSelectors = [
+            '.ytp-next-button',
+            'ytmusic-player-bar .next-button',
+            '[data-testid="control-button-skip-forward"]',
+            '.skipControl__next'
+        ];
+        const previousSelectors = [
+            '.ytp-prev-button',
+            'ytmusic-player-bar .previous-button',
+            '[data-testid="control-button-skip-back"]',
+            '[data-testid="control-button-skip-backward"]',
+            '.skipControl__previous'
+        ];
+        function findButton(selectors) {
             for (const selector of selectors) {
                 const element = document.querySelector(selector);
                 if (element) return element;
             }
             return null;
         }
+        const findNextButton = () => findButton(nextSelectors);
+        const findPrevButton = () => findButton(previousSelectors);
 
-        function findPrevButton() {
-            const selectors = [
-                '.ytp-prev-button',
-                'button[aria-label*="Previous" i]',
-                'button[title*="Previous" i]',
-                '[data-testid="control-button-skip-backward"]'
-            ];
-            for (const selector of selectors) {
-                const element = document.querySelector(selector);
-                if (element) return element;
-            }
-            return null;
-        }
-
-        // Only tell the app when the next/previous buttons appear or disappear.
+        // Only tell the app when the next/previous buttons appear or
+        // disappear. Looked up when the media changes state, not on every
+        // change of the page.
         let lastCaps = null;
         function caps() {
             const hasNext = !!findNextButton();
@@ -185,22 +184,6 @@ enum OmbreBrowserScripts {
             volume: element ? (element.muted ? 0 : element.volume) : undefined,
             title: document.title
         });
-
-        function watchRemoval(element, callback) {
-            const observer = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                    for (const removed of mutation.removedNodes) {
-                        if (removed === element || removed.contains(element)) {
-                            callback();
-                            observer.disconnect();
-                            return;
-                        }
-                    }
-                }
-            });
-
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
 
         // Only media the user can hear count as "played" and bring up the mini
         // player: not muted autoplay videos (page backgrounds, previews, ads),
@@ -229,58 +212,96 @@ enum OmbreBrowserScripts {
             return true;
         }
 
-        function attach(element) {
-            if (!element || element.__attached) return;
-            element.__attached = true;
-            const update = () => post(stateFrom(element));
-            element.addEventListener('play', () => {
+        // The media the app was told about, to tell it when they leave the page.
+        const tracked = new Set();
+
+        // Media events don't bubble, but listeners on the document in the
+        // capture phase see them all: no scan of the page for new media.
+        const handlers = {
+            play(element, update) {
                 if (!markPlayedIfAudible(element, update)) update();
-            });
+                caps();
+            },
             // Playing: the metadata, hence the sound track, is known.
-            element.addEventListener('playing', () => markPlayedIfAudible(element, update));
-            element.addEventListener('pause', update);
-            element.addEventListener('ended', () => post({ type: 'ended' }));
+            playing(element, update) {
+                markPlayedIfAudible(element, update);
+            },
+            pause(element, update) {
+                update();
+                caps();
+            },
+            ended() {
+                post({ type: 'ended' });
+            },
             // Leaving Picture in Picture with the video still playing means the
             // user chose "back to tab" (closing the window pauses it): ask the
             // app to show this tab, as Safari does.
-            element.addEventListener('enterpictureinpicture', () => post({ type: 'pip', state: 'entered' }));
-            element.addEventListener('leavepictureinpicture', () => {
+            enterpictureinpicture() {
+                post({ type: 'pip', state: 'entered' });
+            },
+            leavepictureinpicture(element) {
                 post({ type: 'pip', state: 'left' });
                 setTimeout(() => {
                     if (!element.paused) post({ type: 'pipReturn' });
                 }, 0);
-            });
-            element.addEventListener('volumechange', () => {
+            },
+            volumechange(element, update) {
                 // A muted video the user unmutes while it plays now counts.
                 markPlayedIfAudible(element, update);
                 post({ type: 'volume', volume: element.muted ? 0 : element.volume });
-            });
-            if (!element.paused) {
-                if (!markPlayedIfAudible(element, update)) update();
             }
-            watchRemoval(element, () => post({ type: 'removed' }));
+        };
+        for (const type of Object.keys(handlers)) {
+            document.addEventListener(type, (event) => {
+                const element = event.target;
+                if (!(element instanceof HTMLMediaElement)) return;
+                tracked.add(element);
+                handlers[type](element, () => post(stateFrom(element)));
+            }, true);
         }
 
-        function scan() {
-            document.querySelectorAll('video, audio').forEach(attach);
+        // Media already playing when the script runs.
+        document.querySelectorAll('video, audio').forEach((element) => {
+            if (element.paused) return;
+            tracked.add(element);
+            const update = () => post(stateFrom(element));
+            if (!markPlayedIfAudible(element, update)) update();
             caps();
-        }
-
-        // Busy pages (YouTube...) mutate their DOM constantly: coalesce mutations
-        // into at most one scan every 250 ms instead of one per mutation, to
-        // keep CPU and energy use low. Timers of hidden pages are throttled
-        // further by WebKit, as they should be.
-        let scanScheduled = false;
-        const observer = new MutationObserver(() => {
-            if (scanScheduled) return;
-            scanScheduled = true;
-            setTimeout(() => {
-                scanScheduled = false;
-                scan();
-            }, 250);
         });
-        observer.observe(document.documentElement, { childList: true, subtree: true });
-        scan();
+
+        // One observer for the whole page, that only looks for removed nodes,
+        // and only while some media is known. Busy pages (YouTube...) change
+        // their DOM constantly: checks are coalesced into one every 250 ms.
+        // A media moved elsewhere in the page is still connected by then.
+        let checkScheduled = false;
+        // The page's media session ends with its last media the user heard;
+        // a preview or an ad leaving the page only updates it from what
+        // remains. Muted previews left behind don't keep it.
+        function checkRemoved() {
+            checkScheduled = false;
+            let removed = false;
+            for (const element of tracked) {
+                if (element.isConnected) continue;
+                tracked.delete(element);
+                removed = true;
+            }
+            if (!removed) return;
+            const played = Array.from(tracked).filter((element) => element.__wasPlayed);
+            const current = played.find((element) => !element.paused) || played[0];
+            if (current) {
+                post(stateFrom(current));
+            } else {
+                // A next session starts without buttons: tell it again.
+                lastCaps = null;
+                post({ type: 'removed' });
+            }
+        }
+        new MutationObserver((mutations) => {
+            if (checkScheduled || tracked.size === 0) return;
+            if (!mutations.some((mutation) => mutation.removedNodes.length > 0)) return;
+            checkScheduled = true;
+            setTimeout(checkRemoved, 250);
+        }).observe(document.documentElement, { childList: true, subtree: true });
 
         window.__media = {
             active: null,

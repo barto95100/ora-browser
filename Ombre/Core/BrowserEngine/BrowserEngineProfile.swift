@@ -22,6 +22,17 @@ final class BrowserEngineProfile {
         forHost host: String? = nil,
         completion: (() -> Void)? = nil
     ) {
+        Self.clearData(in: dataStore, ofTypes: types, forHost: host, completion: completion)
+    }
+
+    /// Clears a store's data, or only a website's: `host` (e.g.
+    /// "mail.google.com") and its records' domain ("google.com").
+    static func clearData(
+        in dataStore: WKWebsiteDataStore,
+        ofTypes types: Set<BrowserWebsiteDataType>,
+        forHost host: String? = nil,
+        completion: (() -> Void)? = nil
+    ) {
         let mappedTypes = mapWebsiteDataTypes(types)
         guard let host, !host.isEmpty else {
             dataStore.removeData(ofTypes: mappedTypes, modifiedSince: .distantPast) {
@@ -31,19 +42,28 @@ final class BrowserEngineProfile {
         }
 
         dataStore.fetchDataRecords(ofTypes: mappedTypes) { records in
-            let targetRecords = records.filter { $0.displayName.contains(host) }
+            let targetRecords = records.filter { isRecord(named: $0.displayName, of: host) }
             guard !targetRecords.isEmpty else {
                 completion?()
                 return
             }
 
-            self.dataStore.removeData(ofTypes: mappedTypes, for: targetRecords) {
+            dataStore.removeData(ofTypes: mappedTypes, for: targetRecords) {
                 completion?()
             }
         }
     }
 
-    private func mapWebsiteDataTypes(_ types: Set<BrowserWebsiteDataType>) -> Set<String> {
+    /// Whether a data record (named after its domain, "google.com") is the
+    /// website's: the same host or one of its subdomains, never a mere
+    /// substring ("x.com" isn't "box.com").
+    static func isRecord(named name: String, of host: String) -> Bool {
+        let name = name.lowercased()
+        let host = host.lowercased()
+        return host == name || host.hasSuffix("." + name)
+    }
+
+    private static func mapWebsiteDataTypes(_ types: Set<BrowserWebsiteDataType>) -> Set<String> {
         if types.contains(.all) {
             return WKWebsiteDataStore.allWebsiteDataTypes()
         }

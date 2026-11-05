@@ -331,20 +331,22 @@ private struct WindowPageCommands: ViewModifier {
     /// Clears the active page's cache or cookies, then reloads it.
     @MainActor
     private func reloadClearing(_ data: WebsiteData, tabManager: TabManager) {
-        guard let activeTab = tabManager.activeTab else { return }
-        let host = activeTab.url.host ?? ""
-        let domain = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        // A page without a website (a file, a blank page): nothing to clear,
+        // never the whole store.
+        guard let activeTab = tabManager.activeTab, let host = activeTab.url.host, !host.isEmpty else { return }
+        // What is cleared: the whole site (WebKit keeps data by domain).
+        let domain = WebSite.registrableDomain(of: activeTab.url) ?? host
         let toastManager = targets.toastManager
         switch data {
         case .cache:
-            PrivacyService.clearCacheForHost(for: domain, container: activeTab.container) { [weak toastManager] in
+            PrivacyService.clearCacheForHost(for: host, tab: activeTab) { [weak toastManager] in
                 DispatchQueue.main.async {
                     activeTab.reload()
                     toastManager?.show("Cache cleared for \(domain)", icon: .system("trash"))
                 }
             }
         case .cookies:
-            PrivacyService.clearCookiesForHost(for: host, container: activeTab.container) { [weak toastManager] in
+            PrivacyService.clearCookiesForHost(for: host, tab: activeTab) { [weak toastManager] in
                 DispatchQueue.main.async {
                     activeTab.reload()
                     toastManager?.show("Cookies cleared for \(domain)", icon: .system("trash"))

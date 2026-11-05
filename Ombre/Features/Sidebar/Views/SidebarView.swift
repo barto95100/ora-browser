@@ -13,6 +13,7 @@ struct SidebarView: View {
     @EnvironmentObject var media: MediaController
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toolbarManager: ToolbarManager
+    @Environment(\.modelContext) private var modelContext
 
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
@@ -210,6 +211,21 @@ struct SidebarView: View {
 
     // MARK: - Spaces Content
 
+    private var spacePageEnvironment: SpacePageEnvironment {
+        SpacePageEnvironment(
+            appState: appState,
+            downloadManager: downloadManager,
+            historyManager: tabManager.historyManager,
+            privacyMode: privacyMode,
+            sidebarManager: sidebarManager,
+            tabManager: tabManager,
+            // Not observed here: the sidebar needn't redraw for each toast.
+            toastManager: ToastManager.shared,
+            toolbarManager: toolbarManager,
+            modelContext: modelContext
+        )
+    }
+
     private var spacesContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             if sidebarManager.sidebarPosition == .secondary, !toolbarManager.isToolbarHidden {
@@ -224,10 +240,11 @@ struct SidebarView: View {
                 pageObjects: containers,
                 idKeyPath: \.pageID
             ) { container in
-                // The window's environment reaches the page through its
-                // hosting view (its tabs, toasts, the database).
+                // Hosted apart: a new space's page is first laid out without
+                // the window's environment (see `SpacePageEnvironment`).
                 ContainerView(container: container)
                     .padding(.horizontal, 10)
+                    .modifier(spacePageEnvironment)
             }
 
             if shouldShowMediaWidget {

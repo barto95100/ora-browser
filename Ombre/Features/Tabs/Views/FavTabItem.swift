@@ -145,6 +145,10 @@ struct FavTabItem: View {
             }
         }
         .onHover { isHovering = $0 }
+        .tabAccessibility(tab: tab, isSelected: isSelected, activate: onTap, actions: [
+            (name: "Close Tab", action: onClose),
+            (name: "Remove from Favorites", action: onFavoriteToggle)
+        ])
         .contextMenu {
             Button(action: onFavoriteToggle) {
                 Label("Remove from Favorites", systemImage: "star.slash")

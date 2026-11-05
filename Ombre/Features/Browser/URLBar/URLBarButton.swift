@@ -6,6 +6,8 @@ struct URLBarButton: View {
     let isEnabled: Bool
     let foregroundColor: Color
     let action: () -> Void
+    /// What VoiceOver says; by default, named after the symbol.
+    var label: String?
     @State private var isHovering = false
 
     private var cornerRadius: CGFloat {
@@ -32,8 +34,36 @@ struct URLBarButton: View {
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(!isEnabled)
+        .modifier(OptionalAccessibilityLabel(label: label ?? Self.label(for: systemName)))
         .onHover { hovering in
             isHovering = hovering
+        }
+    }
+}
+
+extension URLBarButton {
+    /// The name of a toolbar button from its symbol, for VoiceOver.
+    /// Nil for another symbol: SwiftUI names it.
+    static func label(for systemName: String) -> String? {
+        switch systemName {
+        case "chevron.left": "Back"
+        case "chevron.right": "Forward"
+        case "arrow.clockwise": "Reload"
+        case "sidebar.left", "sidebar.right": "Toggle Sidebar"
+        case "square.and.arrow.up": "Share"
+        default: nil
+        }
+    }
+}
+
+private struct OptionalAccessibilityLabel: ViewModifier {
+    let label: String?
+
+    func body(content: Content) -> some View {
+        if let label {
+            content.accessibilityLabel(label)
+        } else {
+            content
         }
     }
 }

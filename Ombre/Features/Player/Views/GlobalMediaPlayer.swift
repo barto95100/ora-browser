@@ -93,6 +93,7 @@ private struct MediaPlayerCard: View {
                         .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 }
                 .buttonStyle(PlayerIconButtonStyle(isEnabled: true))
+                .accessibilityLabel("Go to Playing Tab")
                 .help("Go to playing tab")
 
                 Spacer()

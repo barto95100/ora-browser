@@ -84,6 +84,11 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         peek?.update(isLoading: event.isLoading)
     }
 
+    /// A load refused before it started (a restricted port): not loading.
+    func browserPage(_ page: BrowserPage, didFailNavigationWith error: Error, failingURL: URL?) {
+        peek?.update(isLoading: false)
+    }
+
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {
         MainActor.assumeIsolated {
             opener?.downloadManager?.handleDownload(download)

@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+@preconcurrency import WebKit
 
 protocol BrowserPageDelegate: AnyObject {
     func browserPage(
@@ -10,6 +11,16 @@ protocol BrowserPageDelegate: AnyObject {
     /// The user clicked a link that opens a new window (`target="_blank"`):
     /// true if the delegate opened it itself (Peek), else it opens in a new tab.
     func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
+    /// The page opens a window that isn't a popup (`window.open(url)`, a
+    /// `target="_blank"` link): the web view of a tab linked to it, made with
+    /// WebKit's `configuration`, which WebKit then loads; nil for a tab of
+    /// its own, not linked.
+    func browserPage(
+        _ page: BrowserPage,
+        linkedPageWith configuration: WKWebViewConfiguration,
+        for url: URL?,
+        disposition: BrowserNewTabDisposition
+    ) -> WKWebView?
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent)
     /// The page's address changed, including same-page navigations.
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?)
@@ -85,6 +96,15 @@ extension BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {}
     func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool {
         false
+    }
+
+    func browserPage(
+        _ page: BrowserPage,
+        linkedPageWith configuration: WKWebViewConfiguration,
+        for url: URL?,
+        disposition: BrowserNewTabDisposition
+    ) -> WKWebView? {
+        nil
     }
     func browserPage(
         _ page: BrowserPage,

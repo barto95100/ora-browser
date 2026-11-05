@@ -104,8 +104,16 @@ extension BrowserPage: WKUIDelegate {
         {
             return nil
         }
+        // Else a tab linked to this page (`window.opener`, `postMessage`), like
+        // Safari: sign-in and payment pages opened this way wait for an answer.
+        let disposition = takeNewTabDisposition()
+        if let linked = delegate?.browserPage(
+            self, linkedPageWith: configuration, for: navigationAction.request.url, disposition: disposition
+        ) {
+            return linked
+        }
         if let url = navigationAction.request.url {
-            delegate?.browserPage(self, didRequestOpenInNewTab: url, disposition: takeNewTabDisposition())
+            delegate?.browserPage(self, didRequestOpenInNewTab: url, disposition: disposition)
         }
         return nil
     }

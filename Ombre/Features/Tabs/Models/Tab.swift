@@ -1,4 +1,5 @@
 import AppKit
+@preconcurrency import WebKit
 import SwiftData
 import SwiftUI
 
@@ -212,6 +213,35 @@ class Tab: ObservableObject, Identifiable {
                 enablesWebNotifications: !isPrivate
             ),
             delegate: nil
+        )
+    }
+
+    /// A page for a window this tab's page opens, linked to it: made with
+    /// WebKit's configuration (see `BrowserPage`), in this tab's space.
+    func makeLinkedBrowserPage(
+        configuration webKitConfiguration: WKWebViewConfiguration,
+        opener: BrowserPage?
+    ) -> BrowserPage {
+        let privacySettings = SettingsStore.shared.privacySettings(for: container.id)
+        let userScripts = OmbreBrowserScripts.userScripts() + BrowserPrivacyService.privacyScripts(
+            for: privacySettings,
+            spaceID: container.id,
+            isPrivate: isPrivate
+        )
+        return BrowserPage(
+            profile: BrowserEngine.shared.makeProfile(
+                identifier: container.id,
+                isPrivate: isPrivate,
+                privateSession: tabManager?.privateSessionID
+            ),
+            configuration: BrowserPageConfiguration.ombreDefault(
+                userScripts: userScripts,
+                privacySettings: privacySettings,
+                enablesWebNotifications: !isPrivate
+            ),
+            delegate: nil,
+            webKitConfiguration: webKitConfiguration,
+            inheritedRuleLists: opener?.spaceContentRuleLists ?? []
         )
     }
 

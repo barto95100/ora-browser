@@ -16,7 +16,8 @@ extension Tab {
         _ page: BrowserPage,
         historyManager: HistoryManager,
         downloadManager: DownloadManager,
-        tabManager: TabManager
+        tabManager: TabManager,
+        recordsVisit: Bool = true
     ) {
         // First: the page is kept in the window's runtime.
         self.tabManager = tabManager
@@ -29,7 +30,8 @@ extension Tab {
         setupBrowserPageDelegate(for: page)
         syncBackgroundColorFromHex()
         isWebViewReady = true
-        recordVisit()
+        // A page WebKit is about to load is recorded once loaded.
+        if recordsVisit { recordVisit() }
         WebExtensionsHub.tabOpened(self)
     }
 }

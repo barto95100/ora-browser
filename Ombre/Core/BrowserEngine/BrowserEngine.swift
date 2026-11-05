@@ -62,10 +62,21 @@ final class BrowserEngine {
     var webExtensionController: AnyObject?
     private let profileCacheLock = NSLock()
     private var profileCache: [ProfileKey: BrowserEngineProfile] = [:]
+    /// One session per private window, like Safari: its tabs share cookies
+    /// and logins, all gone when it closes (`endPrivateSession`).
+    private var privateSessions: [UUID: WKWebsiteDataStore] = [:]
 
-    func makeProfile(identifier: UUID, isPrivate: Bool) -> BrowserEngineProfile {
+    /// `privateSession`: the private window the page belongs to.
+    func makeProfile(identifier: UUID, isPrivate: Bool, privateSession: UUID? = nil) -> BrowserEngineProfile {
         if isPrivate {
-            return BrowserEngineProfile(identifier: identifier, isPrivate: true)
+            guard let privateSession else {
+                return BrowserEngineProfile(identifier: identifier, isPrivate: true)
+            }
+            profileCacheLock.lock()
+            defer { profileCacheLock.unlock() }
+            let dataStore = privateSessions[privateSession] ?? WKWebsiteDataStore.nonPersistent()
+            privateSessions[privateSession] = dataStore
+            return BrowserEngineProfile(identifier: identifier, isPrivate: true, privateDataStore: dataStore)
         }
 
         let key = ProfileKey(identifier: identifier, isPrivate: false)
@@ -79,6 +90,21 @@ final class BrowserEngine {
         let profile = BrowserEngineProfile(identifier: identifier, isPrivate: false)
         profileCache[key] = profile
         return profile
+    }
+
+    /// A closed private window: its session is forgotten (pages still open,
+    /// like popups closing, keep it until they go).
+    func endPrivateSession(_ privateSession: UUID) {
+        profileCacheLock.lock()
+        privateSessions[privateSession] = nil
+        profileCacheLock.unlock()
+    }
+
+    /// Whether a private window's session is kept, for the tests.
+    func hasPrivateSession(_ privateSession: UUID) -> Bool {
+        profileCacheLock.lock()
+        defer { profileCacheLock.unlock() }
+        return privateSessions[privateSession] != nil
     }
 
     /// A deleted space's profile: forgotten, and its website data store

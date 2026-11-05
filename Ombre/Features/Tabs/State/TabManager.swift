@@ -64,6 +64,8 @@ class TabManager: ObservableObject {
     let historyManager: HistoryManager
     /// The window's undo manager (Edit › Undo, ⌘Z), set by the window.
     weak var windowUndoManager: UndoManager?
+    /// The window's private session (used by private windows only).
+    let privateSessionID = UUID()
 
     var recentTabs: [Tab] {
         guard let container = activeContainer else { return [] }

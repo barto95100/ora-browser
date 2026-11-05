@@ -48,6 +48,27 @@ extension BrowserPage: WKUIDelegate {
         requestGeolocation(for: origin, decisionHandler: decisionHandler)
     }
 
+    /// A page asks to share a screen or a window (`getDisplayMedia`):
+    /// WebKit's private delegate method, the only way on macOS (see
+    /// `ScreenSharing`). The site's permission, then macOS's picker.
+    @objc(_webView:requestDisplayCapturePermissionForOrigin:initiatedByFrame:withSystemAudio:decisionHandler:)
+    func requestDisplayCapture(
+        _ webView: WKWebView,
+        origin: WKSecurityOrigin,
+        frame: WKFrameInfo,
+        withSystemAudio: Bool,
+        decisionHandler: @escaping (Int) -> Void
+    ) {
+        guard let delegate else {
+            decisionHandler(ScreenSharing.Decision.deny.rawValue)
+            return
+        }
+        delegate.browserPage(self, requestPermission: .screen, origin: url(of: origin)) { decision in
+            let answer: ScreenSharing.Decision = decision == .grant ? .screenPrompt : .deny
+            decisionHandler(answer.rawValue)
+        }
+    }
+
     static var isLocationDeniedBySystem: Bool {
         let status = CLLocationManager().authorizationStatus
         return status == .denied || status == .restricted

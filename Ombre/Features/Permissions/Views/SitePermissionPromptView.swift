@@ -12,6 +12,19 @@ struct SitePermissionPromptView: View {
 
     @State private var remember = true
 
+    init(
+        request: SitePermissionRequest,
+        isPrivate: Bool,
+        onAnswer: @escaping (_ granted: Bool, _ remember: Bool) -> Void
+    ) {
+        self.request = request
+        self.isPrivate = isPrivate
+        self.onAnswer = onAnswer
+        // Screen sharing is asked each time unless chosen otherwise, like
+        // Safari: the screen shows more than a site needs to know.
+        _remember = State(initialValue: !request.types.contains(.screen))
+    }
+
     private let width: CGFloat = 340
     private let cornerRadius: CGFloat = 18
 
@@ -74,6 +87,9 @@ struct SitePermissionPromptView: View {
         if request.types == [.location] {
             return "wants to know your location"
         }
+        if request.types == [.screen] {
+            return "wants to share your screen"
+        }
         return "wants to use your \(capabilityDescription)"
     }
 
@@ -91,6 +107,9 @@ struct SitePermissionPromptView: View {
         }
         if request.types.contains(.location) {
             return "location.fill"
+        }
+        if request.types.contains(.screen) {
+            return "rectangle.inset.filled.on.rectangle"
         }
         return request.types.contains(.camera) ? "video.fill" : "mic.fill"
     }

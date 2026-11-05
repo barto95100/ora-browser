@@ -14,7 +14,13 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     private let webView: WKWebView
     /// The window of the page that opened it: the popup closes with it.
     private weak var openerWindow: NSWindow?
-    private var titleObservation: NSKeyValueObservation?
+    /// The page that opened it (or opened the popup that opened it): its
+    /// downloads go to that page's tab.
+    private weak var opener: BrowserPage?
+    /// The origin of the frame that opened it (perhaps a third-party frame):
+    /// the site a page it wrote into a blank popup comes from.
+    private var openerOrigin: URL?
+    private var observations: [NSKeyValueObservation] = []
 
     /// Whether the window is an open popup (⌘W then closes it, see `OmbreCommands`).
     static func isPopupWindow(_ window: NSWindow) -> Bool {
@@ -45,13 +51,18 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     static func open(
         configuration: WKWebViewConfiguration,
         windowFeatures: WKWindowFeatures,
-        openerWindow: NSWindow?
+        openerWindow: NSWindow?,
+        opener: BrowserPage?,
+        openerOrigin: URL? = nil
     ) -> WKWebView {
         let popup = BrowserPopupWindow(
             configuration: configuration,
             frame: frame(for: windowFeatures, openerWindow: openerWindow)
         )
         popup.openerWindow = openerWindow
+        popup.opener = opener
+        popup.openerOrigin = openerOrigin
+        popup.updateTitle()
         openPopups.insert(popup)
         popup.window.makeKeyAndOrderFront(nil)
         popup.window.makeFirstResponder(popup.webView)
@@ -77,11 +88,17 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.tabbingMode = .disallowed
-        titleObservation = webView.observe(\.title) { [weak self] webView, _ in
-            MainActor.assumeIsolated {
-                self?.window.title = webView.title ?? ""
+        // The site actually loaded is the window's title, never the page's
+        // own title, which could pretend to be another site (MOT-09); the
+        // page's title is the subtitle.
+        observations = [
+            webView.observe(\.url) { [weak self] _, _ in
+                MainActor.assumeIsolated { self?.updateTitle() }
+            },
+            webView.observe(\.title) { [weak self] _, _ in
+                MainActor.assumeIsolated { self?.updateTitle() }
             }
-        }
+        ]
     }
 
     /// The size the page asked for, placed where it asked (screen coordinates
@@ -104,15 +121,87 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         return NSRect(origin: origin, size: NSSize(width: width, height: height))
     }
 
+    /// The site the page comes from as the title; the page's own title only
+    /// under it, never alone.
+    private func updateTitle() {
+        let site = PopupTitle.title(for: webView.url, openerURL: openerOrigin)
+        window.title = site
+        window.subtitle = site.isEmpty ? "" : (webView.title ?? "")
+    }
+
     func windowWillClose(_ notification: Notification) {
-        titleObservation = nil
+        observations = []
         webView.stopLoading()
         Self.openPopups.remove(self)
         Self.closePopups(openedFrom: window)
     }
 }
 
-extension BrowserPopupWindow: WKNavigationDelegate {}
+/// The popup's title: the site the page comes from, said not private over
+/// HTTP. A page without a host of its own (`about:blank` written by its
+/// opener, `blob:`) shows the site it really comes from, never nothing (its
+/// own title would then be all that shows).
+enum PopupTitle {
+    /// The origin of a frame, as an address (`https://host[:port]`).
+    @MainActor static func origin(of frame: WKFrameInfo) -> URL? {
+        let origin = frame.securityOrigin
+        guard !origin.host.isEmpty else { return nil }
+        var components = URLComponents()
+        components.scheme = origin.protocol
+        components.host = origin.host
+        if origin.port != 0 { components.port = origin.port }
+        return components.url
+    }
+
+    static func title(for url: URL?, openerURL: URL? = nil) -> String {
+        guard let url else { return "" }
+        let scheme = url.scheme?.lowercased() ?? ""
+        if let host = url.host(), !host.isEmpty {
+            return scheme == "https" ? host : "Not Secure — \(host)"
+        }
+        if scheme == "blob", let inner = URL(string: String(url.absoluteString.dropFirst("blob:".count))),
+           inner.host() != nil
+        {
+            return title(for: inner)
+        }
+        if scheme == "about", let openerURL, openerURL.host() != nil {
+            return title(for: openerURL)
+        }
+        return url.absoluteString.isEmpty ? "" : (scheme.isEmpty ? url.absoluteString : "\(scheme):")
+    }
+}
+
+extension BrowserPopupWindow: WKNavigationDelegate {
+    /// Files are downloaded, not shown, like in a tab, to its opener's tab.
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationResponse: WKNavigationResponse,
+        decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+    ) {
+        decisionHandler(BrowserDownloadPolicy.isDownload(navigationResponse) ? .download : .allow)
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        guard let url = navigationResponse.response.url else { return }
+        hand(download, url: url)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        guard let url = navigationAction.request.url else { return }
+        hand(download, url: url)
+    }
+
+    private func hand(_ download: WKDownload, url: URL) {
+        guard let opener else {
+            download.cancel { _ in }
+            return
+        }
+        opener.delegate?.browserPage(
+            opener,
+            didStartDownload: BrowserDownloadTask(download: download, originalURL: url)
+        )
+    }
+}
 
 extension BrowserPopupWindow: WKUIDelegate {
     /// `window.close()` from the popup.
@@ -127,7 +216,13 @@ extension BrowserPopupWindow: WKUIDelegate {
         for navigationAction: WKNavigationAction,
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
-        Self.open(configuration: configuration, windowFeatures: windowFeatures, openerWindow: window)
+        Self.open(
+            configuration: configuration,
+            windowFeatures: windowFeatures,
+            openerWindow: window,
+            opener: opener,
+            openerOrigin: PopupTitle.origin(of: navigationAction.sourceFrame)
+        )
     }
 
     func webView(
@@ -152,5 +247,25 @@ extension BrowserPopupWindow: WKUIDelegate {
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Cancel")
         alert.beginSheetModal(for: window) { completionHandler($0 == .alertFirstButtonReturn) }
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        runJavaScriptTextInputPanelWithPrompt prompt: String,
+        defaultText: String?,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping (String?) -> Void
+    ) {
+        let alert = NSAlert()
+        alert.messageText = prompt
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = defaultText ?? ""
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        alert.beginSheetModal(for: window) { response in
+            completionHandler(response == .alertFirstButtonReturn ? field.stringValue : nil)
+        }
     }
 }

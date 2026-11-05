@@ -185,7 +185,13 @@ private struct WindowTabCommands: ViewModifier {
             .onNotification(.closeActiveTab) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                    tabManager.closeActiveTab()
+                    // The settings shown over the page close first, like
+                    // Peek: not the tab hidden behind them.
+                    if appState.showSettings {
+                        appState.showSettings = false
+                    } else {
+                        tabManager.closeActiveTab()
+                    }
                 }
             }
             .onNotification(.restoreLastTab) { note in

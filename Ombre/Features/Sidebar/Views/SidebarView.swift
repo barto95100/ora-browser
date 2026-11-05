@@ -7,7 +7,6 @@ struct SidebarView: View {
     @Environment(\.theme) private var theme
     @Environment(\.window) var window: NSWindow?
     @EnvironmentObject var tabManager: TabManager
-    @EnvironmentObject var historyManager: HistoryManager
     @EnvironmentObject var downloadManager: DownloadManager
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var privacyMode: PrivacyMode
@@ -225,17 +224,10 @@ struct SidebarView: View {
                 pageObjects: containers,
                 idKeyPath: \.pageID
             ) { container in
-                ContainerView(
-                    container: container,
-                    containers: containers
-                )
-                .padding(.horizontal, 10)
-                .environmentObject(tabManager)
-                .environmentObject(historyManager)
-                .environmentObject(downloadManager)
-                .environmentObject(appState)
-                .environmentObject(privacyMode)
-                .environmentObject(toolbarManager)
+                // The window's environment reaches the page through its
+                // hosting view (its tabs, toasts, the database).
+                ContainerView(container: container)
+                    .padding(.horizontal, 10)
             }
 
             if shouldShowMediaWidget {

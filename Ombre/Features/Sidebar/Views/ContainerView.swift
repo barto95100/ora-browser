@@ -1,8 +1,11 @@
+import SwiftData
 import SwiftUI
 
 struct ContainerView: View {
     let container: TabContainer
-    let containers: [TabContainer]
+    /// The spaces now (for "Move to"), not as they were when the page was made:
+    /// a page's view is made once (`NSPageView`).
+    @Query(sort: TabContainer.displayOrder) private var containers: [TabContainer]
 
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var toolbarManager: ToolbarManager

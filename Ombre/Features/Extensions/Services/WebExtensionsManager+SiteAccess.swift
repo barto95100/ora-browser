@@ -34,6 +34,15 @@ extension WebExtensionsManager {
             guard let pattern = try? WKWebExtension.MatchPattern(string: string) else { continue }
             context.setPermissionStatus(.deniedExplicitly, for: pattern)
         }
+        // Then what was decided from private windows, until they are all closed.
+        for entry in privateSiteDecisions.entries(for: record.id) {
+            let string = entry.host == PrivateSiteDecisions.allSites
+                ? "<all_urls>" : ExtensionSiteAccess.pattern(forHost: entry.host)
+            guard let pattern = try? WKWebExtension.MatchPattern(string: string) else { continue }
+            let status: WKWebExtensionContext.PermissionStatus = entry.decision == .allow
+                ? .grantedExplicitly : .deniedExplicitly
+            context.setPermissionStatus(status, for: pattern, expirationDate: entry.expiresAt)
+        }
     }
 
     /// The website of the tab, if the extension wants it and nothing was
@@ -42,7 +51,7 @@ extension WebExtensionsManager {
         guard let tab, let record = record(for: context) else { return nil }
         let url = tab.browserPage?.extensionWebView.url ?? tab.url
         guard let host = ExtensionSiteAccess.host(of: url),
-              ExtensionSiteAccess.decision(for: host, in: record) == .ask
+              siteDecision(for: host, in: record, isPrivate: tab.isPrivate) == .ask
         else { return nil }
         switch context.permissionStatus(for: url, in: adapter(for: tab)) {
         case .requestedImplicitly, .requestedExplicitly: return host
@@ -57,6 +66,24 @@ extension WebExtensionsManager {
         updateRecord(id: id) { record in
             record.siteRules = ExtensionSiteAccess.setting(decision, for: host, until: expiresAt, in: record.siteRules)
         }
+    }
+
+    /// A website's decision from a tab: saved, or from a private tab kept in
+    /// memory only (and given to the extension at once).
+    func decideSite(_ host: String, _ decision: SiteDecision, forOneDay: Bool = false, id: String, isPrivate: Bool) {
+        guard isPrivate else { return setSite(host, decision, forOneDay: forOneDay, id: id) }
+        let expiresAt = forOneDay ? Date().addingTimeInterval(24 * 60 * 60) : nil
+        privateSiteDecisions.set(decision, for: host, until: expiresAt, extensionID: id)
+        applyPrivateDecisions(id: id)
+    }
+
+    /// Gives the extension what was just decided in private, and shows it
+    /// on its button.
+    private func applyPrivateDecisions(id: String) {
+        if let item = installed.first(where: { $0.id == id }), let context = item.context {
+            applyAccess(item.record, to: context)
+        }
+        actionDidChange()
     }
 
     func setOtherSites(_ decision: SiteDecision, id: String) {
@@ -94,6 +121,28 @@ extension WebExtensionsManager {
         )
     }
 
+    /// The saved decision, or the one taken in a private window for a
+    /// private tab.
+    func siteDecision(for host: String, in record: ExtensionRecord, isPrivate: Bool) -> SiteDecision {
+        if isPrivate, let decision = privateSiteDecisions.decision(for: host, extensionID: record.id) {
+            return decision
+        }
+        return ExtensionSiteAccess.decision(for: host, in: record)
+    }
+
+    /// The last private window closed: what was decided in private goes,
+    /// and each extension gets back what its record allows.
+    func forgetPrivateSiteDecisions() {
+        let ids = privateSiteDecisions.extensionIDs
+        privateSiteDecisions.removeAll()
+        for item in installed where ids.contains(item.id) {
+            if let context = item.context {
+                applyAccess(item.record, to: context)
+            }
+        }
+        actionDidChange()
+    }
+
     // MARK: - Asked while running
 
     /// An extension asks for more (an optional permission): allowed or not,
@@ -120,17 +169,20 @@ extension WebExtensionsManager {
     }
 
     /// An extension asks for websites while running: all websites, or some.
+    /// From a private window (`isPrivate`), the answer is kept in memory
+    /// only: a site visited in private leaves no trace in `extensions.json`.
     func askSites(
         hosts: [String],
         allSites: Bool,
+        isPrivate: Bool,
         for context: WKWebExtensionContext,
         completion: @escaping (_ allowed: Bool, _ expiresAt: Date?) -> Void
     ) {
         guard let record = record(for: context) else { return completion(false, nil) }
         // Refused for other websites: not asked again (like Safari).
-        let undecided = hosts.filter { ExtensionSiteAccess.decision(for: $0, in: record) == .ask }
+        let undecided = hosts.filter { siteDecision(for: $0, in: record, isPrivate: isPrivate) == .ask }
         if !allSites, undecided.isEmpty {
-            let allowed = hosts.allSatisfy { ExtensionSiteAccess.decision(for: $0, in: record) == .allow }
+            let allowed = hosts.allSatisfy { siteDecision(for: $0, in: record, isPrivate: isPrivate) == .allow }
             return completion(allowed, nil)
         }
         if allSites, record.otherSites == .deny { return completion(false, nil) }
@@ -141,7 +193,18 @@ extension WebExtensionsManager {
                 message: "It will be able to read and change every page you visit.",
                 buttons: ["Allow on All Websites", "Don't Allow"]
             ) { choice in
-                if choice == 0 { self.setOtherSites(.allow, id: record.id) }
+                if choice == 0 {
+                    if isPrivate {
+                        self.privateSiteDecisions.set(
+                            .allow,
+                            for: PrivateSiteDecisions.allSites,
+                            extensionID: record.id
+                        )
+                        self.applyPrivateDecisions(id: record.id)
+                    } else {
+                        self.setOtherSites(.allow, id: record.id)
+                    }
+                }
                 completion(choice == 0, nil)
             }
             return
@@ -154,7 +217,7 @@ extension WebExtensionsManager {
         ) { choice in
             let decision: SiteDecision = choice == 2 ? .deny : .allow
             for host in undecided {
-                self.setSite(host, decision, forOneDay: choice == 0, id: record.id)
+                self.decideSite(host, decision, forOneDay: choice == 0, id: record.id, isPrivate: isPrivate)
             }
             let expiresAt = choice == 0 ? Date().addingTimeInterval(24 * 60 * 60) : nil
             completion(decision == .allow, expiresAt)

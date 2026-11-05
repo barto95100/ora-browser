@@ -61,21 +61,18 @@ extension TabManager {
 
     @discardableResult
     private func addImportedTab(_ imported: ImportedTab, type: TabType, order: Int, to container: TabContainer) -> Tab {
-        let tab = Tab(
+        let tab = makeTab(
             url: imported.url,
             title: imported.title,
             favicon: imported.faviconURL,
-            container: container,
             type: type,
             order: order,
+            in: container,
+            isPrivate: false,
             historyManager: historyManager,
-            downloadManager: downloadManager,
-            tabManager: self,
-            isPrivate: false
+            downloadManager: downloadManager
         )
         tab.savedURL = imported.url
-        modelContext.insert(tab)
-        container.tabs.append(tab)
         return tab
     }
 }

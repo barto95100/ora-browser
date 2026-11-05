@@ -35,8 +35,7 @@ struct ContainerView: View {
                         onSelect: selectTab,
                         onFavoriteToggle: toggleFavorite,
                         onClose: removeTab,
-                        onDuplicate: duplicateTab,
-                        onMoveToContainer: moveTab
+                        onDuplicate: duplicateTab
                     )
                 }
             } else {

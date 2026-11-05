@@ -33,21 +33,15 @@ extension TabManager {
         self.peek = nil
 
         let placeholder = Self.initialTitleAndFavicon(for: peek.url)
-        let tab = Tab(
+        let tab = makeTab(
             url: peek.url,
             title: peek.title.isEmpty ? placeholder?.title ?? peek.url.absoluteString : peek.title,
             favicon: peek.isPrivate ? nil : placeholder?.favicon,
-            container: container,
-            type: .normal,
-            isPlayingMedia: false,
-            order: container.tabs.count + 1,
+            in: container,
+            isPrivate: peek.isPrivate,
             historyManager: historyManager,
-            downloadManager: downloadManager,
-            tabManager: self,
-            isPrivate: peek.isPrivate
+            downloadManager: downloadManager
         )
-        modelContext.insert(tab)
-        container.tabs.append(tab)
         tab.adopt(peek.page, historyManager: historyManager, downloadManager: downloadManager, tabManager: self)
         if inSplitView {
             // Beside the tab Peek was opened from.

@@ -33,10 +33,11 @@ struct PictureInPicturePreferenceTests {
         return value
     }
 
-    /// A playing video with sound: switching tabs asks for Picture in
-    /// Picture (`__triggerPiP`), and WebKit takes the request. Without the
-    /// setting it refused at once: "NotSupportedError" (#104 took it away).
-    @Test func playingVideoIsAcceptedForPictureInPicture() async throws {
+    /// A playing video with sound: WebKit lets it go to Picture in Picture,
+    /// and switching tabs asks for it (`__triggerPiP`). Without the setting
+    /// every request was refused at once: "NotSupportedError" (#104).
+    /// Nothing opens: no window may show while the tests run.
+    @Test func playingVideoCanGoToPictureInPicture() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -75,25 +76,23 @@ struct PictureInPicturePreferenceTests {
 
         _ = await evaluate(page, "document.querySelector('video').play(); true")
         #expect(try await waitFor(page, "String(!document.querySelector('video').paused)", toBe: "true") == "true")
-        // What the request answers: refused at once without the setting.
+        // What WebKit says of the video, without asking: no without the setting.
+        let supportsPictureInPicture = await evaluate(
+            page, "String(document.querySelector('video').webkitSupportsPresentationMode('picture-in-picture'))"
+        ) as? String
+        #expect(supportsPictureInPicture == "true")
+
+        // Switching tabs asks for it: recorded, not opened.
         _ = await evaluate(page, """
-        const original = HTMLVideoElement.prototype.requestPictureInPicture;
-        window.pipAnswer = 'not asked';
+        window.pipAsked = false;
         HTMLVideoElement.prototype.requestPictureInPicture = function () {
-            window.pipAnswer = 'pending';
-            return original.call(this)
-                .then((result) => { window.pipAnswer = 'opened'; return result; })
-                .catch((error) => { window.pipAnswer = error.name; throw error; });
+            window.pipAsked = true;
+            return Promise.resolve();
         };
         true
         """)
-
         _ = await evaluate(page, "window.__triggerPiP(); true")
-        try await Task.sleep(for: .milliseconds(500))
-
-        let answer = await evaluate(page, "window.pipAnswer") as? String
-        #expect(answer == "pending" || answer == "opened", "Picture in Picture answered \(answer ?? "nil")")
-        _ = await evaluate(page, "document.exitPictureInPicture().catch(() => {}); true")
+        #expect(await evaluate(page, "String(window.pipAsked)") as? String == "true")
     }
 }
 

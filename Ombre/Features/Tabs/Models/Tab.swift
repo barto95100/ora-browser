@@ -51,24 +51,6 @@ class Tab: ObservableObject, Identifiable {
     @Transient @Published var pageRuntime: TabRuntime?
     @Transient var maybeIsActive = false
     @Transient var isPrivate: Bool = false
-    @Transient var passwordCoordinator: PasswordAutofillCoordinator?
-    @Transient @Published var passwordOverlayState: PasswordAutofillOverlayState?
-    @Transient @Published var passwordTriggerOverlayState: PasswordAutofillOverlayState?
-    /// Permission prompt currently shown for this tab, see `Tab+SitePermissions`.
-    @Transient @Published var permissionRequest: SitePermissionRequest?
-    @Transient @Published var mediaCaptureState = BrowserMediaCaptureState()
-    /// Site the shown favicon belongs to (see `Tab+Favicon.swift`).
-    @Transient var faviconSiteHost: String?
-    /// Last page recorded in the history (see `Tab+History.swift`).
-    @Transient var lastRecordedVisitURL: URL?
-    /// Local file this tab currently has sandbox access to (see `Tab+LocalFile.swift`).
-    @Transient var fileAccessURL: URL?
-    /// Folder of a local page whose images and styles are blocked, offered to
-    /// the user (see `Tab+LocalFile.swift`).
-    @Transient @Published var folderAccessRequest: URL?
-    /// Loads kept from the current page by content rules, by host (see
-    /// `Tab+Protections.swift`).
-    @Transient @Published var blockedContent: [String: Int] = [:]
 
     /// The space, optional in the database so deleting a space never leaves a
     /// tab pointing at nothing. Nil only once the tab or its space is deleted:
@@ -123,7 +105,6 @@ class Tab: ObservableObject, Identifiable {
         self.downloadManager = downloadManager
         self.tabManager = tabManager
         self.isPrivate = isPrivate
-        self.passwordCoordinator = PasswordAutofillCoordinator(tab: self)
     }
 
     /// When it was last shown; never shown counts as the oldest.
@@ -243,12 +224,12 @@ class Tab: ObservableObject, Identifiable {
         // Avoid double initialization
         if browserPage != nil { return }
 
+        // First: the page takes the window's private session from it, and
+        // its state is kept in the window's runtime.
+        self.tabManager = tabManager
         if passwordCoordinator == nil {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }
-
-        // First: the page takes the window's private session from it.
-        self.tabManager = tabManager
         let page = makeBrowserPage(isPrivate: isPrivate)
         browserPage = page
 

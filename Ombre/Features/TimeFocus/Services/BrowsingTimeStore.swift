@@ -1,4 +1,5 @@
 import Foundation
+import os
 import SwiftData
 
 /// An hour of a site in a space, in seconds.
@@ -37,8 +38,22 @@ final class BrowsingTimeStore: ObservableObject {
             schema: Schema([BrowsingTimeRecord.self]),
             url: folder.appending(path: "BrowsingTime.sqlite")
         )
-        let container = try? ModelContainer(for: BrowsingTimeRecord.self, configurations: configuration)
-        context = container.map { ModelContext($0) }
+        do {
+            let container = try ModelContainer(for: BrowsingTimeRecord.self, configurations: configuration)
+            context = ModelContext(container)
+        } catch {
+            // Browsing time is then not counted: said, not silent.
+            // The description may hold the file's path: private.
+            let nsError = error as NSError
+            Logger(category: "BrowsingTime").error(
+                """
+                Browsing time database failed to open: \
+                \(nsError.domain, privacy: .public) \(nsError.code, privacy: .public) \
+                \(String(describing: error), privacy: .private)
+                """
+            )
+            context = nil
+        }
     }
 
     /// Time spent on a site, from `start` to `end`; `opened`: the site has
@@ -85,26 +100,26 @@ final class BrowsingTimeStore: ObservableObject {
     /// Forgets what is older than `days` days.
     func purge(keepingDays days: Int, now: Date = Date()) {
         guard let context, let limit = Calendar.current.date(byAdding: .day, value: -days, to: now) else { return }
-        try? context.delete(model: BrowsingTimeRecord.self, where: #Predicate { $0.hour < limit })
+        context.deleteOrLog(BrowsingTimeRecord.self, where: #Predicate { $0.hour < limit }, "purge browsing time")
         save()
     }
 
     func delete(domain: String) {
         guard let context else { return }
-        try? context.delete(model: BrowsingTimeRecord.self, where: #Predicate { $0.domain == domain })
+        context.deleteOrLog(BrowsingTimeRecord.self, where: #Predicate { $0.domain == domain }, "delete site time")
         save()
     }
 
     /// A space deleted: its time goes too.
     func delete(spaceID: UUID) {
         guard let context else { return }
-        try? context.delete(model: BrowsingTimeRecord.self, where: #Predicate { $0.spaceID == spaceID })
+        context.deleteOrLog(BrowsingTimeRecord.self, where: #Predicate { $0.spaceID == spaceID }, "delete space time")
         save()
     }
 
     func deleteAll() {
         guard let context else { return }
-        try? context.delete(model: BrowsingTimeRecord.self)
+        context.deleteOrLog(BrowsingTimeRecord.self, "delete all browsing time")
         save()
     }
 

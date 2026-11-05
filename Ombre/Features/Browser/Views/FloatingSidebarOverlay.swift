@@ -24,7 +24,9 @@ struct FloatingSidebarOverlay: View {
                 if showFloatingSidebar {
                     FloatingSidebar()
                         .frame(width: floatingWidth)
-                        .transition(.move(edge: sidebarManager.sidebarPosition == .primary ? .leading : .trailing))
+                        // Its pages are AppKit views, which don't follow a move
+                        // (CLAUDE.md): it fades in and out.
+                        .transition(.opacity)
                         .overlay(alignment: sidebarManager.sidebarPosition == .primary ? .trailing : .leading) {
                             ResizeHandle(
                                 dragFraction: $dragFraction,

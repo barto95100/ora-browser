@@ -7,8 +7,7 @@ extension TabManager {
     /// window is closing (see `OmbreRoot`); doing it twice does nothing more.
     func tearDown() {
         isTornDown = true
-        cleanupTimer?.invalidate()
-        cleanupTimer = nil
+        TabCleaner.shared.unregister(self)
         memoryPressureSource?.cancel()
         memoryPressureSource = nil
 

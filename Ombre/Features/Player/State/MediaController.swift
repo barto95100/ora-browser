@@ -73,7 +73,10 @@ final class MediaController: ObservableObject {
                 tabID: tab.id,
                 title: tab.title,
                 pageURL: tab.url,
-                favicon: tab.faviconLocalFile ?? tab.favicon
+                // A private icon lives in memory, not at an address the
+                // player can load.
+                favicon: tab.faviconLocalFile.flatMap { $0.scheme == FaviconStore.privateScheme ? nil : $0 }
+                    ?? (tab.isPrivate ? nil : tab.favicon)
             )
         }
     }

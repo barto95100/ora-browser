@@ -6,7 +6,8 @@ import Foundation
 /// Spaces have isolated website data, so permissions follow the same
 /// boundary: allowing the camera for a site in one space does not allow it in
 /// another. Regular spaces are persisted in user defaults; private browsing
-/// keeps its choices in memory only, so they are forgotten when the app quits.
+/// keeps its choices in memory only, forgotten when their window closes (see
+/// `PrivateWindows`).
 ///
 /// Like `SettingsStore`, this type is meant to be used from the main thread.
 final class SitePermissionStore: ObservableObject {
@@ -70,6 +71,13 @@ final class SitePermissionStore: ObservableObject {
                 permissionsBySpace[spaceId] = nil
             }
             save()
+        }
+    }
+
+    /// A closed private window's choices: its spaces go with it.
+    func forgetPrivatePermissions(in spaceIds: some Sequence<UUID>) {
+        for spaceId in spaceIds {
+            privatePermissionsBySpace[spaceId] = nil
         }
     }
 

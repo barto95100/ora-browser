@@ -147,7 +147,7 @@ private struct BrowserWindowRoot: View {
                 }
             }
             // Closing the window stops and frees its pages; quitting saves.
-            .windowLifecycle(window: window, tabManager: tabManager)
+            .windowLifecycle(window: window, tabManager: tabManager, isPrivate: privacyMode.isPrivate)
             // The menu commands: they stop with the window (see `windowCommands`).
             .windowCommands(
                 WindowCommandTargets(

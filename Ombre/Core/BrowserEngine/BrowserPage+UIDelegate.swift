@@ -93,6 +93,15 @@ extension BrowserPage: WKUIDelegate {
                 )
             }
         }
+        // A click on a `target="_blank"` link (not a script, not "Open Link in
+        // New Tab" from the context menu): Peek, from a pinned tab, like a
+        // plain link (see `PeekPolicy`).
+        if navigationAction.navigationType == .linkActivated, !hasPendingNewTabDisposition,
+           let url = navigationAction.request.url,
+           delegate?.browserPage(self, opensNewWindowLink: url, modifierFlags: navigationAction.modifierFlags) == true
+        {
+            return nil
+        }
         if let url = navigationAction.request.url {
             delegate?.browserPage(self, didRequestOpenInNewTab: url, disposition: takeNewTabDisposition())
         }

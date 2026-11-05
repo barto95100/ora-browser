@@ -9,7 +9,6 @@ struct FavTabItem: View {
     let onFavoriteToggle: () -> Void
     let onClose: () -> Void
     let onDuplicate: () -> Void
-    let onMoveToContainer: (TabContainer) -> Void
 
     @Environment(\.theme) private var theme
     @EnvironmentObject var tabManager: TabManager

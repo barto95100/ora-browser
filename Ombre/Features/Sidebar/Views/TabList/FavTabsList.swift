@@ -11,11 +11,6 @@ struct FavTabsGrid: View {
     let onFavoriteToggle: (Tab) -> Void
     let onClose: (Tab) -> Void
     let onDuplicate: (Tab) -> Void
-    let onMoveToContainer:
-        (
-            Tab,
-            TabContainer
-        ) -> Void
 
     private var adaptiveColumns: [GridItem] {
         let maxColumns = 3
@@ -45,8 +40,7 @@ struct FavTabsGrid: View {
                         onTap: { onSelect(tab) },
                         onFavoriteToggle: { onFavoriteToggle(tab) },
                         onClose: { onClose(tab) },
-                        onDuplicate: { onDuplicate(tab) },
-                        onMoveToContainer: { onMoveToContainer(tab, $0) }
+                        onDuplicate: { onDuplicate(tab) }
                     )
                     .onDrag { onDrag(tab.id) }
                     .onDrop(

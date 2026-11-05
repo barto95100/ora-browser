@@ -15,8 +15,8 @@ struct HistorySearchTests {
     init() {
         context = ModelContext(container)
         manager = HistoryManager(modelContainer: container, modelContext: context)
-        space = TabContainer(name: "Space", isActive: true)
-        otherSpace = TabContainer(name: "Other", isActive: false)
+        space = TabContainer(name: "Space")
+        otherSpace = TabContainer(name: "Other")
         context.insert(space)
         context.insert(otherSpace)
     }

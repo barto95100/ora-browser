@@ -1,45 +1,7 @@
-import os
 import SwiftData
 import SwiftUI
 
-private let logger = Logger(category: "TabManager")
-
-// MARK: - Tab Manager
-
-private struct ClosedTabSnapshot {
-    let id: UUID
-    let containerID: UUID
-    let url: URL
-    let savedURL: URL?
-    let title: String
-    let favicon: URL?
-    let faviconLocalFile: URL?
-    let createdAt: Date
-    let lastAccessedAt: Date?
-    let type: TabType
-    let order: Int
-    let backgroundColorHex: String
-    let isPrivate: Bool
-
-    init(tab: Tab) {
-        id = tab.id
-        containerID = tab.container.id
-        url = tab.url
-        savedURL = tab.savedURL
-        title = tab.title
-        favicon = tab.favicon
-        faviconLocalFile = tab.faviconLocalFile
-        createdAt = tab.createdAt
-        lastAccessedAt = tab.lastAccessedAt
-        type = tab.type
-        order = tab.order
-        backgroundColorHex = tab.backgroundColorHex
-        isPrivate = tab.isPrivate
-    }
-}
-
 @MainActor
-// swiftlint:disable:next type_body_length
 class TabManager: ObservableObject {
     @Published var activeContainer: TabContainer?
     @Published var activeTab: Tab?
@@ -67,14 +29,6 @@ class TabManager: ObservableObject {
     /// The window's private session (used by private windows only).
     let privateSessionID = UUID()
 
-    var recentTabs: [Tab] {
-        guard let container = activeContainer else { return [] }
-        return Array(container.tabs
-            .sorted { ($0.lastAccessedAt ?? Date.distantPast) > ($1.lastAccessedAt ?? Date.distantPast) }
-            .prefix(SettingsStore.shared.maxRecentTabs)
-        )
-    }
-
     /// Note: Could be made injectable via init parameter if preferred
     let tabSearchingService: TabSearchingProviding
 
@@ -84,8 +38,9 @@ class TabManager: ObservableObject {
     var isTornDown = false
     /// macOS memory pressure events, see `TabManager+MemoryPressure.swift`.
     var memoryPressureSource: DispatchSourceMemoryPressure?
-    private var recentlyClosedTabs: [ClosedTabSnapshot] = []
-    private let maxRecentlyClosedTabs = 5
+    /// Closed tabs ⌘Z brings back, see `TabManager+ClosedTabs.swift`.
+    var recentlyClosedTabs: [ClosedTabSnapshot] = []
+    let maxRecentlyClosedTabs = 5
 
     init(
         modelContainer: ModelContainer,
@@ -145,198 +100,7 @@ class TabManager: ObservableObject {
         return false
     }
 
-    func togglePinTab(_ tab: Tab) {
-        if tab.type == .pinned {
-            tab.type = .normal
-            tab.savedURL = nil
-            tab.folderID = nil
-        } else {
-            tab.type = .pinned
-            tab.savedURL = tab.url
-        }
-
-        modelContext.saveOrLog("toggle pin tab")
-    }
-
-    func toggleFavTab(_ tab: Tab) {
-        tab.folderID = nil
-        if tab.type == .fav {
-            tab.type = .normal
-            tab.savedURL = nil
-        } else {
-            tab.type = .fav
-            tab.savedURL = tab.url
-        }
-
-        modelContext.saveOrLog("toggle favorite tab")
-    }
-
-    // MARK: - Container Public API's
-
-    func moveTabToContainer(_ tab: Tab, toContainer: TabContainer) {
-        separateSplit(containing: tab, save: false)
-        tab.folderID = nil
-        tab.container = toContainer
-        modelContext.saveOrLog("move tab to space")
-    }
-
-    private func initializeActiveContainerAndTab() {
-        // Ensure containers are fetched
-        let containers = fetchContainers()
-
-        // Get the last accessed container
-        if let lastAccessedContainer = containers.first {
-            activeContainer = lastAccessedContainer
-            // Get the last accessed tab from the active container
-            if let lastAccessedTab = lastAccessedContainer.tabs
-                .sorted(by: { ($0.lastAccessedAt ?? Date.distantPast) > ($1.lastAccessedAt ?? Date.distantPast) })
-                .first
-            {
-                activeTab = lastAccessedTab
-                activeTab?.maybeIsActive = true
-            }
-        } else {
-            let newContainer = createContainer()
-            activeContainer = newContainer
-        }
-    }
-
-    @discardableResult
-    func createContainer(name: String = "Default", emoji: String = "•") -> TabContainer {
-        let newContainer = TabContainer(name: name, emoji: emoji)
-        newContainer.order = nextContainerOrder()
-        modelContext.insert(newContainer)
-        activeContainer = newContainer
-        self.activeTab = nil
-        modelContext.saveOrLog("create space")
-        PrivacyDefaults.applyToNewSpace(newContainer.id)
-        //        _ = fetchContainers() // Refresh containers
-        return newContainer
-    }
-
-    /// The order of a new space: after all the others.
-    func nextContainerOrder() -> Int {
-        var descriptor = FetchDescriptor<TabContainer>(sortBy: [SortDescriptor(\.order, order: .reverse)])
-        descriptor.fetchLimit = 1
-        return ((try? modelContext.fetch(descriptor))?.first?.order ?? -1) + 1
-    }
-
-    func renameContainer(_ container: TabContainer, name: String, emoji: String) {
-        container.name = name
-        container.emoji = emoji
-        modelContext.saveOrLog("rename space")
-    }
-
-    /// Deletes the space at once (it can't be used half deleted), then cleans
-    /// up what it leaves outside the database: passwords, browsing time,
-    /// focus settings and website data. Each cleanup step goes on when
-    /// another fails. Returns the cleanup, for the tests.
-    @discardableResult
-    func deleteContainer(_ container: TabContainer) -> Task<Void, Never> {
-        let containerId = container.id
-        if let persistedContainer = fetchContainer(id: containerId) {
-            // A Peek opened from the space uses its data store.
-            if let peek, persistedContainer.tabs.contains(where: { $0.id == peek.openerTabID }) {
-                closePeek()
-            }
-            let wasActiveContainer = activeContainer?.id == containerId
-            prepareForContainerDeletion(isActiveContainer: wasActiveContainer)
-            deleteContainerContents(persistedContainer)
-
-            // Save child deletions before deleting the container: SwiftData
-            // could fail when the parent and children went in the same save.
-            modelContext.saveOrLog("delete space contents")
-
-            if let containerToDelete = fetchContainer(id: containerId) {
-                modelContext.delete(containerToDelete)
-                modelContext.saveOrLog("delete space")
-            }
-            activateFallbackContainerIfNeeded(afterDeletingActiveContainer: wasActiveContainer)
-        }
-        SettingsStore.shared.removeContainerSettings(for: containerId)
-
-        return Task { @MainActor in
-            do {
-                try PasswordManagerService.shared.deleteEntries(for: containerId)
-            } catch {
-                logger.error("Deleting the space's passwords failed: \(error.localizedDescription, privacy: .public)")
-            }
-            BrowsingTimeStore.shared.delete(spaceID: containerId)
-            FocusSettings.shared.removeSpace(containerId)
-            // Its website data, then its store on disk.
-            await PrivacyService.clearAllWebsiteData(for: containerId)
-            await BrowserEngine.shared.removeProfile(identifier: containerId)
-        }
-    }
-
-    func activateContainer(_ container: TabContainer, activateLastAccessedTab: Bool = true) {
-        activeContainer = container
-        container.lastAccessedAt = Date()
-
-        // Set the most recently accessed tab in the container
-        if let lastAccessedTab = container.tabs
-            .sorted(by: { $0.lastAccessedAt ?? Date() > $1.lastAccessedAt ?? Date() }).first,
-           lastAccessedTab.isWebViewReady
-        {
-            activeTab?.maybeIsActive = false
-            activeTab = lastAccessedTab
-            activeTab?.maybeIsActive = true
-            lastAccessedTab.lastAccessedAt = Date()
-        } else {
-            activeTab = nil
-        }
-
-        modelContext.saveOrLog("activate space")
-    }
-
-    // MARK: - Tab Public API's
-
-    func addTab(
-        title: String = "Untitled",
-        // Will Always Work
-        url: URL = URL(string: "about:blank")!,
-        container: TabContainer,
-        favicon: URL? = nil,
-        historyManager: HistoryManager? = nil,
-        downloadManager: DownloadManager? = nil,
-        isPrivate: Bool
-    ) -> Tab {
-        let cleanHost: String? = {
-            guard let host = url.host else { return nil }
-            return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-        }()
-        let newTab = Tab(
-            url: url,
-            title: cleanHost ?? "New Tab",
-            favicon: favicon,
-            container: container,
-            type: .normal,
-            isPlayingMedia: false,
-            order: container.tabs.count + 1,
-            historyManager: historyManager,
-            downloadManager: downloadManager,
-            tabManager: self,
-            isPrivate: isPrivate
-        )
-        modelContext.insert(newTab)
-        container.tabs.append(newTab)
-        activeTab?.maybeIsActive  = false
-        activeTab = newTab
-        activeTab?.maybeIsActive  = true
-        newTab.lastAccessedAt = Date()
-        container.lastAccessedAt = Date()
-
-        // Initialize the WebView for the new active tab
-        newTab.restoreTransientState(
-            historyManager: historyManager ?? self.historyManager,
-            downloadManager: downloadManager ?? self.downloadManager,
-            tabManager: self,
-            isPrivate: isPrivate
-        )
-
-        modelContext.saveOrLog("add tab")
-        return newTab
-    }
+    // MARK: - Tabs
 
     @discardableResult
     func openTab(
@@ -349,23 +113,17 @@ class TabManager: ObservableObject {
     ) -> Tab? {
         if let container = activeContainer {
             if let (title, faviconURL) = Self.initialTitleAndFavicon(for: url) {
-                let newTab = Tab(
+                let newTab = makeTab(
                     url: url,
                     title: title,
                     // A private tab loads no icon from outside its page (the
                     // shared URL cache would keep it on the disk).
                     favicon: isPrivate ? nil : faviconURL,
-                    container: container,
-                    type: .normal,
-                    isPlayingMedia: false,
-                    order: container.tabs.count + 1,
+                    in: container,
+                    isPrivate: isPrivate,
                     historyManager: historyManager,
-                    downloadManager: downloadManager,
-                    tabManager: self,
-                    isPrivate: isPrivate
+                    downloadManager: downloadManager
                 )
-                modelContext.insert(newTab)
-                container.tabs.append(newTab)
 
                 if focusAfterOpening {
                     completePendingSplit(with: newTab)
@@ -389,6 +147,78 @@ class TabManager: ObservableObject {
         return nil
     }
 
+    /// A tab made active and loaded at once (the Arc import).
+    func addTab(
+        title: String = "Untitled",
+        url: URL,
+        container: TabContainer,
+        favicon: URL? = nil,
+        historyManager: HistoryManager? = nil,
+        downloadManager: DownloadManager? = nil,
+        isPrivate: Bool
+    ) -> Tab {
+        let cleanHost: String? = {
+            guard let host = url.host else { return nil }
+            return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        }()
+        let newTab = makeTab(
+            url: url,
+            title: cleanHost ?? "New Tab",
+            favicon: favicon,
+            in: container,
+            isPrivate: isPrivate,
+            historyManager: historyManager,
+            downloadManager: downloadManager
+        )
+        activeTab?.maybeIsActive = false
+        activeTab = newTab
+        activeTab?.maybeIsActive = true
+        newTab.lastAccessedAt = Date()
+        container.lastAccessedAt = Date()
+
+        newTab.restoreTransientState(
+            historyManager: historyManager ?? self.historyManager,
+            downloadManager: downloadManager ?? self.downloadManager,
+            tabManager: self,
+            isPrivate: isPrivate
+        )
+
+        modelContext.saveOrLog("add tab")
+        return newTab
+    }
+
+    /// The one way a tab is made: added to its space, in its section's order.
+    @discardableResult
+    func makeTab(
+        id: UUID = UUID(),
+        url: URL,
+        title: String,
+        favicon: URL? = nil,
+        type: TabType = .normal,
+        order: Int? = nil,
+        in container: TabContainer,
+        isPrivate: Bool,
+        historyManager: HistoryManager? = nil,
+        downloadManager: DownloadManager? = nil
+    ) -> Tab {
+        let tab = Tab(
+            id: id,
+            url: url,
+            title: title,
+            favicon: favicon,
+            container: container,
+            type: type,
+            order: order ?? container.tabs.count + 1,
+            historyManager: historyManager,
+            downloadManager: downloadManager,
+            tabManager: self,
+            isPrivate: isPrivate
+        )
+        modelContext.insert(tab)
+        container.tabs.append(tab)
+        return tab
+    }
+
     /// Placeholder title and favicon shown until the page reports its own:
     /// the host for web pages, the file name for local files (which have no
     /// host). Returns nil for URLs a tab cannot show.
@@ -401,11 +231,6 @@ class TabManager: ObservableObject {
             return (url.lastPathComponent, nil)
         }
         return nil
-    }
-
-    func switchSections(from: Tab, toTab: Tab) {
-        from.switchSections(from: from, to: toTab)
-        modelContext.saveOrLog("switch tab section")
     }
 
     func closeTab(tab: Tab, shouldTrackForRestore: Bool = true) {
@@ -483,43 +308,6 @@ class TabManager: ObservableObject {
         }
     }
 
-    func restoreLastTab() {
-        guard let snapshot = recentlyClosedTabs.popLast() else { return }
-        // Still being closed (its media is stopping): ⌘Z cancels the close.
-        // A new tab would share its id, which is unique.
-        if let closing = closingTab(id: snapshot.id) {
-            closing.isClosing = false
-            activateTab(closing)
-            return
-        }
-        let container = fetchContainers()
-            .first(where: { $0.id == snapshot.containerID }) ?? activeContainer ?? createContainer()
-
-        shiftRestoredTabOrders(in: container, restoring: snapshot)
-
-        let restoredTab = Tab(
-            id: snapshot.id,
-            url: snapshot.url,
-            title: snapshot.title,
-            favicon: snapshot.favicon,
-            container: container,
-            type: snapshot.type,
-            order: snapshot.order,
-            tabManager: self,
-            isPrivate: snapshot.isPrivate
-        )
-        restoredTab.savedURL = snapshot.savedURL
-        restoredTab.faviconLocalFile = snapshot.faviconLocalFile
-        restoredTab.createdAt = snapshot.createdAt
-        restoredTab.lastAccessedAt = snapshot.lastAccessedAt
-        restoredTab.backgroundColorHex = snapshot.backgroundColorHex
-
-        modelContext.insert(restoredTab)
-        container.tabs.append(restoredTab)
-        activateTab(restoredTab)
-        modelContext.saveOrLog("restore last tab")
-    }
-
     func activateTab(_ tab: Tab) {
         // Toggle Picture-in-Picture on tab switch
         togglePiPOnSwitch(to: tab)
@@ -550,80 +338,6 @@ class TabManager: ObservableObject {
         modelContext.saveOrLog("activate tab")
     }
 
-    /// Clean up old tabs that haven't been accessed recently to preserve memory
-    func cleanupOldTabs() {
-        let timeout = SettingsStore.shared.tabAliveTimeout
-        // Skip cleanup if set to "Never" (365 days)
-        guard timeout < 365 * 24 * 60 * 60 else { return }
-
-        let allContainers = fetchContainers()
-        for container in allContainers {
-            for tab in container.tabs {
-                // A tab in a call keeps its page, like one playing media.
-                if !tab.isAlive, tab.isWebViewReady, !isShown(tab), !tab.isPlayingMedia,
-                   !tab.mediaCaptureState.isCapturing, tab.type == .normal
-                {
-                    tab.destroyWebView()
-                }
-            }
-        }
-    }
-
-    /// Completely remove old normal tabs that haven't been accessed for a long time
-    func removeOldTabs() {
-        let cutoffDate = Date().addingTimeInterval(-SettingsStore.shared.tabRemovalTimeout)
-        let allContainers = fetchContainers()
-
-        for container in allContainers {
-            for tab in container.tabs {
-                if let lastAccessed = tab.lastAccessedAt,
-                   lastAccessed < cutoffDate,
-                   !isShown(tab),
-                   !tab.isPlayingMedia,
-                   !tab.mediaCaptureState.isCapturing,
-                   tab.type == .normal
-                {
-                    closeTab(tab: tab, shouldTrackForRestore: false)
-                }
-            }
-        }
-    }
-
-    /// Remove tabs in containers that have a per-space autoClearTabsAfter setting
-    func autoClearContainerTabs() {
-        let settings = SettingsStore.shared
-        let allContainers = fetchContainers()
-
-        for container in allContainers {
-            let policy = settings.autoClearTabsAfter(for: container.id)
-            guard let timeout = policy.seconds else { continue }
-
-            let cutoffDate = Date().addingTimeInterval(-timeout)
-            for tab in container.tabs {
-                if let lastAccessed = tab.lastAccessedAt,
-                   lastAccessed < cutoffDate,
-                   !isShown(tab),
-                   !tab.isPlayingMedia,
-                   !tab.mediaCaptureState.isCapturing,
-                   tab.type == .normal
-                {
-                    closeTab(tab: tab)
-                }
-            }
-        }
-    }
-
-    /// Start the automatic cleanup timer
-    private func startCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.cleanupOldTabs()
-                self?.removeOldTabs()
-                self?.autoClearContainerTabs()
-            }
-        }
-    }
-
     deinit {
         cleanupTimer?.invalidate()
         memoryPressureSource?.cancel()
@@ -640,47 +354,6 @@ class TabManager: ObservableObject {
                 return
             }
         }
-    }
-
-    func selectTabAtIndex(_ index: Int) {
-        guard let container = activeContainer else { return }
-
-        // Match the sidebar ordering: favorites, then pinned, then normal tabs
-        // All sorted by order in descending order
-        let favoriteTabs = container.tabs
-            .filter { $0.type == .fav }
-            .sorted(by: { $0.order > $1.order })
-
-        // Tabs of closed folders are hidden.
-        let pinnedTabs = container.visiblePinnedTabs(activeTabID: activeTab?.id)
-
-        // The right side of a split of normal tabs shares its left side's row.
-        let splitRightTabIDs = splitRows(in: container).hidden
-        let normalTabs = container.tabs
-            .filter { $0.type == .normal && !splitRightTabIDs.contains($0.id) }
-            .sorted(by: { $0.order > $1.order })
-
-        // Combine all tabs in the same order as the sidebar
-        let allTabs = favoriteTabs + pinnedTabs + normalTabs
-
-        // Handle special case: Command+9 selects the last tab
-        let targetIndex = (index == 9) ? allTabs.count - 1 : index - 1
-
-        // Validate index is within bounds
-        guard targetIndex >= 0, targetIndex < allTabs.count else { return }
-
-        let targetTab = allTabs[targetIndex]
-        activateTab(targetTab)
-    }
-
-    private func fetchContainers() -> [TabContainer] {
-        do {
-            let descriptor = FetchDescriptor<TabContainer>(sortBy: [SortDescriptor(\.lastAccessedAt, order: .reverse)])
-            return try modelContext.fetch(descriptor)
-        } catch {
-            // Failed to fetch containers
-        }
-        return []
     }
 
     func duplicateTab(_ tab: Tab) {
@@ -708,88 +381,6 @@ class TabManager: ObservableObject {
 
         for tab in loadedTabs {
             tab.refreshBrowserPageForPrivacySettings()
-        }
-    }
-
-    private func trackRecentlyClosedTab(_ tab: Tab) {
-        recentlyClosedTabs.append(ClosedTabSnapshot(tab: tab))
-        if recentlyClosedTabs.count > maxRecentlyClosedTabs {
-            recentlyClosedTabs.removeFirst(recentlyClosedTabs.count - maxRecentlyClosedTabs)
-        }
-
-        // ⌘Z outside a text field reopens it, like Arc and Safari
-        // ("Undo Close Tab"); text fields keep undoing typing first.
-        windowUndoManager?.registerUndo(withTarget: self) { manager in
-            MainActor.assumeIsolated {
-                manager.restoreLastTab()
-            }
-        }
-        windowUndoManager?.setActionName("Close Tab")
-    }
-
-    private func shiftRestoredTabOrders(in container: TabContainer, restoring snapshot: ClosedTabSnapshot) {
-        for tab in container.tabs where tab.type == snapshot.type && tab.order >= snapshot.order {
-            tab.order += 1
-        }
-    }
-}
-
-private extension TabManager {
-    func reloadCancelledClose(of tab: Tab) {
-        guard tab.browserPage == nil else { return }
-        tab.isWebViewReady = false
-        if activeTab?.id == tab.id {
-            activateTab(tab)
-        }
-    }
-
-    func closingTab(id: UUID) -> Tab? {
-        let descriptor = FetchDescriptor<Tab>(predicate: #Predicate { $0.id == id })
-        return (try? modelContext.fetch(descriptor))?.first { $0.isClosing }
-    }
-
-    func fetchContainer(id: UUID) -> TabContainer? {
-        let descriptor = FetchDescriptor<TabContainer>(
-            predicate: #Predicate { $0.id == id }
-        )
-
-        do {
-            return try modelContext.fetch(descriptor).first
-        } catch {
-            return nil
-        }
-    }
-
-    func prepareForContainerDeletion(isActiveContainer: Bool) {
-        guard isActiveContainer else { return }
-
-        activeTab?.maybeIsActive = false
-        activeTab = nil
-        activeContainer = nil
-    }
-
-    func deleteContainerContents(_ container: TabContainer) {
-        for tab in Array(container.tabs) {
-            if tab.isWebViewReady {
-                tab.destroyWebView()
-            }
-            mediaController.removeSession(for: tab.id)
-            modelContext.delete(tab)
-        }
-
-        for folder in Array(container.folders) {
-            modelContext.delete(folder)
-        }
-        // The space's history goes with it (cascade).
-    }
-
-    func activateFallbackContainerIfNeeded(afterDeletingActiveContainer wasActiveContainer: Bool) {
-        guard wasActiveContainer else { return }
-
-        if let nextContainer = fetchContainers().first {
-            activateContainer(nextContainer)
-        } else {
-            _ = createContainer()
         }
     }
 }

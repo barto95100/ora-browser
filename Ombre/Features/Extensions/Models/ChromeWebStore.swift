@@ -21,13 +21,53 @@ enum ChromeWebStore {
         text.count == 32 && text.allSatisfy { ("a" ... "p").contains($0) }
     }
 
+    /// The largest package downloaded, well above any store extension.
+    static let maximumPackageSize = 100 * 1024 * 1024
+
+    /// Google's own servers only, in HTTPS (where the store sends packages).
+    static func isDownloadURL(_ url: URL) -> Bool {
+        guard url.scheme == "https", let host = url.host?.lowercased() else { return false }
+        return ["google.com", "googleusercontent.com", "gvt1.com"].contains { host == $0 || host.hasSuffix("." + $0) }
+    }
+
+    /// Downloads a package, stopping past `maximumPackageSize`.
+    static func downloadPackage(_ request: URLRequest, session: URLSession = .shared) async throws -> Data {
+        let (bytes, response) = try await session.bytes(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw DownloadFailure.notFound }
+        if let finalURL = response.url, !isDownloadURL(finalURL) { throw DownloadFailure.notFromTheStore }
+        if response.expectedContentLength > maximumPackageSize { throw DownloadFailure.tooLarge }
+        var data = Data()
+        data.reserveCapacity(Int(max(0, response.expectedContentLength)))
+        for try await byte in bytes {
+            data.append(byte)
+            if data.count > maximumPackageSize { throw DownloadFailure.tooLarge }
+        }
+        guard !data.isEmpty else { throw DownloadFailure.notFound }
+        return data
+    }
+
+    enum DownloadFailure: LocalizedError {
+        case notFound
+        case notFromTheStore
+        case tooLarge
+
+        var errorDescription: String? {
+            switch self {
+            case .notFound: "The Chrome Web Store didn't send this extension."
+            case .notFromTheStore: "The extension was sent from outside the Chrome Web Store."
+            case .tooLarge: "This extension is too large."
+            }
+        }
+    }
+
     /// Where Chrome downloads an extension (a `.crx`).
     static func downloadURL(for extensionID: String) -> URL? {
         var components = URLComponents(string: "https://clients2.google.com/service/update2/crx")
         components?.queryItems = [
             URLQueryItem(name: "response", value: "redirect"),
             URLQueryItem(name: "prodversion", value: chromeVersion),
-            URLQueryItem(name: "acceptformat", value: "crx2,crx3"),
+            // Version 3 only: the signed one (see `CRXVerifier`).
+            URLQueryItem(name: "acceptformat", value: "crx3"),
             URLQueryItem(name: "x", value: "id=\(extensionID)&uc")
         ]
         return components?.url
@@ -119,7 +159,7 @@ enum ChromeWebStoreUpdates {
         components?.queryItems = [
             URLQueryItem(name: "response", value: "updatecheck"),
             URLQueryItem(name: "prodversion", value: ChromeWebStore.chromeVersion),
-            URLQueryItem(name: "acceptformat", value: "crx2,crx3")
+            URLQueryItem(name: "acceptformat", value: "crx3")
         ] + extensions.map { URLQueryItem(name: "x", value: "id=\($0.storeID)&v=\($0.version)&uc") }
         return components?.url
     }
@@ -151,7 +191,8 @@ enum ChromeWebStoreUpdates {
             case "updatecheck":
                 guard let appID, attributes["status"] == "ok",
                       let version = attributes["version"],
-                      let codebase = attributes["codebase"].flatMap(URL.init(string:))
+                      let codebase = attributes["codebase"].flatMap(URL.init(string:)),
+                      ChromeWebStore.isDownloadURL(codebase)
                 else { return }
                 updates[appID] = Update(version: version, downloadURL: codebase)
             default:

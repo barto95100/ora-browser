@@ -285,7 +285,7 @@ class TabManager: ObservableObject {
                     return
                 }
                 if tab.type == .normal {
-                    self.dropRuntime(for: tab.id)
+                    self.dropRuntime(for: tab)
                     self.modelContext.delete(tab)
                 } else {
                     tab.isWebViewReady = false

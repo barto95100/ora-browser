@@ -25,7 +25,7 @@ extension TabManagerTests {
             }
         }
 
-        @Test func activateContainerActivatesItsLastTabOnlyIfLoaded() async throws {
+        @Test func activateContainerShowsItsLastTabLoadingIt() async throws {
             try await TabManagerTestWindow.run { window in
                 let defaultSpace = try window.activeSpace
                 let older = try await window.openLoaded("older")
@@ -39,10 +39,10 @@ extension TabManagerTests {
                 #expect(window.tabManager.activeTab?.id == newer.id)
                 #expect(try #require(newer.lastAccessedAt) > Date(timeIntervalSinceNow: -5))
 
-                // The most recent tab is not loaded: no active tab, even though
-                // a loaded one exists.
+                // The most recent tab is not loaded: it is shown and loaded,
+                // like Arc (before: no tab at all).
                 window.tabManager.activateContainer(work)
-                window.addUnloadedTab(
+                let unloaded = window.addUnloadedTab(
                     "unloaded",
                     order: 3,
                     in: defaultSpace,
@@ -50,24 +50,24 @@ extension TabManagerTests {
                 )
                 window.tabManager.activateContainer(defaultSpace)
                 #expect(window.tabManager.activeContainer?.id == defaultSpace.id)
-                #expect(window.tabManager.activeTab == nil)
+                #expect(window.tabManager.activeTab?.id == unloaded.id)
+                #expect(unloaded.browserPage != nil)
             }
         }
 
-        @Test func activateContainerTreatsTabsNeverAccessedAsMostRecent() async throws {
+        @Test func activateContainerTreatsTabsNeverAccessedAsOldest() async throws {
             try await TabManagerTestWindow.run { window in
                 let defaultSpace = try window.activeSpace
-                try await window.openLoaded("loaded")
+                let loaded = try await window.openLoaded("loaded")
                 window.addUnloadedTab("never", order: 2, in: defaultSpace, lastAccessedAt: nil)
                 let work = window.createSpace("Work")
                 window.tabManager.activateContainer(work)
 
                 window.tabManager.activateContainer(defaultSpace)
 
-                // BUG: (ONG-16) a tab never accessed counts as accessed "now" here
-                // (`?? Date()`, elsewhere `?? .distantPast`): it wins, and since
-                // it is not loaded, no tab is activated.
-                #expect(window.tabManager.activeTab == nil)
+                // A tab never accessed counts as the oldest (before: as "now",
+                // so it won and, unloaded, left no tab at all).
+                #expect(window.tabManager.activeTab?.id == loaded.id)
             }
         }
 
@@ -84,12 +84,9 @@ extension TabManagerTests {
                 #expect(window.tabManager.activeContainer?.id == work.id)
                 #expect(window.tabManager.activeTab?.id == target.id)
                 #expect(target.maybeIsActive)
-                // BUG: the previous tab still believes it is active: when the
-                // space's last tab is not loaded, `activateContainer` sets
-                // `activeTab = nil` without clearing its `maybeIsActive`, so
-                // `activateTab` no longer sees it. Its header-color snapshots
-                // (`maintainSnapShots`) keep running in the background.
-                #expect(active.maybeIsActive)
+                // The previous tab no longer believes it is active (before, its
+                // header-color snapshots kept running in the background).
+                #expect(!active.maybeIsActive)
                 // Activating loads the page.
                 #expect(target.browserPage != nil)
             }
@@ -151,10 +148,11 @@ extension TabManagerTests {
                 // data store is gone from the disk.
                 #expect(loaded.browserPage == nil)
                 #expect(await !WKWebsiteDataStore.allDataStoreIdentifiers.contains(deletedID))
-                // The most recently accessed space takes over; its last tab is
-                // not loaded, so none is active.
+                // The most recently accessed space takes over with its last tab,
+                // loaded (like Arc).
                 #expect(window.tabManager.activeContainer?.id == work.id)
-                #expect(window.tabManager.activeTab == nil)
+                #expect(window.tabManager.activeTab?.container.id == work.id)
+                #expect(window.tabManager.activeTab?.browserPage != nil)
             }
         }
 

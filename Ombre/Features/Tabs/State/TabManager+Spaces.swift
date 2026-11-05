@@ -15,7 +15,7 @@ extension TabManager {
             activeContainer = lastAccessedContainer
             // Get the last accessed tab from the active container
             if let lastAccessedTab = lastAccessedContainer.tabs
-                .sorted(by: { ($0.lastAccessedAt ?? Date.distantPast) > ($1.lastAccessedAt ?? Date.distantPast) })
+                .sorted(by: { $0.lastAccessedOrDistantPast > $1.lastAccessedOrDistantPast })
                 .first
             {
                 activeTab = lastAccessedTab
@@ -89,24 +89,28 @@ extension TabManager {
         }
     }
 
+    /// Shows a space with its last used tab, loaded if it isn't (like Arc);
+    /// without a tab, its empty page.
     func activateContainer(_ container: TabContainer, activateLastAccessedTab: Bool = true) {
         activeContainer = container
         container.lastAccessedAt = Date()
 
-        // Set the most recently accessed tab in the container
-        if let lastAccessedTab = container.tabs
-            .sorted(by: { $0.lastAccessedAt ?? Date() > $1.lastAccessedAt ?? Date() }).first,
-           lastAccessedTab.isWebViewReady
-        {
-            activeTab?.maybeIsActive = false
-            activeTab = lastAccessedTab
-            activeTab?.maybeIsActive = true
-            lastAccessedTab.lastAccessedAt = Date()
-        } else {
-            activeTab = nil
+        if activateLastAccessedTab, let lastTab = Self.lastUsedTab(in: container) {
+            activateTab(lastTab)
+            return
         }
-
+        // The video left behind goes to picture in picture, as on a tab switch.
+        togglePiPOnSwitch(to: nil)
+        activeTab?.maybeIsActive = false
+        activeTab = nil
         modelContext.saveOrLog("activate space")
+    }
+
+    /// The tab used last in a space; a tab never shown counts as the oldest.
+    static func lastUsedTab(in container: TabContainer, except excluded: Tab? = nil) -> Tab? {
+        container.tabs
+            .filter { $0.id != excluded?.id && !$0.isClosing }
+            .max { $0.lastAccessedOrDistantPast < $1.lastAccessedOrDistantPast }
     }
 
     func fetchContainers() -> [TabContainer] {

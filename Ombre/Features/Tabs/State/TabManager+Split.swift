@@ -127,7 +127,7 @@ extension TabManager {
     /// PiP, pages coming back leave it. Both sides of a split are shown, so
     /// moving between them changes nothing. A closing tab stays out of it: its
     /// media is about to be stopped, which left a black Picture in Picture.
-    func togglePiPOnSwitch(to tab: Tab) {
+    func togglePiPOnSwitch(to tab: Tab?) {
         guard SettingsStore.shared.autoPiPEnabled else { return }
         let leaving = shownTabs(around: activeTab).filter { !$0.isClosing }
         let coming = shownTabs(around: tab)

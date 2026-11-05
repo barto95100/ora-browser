@@ -34,10 +34,30 @@ extension TabManager {
         modelContext.saveOrLog("toggle favorite tab")
     }
 
+    /// The window stays in its space: moving the tab it shows shows the
+    /// space's next tab. The tab goes where a new one would in its section.
     func moveTabToContainer(_ tab: Tab, toContainer: TabContainer) {
+        guard tab.container.id != toContainer.id else { return }
         separateSplit(containing: tab, save: false)
+        let wasActive = activeTab?.id == tab.id
+        let fromContainer = tab.container
+        // Taken before the move, without the tab.
+        let topOrder = toContainer.topOrder(of: .normal)
         tab.folderID = nil
         tab.container = toContainer
+        switch tab.type {
+        case .pinned: toContainer.appendPinned(tab)
+        case .fav: toContainer.appendFavorite(tab)
+        case .normal: tab.order = topOrder
+        }
+        if wasActive {
+            if let next = Self.lastUsedTab(in: fromContainer, except: tab) {
+                activateTab(next)
+            } else {
+                activeTab?.maybeIsActive = false
+                activeTab = nil
+            }
+        }
         modelContext.saveOrLog("move tab to space")
     }
 

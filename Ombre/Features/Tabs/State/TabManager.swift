@@ -248,7 +248,7 @@ class TabManager: ObservableObject {
                 self.activateTab(partner)
             } else if let nextTab = tab.container.tabs
                 .filter({ $0.id != tab.id && $0.isWebViewReady && !$0.isClosing })
-                .sorted(by: { $0.lastAccessedAt ?? Date.distantPast > $1.lastAccessedAt ?? Date.distantPast })
+                .sorted(by: { $0.lastAccessedOrDistantPast > $1.lastAccessedOrDistantPast })
                 .first
             {
                 self.activateTab(nextTab)
@@ -350,8 +350,8 @@ class TabManager: ObservableObject {
     func activateTab(id: UUID) {
         let allContainers = fetchContainers()
         for container in allContainers {
+            // Its space with it (not the space's last tab first).
             if let tab = container.tabs.first(where: { $0.id == id }) {
-                activateContainer(container)
                 activateTab(tab)
                 return
             }

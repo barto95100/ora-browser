@@ -93,11 +93,19 @@ extension BrowserPage {
     func installWebNotifications(in contentController: WKUserContentController) {
         let bridge = WebNotificationBridge(page: self)
         notificationBridge = bridge
+        // The handler in the app's world, reached through its relay: nothing
+        // of the app in the page's world but the standard API.
         contentController.addScriptMessageHandler(
             WeakScriptMessageHandlerWithReply(bridge),
-            contentWorld: .page,
+            contentWorld: Self.appWorld,
             name: WebNotificationBridge.messageName
         )
+        contentController.addUserScript(WKUserScript(
+            source: WebNotificationScript.relay(channel: notificationChannel),
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true,
+            in: Self.appWorld
+        ))
         contentController.addUserScript(WKUserScript(
             source: WebNotificationScript.source(channel: notificationChannel),
             injectionTime: .atDocumentStart,

@@ -408,7 +408,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         for messageName in messageNames {
             controller.removeScriptMessageHandler(forName: messageName, contentWorld: Self.appWorld)
         }
-        controller.removeScriptMessageHandler(forName: WebNotificationBridge.messageName, contentWorld: .page)
+        controller.removeScriptMessageHandler(forName: WebNotificationBridge.messageName, contentWorld: Self.appWorld)
         webView.removeFromSuperview()
     }
 

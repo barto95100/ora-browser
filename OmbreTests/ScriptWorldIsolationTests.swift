@@ -73,14 +73,14 @@ struct ScriptWorldIsolationTests {
             false)
     }
 
-    /// The page can't post to the app's handlers (only the notifications
-    /// bridge, which gives it the standard API, is in its world).
+    /// The page can't post to the app's handlers, the notifications one
+    /// included (its standard API reaches it through the app's world).
     @Test func pageCannotReachTheAppsHandlers() async throws {
         let page = makePage()
         defer { page.teardown() }
         try await load(page)
 
-        for name in ["passwordManager", "mediaEvent", "linkHover", "favicon"] {
+        for name in ["passwordManager", "mediaEvent", "linkHover", "favicon", "notifications"] {
             let script = "typeof (window.webkit && window.webkit.messageHandlers.\(name))"
             #expect(await evaluateInPage(page, script) as? String == "undefined", "\(name)")
             #expect(await evaluateInApp(page, script) as? String == "object", "\(name)")

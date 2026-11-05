@@ -37,6 +37,26 @@ extension WebExtensionsManager {
         updateTimer?.tolerance = 60 * 60
     }
 
+    /// The line under "Check for Updates": read from what is installed now,
+    /// so a check's result never outlives the extensions it was about.
+    var updateSummary: String {
+        Self.updateSummary(
+            status: updateStatus,
+            hasStoreExtensions: installed.contains { $0.record.storeID != nil }
+        )
+    }
+
+    nonisolated static func updateSummary(status: String?, hasStoreExtensions: Bool) -> String {
+        guard hasStoreExtensions else { return "No extension from the Chrome Web Store." }
+        return status ?? "Updates are checked once a day, like Chrome."
+    }
+
+    /// Forgets a check's result once the store extensions change, but not an
+    /// update still waiting for review.
+    func resetUpdateStatus() {
+        updateStatus = pendingUpdates.isEmpty ? nil : "An update needs your review."
+    }
+
     /// `reinstall` (Debug, ⌥-click): asks as if every version were 0, to
     /// test a whole update with the current versions.
     func checkForUpdates(reinstall: Bool = false) async {
@@ -47,7 +67,8 @@ extension WebExtensionsManager {
             return (storeID: storeID, version: reinstall ? "0" : version)
         }
         guard !extensions.isEmpty, let url = ChromeWebStoreUpdates.checkURL(for: extensions) else {
-            updateStatus = "No extension from the Chrome Web Store."
+            // Nothing to check: the settings say so from the list itself.
+            updateStatus = nil
             return
         }
         isCheckingUpdates = true

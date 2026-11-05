@@ -227,4 +227,18 @@ struct ExtensionUpdateTests {
         #expect(updates["aaaabbbbccccddddeeeeffffgggghhhh"]?.version == "4.9.110")
         #expect(updates["aaaabbbbccccddddeeeeffffgggghhhh"]?.downloadURL.host == "clients2.googleusercontent.com")
     }
+
+    /// A check run with no store extension used to leave "No extension from
+    /// the Chrome Web Store." on screen after one was installed.
+    @Test func updateLineFollowsWhatIsInstalled() {
+        guard #available(macOS 15.4, *) else { return }
+        let none = "No extension from the Chrome Web Store."
+        #expect(WebExtensionsManager.updateSummary(status: nil, hasStoreExtensions: false) == none)
+        #expect(WebExtensionsManager.updateSummary(status: "Everything is up to date.", hasStoreExtensions: false)
+            == none)
+        #expect(WebExtensionsManager.updateSummary(status: nil, hasStoreExtensions: true)
+            == "Updates are checked once a day, like Chrome.")
+        #expect(WebExtensionsManager.updateSummary(status: "Everything is up to date.", hasStoreExtensions: true)
+            == "Everything is up to date.")
+    }
 }

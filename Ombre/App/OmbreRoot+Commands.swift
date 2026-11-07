@@ -24,6 +24,7 @@ extension View {
         modifier(WindowAppCommands(targets: targets))
             .modifier(WindowTabCommands(targets: targets))
             .modifier(WindowPageCommands(targets: targets))
+            .modifier(WindowSpaceCommands(targets: targets))
     }
 
     /// Runs `action` for each `name` notification while the view is shown.
@@ -251,6 +252,25 @@ private struct WindowTabCommands: ViewModifier {
                         downloadManager: targets.downloadManager,
                         focusAfterOpening: true,
                         isPrivate: targets.privacyMode.isPrivate
+                    )
+                }
+            }
+    }
+}
+
+/// Spaces asked for from elsewhere (Settings › Spaces › New Space…).
+private struct WindowSpaceCommands: ViewModifier {
+    let targets: WindowCommandTargets
+
+    func body(content: Content) -> some View {
+        content
+            .onNotification(.newSpace) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === targets.window else { return }
+                    SpaceEditorView.showNewSpace(
+                        dialogManager: targets.dialogManager,
+                        tabManager: targets.tabManager,
+                        switchesToNewSpace: false
                     )
                 }
             }

@@ -17,6 +17,8 @@ struct SpacesSettingsView: View {
     @State private var completedClearActions: Set<ClearDataAction> = []
     @State private var newCustomFilterListURL = ""
     @State private var spacePendingDeletion: TabContainer?
+    /// New Space… was clicked: the space that appears next is selected.
+    @State private var awaitsNewSpace = false
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject private var toastManager: ToastManager
 
@@ -43,6 +45,16 @@ struct SpacesSettingsView: View {
                 }
                 Divider()
                 Button {
+                    awaitsNewSpace = true
+                    BrowserWindows.newSpace()
+                } label: {
+                    Label("New Space…", systemImage: "plus")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+                .padding(.horizontal, 10)
+                .padding(.top, 10)
+                Button {
                     BrowserWindows.showImport()
                 } label: {
                     Label("Import from Zen…", systemImage: "square.and.arrow.down")
@@ -52,6 +64,12 @@ struct SpacesSettingsView: View {
                 .padding(10)
             }
             .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
+            // A space just made with New Space… is shown at once.
+            .onChange(of: containers.map(\.id)) { old, new in
+                guard awaitsNewSpace, let added = new.first(where: { !old.contains($0) }) else { return }
+                awaitsNewSpace = false
+                selectedContainerId = added
+            }
 
             Divider()
 

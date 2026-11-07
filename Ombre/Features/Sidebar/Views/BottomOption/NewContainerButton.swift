@@ -10,11 +10,7 @@ struct NewContainerButton: View {
 
     var body: some View {
         Button(action: {
-            dialogManager.show { id in
-                SpaceEditorView(container: nil, dismiss: { dialogManager.dismiss(id: id) })
-                    .environmentObject(tabManager)
-                    .environmentObject(dialogManager)
-            }
+            SpaceEditorView.showNewSpace(dialogManager: dialogManager, tabManager: tabManager)
         }) {
             HStack {
                 Image(systemName: "plus")

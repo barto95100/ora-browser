@@ -7,6 +7,9 @@ import SwiftUI
 struct SpaceEditorView: View {
     /// The space edited, or nil to create one.
     let container: TabContainer?
+    /// A new space becomes the window's one (the sidebar's "+"), or is only
+    /// added (from the settings, which stay where they were).
+    var switchesToNewSpace = true
     let dismiss: () -> Void
 
     @Environment(\.theme) private var theme
@@ -82,7 +85,7 @@ struct SpaceEditorView: View {
         if let container {
             tabManager.updateSpace(container, look: saved)
         } else {
-            tabManager.createSpace(look: saved)
+            Self.createSpace(saved, in: tabManager, switchingToIt: switchesToNewSpace)
         }
         dismiss()
     }
@@ -114,5 +117,36 @@ extension TabManager {
     func canDeleteSpace(_ container: TabContainer) -> Bool {
         let count = (try? modelContext.fetchCount(FetchDescriptor<TabContainer>())) ?? 0
         return count > 1
+    }
+}
+
+@MainActor
+extension SpaceEditorView {
+    /// A new space, made the window's one or only added.
+    @discardableResult
+    static func createSpace(_ look: SpaceLook, in tabManager: TabManager, switchingToIt: Bool) -> TabContainer {
+        if switchingToIt { return tabManager.createSpace(look: look) }
+        let space = tabManager.addSpace(look: look)
+        tabManager.modelContext.saveOrLog("add space")
+        return space
+    }
+
+    /// The editor of a new space, over a browser window: from the sidebar's
+    /// "+" and from Settings › Spaces (see `BrowserWindows.newSpace`).
+    @discardableResult
+    static func showNewSpace(
+        dialogManager: DialogManager,
+        tabManager: TabManager,
+        switchesToNewSpace: Bool = true
+    ) -> String {
+        dialogManager.show { id in
+            SpaceEditorView(
+                container: nil,
+                switchesToNewSpace: switchesToNewSpace,
+                dismiss: { dialogManager.dismiss(id: id) }
+            )
+            .environmentObject(tabManager)
+            .environmentObject(dialogManager)
+        }
     }
 }

@@ -10,6 +10,14 @@ private let logger = Logger(category: "DatabaseRecovery")
 /// it is moved aside next to itself, never deleted, and a fresh one is
 /// created. As a last resort the window works from memory for this session.
 enum DatabaseRecovery {
+    /// The error's kind in public; its description (the database's path,
+    /// so the account's name) private.
+    private static func log(_ what: String, _ error: Error) {
+        let nsError = error as NSError
+        let kind = "\(what): \(nsError.domain) \(nsError.code)"
+        logger.error("\(kind, privacy: .public) \(String(describing: error), privacy: .private)")
+    }
+
     enum Outcome: Equatable {
         /// The database opened normally.
         case opened
@@ -84,7 +92,7 @@ enum DatabaseRecovery {
         do {
             return try (ModelConfiguration.createMainContainer(at: storeURL), .opened)
         } catch {
-            logger.error("Database failed to open: \(String(describing: error), privacy: .public)")
+            log("Database failed to open", error)
         }
 
         var backup: URL?
@@ -95,7 +103,7 @@ enum DatabaseRecovery {
                 let container = try ModelConfiguration.createMainContainer(at: storeURL)
                 return (container, .recovered(backup: moved))
             } catch {
-                logger.error("Fresh database failed to open: \(String(describing: error), privacy: .public)")
+                Self.log("Fresh database failed to open", error)
             }
         }
         return (inMemoryContainer(), .inMemory(backup: backup))

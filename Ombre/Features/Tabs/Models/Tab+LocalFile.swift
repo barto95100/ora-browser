@@ -37,12 +37,32 @@ extension Tab {
         modelContext?.saveOrLog("store file bookmark")
     }
 
-    /// A local file the tab now loads (typed in the address bar): its
+    /// A local file the tab now loads (typed, or reached by the page): its
     /// bookmark replaces the previous file's, which would bring that one back.
     func keepFileAccess(to file: URL) {
         endFileAccess()
         fileBookmark = Self.bookmark(for: file)
-        modelContext?.saveOrLog("store typed file bookmark")
+        modelContext?.saveOrLog("store file bookmark")
+    }
+
+    /// A local file the page went to by itself (dropped on it, a link to
+    /// another file): the tab keeps a bookmark to it, or it would be
+    /// unreadable after a relaunch (or the tab would go back to the previous
+    /// file, taken for moved). A pinned or favorite tab keeps its own file.
+    func rememberFileIfNeeded(_ url: URL) {
+        guard url.isFileURL else { return }
+        if type != .normal, let saved = savedURL, saved.standardizedFileURL != url.standardizedFileURL { return }
+        if let bookmark = fileBookmark, let resolved = Self.resolve(bookmark),
+           resolved.url.standardizedFileURL.path == url.standardizedFileURL.path
+        {
+            return
+        }
+        // Only a bookmark that could be made replaces the tab's (no access
+        // to the file any more, say back to a previous one: kept as it was).
+        // The access in use is given back when the page goes.
+        guard let bookmark = Self.bookmark(for: url) else { return }
+        fileBookmark = bookmark
+        modelContext?.saveOrLog("store file bookmark")
     }
 
     /// Gives the access back when the tab's page goes away.

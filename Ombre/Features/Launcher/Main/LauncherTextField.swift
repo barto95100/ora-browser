@@ -11,6 +11,9 @@ struct LauncherTextField: NSViewRepresentable {
     var cursorColor: Color
     var textColor: Color?
     var placeholder: String
+    /// The placeholder's color (AppKit's own otherwise, which can vanish
+    /// over a page's header color).
+    var placeholderColor: Color?
 
     class CustomTextField: NSTextField {
         var cursorColor: NSColor?
@@ -59,6 +62,17 @@ struct LauncherTextField: NSViewRepresentable {
         }
     }
 
+    private static func setPlaceholder(_ text: String, color: Color?, font: NSFont, on field: NSTextField) {
+        guard let color else {
+            field.placeholderString = text
+            return
+        }
+        field.placeholderAttributedString = NSAttributedString(
+            string: text,
+            attributes: [.foregroundColor: NSColor(color), .font: font]
+        )
+    }
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -71,7 +85,7 @@ struct LauncherTextField: NSViewRepresentable {
         textField.isBordered = false
         textField.focusRingType = .none
         textField.drawsBackground = false
-        textField.placeholderString = placeholder
+        Self.setPlaceholder(placeholder, color: placeholderColor, font: font, on: textField)
         textField.lineBreakMode = .byClipping
         textField.maximumNumberOfLines = 1
         textField.usesSingleLineMode = true
@@ -92,7 +106,7 @@ struct LauncherTextField: NSViewRepresentable {
             context.coordinator.isProgrammaticUpdate = false
         }
         nsView.cursorColor = NSColor(cursorColor)
-        nsView.placeholderString = placeholder
+        Self.setPlaceholder(placeholder, color: placeholderColor, font: font, on: nsView)
         if let textColor {
             nsView.textColor = NSColor(textColor)
         }

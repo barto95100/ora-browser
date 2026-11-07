@@ -6,6 +6,8 @@ import SwiftUI
 struct MediaCaptureIndicator: View {
     let state: BrowserMediaCaptureState
     let foregroundColor: Color
+    /// Capture paused (the color at 0.6 otherwise).
+    var pausedColor: Color?
     let onToggle: (BrowserCaptureDevice) -> Void
 
     var body: some View {
@@ -24,7 +26,7 @@ struct MediaCaptureIndicator: View {
         } label: {
             Image(systemName: device.symbolName(isPaused: isPaused))
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(isPaused ? foregroundColor.opacity(0.6) : Color.red)
+                .foregroundStyle(isPaused ? pausedColor ?? foregroundColor.opacity(0.6) : Color.red)
                 .frame(width: 16, height: 16)
                 .contentShape(Rectangle())
         }

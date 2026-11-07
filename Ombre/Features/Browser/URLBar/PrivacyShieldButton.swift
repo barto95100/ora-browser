@@ -6,6 +6,8 @@ import SwiftUI
 struct PrivacyShieldButton: View {
     @ObservedObject var tab: Tab
     let foregroundColor: Color
+    /// Protections off (the color at 0.6 otherwise).
+    var offColor: Color?
     @State private var isShowingPanel = false
 
     var body: some View {
@@ -20,7 +22,7 @@ struct PrivacyShieldButton: View {
                         .font(.system(size: 11, weight: .semibold).monospacedDigit())
                 }
             }
-            .foregroundColor(foregroundColor.opacity(tab.areProtectionsEnabled ? 1 : 0.6))
+            .foregroundColor(tab.areProtectionsEnabled ? foregroundColor : offColor ?? foregroundColor.opacity(0.6))
             .frame(minWidth: 16, minHeight: 16)
             .contentShape(Rectangle())
         }

@@ -39,14 +39,9 @@ struct URLBar: View {
 
     // MARK: - Helpers
 
-    private func getForegroundColor(_ tab: Tab) -> Color {
-        let nsColor = NSColor(tab.backgroundColor)
-        if let ciColor = CIColor(color: nsColor) {
-            let luminance = 0.299 * ciColor.red + 0.587 * ciColor.green + 0.114 * ciColor.blue
-            return luminance < 0.5 ? .white : .black
-        } else {
-            return .black
-        }
+    /// Readable over the page's header color (WCAG AA, see `ReadableForeground`).
+    private func foreground(_ tab: Tab) -> ReadableForeground {
+        ReadableForeground(on: tab.backgroundColor)
     }
 
     private func triggerCopy(_ text: String) {
@@ -58,7 +53,12 @@ struct URLBar: View {
     }
 
     var buttonForegroundColor: Color {
-        return tabManager.activeTab.map { getForegroundColor($0).opacity(0.5) } ?? .gray
+        tabManager.activeTab.map { foreground($0).primary } ?? .gray
+    }
+
+    /// For the buttons that dim it when idle (×0.7) or off (×0.6): still 3:1.
+    private func dimmableColor(_ dimming: Double) -> Color {
+        tabManager.activeTab.map { foreground($0).icon(dimmedBy: dimming) } ?? .gray
     }
 
     private func shareCurrentPage(tab: Tab, sourceView: NSView, sourceRect: NSRect) {
@@ -212,19 +212,19 @@ struct URLBar: View {
                     URLBarButton(
                         systemName: "sidebar.left",
                         isEnabled: true,
-                        foregroundColor: buttonForegroundColor,
+                        foregroundColor: dimmableColor(0.7),
                         action: onSidebarToggle
                     )
                     .ombreShortcutHelp("Toggle Sidebar", for: KeyboardShortcuts.App.toggleSidebar)
                     // The extensions follow the sidebar button.
-                    ExtensionStrip(foregroundColor: buttonForegroundColor, maxVisible: 3)
+                    ExtensionStrip(foregroundColor: dimmableColor(0.7), maxVisible: 3)
                 }
 
                 // Back button
                 URLBarButton(
                     systemName: "chevron.left",
                     isEnabled: tabManager.activeTab?.canGoBack ?? false,
-                    foregroundColor: buttonForegroundColor,
+                    foregroundColor: dimmableColor(0.7),
                     action: { tabManager.activeTab?.goBack() }
                 )
                 .ombreShortcutHelp("Go Back", for: KeyboardShortcuts.Navigation.back)
@@ -233,7 +233,7 @@ struct URLBar: View {
                 URLBarButton(
                     systemName: "chevron.right",
                     isEnabled: tabManager.activeTab?.canGoForward ?? false,
-                    foregroundColor: buttonForegroundColor,
+                    foregroundColor: dimmableColor(0.7),
                     action: { tabManager.activeTab?.goForward() }
                 )
                 .ombreShortcutHelp("Go Forward", for: KeyboardShortcuts.Navigation.forward)
@@ -242,7 +242,7 @@ struct URLBar: View {
                 URLBarButton(
                     systemName: "arrow.clockwise",
                     isEnabled: tabManager.activeTab != nil,
-                    foregroundColor: buttonForegroundColor,
+                    foregroundColor: dimmableColor(0.7),
                     action: { tabManager.activeTab?.reload() }
                 )
                 .ombreShortcutHelp("Reload This Page", for: KeyboardShortcuts.Navigation.reload)
@@ -271,7 +271,7 @@ struct URLBar: View {
                 .zIndex(1)
 
                 URLBarMenuButton(
-                    foregroundColor: buttonForegroundColor,
+                    foregroundColor: dimmableColor(0.7),
                     onShare: { sourceView, sourceRect in
                         if let activeTab = tabManager.activeTab {
                             shareCurrentPage(tab: activeTab, sourceView: sourceView, sourceRect: sourceRect)
@@ -281,12 +281,12 @@ struct URLBar: View {
 
                 if sidebarManager.sidebarPosition == .secondary {
                     if sidebarManager.isSidebarHidden {
-                        ExtensionStrip(foregroundColor: buttonForegroundColor, maxVisible: 3)
+                        ExtensionStrip(foregroundColor: dimmableColor(0.7), maxVisible: 3)
                     }
                     URLBarButton(
                         systemName: "sidebar.right",
                         isEnabled: true,
-                        foregroundColor: buttonForegroundColor,
+                        foregroundColor: dimmableColor(0.7),
                         action: onSidebarToggle
                     )
                     .ombreShortcutHelp("Toggle Sidebar", for: KeyboardShortcuts.App.toggleSidebar)
@@ -334,8 +334,9 @@ struct URLBar: View {
             ZStack {
                 if tab.isLoading {
                     ProgressView()
-                        .tint(buttonForegroundColor)
                         .scaleEffect(0.5)
+                        // AppKit's spinner follows the appearance, not a color.
+                        .environment(\.colorScheme, foreground(tab).isLight ? .dark : .light)
                 } else {
                     // A lock, like Safari: the shield is the privacy protections'.
                     Image(systemName: tab.url.scheme == "https" ? "lock.fill" : "globe")
@@ -365,7 +366,7 @@ struct URLBar: View {
                     if let title = parts.title {
                         Text(" / \(title)")
                             .font(.system(size: 14))
-                            .foregroundColor(buttonForegroundColor.opacity(0.6))
+                            .foregroundColor(tabManager.activeTab.map { foreground($0).secondary } ?? .gray)
                     }
                     Spacer()
                 }
@@ -392,17 +393,30 @@ struct URLBar: View {
             }
 
             if let runtime = tab.runtime {
-                PageTranslationButton(tab: tab, runtime: runtime, foregroundColor: buttonForegroundColor)
+                PageTranslationButton(
+                    tab: tab,
+                    runtime: runtime,
+                    foregroundColor: buttonForegroundColor,
+                    isOverDark: foreground(tab).isLight
+                )
             }
 
-            PrivacyShieldButton(tab: tab, foregroundColor: buttonForegroundColor)
+            PrivacyShieldButton(
+                tab: tab,
+                foregroundColor: buttonForegroundColor,
+                offColor: foreground(tab).muted
+            )
 
             if !privacyMode.isPrivate {
                 FocusIndicator(foregroundColor: buttonForegroundColor)
                 URLBarTools(foregroundColor: buttonForegroundColor)
             }
 
-            MediaCaptureIndicator(state: tab.mediaCaptureState, foregroundColor: buttonForegroundColor) { device in
+            MediaCaptureIndicator(
+                state: tab.mediaCaptureState,
+                foregroundColor: buttonForegroundColor,
+                pausedColor: foreground(tab).muted
+            ) { device in
                 tab.toggleCapture(device)
             }
 
@@ -426,7 +440,7 @@ struct URLBar: View {
         .padding(.horizontal, 8)
         .background(
             ConditionallyConcentricRectangle(cornerRadius: 10, style: .continuous)
-                .fill(buttonForegroundColor.opacity(0.08))
+                .fill(tabManager.activeTab.map { foreground($0).fieldFill } ?? .clear)
         )
         .contentShape(Rectangle())
         .onTapGesture { startEditing() }
@@ -455,9 +469,10 @@ struct URLBar: View {
                 onMoveDown: {
                     launcherViewModel.moveFocusedElement(.down)
                 },
-                cursorColor: getForegroundColor(tab).opacity(0.8),
-                textColor: getForegroundColor(tab).opacity(0.7),
-                placeholder: "Search the web or enter URL..."
+                cursorColor: foreground(tab).primary,
+                textColor: foreground(tab).primary,
+                placeholder: "Search the web or enter URL...",
+                placeholderColor: foreground(tab).secondary
             )
             .textFieldStyle(PlainTextFieldStyle())
             .focused($isLauncherFocused)
@@ -482,7 +497,7 @@ struct URLBar: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             ConditionallyConcentricRectangle(cornerRadius: 10, style: .continuous)
-                .fill(buttonForegroundColor.opacity(0.08))
+                .fill(tabManager.activeTab.map { foreground($0).fieldFill } ?? .clear)
                 .overlay(
                     ConditionallyConcentricRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(

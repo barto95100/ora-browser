@@ -23,7 +23,7 @@ struct FavTabsGrid: View {
             if tabs.isEmpty {
                 EmptyFavTabItem()
                     .onDrop(
-                        of: [.text],
+                        of: [.text, .fileURL],
                         delegate: SectionDropDelegate(
                             items: tabs,
                             draggedItem: $draggedItem,
@@ -44,7 +44,7 @@ struct FavTabsGrid: View {
                     )
                     .onDrag { onDrag(tab.id) }
                     .onDrop(
-                        of: [.text],
+                        of: [.text, .fileURL],
                         delegate: TabDropDelegate(
                             item: tab,
                             draggedItem: $draggedItem,
@@ -56,7 +56,7 @@ struct FavTabsGrid: View {
         }
         .animation(.easeOut(duration: 0.1), value: adaptiveColumns.count)
         .onDrop(
-            of: [.text],
+            of: [.text, .fileURL],
             delegate: SectionDropDelegate(
                 items: tabs,
                 draggedItem: $draggedItem,

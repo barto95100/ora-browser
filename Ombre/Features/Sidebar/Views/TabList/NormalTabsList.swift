@@ -34,7 +34,7 @@ struct NormalTabsList: View {
                 row(for: tab, split: split)
                     .onDrag { onDrag(tab.id) }
                     .onDrop(
-                        of: [.text],
+                        of: [.text, .fileURL],
                         delegate: TabDropDelegate(
                             item: tab,
                             draggedItem: $draggedItem,
@@ -55,7 +55,7 @@ struct NormalTabsList: View {
             }
         }
         .onDrop(
-            of: [.text],
+            of: [.text, .fileURL],
             delegate: SectionDropDelegate(
                 items: tabs,
                 draggedItem: $draggedItem,

@@ -120,7 +120,46 @@ extension TabManagerTests {
                 #expect(runtime.translationRequest == nil)
                 let translated = try #require(await text(tab, "a"))
                 #expect(translated != "Guten Morgen")
+                let session = try #require(runtime.translationSession?.session)
+
+                // Again after the original: same session, from the page's memory.
+                #expect(runtime.translationMemory?.translations.isEmpty == false)
                 tab.showOriginalPage()
+                #expect(await text(tab, "a") == "Guten Morgen")
+                let start = Date()
+                tab.translatePage(to: pair.1)
+                try await waitUntilSettled(runtime, seconds: 30)
+                #expect(Date().timeIntervalSince(start) < 3)
+                #expect(await text(tab, "a") == translated)
+                #expect(runtime.translationSession?.session === session)
+                tab.showOriginalPage()
+            }
+        }
+
+        /// The page's memory: translated again from it, never asked twice;
+        /// a new document starts with none.
+        @Test func aPageIsTranslatedOnce() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await tab(showing: Self.german, in: window)
+                let runtime = try #require(tab.runtime)
+                let pair = PageTranslationPair(
+                    source: Locale.Language(identifier: "de"),
+                    target: Locale.Language(identifier: "fr")
+                )
+                let counting = UpperCase()
+                for _ in 0 ..< 2 {
+                    let runID = UUID()
+                    runtime.translationRunID = runID
+                    let translator = MemorizingTranslator(base: counting, memory: runtime.translationMemory(for: pair))
+                    await tab.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
+                    #expect(runtime.translation == .translated(pair))
+                    #expect(await text(tab, "a") == "GUTEN MORGEN")
+                    tab.showOriginalPage()
+                }
+                #expect(counting.translatedPieces == 2)
+
+                runtime.resetTranslation()
+                #expect(runtime.translationMemory == nil)
             }
         }
 
@@ -266,6 +305,8 @@ extension TabManagerTests {
 private final class UpperCase: PageTextTranslating, @unchecked Sendable {
     /// Translations wait for `release` (a run stopped while at work).
     var waits = false
+    /// Pieces asked so far.
+    private(set) var translatedPieces = 0
     private var release: CheckedContinuation<Void, Never>?
 
     func prepare() async throws {}
@@ -279,6 +320,7 @@ private final class UpperCase: PageTextTranslating, @unchecked Sendable {
 
     func translate(_ pieces: [PageTextPiece]) async throws -> [String: String] {
         if waits { await withCheckedContinuation { release = $0 } }
+        translatedPieces += pieces.count
         return Dictionary(uniqueKeysWithValues: pieces.map { ($0.id, $0.text.uppercased()) })
     }
 }

@@ -13,6 +13,8 @@ extension Notification.Name {
     static let showSettings = Notification.Name("ShowSettings")
     /// Import from another browser; the object is the browser window to import into.
     static let showImport = Notification.Name("ShowImport")
+    /// Settings › Spaces asks the front browser window for a new space's editor.
+    static let newSpace = Notification.Name("NewSpace")
     /// Delete a space; `userInfo["spaceID"]` is the space, the object the window to do it.
     static let deleteSpace = Notification.Name("DeleteSpace")
     /// A task reminder clicked; `userInfo["spaceID"]` is the task's space.

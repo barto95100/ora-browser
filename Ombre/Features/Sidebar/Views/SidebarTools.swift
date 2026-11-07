@@ -76,6 +76,15 @@ enum BrowserWindows {
         }
     }
 
+    /// Asks the front normal window for a new space's editor (from the
+    /// settings, which may be a window of their own, without its managers).
+    static func newSpace() {
+        if let window = front {
+            window.makeKeyAndOrderFront(nil)
+            NotificationCenter.default.post(name: .newSpace, object: window)
+        }
+    }
+
     /// Asks the front normal window to import from another browser.
     static func showImport() {
         if let window = front {

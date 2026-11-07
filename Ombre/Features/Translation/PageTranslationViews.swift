@@ -31,6 +31,8 @@ struct PageTranslationButton: View {
     let tab: Tab
     let runtime: TabRuntime
     let foregroundColor: Color
+    /// Drawn over a dark color: the system spinner is drawn light.
+    var isOverDark = false
 
     private var help: String {
         switch runtime.translation {
@@ -62,11 +64,20 @@ struct PageTranslationButton: View {
     private var icon: some View {
         switch runtime.translation {
         case let .translating(_, done, total) where total > 0:
-            ProgressView(value: Double(done), total: Double(total))
-                .progressViewStyle(.circular)
-                .scaleEffect(0.45)
+            // Drawn here, in the bar's readable color: AppKit's own ring
+            // keeps the system's colors, unseen over a bright header.
+            ZStack {
+                Circle().stroke(foregroundColor.opacity(0.35), lineWidth: 2)
+                Circle()
+                    .trim(from: 0, to: CGFloat(done) / CGFloat(total))
+                    .stroke(foregroundColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: 12, height: 12)
         case .preparing, .translating:
-            ProgressView().scaleEffect(0.45)
+            ProgressView()
+                .scaleEffect(0.45)
+                .environment(\.colorScheme, isOverDark ? .dark : .light)
         case .failed:
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 11, weight: .medium))

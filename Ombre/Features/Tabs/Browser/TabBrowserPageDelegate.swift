@@ -140,7 +140,10 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                 tab.recordVisit()
                 tab.updateHeaderColor()
                 MainActor.assumeIsolated { tab.checkPageLanguage() }
-                if url.isFileURL { tab.offerFolderAccessIfNeeded() }
+                if url.isFileURL {
+                    tab.rememberFileIfNeeded(url)
+                    tab.offerFolderAccessIfNeeded()
+                }
             }
             WebExtensionsHub.tabChanged(tab, url: true, title: true, loading: true)
         }

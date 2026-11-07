@@ -4,9 +4,8 @@ import os
 /// Local files typed in the address bar. The sandbox only lets Ombre read a
 /// file the user picked (Finder, open panel, drop): a typed path gets the same
 /// access through an open panel showing that file, which the user confirms
-/// once. The tab then keeps it (`Tab+LocalFile`). Only for what the user
-/// typed or picked in the address bar, never for what a page or an extension
-/// opens.
+/// once. The tab then keeps it (`Tab+LocalFile`). Only what the user typed
+/// or picked in the address bar asks; a page or an extension never does.
 @MainActor
 enum LocalFileAccess {
     private static let logger = Logger(category: "LocalFiles")

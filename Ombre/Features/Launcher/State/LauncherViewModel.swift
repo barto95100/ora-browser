@@ -234,11 +234,14 @@ class LauncherViewModel: ObservableObject {
                     if navigateCurrent {
                         tabManager.activeTab?.loadURL(url.absoluteString)
                     } else {
-                        tabManager.openTab(
-                            url: url,
-                            historyManager: historyManager,
-                            isPrivate: privacyMode.isPrivate
-                        )
+                        // A local file: once Ombre may read it (asks the user).
+                        LocalFileAccess.whenReadable(url) { url in
+                            tabManager.openTab(
+                                url: url,
+                                historyManager: historyManager,
+                                isPrivate: privacyMode.isPrivate
+                            )
+                        }
                     }
                 }
             )
@@ -331,11 +334,14 @@ class LauncherViewModel: ObservableObject {
                         if navigateCurrent {
                             tabManager.activeTab?.loadURL(history.url.absoluteString)
                         } else {
-                            tabManager.openTab(
-                                url: history.url,
-                                historyManager: historyManager,
-                                isPrivate: privacyMode.isPrivate
-                            )
+                            // A local file: once Ombre may read it (asks the user).
+                            LocalFileAccess.whenReadable(history.url) { url in
+                                tabManager.openTab(
+                                    url: url,
+                                    historyManager: historyManager,
+                                    isPrivate: privacyMode.isPrivate
+                                )
+                            }
                         }
                     }
                 )

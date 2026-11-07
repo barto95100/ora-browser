@@ -325,13 +325,19 @@ class Tab: ObservableObject, Identifiable {
         urlString = newURL.absoluteString
     }
 
+    @MainActor
     func loadURL(_ urlString: String) {
         lastAccessedAt = Date()
         let input = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // 1) Try to construct a direct URL (has scheme or valid domain+TLD/IP)
+        // 1) Try to construct a direct URL (has scheme or valid domain+TLD/IP,
+        // or a local file, once Ombre may read it)
         if let directURL = constructURL(from: input) {
-            browserPage?.load(URLRequest(url: directURL))
+            LocalFileAccess.whenReadable(directURL) { [weak self] url in
+                // The tab keeps its access to a local file across relaunches.
+                if url.isFileURL { self?.keepFileAccess(to: url) }
+                self?.browserPage?.load(URLRequest(url: url))
+            }
             return
         }
 

@@ -116,6 +116,9 @@ struct BrowserView: View {
         // open as tabs, like Finder's Open With; on a page, the page gets
         // them first (WebKit), as in Safari.
         .onDrop(of: [.fileURL], delegate: FileDropDelegate(window: window))
+        // Up to the window's top edge: the sidebar's header and the address
+        // bar are under the title bar.
+        .ignoresSafeArea()
         // A space with a theme is shown dark, like Arc (private windows are
         // made dark by `OmbreRoot`).
         .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)

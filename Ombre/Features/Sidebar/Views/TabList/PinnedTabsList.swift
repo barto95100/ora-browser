@@ -48,7 +48,7 @@ struct PinnedTabsList: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onDrop(
-            of: [.text],
+            of: [.text, .fileURL],
             delegate: SectionDropDelegate(
                 items: tabs,
                 draggedItem: $draggedItem,
@@ -73,7 +73,7 @@ struct PinnedTabsList: View {
         )
         .onDrag { onDrag(tab.id) }
         .onDrop(
-            of: [.text],
+            of: [.text, .fileURL],
             delegate: TabDropDelegate(
                 item: tab,
                 draggedItem: $draggedItem,
@@ -91,7 +91,7 @@ struct PinnedTabsList: View {
                 FolderItem(folder: folder, isDragging: draggedItem == folder.id)
                     .onDrag { onDrag(folder.id) }
                     .onDrop(
-                        of: [.text],
+                        of: [.text, .fileURL],
                         delegate: FolderDropDelegate(folder: folder, draggedItem: $draggedItem)
                     )
                 if draggedItem != folder.id {

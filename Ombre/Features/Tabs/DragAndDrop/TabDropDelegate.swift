@@ -37,16 +37,17 @@ struct TabDropDelegate: DropDelegate {
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        .init(operation: .move)
+        DropProposal(operation: draggedItem == nil ? .copy : .move)
     }
 
-    /// Only a tab being dragged: a file from the Finder goes to the window
-    /// (it opens as a tab, see `FileDropDelegate`).
+    /// A tab being dragged, or files from the Finder: they open as tabs, as
+    /// on the rest of the window (see `FileDrop`).
     func validateDrop(info: DropInfo) -> Bool {
-        draggedItem != nil
+        draggedItem != nil || FileDrop.hasOpenableFiles()
     }
 
     func performDrop(info: DropInfo) -> Bool {
+        guard draggedItem != nil else { return FileDrop.open(info, in: nil) }
         draggedItem = nil
         item.container.modelContext?.saveOrLog("drop on tab")
         return true

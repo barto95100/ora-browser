@@ -122,7 +122,7 @@ struct ContainerView: View {
                                 (NSApp.currentEvent?.window ?? window)?.toggleMaximized()
                             }
                             .onDrop(
-                                of: [.text],
+                                of: [.text, .fileURL],
                                 delegate: TabListEndDropDelegate(container: container, draggedItem: $draggedItem)
                             )
                     }

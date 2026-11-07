@@ -10,6 +10,11 @@ cd "$(dirname "$0")/.."
 # Even when the build fails (a partly built app may be registered).
 trap 'scripts/unregister-copies.sh build/DerivedData' EXIT
 
+# Run from git's pre-push hook, GIT_DIR and the like point at this checkout:
+# Swift Package Manager's own git commands then fail to fetch the packages
+# ("Could not resolve package dependencies", in a checkout that never built).
+unset $(git rev-parse --local-env-vars)
+
 xcodebuild build \
   -scheme Ombre \
   -destination "platform=macOS" \

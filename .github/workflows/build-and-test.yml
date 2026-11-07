@@ -151,14 +151,20 @@ jobs:
             "${signing[@]}" \
             | xcbeautify --renderer github-actions
 
-      # Otherwise clicking a notification could open this copy of the app.
-      - name: Unregister the built app
+      # Otherwise clicking a notification could open one of these copies
+      # (the app, the tests' app and Sparkle's Updater.app, in Debug and Test).
+      # Written out here, not with scripts/unregister-copies.sh: this runs
+      # even when the checkout failed.
+      - name: Unregister the built apps
         if: always() && runner.environment == 'self-hosted'
         run: |
-          # The tests' app (the "Test" configuration, see `TestHost`).
-          app="$RUNNER_WORKSPACE/DerivedData/Build/Products/Test/Ombre.app"
           lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-          if [ -d "$app" ]; then "$lsregister" -u "$app" || true; fi
+          find "$RUNNER_WORKSPACE" -type d -name '*.app' -print0 \
+            | xargs -0 -n 1 "$lsregister" -u 2>/dev/null || true
+          # Copies registered from there, even if since deleted.
+          "$lsregister" -dump \
+            | awk -v dir="$RUNNER_WORKSPACE/" '/^path:/ { sub(/^path: +/, ""); sub(/ \(0x[0-9a-f]+\)$/, ""); if (index($0, dir) == 1) print }' \
+            | sort -u | while IFS= read -r app; do "$lsregister" -u "$app" 2>/dev/null || true; done
 
       - name: Upload test results
         if: failure()

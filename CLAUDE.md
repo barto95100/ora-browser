@@ -28,7 +28,8 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
   Les PR venant d'autres comptes passent par GitHub ; le réglage « Require approval
   for all external contributors » (Settings › Actions › General) doit rester actif. Avant chaque version
   distribuée : la lancer aussi sur GitHub (Actions › Build and Test › Run workflow, runner `github`).
-- Après fusion : `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
+- Après fusion : `git switch main && git pull --ff-only && git fetch --prune && xcodegen`, puis
+  `scripts/clean-worktrees.sh` (retire les worktrees des branches fusionnées et désenregistre leurs copies).
 
 ## Mode autonome (quand Ludo le demande : enchaîner une liste de PR sans l'attendre)
 
@@ -37,7 +38,7 @@ Ludo n'intervient que pour les décisions produit, les tests manuels par lots et
 1. `git switch main && git pull --ff-only && git switch -c <branche> && xcodegen` ; plan écrit dans
    `docs/audit/journal/<n°>-<branche>.md` (local, hors git), sans attendre de validation.
 2. Code + tests Swift Testing ; un bug à prouver : faire d'abord échouer le test sur le code actuel.
-3. `xcodegen`, compilation, suite complète avec `xcodebuild` (stable) ; SwiftFormat / SwiftLint propres.
+3. `xcodegen`, compilation, suite complète avec `scripts/test.sh` (stable) ; SwiftFormat / SwiftLint propres.
 4. Relecture indépendante : un sous-agent neuf, en lecture seule, qui reçoit seulement le diff, les
    identifiants de l'audit et `CLAUDE.md` (pas le raisonnement). Il vérifie : périmètre, pas de
    changement de comportement non voulu, tests pertinents, règles du projet, aucune mention d'IA.
@@ -48,7 +49,10 @@ Ludo n'intervient que pour les décisions produit, les tests manuels par lots et
    CI en file d'attente : runner du Mac de Ludo occupé, arrêté ou Mac en veille ; le lui signaler.
    Jamais `--admin`, jamais de contournement de la règle de `main`, jamais de force push.
 7. `gh pr merge <n°> --repo barto95100/ora-browser --merge --delete-branch`, puis
-   `git switch main && git pull --ff-only && git fetch --prune && xcodegen`.
+   `git switch main && git pull --ff-only && git fetch --prune && xcodegen && scripts/clean-worktrees.sh`
+   (depuis le dépôt principal).
+   Vérifier `scripts/unregister-copies.sh --check` : une seule copie d'Ombre enregistrée (celle de Xcode, plus
+   une version installée dans `/Applications` s'il y en a une).
 8. Ajouter les étapes de test manuelles numérotées de la PR, avec son lien, dans
    `docs/audit/TESTS-MANUELS.md` (local). Les logs `[DEBUG-…]` de mesure restent hors des commits.
 
@@ -72,11 +76,12 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   (identifiant `com.barto95100.ora.tests`, son propre conteneur) et l'app détecte qu'elle tourne sous les
   tests (`TestHost`) : base en mémoire, aucune fenêtre ni assistant, service à part dans le trousseau.
   Un test ne doit jamais agir sur un singleton qui verrait de vraies fenêtres ou de vraies données.
-  Après des tests en local, désinscrire l'app de test (elle se déclare navigateur) :
-  `lsregister -u build/DerivedData/Build/Products/Test/Ombre.app` (`lsregister` est dans
-  `/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/`).
-- **Avant chaque push : lancer les tests** :
-  `xcodebuild test -scheme Ombre -destination 'platform=macOS,arch=arm64' 2>&1 | xcbeautify`
+- **Copies enregistrées dans Launch Services** : toute copie d'Ombre construite hors du DerivedData de Xcode
+  (worktrees, hook, `build.sh`, app de tests, CI) et son `Updater.app` (Sparkle) doivent être désenregistrées,
+  sinon un clic sur une notification lance une autre copie. `scripts/unregister-copies.sh <dossier>…` le fait
+  (déjà appelé par le hook, `build.sh`, `scripts/test.sh` et la CI) ; `--check` liste ce qui reste.
+- **Avant chaque push : lancer les tests** : `scripts/test.sh` (`xcodebuild test` dans `build/TestData`, puis
+  désenregistre l'app de test ; options de `xcodebuild` en plus, ex. `-only-testing:OmbreTests/<Suite>`)
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
 - Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` fait
   `Ombre.app` + DMG. Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit

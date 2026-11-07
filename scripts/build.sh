@@ -64,10 +64,7 @@ rm -rf "$STAGING"
 
 # These copies have the app's bundle id: keep macOS from launching one of
 # them (a link, a notification click) instead of the app in use.
-LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-for copy in "$APP_PATH" "$ARCHIVE_PATH/Products/Applications/Ombre.app"; do
-    "$LSREGISTER" -u "$copy" >/dev/null 2>&1 || true
-done
+"$SCRIPT_DIR/unregister-copies.sh" "$APP_PATH" "$ARCHIVE_PATH" "$STAGING"
 
 green "Build complete: ${DMG_PATH} ($(du -h "$DMG_PATH" | cut -f1))"
 

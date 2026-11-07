@@ -37,6 +37,14 @@ extension Tab {
         modelContext?.saveOrLog("store file bookmark")
     }
 
+    /// A local file the tab now loads (typed in the address bar): its
+    /// bookmark replaces the previous file's, which would bring that one back.
+    func keepFileAccess(to file: URL) {
+        endFileAccess()
+        fileBookmark = Self.bookmark(for: file)
+        modelContext?.saveOrLog("store typed file bookmark")
+    }
+
     /// Gives the access back when the tab's page goes away.
     func endFileAccess() {
         fileAccessURL?.stopAccessingSecurityScopedResource()

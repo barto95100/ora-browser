@@ -245,14 +245,18 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
         // A site allowed to send notifications: macOS must allow Ombre too
         // (asked once, right after the user allowed the site).
-        let answer: (BrowserPermissionDecision) -> Void = permission == .notifications
-            ? { decision in
+        let answer: (BrowserPermissionDecision) -> Void = switch permission {
+        case .notifications: { decision in
                 if decision == .grant {
                     WebNotificationCenter.shared.requestAuthorizationIfNeeded()
                 }
                 decisionHandler(decision)
             }
-            : decisionHandler
+        // A site allowed to know the position: macOS must let Ombre use
+        // Location Services too (WebKit never asks it).
+        case .geolocation: LocationAuthorization.askingMacOS(then: decisionHandler)
+        default: decisionHandler
+        }
 
         let types = permission.sitePermissionTypes
         let saved = SitePermissionStore.shared.permissions(

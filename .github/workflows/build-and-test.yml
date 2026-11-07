@@ -159,12 +159,24 @@ jobs:
         if: always() && runner.environment == 'self-hosted'
         run: |
           lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
-          find "$RUNNER_WORKSPACE" -type d -name '*.app' -print0 \
-            | xargs -0 -n 1 "$lsregister" -u 2>/dev/null || true
-          # Copies registered from there, even if since deleted.
-          "$lsregister" -dump \
-            | awk -v dir="$RUNNER_WORKSPACE/" '/^path:/ { sub(/^path: +/, ""); sub(/ \(0x[0-9a-f]+\)$/, ""); if (index($0, dir) == 1) print }' \
-            | sort -u | while IFS= read -r app; do "$lsregister" -u "$app" 2>/dev/null || true; done
+          unregister() {
+            find "$RUNNER_WORKSPACE" -type d -name '*.app' -print0 \
+              | xargs -0 -n 1 "$lsregister" -u 2>/dev/null || true
+            # Copies registered from there, even if since deleted.
+            "$lsregister" -dump \
+              | awk -v dir="$RUNNER_WORKSPACE/" '/^path:/ { sub(/^path: +/, ""); sub(/ \(0x[0-9a-f]+\)$/, ""); if (index($0, dir) == 1) print }' \
+              | sort -u | while IFS= read -r app; do "$lsregister" -u "$app" 2>/dev/null || true; done
+          }
+          # The tests' app may still be quitting: macOS registered it again
+          # right after it was unregistered. Wait for it (30 s at most),
+          # then unregister twice, a few seconds apart.
+          for _ in $(seq 30); do
+            pgrep -f "$RUNNER_WORKSPACE/DerivedData" >/dev/null || break
+            sleep 1
+          done
+          unregister
+          sleep 5
+          unregister
 
       - name: Upload test results
         if: failure()

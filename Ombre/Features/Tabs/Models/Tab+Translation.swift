@@ -88,19 +88,19 @@ extension Tab {
         runtime.translation = .translating(pair, done: 0, total: 0)
         let languages = "\(source.minimalIdentifier) → \(target.minimalIdentifier)"
         logger.info("Checking whether macOS has \(languages, privacy: .public)")
+        let start = Date()
         Task { @MainActor in
             let status: LanguageAvailability.Status
             do {
-                status = try await withTimeout(seconds: 15) {
-                    await LanguageAvailability().status(from: source, to: target)
-                }
+                status = try await InstalledTranslationLanguages.status(of: pair)
             } catch {
                 guard runtime.translationRunID == runID else { return }
                 self.translationFailed(pair, "macOS didn't say whether it can translate this page. Try again.")
                 return
             }
             guard runtime.translationRunID == runID else { return }
-            logger.info("\(languages, privacy: .public): \(String(describing: status), privacy: .public)")
+            let answer = "\(status) (\(String(format: "%.2f", Date().timeIntervalSince(start))) s)"
+            logger.info("\(languages, privacy: .public): \(answer, privacy: .public)")
             self.startTranslation(pair, status: status, runID: runID)
         }
     }
@@ -116,11 +116,18 @@ extension Tab {
             if #available(macOS 26.0, *) {
                 // A session of its own: the translation goes on while
                 // another tab is shown.
-                let translator = SessionTextTranslator(
-                    session: TranslationSession(installedSource: source, target: target)
+                let session = borrowSession(for: pair)
+                let translator = MemorizingTranslator(
+                    base: SessionTextTranslator(session: session),
+                    memory: runtime.translationMemory(for: pair)
                 )
                 runtime.translationTask = Task { @MainActor in
                     await self.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
+                    // Kept for the next translation once it worked; a run
+                    // stopped or failed keeps it from anyone else.
+                    if runtime.translation == .translated(pair), runtime.translationSession == nil {
+                        runtime.translationSession = (pair, session)
+                    }
                 }
             } else {
                 runtime.requestTranslationSession(id: runID, pair: pair, needsDownload: false)
@@ -139,6 +146,20 @@ extension Tab {
         }
     }
 
+    /// The tab's session for `pair`, kept from one translation to the next
+    /// (a new one loads macOS's model again). Taken while a translation uses
+    /// it: a run still stopping can only cancel its own session.
+    @available(macOS 26.0, *)
+    private func borrowSession(for pair: PageTranslationPair) -> TranslationSession {
+        if let kept = runtime?.translationSession, kept.pair == pair {
+            logger.info("Reusing the tab's translation session")
+            runtime?.translationSession = nil
+            return kept.session
+        }
+        runtime?.translationSession = nil
+        return TranslationSession(installedSource: pair.source, target: pair.target)
+    }
+
     /// Shows the page as it was written.
     func showOriginalPage() {
         guard let runtime else { return }
@@ -150,14 +171,18 @@ extension Tab {
     /// The translation `request` asked for, with the session of the page's
     /// view (see `PageTranslationHost`).
     func runTranslation(with session: TranslationSession, for request: PageTranslationRequest) async {
+        guard let runtime else { return }
         await runTranslation(
             request.pair,
-            translator: SessionTextTranslator(session: session),
+            translator: MemorizingTranslator(
+                base: SessionTextTranslator(session: session),
+                memory: runtime.translationMemory(for: request.pair)
+            ),
             needsDownload: request.needsDownload,
             runID: request.id
         )
         // Done: a later request for the same languages starts the view's task again.
-        if runtime?.translationRequest == request { runtime?.translationRequest = nil }
+        if runtime.translationRequest == request { runtime.translationRequest = nil }
     }
 
     func runTranslation(
@@ -177,6 +202,8 @@ extension Tab {
                 timeouts: timeouts
             ) { state in
                 guard runtime.translationRunID == runID, runtime.page === page else { return false }
+                // Languages macOS said it had, but failing: asked again next time.
+                if case .failed = state { InstalledTranslationLanguages.forget(pair) }
                 runtime.translation = state
                 // Said where it can't be missed.
                 if case .failed = state { runtime.showsTranslationPanel = true }

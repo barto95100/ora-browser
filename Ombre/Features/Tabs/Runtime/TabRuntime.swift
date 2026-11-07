@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import Translation
 
 /// What a tab's page is doing in one window, apart from the saved tab (ONG-05):
 /// owned by the window's `TabManager`, so two windows showing the same tab
@@ -62,6 +63,11 @@ final class TabRuntime {
     @ObservationIgnored var translationRunID: UUID?
     @ObservationIgnored var translationTask: Task<Void, Never>?
     @ObservationIgnored private var translationRequestCount = 0
+    /// The page's translations already made (see `PageTranslationMemory`).
+    @ObservationIgnored var translationMemory: PageTranslationMemory?
+    /// The tab's translation session, kept for its languages while its page
+    /// lives: a new one loads macOS's model again (macOS 26).
+    @ObservationIgnored var translationSession: (pair: PageTranslationPair, session: TranslationSession)?
 
     private(set) var navigationFailure: NavigationFailure?
     /// The link under the mouse, shown at the bottom of the page.
@@ -80,12 +86,14 @@ final class TabRuntime {
         clearNavigationFailure()
         setHoveredLink(nil)
         resetTranslation()
+        translationSession = nil
     }
 
     /// A new document: its language is read again once loaded, and a
     /// translation of the previous one stops.
     func resetTranslation() {
         stopTranslation()
+        translationMemory = nil
         pageLanguage = nil
         if translation != .original { translation = .original }
         if showsTranslationPanel { showsTranslationPanel = false }
@@ -99,6 +107,15 @@ final class TabRuntime {
         translationRequest = PageTranslationRequest(
             id: id, pair: pair, needsDownload: needsDownload, version: translationRequestCount % 2
         )
+    }
+
+    /// The memory of the page's translations into `pair` (a new one for other
+    /// languages).
+    func translationMemory(for pair: PageTranslationPair) -> PageTranslationMemory {
+        if let memory = translationMemory, memory.pair == pair { return memory }
+        let memory = PageTranslationMemory(pair: pair)
+        translationMemory = memory
+        return memory
     }
 
     /// Ends the running translation, if any: its late results are dropped.

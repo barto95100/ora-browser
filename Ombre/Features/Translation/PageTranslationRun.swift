@@ -65,12 +65,12 @@ enum PageTranslationRun {
             if needsDownload {
                 guard update(.preparing(pair)) else { return }
                 try await prepare(with: translator, timeout: timeouts.prepare)
-                logger.info("Languages ready for \(languages, privacy: .public)")
+                let ready = elapsed(since: start)
+                logger.info("Languages ready for \(languages, privacy: .public) after \(ready, privacy: .public) s")
             }
             let plan = await PageTranslationPlan(pieces: page.collectText())
-            logger.info(
-                "\(plan.pieceCount) pieces, \(plan.texts.count) different, in \(plan.groups.count) groups"
-            )
+            let found = "\(plan.pieceCount) pieces, \(plan.texts.count) different, \(plan.groups.count) groups"
+            logger.info("\(found, privacy: .public) (\(elapsed(since: start), privacy: .public) s)")
             guard !plan.texts.isEmpty else { throw PageTranslationFailure.nothingToTranslate }
             let total = plan.pieceCount
             guard update(.translating(pair, done: 0, total: total)) else { return }
@@ -88,6 +88,9 @@ enum PageTranslationRun {
                     return
                 }
                 page.showTranslations(plan.pageTranslations(translations))
+                if shown == 0 {
+                    logger.info("First translations shown after \(elapsed(since: start), privacy: .public) s")
+                }
                 shown = done
             }
             let seconds = Date().timeIntervalSince(start)
@@ -105,6 +108,11 @@ enum PageTranslationRun {
             )
             _ = update(.failed(pair, message: message(for: error, pair: pair), isPartial: shown > 0))
         }
+    }
+
+    /// Seconds since `start`, for the logs.
+    private static func elapsed(since start: Date) -> String {
+        String(format: "%.2f", Date().timeIntervalSince(start))
     }
 
     private static func prepare(with translator: PageTextTranslating, timeout: Double) async throws {

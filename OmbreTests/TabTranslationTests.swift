@@ -259,6 +259,157 @@ extension TabManagerTests {
             }
         }
 
+        /// "Show Original" during a translation: it goes on behind the
+        /// original, the page left alone; translating again shows it all at
+        /// once, nothing asked twice.
+        @Test func aTranslationGoesOnBehindTheOriginal() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await tab(showing: Self.german, in: window)
+                let runtime = try #require(tab.runtime)
+                let pair = PageTranslationPair(
+                    source: Locale.Language(identifier: "de"),
+                    target: Locale.Language(identifier: "fr")
+                )
+                let translator = UpperCase()
+                translator.waits = true
+                let runID = UUID()
+                runtime.translationRunID = runID
+                let run = Task { @MainActor in
+                    await tab.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
+                }
+                for _ in 0 ..< 100 where runtime.translation != .translating(pair, done: 0, total: 2) {
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                tab.showOriginalPage()
+                #expect(runtime.translation == .original)
+                #expect(runtime.hiddenTranslation == .translating(pair, done: 0, total: 2))
+
+                translator.letGo()
+                await run.value
+                #expect(runtime.translation == .original)
+                #expect(runtime.hiddenTranslation == .translated(pair))
+                #expect(await text(tab, "a") == "Guten Morgen")
+
+                tab.translatePage(to: pair.target)
+                #expect(runtime.translation == .translated(pair))
+                #expect(runtime.hiddenTranslation == nil)
+                #expect(await text(tab, "a") == "GUTEN MORGEN")
+                #expect(await text(tab, "b") == "WIE GEHT ES DIR HEUTE?")
+                #expect(translator.translatedPieces == 2)
+
+                // Shown as written again, then gone with the page.
+                tab.showOriginalPage()
+                #expect(await text(tab, "a") == "Guten Morgen")
+                #expect(runtime.hiddenTranslation == nil)
+            }
+        }
+
+        /// Another page (or the tab closing) stops the translation going on
+        /// behind the original.
+        @Test func aTranslationBehindTheOriginalStopsWithThePage() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await tab(showing: Self.german, in: window)
+                let runtime = try #require(tab.runtime)
+                let pair = PageTranslationPair(
+                    source: Locale.Language(identifier: "de"),
+                    target: Locale.Language(identifier: "fr")
+                )
+                let translator = UpperCase()
+                translator.waits = true
+                let runID = UUID()
+                runtime.translationRunID = runID
+                let run = Task { @MainActor in
+                    await tab.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
+                }
+                for _ in 0 ..< 100 where runtime.translation != .translating(pair, done: 0, total: 2) {
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                tab.showOriginalPage()
+                #expect(runtime.hiddenTranslation != nil)
+                // A new document at the address.
+                runtime.resetTranslation()
+                #expect(runtime.hiddenTranslation == nil)
+                #expect(runtime.translationRunID == nil)
+                #expect(runtime.translationPageText == nil)
+                translator.letGo()
+                await run.value
+                #expect(runtime.translation == .original)
+                #expect(runtime.hiddenTranslation == nil)
+                #expect(await text(tab, "a") == "Guten Morgen")
+            }
+        }
+
+        /// The translation going on behind the original, started again
+        /// into another language or stopped: it ends.
+        @Test(arguments: [false, true])
+        func aTranslationBehindTheOriginalStopsWithAnotherLanguage(stoppedInPanel: Bool) async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await tab(showing: Self.german, in: window)
+                let runtime = try #require(tab.runtime)
+                let pair = PageTranslationPair(
+                    source: Locale.Language(identifier: "de"),
+                    target: Locale.Language(identifier: "fr")
+                )
+                let (run, translator) = try await startWaitingRun(pair, on: tab)
+                if stoppedInPanel {
+                    tab.stopTranslatingPage()
+                } else {
+                    tab.showOriginalPage()
+                    #expect(runtime.hiddenTranslation != nil)
+                    // "German": the same language, said at once, the other run gone.
+                    tab.translatePage(to: pair.source)
+                }
+                #expect(runtime.hiddenTranslation == nil)
+                #expect(runtime.translationPageText == nil)
+                translator.letGo()
+                await run.value
+                #expect(await text(tab, "a") == "Guten Morgen")
+                #expect(runtime.hiddenTranslation == nil)
+            }
+        }
+
+        /// Failing behind the original: nothing said (the user sees the
+        /// original), and translating again starts anew.
+        @Test func aTranslationFailingBehindTheOriginalIsQuiet() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await tab(showing: Self.german, in: window)
+                let runtime = try #require(tab.runtime)
+                let pair = PageTranslationPair(
+                    source: Locale.Language(identifier: "de"),
+                    target: Locale.Language(identifier: "fr")
+                )
+                let (run, translator) = try await startWaitingRun(pair, on: tab)
+                translator.fails = true
+                tab.showOriginalPage()
+                translator.letGo()
+                await run.value
+                #expect(runtime.translation == .original)
+                #expect(!runtime.showsTranslationPanel)
+                #expect(runtime.hiddenTranslation == nil)
+                #expect(runtime.translationRunID == nil)
+            }
+        }
+
+        /// A run started on `tab`, waiting in its first group.
+        private func startWaitingRun(
+            _ pair: PageTranslationPair,
+            on tab: Tab
+        ) async throws -> (Task<Void, Never>, UpperCase) {
+            let runtime = try #require(tab.runtime)
+            let translator = UpperCase()
+            translator.waits = true
+            let runID = UUID()
+            runtime.translationRunID = runID
+            let run = Task { @MainActor in
+                await tab.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
+            }
+            for _ in 0 ..< 100 where runtime.translation != .translating(pair, done: 0, total: 2) {
+                try await Task.sleep(for: .milliseconds(20))
+            }
+            try #require(runtime.translation == .translating(pair, done: 0, total: 2))
+            return (run, translator)
+        }
+
         /// Stopped while at work without the user asking (the page's view
         /// hidden): said, never left turning.
         @Test func aRunStoppedAtWorkIsTold() async throws {
@@ -354,6 +505,8 @@ extension TabManagerTests {
 private final class UpperCase: PageTextTranslating, @unchecked Sendable {
     /// Translations wait for `release` (a run stopped while at work).
     var waits = false
+    /// Translations fail (once released).
+    var fails = false
     /// Pieces asked so far.
     private(set) var translatedPieces = 0
     private var release: CheckedContinuation<Void, Never>?
@@ -369,6 +522,7 @@ private final class UpperCase: PageTextTranslating, @unchecked Sendable {
 
     func translate(_ pieces: [PageTextPiece]) async throws -> [String: String] {
         if waits { await withCheckedContinuation { release = $0 } }
+        if fails { throw URLError(.cannotConnectToHost) }
         translatedPieces += pieces.count
         return Dictionary(uniqueKeysWithValues: pieces.map { ($0.id, $0.text.uppercased()) })
     }

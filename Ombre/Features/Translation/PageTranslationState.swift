@@ -49,6 +49,11 @@ enum PageTranslationState: Equatable {
         progress.map { Int(($0 * 100).rounded(.down)) }
     }
 
+    /// Waiting for a language download.
+    var isPreparing: Bool {
+        if case .preparing = self { true } else { false }
+    }
+
     /// Some of the page shows translated text.
     var showsTranslation: Bool {
         switch self {

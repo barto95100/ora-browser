@@ -107,13 +107,21 @@ enum PageTranslatorScript {
                 }
                 return true;
             },
-            /// The page as it was, where it still shows the translation.
-            restore() {
+            /// The page as it was, where it still shows the translation;
+            /// its pieces are kept, for the translation going on meanwhile
+            /// to be shown again (`apply`).
+            hide() {
                 nodes.forEach((node, index) => {
                     if (translatedValues[index] !== undefined && node.nodeValue === translatedValues[index]) {
                         node.nodeValue = originals[index];
                     }
                 });
+                translatedValues = new Array(nodes.length);
+                return true;
+            },
+            /// The page as it was, its pieces forgotten.
+            restore() {
+                this.hide();
                 nodes = [];
                 originals = [];
                 translatedValues = [];

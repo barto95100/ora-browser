@@ -73,6 +73,9 @@ extension Tab {
         }
         let target = target ?? translationSettings.targetLanguage
         let pair = PageTranslationPair(source: source, target: target)
+        if showHiddenTranslation(of: pair) { return }
+        // Another language: the one going on behind the original stops.
+        if runtime.hiddenTranslation != nil { runtime.stopTranslation() }
         // Another translation of the page first goes back to the original.
         if runtime.translation != .original { stopTranslation(restoring: true) }
         guard source.languageCode != target.languageCode else {
@@ -123,7 +126,8 @@ extension Tab {
                     await self.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
                     // Kept for the next translation once it worked; a run
                     // stopped or failed keeps it from anyone else.
-                    if runtime.translation == .translated(pair), runtime.translationSession == nil {
+                    let state = runtime.hiddenTranslation ?? runtime.translation
+                    if state == .translated(pair), runtime.translationSession == nil {
                         runtime.translationSession = (pair, session)
                     }
                 }
@@ -158,12 +162,43 @@ extension Tab {
         return TranslationSession(installedSource: pair.source, target: pair.target)
     }
 
-    /// Shows the page as it was written.
+    /// Shows the page as it was written. A translation still at work goes
+    /// on behind it, in the page's memory only (see `hiddenTranslation`):
+    /// it stops with another page, another language or the tab.
     func showOriginalPage() {
         guard let runtime else { return }
+        if case .translating = runtime.translation, let text = runtime.translationPageText {
+            logger.notice("Showing the original page; the translation goes on behind it")
+            runtime.hiddenTranslation = runtime.translation
+            text.hide()
+            runtime.translation = .original
+            return
+        }
         logger.info("Showing the original page")
         stopTranslation(restoring: true)
         runtime.translation = .original
+    }
+
+    /// Stops the translation (the panel's "Stop"): the page as written,
+    /// nothing going on behind it.
+    func stopTranslatingPage() {
+        guard let runtime else { return }
+        logger.info("Translation stopped by the user")
+        stopTranslation(restoring: true)
+        runtime.translation = .original
+    }
+
+    /// The translation into `pair` that went on behind the original, shown
+    /// again at once with all it did meanwhile; false if there is none.
+    private func showHiddenTranslation(of pair: PageTranslationPair) -> Bool {
+        guard let runtime, let hidden = runtime.hiddenTranslation, let text = runtime.translationPageText,
+              hidden.pair == pair, hidden.isBusy || hidden == .translated(pair)
+        else { return false }
+        logger.notice("Showing again the translation that went on behind the original")
+        runtime.hiddenTranslation = nil
+        text.show()
+        runtime.translation = hidden
+        return true
     }
 
     /// The translation `request` asked for, with the session of the page's
@@ -192,9 +227,11 @@ extension Tab {
     ) async {
         guard let runtime else { return }
         if let page = browserPage {
+            let text = BrowserPageText(page: page)
+            if runtime.translationRunID == runID { runtime.translationPageText = text }
             await PageTranslationRun.run(
                 pair,
-                page: BrowserPageText(page: page),
+                page: text,
                 translator: translator,
                 needsDownload: needsDownload,
                 timeouts: timeouts
@@ -202,11 +239,22 @@ extension Tab {
                 guard runtime.translationRunID == runID, runtime.page === page else { return false }
                 // Languages macOS said it had, but failing: asked again next time.
                 if case .failed = state { InstalledTranslationLanguages.forget(pair) }
+                // Behind the original: kept for later, the page left alone.
+                if runtime.hiddenTranslation != nil {
+                    runtime.hiddenTranslation = state
+                    return true
+                }
                 runtime.translation = state
                 // Said where it can't be missed.
                 if case .failed = state { runtime.showsTranslationPanel = true }
                 return true
             }
+        }
+        // Behind the original and stopped at work, or failed: nothing to show
+        // again; translating again starts from the page's memory.
+        if runtime.translationRunID == runID, let hidden = runtime.hiddenTranslation, hidden != .translated(pair) {
+            runtime.stopTranslation()
+            return
         }
         // Still this page's translation, but stopped at work (the page's view
         // hidden, its page gone): said, never left turning.
@@ -280,9 +328,27 @@ private final class TranslationMenuItem: NSMenuItem {
 @MainActor
 final class BrowserPageText: PageTextAccess {
     private let page: BrowserPage
+    /// Whether translations go on the page; else only kept (`hide`).
+    private(set) var isShown = true
+    /// Every translation made by the run, by piece number: shown again at
+    /// once after `hide`.
+    private var translations: [String: String] = [:]
 
     init(page: BrowserPage) {
         self.page = page
+    }
+
+    /// The page as written, its pieces kept: the run goes on, its
+    /// translations only kept.
+    func hide() {
+        isShown = false
+        page.evaluateJavaScript("window.__translator && window.__translator.hide()")
+    }
+
+    /// All the run translated so far, back on the page in one go.
+    func show() {
+        isShown = true
+        apply(translations)
     }
 
     func collectText() async -> [String] {
@@ -295,6 +361,11 @@ final class BrowserPageText: PageTextAccess {
     }
 
     func showTranslations(_ translations: [String: String]) {
+        self.translations.merge(translations) { _, new in new }
+        if isShown { apply(translations) }
+    }
+
+    private func apply(_ translations: [String: String]) {
         guard !translations.isEmpty,
               let json = try? JSONEncoder().encode(translations), let object = String(data: json, encoding: .utf8),
               let argument = try? JSONEncoder().encode(object), let literal = String(data: argument, encoding: .utf8)
@@ -303,7 +374,9 @@ final class BrowserPageText: PageTextAccess {
     }
 
     func piecesOnScreen() async -> [Int] {
-        await withCheckedContinuation { continuation in
+        // Behind the original: the queue's order stands.
+        guard isShown else { return [] }
+        return await withCheckedContinuation { continuation in
             page.evaluateJavaScript("window.__translator ? window.__translator.onScreen() : '[]'") { value, _ in
                 let json = value as? String ?? "[]"
                 continuation.resume(returning: (try? JSONDecoder().decode([Int].self, from: Data(json.utf8))) ?? [])

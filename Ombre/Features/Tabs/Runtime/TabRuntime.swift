@@ -59,10 +59,19 @@ final class TabRuntime {
     /// A translation waiting for a session from the page's view (see
     /// `PageTranslationHost`): to download a language, or before macOS 26.
     var translationRequest: PageTranslationRequest?
-    /// The running translation: a later one, or the page going, ends it.
+    /// The running translation: a later one, another language, the page
+    /// going or "Stop" ends it; "Show Original" doesn't (`hiddenTranslation`),
+    /// and its page access stays until then, even once it is done.
     @ObservationIgnored var translationRunID: UUID?
     @ObservationIgnored var translationTask: Task<Void, Never>?
     @ObservationIgnored private var translationRequestCount = 0
+    /// The running translation's access to the page (see `BrowserPageText`).
+    @ObservationIgnored var translationPageText: BrowserPageText?
+    /// Where the running translation stands while the page shows its
+    /// original ("Show Original" during a translation): it goes on in the
+    /// page's memory, without touching the page, so translating again is
+    /// whole and instant. Nil when the translation is shown.
+    @ObservationIgnored var hiddenTranslation: PageTranslationState?
     /// The translations already made for the tab's last pages, the latest
     /// last (see `PageTranslationMemory`).
     @ObservationIgnored private(set) var translationMemories: [PageTranslationMemory] = []
@@ -145,6 +154,8 @@ final class TabRuntime {
         translationRunID = nil
         translationTask?.cancel()
         translationTask = nil
+        translationPageText = nil
+        hiddenTranslation = nil
         if translationRequest != nil { translationRequest = nil }
     }
 

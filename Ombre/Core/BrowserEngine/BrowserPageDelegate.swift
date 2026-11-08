@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 @preconcurrency import WebKit
 
+@MainActor
 protocol BrowserPageDelegate: AnyObject {
     func browserPage(
         _ page: BrowserPage,

@@ -124,6 +124,7 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
     }
 }
 
+@MainActor
 class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
     private let defaults = UserDefaults.standard

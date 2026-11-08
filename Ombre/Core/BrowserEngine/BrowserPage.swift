@@ -206,7 +206,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     func clearWebsiteData(
         ofTypes types: Set<BrowserWebsiteDataType>,
         forHost host: String?,
-        completion: (() -> Void)? = nil
+        completion: (@MainActor () -> Void)? = nil
     ) {
         BrowserEngineProfile.clearData(
             in: webView.configuration.websiteDataStore, ofTypes: types, forHost: host, completion: completion
@@ -434,7 +434,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     }
 
     /// KVO may notify on any thread; the delegate updates the interface.
-    func notifyOnMain(_ body: @escaping (BrowserPage) -> Void) {
+    nonisolated func notifyOnMain(_ body: @escaping @MainActor @Sendable (BrowserPage) -> Void) {
         DispatchQueue.main.async { [weak self] in
             if let self { body(self) }
         }

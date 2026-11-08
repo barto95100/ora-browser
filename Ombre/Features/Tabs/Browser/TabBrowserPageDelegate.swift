@@ -2,6 +2,7 @@ import AppKit
 @preconcurrency import WebKit
 import SwiftUI
 
+@MainActor
 final class TabBrowserPageDelegate: BrowserPageDelegate {
     weak var tab: Tab?
     /// When the page may show `alert`, `confirm` and `prompt` dialogs.

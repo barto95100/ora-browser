@@ -54,6 +54,7 @@ private final class RequestCountingURLProtocol: URLProtocol, @unchecked Sendable
     override func stopLoading() {}
 }
 
+@MainActor
 struct OmbreTests {
     @Test func normalizesHostsForPasswordMatching() {
         #expect(PasswordManagerService.normalizeHost("WWW.Example.COM.") == "www.example.com")

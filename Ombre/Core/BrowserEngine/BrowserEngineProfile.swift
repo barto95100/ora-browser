@@ -1,6 +1,7 @@
 import Foundation
 @preconcurrency import WebKit
 
+@MainActor
 final class BrowserEngineProfile {
     let identifier: UUID
     let isPrivate: Bool
@@ -20,7 +21,7 @@ final class BrowserEngineProfile {
     func clearData(
         ofTypes types: Set<BrowserWebsiteDataType>,
         forHost host: String? = nil,
-        completion: (() -> Void)? = nil
+        completion: (@MainActor () -> Void)? = nil
     ) {
         Self.clearData(in: dataStore, ofTypes: types, forHost: host, completion: completion)
     }
@@ -31,7 +32,7 @@ final class BrowserEngineProfile {
         in dataStore: WKWebsiteDataStore,
         ofTypes types: Set<BrowserWebsiteDataType>,
         forHost host: String? = nil,
-        completion: (() -> Void)? = nil
+        completion: (@MainActor () -> Void)? = nil
     ) {
         let mappedTypes = mapWebsiteDataTypes(types)
         guard let host, !host.isEmpty else {
@@ -57,7 +58,7 @@ final class BrowserEngineProfile {
     /// Whether a data record (named after its domain, "google.com") is the
     /// website's: the same host or one of its subdomains, never a mere
     /// substring ("x.com" isn't "box.com").
-    static func isRecord(named name: String, of host: String) -> Bool {
+    nonisolated static func isRecord(named name: String, of host: String) -> Bool {
         let name = name.lowercased()
         let host = host.lowercased()
         return host == name || host.hasSuffix("." + name)

@@ -69,6 +69,7 @@ class Tab: ObservableObject, Identifiable {
     }
 
     /// Whether this tab is considered alive (recently accessed)
+    @MainActor
     var isAlive: Bool {
         guard let lastAccessed = lastAccessedAt else { return false }
         let timeout = SettingsStore.shared.tabAliveTimeout
@@ -169,6 +170,7 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    @MainActor
     func setupBrowserPageDelegate(for page: BrowserPage) {
         let delegate = TabBrowserPageDelegate()
         delegate.tab = self
@@ -192,6 +194,7 @@ class Tab: ObservableObject, Identifiable {
 
     /// A page in this tab's space and privacy mode, with Ombre's scripts and the
     /// space's privacy settings.
+    @MainActor
     func makeBrowserPage(isPrivate: Bool) -> BrowserPage {
         let engine = BrowserEngine.shared
         let profile = engine.makeProfile(
@@ -218,6 +221,7 @@ class Tab: ObservableObject, Identifiable {
 
     /// A page for a window this tab's page opens, linked to it: made with
     /// WebKit's configuration (see `BrowserPage`), in this tab's space.
+    @MainActor
     func makeLinkedBrowserPage(
         configuration webKitConfiguration: WKWebViewConfiguration,
         opener: BrowserPage?
@@ -245,6 +249,7 @@ class Tab: ObservableObject, Identifiable {
         )
     }
 
+    @MainActor
     func restoreTransientState(
         historyManager: HistoryManager,
         downloadManager: DownloadManager,
@@ -280,6 +285,7 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    @MainActor
     func stopMedia(completed: @escaping () -> Void) {
         guard let page = browserPage else {
             completed()
@@ -358,6 +364,7 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    @MainActor
     func destroyWebView() {
         cancelPermissionRequest()
         // A new page loads from scratch: nothing left to recover.
@@ -369,7 +376,7 @@ class Tab: ObservableObject, Identifiable {
         // The page's media go with it (closed, unloaded in the background or
         // reloaded for new privacy settings): no event reports it.
         if let mediaController = tabManager?.mediaController {
-            MainActor.assumeIsolated { mediaController.removeSession(for: id) }
+            mediaController.removeSession(for: id)
         }
         pageDelegate?.dismissDialog()
         browserPage?.teardown()
@@ -457,6 +464,7 @@ class Tab: ObservableObject, Identifiable {
         browserPage?.reload()
     }
 
+    @MainActor
     func refreshBrowserPageForPrivacySettings() {
         guard isWebViewReady,
               let historyManager,

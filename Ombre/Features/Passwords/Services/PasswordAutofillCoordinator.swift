@@ -131,6 +131,7 @@ struct PasswordSavePromptDetails: Equatable {
     let showsSecurityWarning: Bool
 }
 
+@MainActor
 final class PasswordAutofillCoordinator {
     weak var tab: Tab?
 

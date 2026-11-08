@@ -38,6 +38,7 @@ struct BrowserPageConfiguration {
     }
 }
 
+@MainActor
 final class BrowserEngine {
     private struct ProfileKey: Hashable {
         let identifier: UUID

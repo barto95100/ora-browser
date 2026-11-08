@@ -2,6 +2,7 @@ import Foundation
 
 /// The shield of the address bar: what content rules keep from the page, and
 /// sites exempted from them (in this tab's space).
+@MainActor
 extension Tab {
     /// The site protections are set for: its registrable domain.
     var protectionSite: String? {

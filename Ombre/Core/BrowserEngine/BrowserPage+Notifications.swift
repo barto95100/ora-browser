@@ -19,7 +19,7 @@ final class WebNotificationBridge: NSObject, WKScriptMessageHandlerWithReply {
     func userContentController(
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage,
-        replyHandler: @escaping (Any?, String?) -> Void
+        replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void
     ) {
         // Popups share the page's configuration; frames get no notifications.
         guard let page, message.webView === page.webView, message.frameInfo.isMainFrame,

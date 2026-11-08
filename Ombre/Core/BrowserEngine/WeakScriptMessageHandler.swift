@@ -31,7 +31,7 @@ final class WeakScriptMessageHandlerWithReply: NSObject, WKScriptMessageHandlerW
     func userContentController(
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage,
-        replyHandler: @escaping (Any?, String?) -> Void
+        replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void
     ) {
         guard let target else {
             replyHandler(nil, "Handler unavailable")

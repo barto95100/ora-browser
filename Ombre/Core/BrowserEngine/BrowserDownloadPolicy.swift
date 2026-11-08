@@ -4,6 +4,7 @@ import WebKit
 /// can't show it, or the server says so ("Content-Disposition: attachment"),
 /// like Safari. Used by tabs and popups alike.
 enum BrowserDownloadPolicy {
+    @MainActor
     static func isDownload(_ response: WKNavigationResponse) -> Bool {
         isDownload(canShowMIMEType: response.canShowMIMEType, response: response.response)
     }

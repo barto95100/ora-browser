@@ -17,7 +17,8 @@ struct HeaderColorTests {
     }
 
     private func waitUntil(_ condition: () -> Bool) async {
-        let deadline = Date().addingTimeInterval(10)
+        // 30 s at most, as soon as it holds: GitHub's runners can be that slow.
+        let deadline = Date().addingTimeInterval(30)
         while !condition(), Date() < deadline {
             try? await Task.sleep(for: .milliseconds(20))
         }

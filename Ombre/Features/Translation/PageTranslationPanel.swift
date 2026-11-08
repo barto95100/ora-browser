@@ -40,7 +40,9 @@ struct PageTranslationPanel: View {
         .font(.system(size: 12))
         .padding(14)
         .frame(width: 290)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        // Opaque: a translucent material took the page's color under it (an
+        // orange header), and the checkboxes and menus faded into it.
+        .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.1))
@@ -73,15 +75,21 @@ struct PageTranslationPanel: View {
             }
             GridRow {
                 Text("To").foregroundStyle(.secondary)
-                Picker("To", selection: $target) {
-                    ForEach(targetChoices(excluding: source), id: \.minimalIdentifier) { language in
-                        Text(Self.displayName(of: language)).tag(language.minimalIdentifier)
+                if state.isBusy {
+                    // Not a greyed-out menu (hard to read): the language, as text.
+                    // The one being translated into; the menu's height, no jump.
+                    Text(Self.displayName(of: state.pair?.target ?? Locale.Language(identifier: target)))
+                        .frame(minHeight: 22)
+                } else {
+                    Picker("To", selection: $target) {
+                        ForEach(targetChoices(excluding: source), id: \.minimalIdentifier) { language in
+                            Text(Self.displayName(of: language)).tag(language.minimalIdentifier)
+                        }
                     }
-                }
-                .labelsHidden()
-                .disabled(state.isBusy)
-                .onChange(of: target) { _, newValue in
-                    settings.setTargetLanguage(Locale.Language(identifier: newValue))
+                    .labelsHidden()
+                    .onChange(of: target) { _, newValue in
+                        settings.setTargetLanguage(Locale.Language(identifier: newValue))
+                    }
                 }
             }
         }

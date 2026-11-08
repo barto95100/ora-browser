@@ -12,6 +12,9 @@ protocol PageTextAccess: AnyObject {
     func collectText() async -> [String]
     /// Translations by piece number.
     func showTranslations(_ translations: [String: String])
+    /// The pieces on screen not translated yet, once the user scrolled since
+    /// the last call (else none: the queue's order stands).
+    func piecesOnScreen() async -> [Int]
 }
 
 /// What translates text: Apple's Translation, on the Mac (see
@@ -22,8 +25,17 @@ protocol PageTextTranslating {
     func prepare() async throws
     /// Translations by piece id.
     func translate(_ pieces: [PageTextPiece]) async throws -> [String: String]
+    /// The translations already known for `pieces` (the page's memory), by
+    /// piece id: shown at once, never asked again.
+    func remembered(_ pieces: [PageTextPiece]) async -> [String: String]
     /// Stops what is still at work (after a time limit, or when stopped).
     func cancel()
+}
+
+extension PageTextTranslating {
+    func remembered(_: [PageTextPiece]) async -> [String: String] {
+        [:]
+    }
 }
 
 /// How long each step may take before the translation stops with a message:
@@ -31,7 +43,7 @@ protocol PageTextTranslating {
 struct PageTranslationTimeouts {
     /// The user answers macOS's prompt and the language downloads.
     var prepare: Double = 300
-    /// A group of pieces: usually a second or two.
+    /// A group of pieces: usually a few seconds.
     var group: Double = 45
 
     static let standard = PageTranslationTimeouts()
@@ -43,10 +55,12 @@ enum PageTranslationFailure: Error, Equatable {
     case downloadFailed(String)
 }
 
-/// One translation of a page: downloads the languages if needed, then
-/// translates the text in small groups, the visible text first, showing each
-/// as it comes. `update` gets each new state and returns false once the run
-/// is no longer the page's (stopped, another page): it then ends quietly.
+/// One translation of a page: downloads the languages if needed, shows at
+/// once what the page's memory knows, then translates the rest in small
+/// groups (see `PageTranslationQueue`), the text on screen first, showing
+/// each as it comes. `update` gets each new state and returns false once
+/// the run is no longer the page's (stopped, another page): it then ends
+/// quietly.
 @MainActor
 enum PageTranslationRun {
     static func run(
@@ -59,48 +73,60 @@ enum PageTranslationRun {
     ) async {
         let start = Date()
         let languages = "\(pair.source.minimalIdentifier) → \(pair.target.minimalIdentifier)"
-        logger.info("Translating \(languages, privacy: .public), download needed: \(needsDownload)")
+        logger.notice("Translating \(languages, privacy: .public), download needed: \(needsDownload)")
         var shown = 0
         do {
             if needsDownload {
                 guard update(.preparing(pair)) else { return }
                 try await prepare(with: translator, timeout: timeouts.prepare)
                 let ready = elapsed(since: start)
-                logger.info("Languages ready for \(languages, privacy: .public) after \(ready, privacy: .public) s")
+                logger.notice("Languages ready for \(languages, privacy: .public) after \(ready, privacy: .public) s")
             }
             let plan = await PageTranslationPlan(pieces: page.collectText())
-            let found = "\(plan.pieceCount) pieces, \(plan.texts.count) different, \(plan.groups.count) groups"
-            logger.info("\(found, privacy: .public) (\(elapsed(since: start), privacy: .public) s)")
+            let found = "\(plan.pieceCount) pieces, \(plan.texts.count) different"
+            logger.notice("\(found, privacy: .public) (\(elapsed(since: start), privacy: .public) s)")
             guard !plan.texts.isEmpty else { throw PageTranslationFailure.nothingToTranslate }
             let total = plan.pieceCount
+            // Still this page's translation (another may have started while
+            // the text was read): only then anything is shown.
             guard update(.translating(pair, done: 0, total: total)) else { return }
-            for group in plan.groups {
-                let pieces = plan.pieces(of: group)
+
+            var queue = await showRemembered(plan, page: page, translator: translator, since: start)
+            shown = queue.donePieces
+            guard !queue.isEmpty else {
+                logger.notice("Translated from memory in \(elapsed(since: start), privacy: .public) s")
+                _ = update(.translated(pair))
+                return
+            }
+            if shown > 0 { guard update(.translating(pair, done: shown, total: total)) else { return } }
+            var firstShown = shown > 0
+            while !queue.isEmpty {
+                let group = await queue.next(onScreen: page.piecesOnScreen())
                 let translations = try await withTimeout(seconds: timeouts.group) {
-                    try await translator.translate(pieces)
+                    try await translator.translate(plan.pieces(of: group))
                 }
                 guard !Task.isCancelled else { throw CancellationError() }
-                let done = plan.pieceCount(ofFirst: group.upperBound)
+                let done = queue.donePieces
                 // Still this page's translation: only then shown.
                 guard update(.translating(pair, done: done, total: total)) else {
-                    logger.info("Translation stopped after \(shown) of \(total) pieces")
+                    logger.notice("Translation stopped after \(shown) of \(total) pieces")
                     translator.cancel()
                     return
                 }
                 page.showTranslations(plan.pageTranslations(translations))
-                if shown == 0 {
-                    logger.info("First translations shown after \(elapsed(since: start), privacy: .public) s")
+                if !firstShown {
+                    firstShown = true
+                    logger.notice("First translations shown after \(elapsed(since: start), privacy: .public) s")
                 }
                 shown = done
             }
-            let seconds = Date().timeIntervalSince(start)
-            logger.info("Translated \(total) pieces in \(seconds, format: .fixed(precision: 1)) s")
+            logger.notice("Translated \(total) pieces in \(elapsed(since: start), privacy: .public) s")
             _ = update(.translated(pair))
         } catch {
             translator.cancel()
             // Stopped by the user or the page going: nothing to tell.
             guard !Task.isCancelled else {
-                logger.info("Translation cancelled after \(shown) pieces")
+                logger.notice("Translation cancelled after \(shown) pieces")
                 return
             }
             logger.error(
@@ -108,6 +134,22 @@ enum PageTranslationRun {
             )
             _ = update(.failed(pair, message: message(for: error, pair: pair), isPartial: shown > 0))
         }
+    }
+
+    /// What the page's memory knows, shown at once, in one go: the queue of
+    /// the rest.
+    private static func showRemembered(
+        _ plan: PageTranslationPlan,
+        page: PageTextAccess,
+        translator: PageTextTranslating,
+        since start: Date
+    ) async -> PageTranslationQueue {
+        let known = await translator.remembered(plan.pieces(of: Array(plan.texts.indices)))
+        guard !known.isEmpty, !Task.isCancelled else { return PageTranslationQueue(plan: plan) }
+        page.showTranslations(plan.pageTranslations(known))
+        let remembered = "\(known.count) texts from memory"
+        logger.notice("\(remembered, privacy: .public) shown after \(elapsed(since: start), privacy: .public) s")
+        return PageTranslationQueue(plan: plan, done: Set(known.keys.compactMap(Int.init)))
     }
 
     /// Seconds since `start`, for the logs.

@@ -87,7 +87,7 @@ extension Tab {
         runtime.translationRunID = runID
         runtime.translation = .translating(pair, done: 0, total: 0)
         let languages = "\(source.minimalIdentifier) → \(target.minimalIdentifier)"
-        logger.info("Checking whether macOS has \(languages, privacy: .public)")
+        logger.notice("Checking whether macOS has \(languages, privacy: .public)")
         let start = Date()
         Task { @MainActor in
             let status: LanguageAvailability.Status
@@ -100,7 +100,7 @@ extension Tab {
             }
             guard runtime.translationRunID == runID else { return }
             let answer = "\(status) (\(String(format: "%.2f", Date().timeIntervalSince(start))) s)"
-            logger.info("\(languages, privacy: .public): \(answer, privacy: .public)")
+            logger.notice("\(languages, privacy: .public): \(answer, privacy: .public)")
             self.startTranslation(pair, status: status, runID: runID)
         }
     }
@@ -109,8 +109,6 @@ extension Tab {
     /// (a language to download, or before macOS 26).
     private func startTranslation(_ pair: PageTranslationPair, status: LanguageAvailability.Status, runID: UUID) {
         guard let runtime else { return }
-        let source = pair.source
-        let target = pair.target
         switch status {
         case .installed:
             if #available(macOS 26.0, *) {
@@ -119,7 +117,7 @@ extension Tab {
                 let session = borrowSession(for: pair)
                 let translator = MemorizingTranslator(
                     base: SessionTextTranslator(session: session),
-                    memory: runtime.translationMemory(for: pair)
+                    memory: runtime.translationMemory(for: pair, page: url)
                 )
                 runtime.translationTask = Task { @MainActor in
                     await self.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
@@ -176,7 +174,7 @@ extension Tab {
             request.pair,
             translator: MemorizingTranslator(
                 base: SessionTextTranslator(session: session),
-                memory: runtime.translationMemory(for: request.pair)
+                memory: runtime.translationMemory(for: request.pair, page: url)
             ),
             needsDownload: request.needsDownload,
             runID: request.id
@@ -302,6 +300,15 @@ final class BrowserPageText: PageTextAccess {
               let argument = try? JSONEncoder().encode(object), let literal = String(data: argument, encoding: .utf8)
         else { return }
         page.evaluateJavaScript("window.__translator && window.__translator.apply(\(literal))")
+    }
+
+    func piecesOnScreen() async -> [Int] {
+        await withCheckedContinuation { continuation in
+            page.evaluateJavaScript("window.__translator ? window.__translator.onScreen() : '[]'") { value, _ in
+                let json = value as? String ?? "[]"
+                continuation.resume(returning: (try? JSONDecoder().decode([Int].self, from: Data(json.utf8))) ?? [])
+            }
+        }
     }
 }
 

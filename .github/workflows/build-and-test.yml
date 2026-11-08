@@ -66,17 +66,27 @@ jobs:
           bin="$RUNNER_TEMP/tools-bin"
           mkdir -p "$bin"
           # Download a release archive and install the named binary from it,
-          # wherever it sits inside the archive.
+          # wherever it sits inside the archive. The Mac's own binary instead
+          # when it is that very version (GitHub's downloads can fail for a
+          # while, with nothing else to fix).
           install_tool() {
-            local name="$1" url="$2" dir="$RUNNER_TEMP/$1"
-            curl -fsSL -o "$dir.zip" "$url"
+            local name="$1" url="$2" version="$3" dir="$RUNNER_TEMP/$1"
+            local installed
+            installed=$(command -v "$name" || true)
+            if [ -n "$installed" ] && [ "$("$installed" --version 2>/dev/null)" = "$version" ]; then
+              ln -sf "$installed" "$bin/$name"
+              return
+            fi
+            curl -fsSL --retry 3 -o "$dir.zip" "$url"
             unzip -o -q "$dir.zip" -d "$dir"
             install -m 755 "$(find "$dir" -type f -name "$name" | head -n 1)" "$bin/$name"
           }
           install_tool swiftlint \
-            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip"
+            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip" \
+            "$SWIFTLINT_VERSION"
           install_tool swiftformat \
-            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip" \
+            "$SWIFTFORMAT_VERSION"
           echo "$bin" >> "$GITHUB_PATH"
 
       # The self-hosted Mac uses its own: nothing is installed or upgraded there.
@@ -126,6 +136,9 @@ jobs:
       # service must not set SessionCreate, or codesign can't reach the
       # login keychain.
       # Packages are the versions pinned in Package.resolved, never newer ones.
+      # On the self-hosted Mac, builds and packages (Sparkle's Updater.app) go
+      # to .noindex folders: Spotlight skips them, so it never registers these
+      # apps again with Launch Services once they are unregistered.
       - name: Build and run unit tests
         env:
           GITHUB_HOSTED: ${{ runner.environment == 'github-hosted' }}
@@ -136,8 +149,8 @@ jobs:
             signing=(CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER="")
           else
             places=(
-              -clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm"
-              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData"
+              -clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm.noindex"
+              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData.noindex"
             )
             signing=()
           fi
@@ -171,7 +184,7 @@ jobs:
           # right after it was unregistered. Wait for it (30 s at most),
           # then unregister twice, a few seconds apart.
           for _ in $(seq 30); do
-            pgrep -f "$RUNNER_WORKSPACE/DerivedData" >/dev/null || break
+            pgrep -f "$RUNNER_WORKSPACE/DerivedData.noindex" >/dev/null || break
             sleep 1
           done
           unregister

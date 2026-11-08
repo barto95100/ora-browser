@@ -63,8 +63,10 @@ final class TabRuntime {
     @ObservationIgnored var translationRunID: UUID?
     @ObservationIgnored var translationTask: Task<Void, Never>?
     @ObservationIgnored private var translationRequestCount = 0
-    /// The page's translations already made (see `PageTranslationMemory`).
-    @ObservationIgnored var translationMemory: PageTranslationMemory?
+    /// The translations already made for the tab's last pages, the latest
+    /// last (see `PageTranslationMemory`).
+    @ObservationIgnored private(set) var translationMemories: [PageTranslationMemory] = []
+    static let maxTranslatedPages = 5
     /// The tab's translation session, kept for its languages while its page
     /// lives: a new one loads macOS's model again (macOS 26).
     @ObservationIgnored var translationSession: (pair: PageTranslationPair, session: TranslationSession)?
@@ -87,13 +89,14 @@ final class TabRuntime {
         setHoveredLink(nil)
         resetTranslation()
         translationSession = nil
+        translationMemories = []
     }
 
     /// A new document: its language is read again once loaded, and a
-    /// translation of the previous one stops.
+    /// translation of the previous one stops (its memory stays, for a reload
+    /// or a way back).
     func resetTranslation() {
         stopTranslation()
-        translationMemory = nil
         pageLanguage = nil
         if translation != .original { translation = .original }
         if showsTranslationPanel { showsTranslationPanel = false }
@@ -109,13 +112,32 @@ final class TabRuntime {
         )
     }
 
-    /// The memory of the page's translations into `pair` (a new one for other
-    /// languages).
-    func translationMemory(for pair: PageTranslationPair) -> PageTranslationMemory {
-        if let memory = translationMemory, memory.pair == pair { return memory }
-        let memory = PageTranslationMemory(pair: pair)
-        translationMemory = memory
+    /// The memory of the translations of `page` into `pair`, made if
+    /// needed (the oldest page's memory then goes past the limit).
+    func translationMemory(for pair: PageTranslationPair, page: URL?) -> PageTranslationMemory {
+        let page = page.map(Self.withoutFragment)
+        if let index = translationMemories.firstIndex(where: { $0.pair == pair && $0.page == page }) {
+            let memory = translationMemories.remove(at: index)
+            translationMemories.append(memory)
+            return memory
+        }
+        let memory = PageTranslationMemory(pair: pair, page: page)
+        translationMemories.append(memory)
+        if translationMemories.count > Self.maxTranslatedPages { translationMemories.removeFirst() }
         return memory
+    }
+
+    /// The memory of `page`'s translations into `pair`, if any (never made).
+    func existingTranslationMemory(for pair: PageTranslationPair, page: URL?) -> PageTranslationMemory? {
+        let page = page.map(Self.withoutFragment)
+        return translationMemories.first { $0.pair == pair && $0.page == page }
+    }
+
+    private static func withoutFragment(_ url: URL) -> URL {
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false), components.fragment != nil
+        else { return url }
+        components.fragment = nil
+        return components.url ?? url
     }
 
     /// Ends the running translation, if any: its late results are dropped.

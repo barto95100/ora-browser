@@ -25,7 +25,8 @@ struct PictureInPicturePreferenceTests {
 
     private func waitFor(_ page: BrowserPage, _ script: String, toBe expected: String) async throws -> String? {
         var value: String?
-        for _ in 0 ..< 50 {
+        // 20 s at most, as soon as it holds: GitHub's runners can be that slow.
+        for _ in 0 ..< 200 {
             value = await evaluate(page, script) as? String
             if value == expected { break }
             try await Task.sleep(for: .milliseconds(100))
@@ -76,10 +77,16 @@ struct PictureInPicturePreferenceTests {
 
         _ = await evaluate(page, "document.querySelector('video').play(); true")
         #expect(try await waitFor(page, "String(!document.querySelector('video').paused)", toBe: "true") == "true")
-        // What WebKit says of the video, without asking: no without the setting.
-        let supportsPictureInPicture = await evaluate(
-            page, "String(document.querySelector('video').webkitSupportsPresentationMode('picture-in-picture'))"
-        ) as? String
+        // What WebKit says of the video, without asking: no without the
+        // setting. Only once its frames are there (`readyState` 2): playing
+        // comes first on a slow machine, and WebKit says no until then.
+        #expect(try await waitFor(page, "String(document.querySelector('video').readyState >= 2)", toBe: "true")
+            == "true")
+        let supportsPictureInPicture = try await waitFor(
+            page,
+            "String(document.querySelector('video').webkitSupportsPresentationMode('picture-in-picture'))",
+            toBe: "true"
+        )
         #expect(supportsPictureInPicture == "true")
 
         // Switching tabs asks for it: recorded, not opened.

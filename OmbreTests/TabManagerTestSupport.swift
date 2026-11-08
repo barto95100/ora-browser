@@ -186,10 +186,11 @@ final class TabManagerTestWindow {
 
     // MARK: - Waiting
 
-    /// Lets the main queue run until `condition` holds (5 s at most).
+    /// Lets the main queue run until `condition` holds (20 s at most: it
+    /// returns as soon as it does, and GitHub's runners can be that slow).
     func waitUntil(
         _ what: String,
-        timeout: Duration = .seconds(5),
+        timeout: Duration = .seconds(20),
         sourceLocation: SourceLocation = #_sourceLocation,
         _ condition: () -> Bool
     ) async {

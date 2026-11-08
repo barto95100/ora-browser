@@ -25,8 +25,11 @@ extension BrowserPage: WKUIDelegate {
     /// A page asks for the device's location: the site's permission in its
     /// space, asked in the page like the camera. macOS 27's public method;
     /// before it, WebKit's private delegate method below (the one Safari
-    /// implements), the only way there.
+    /// implements), the only way there. Its selector is spelled out: built
+    /// with an older SDK, WebKit's protocol doesn't declare it yet, so Swift
+    /// wouldn't give it this name (WebKit on macOS 27 would never call it).
     @available(macOS 27.0, *)
+    @objc(webView:requestGeolocationPermissionForOrigin:initiatedByFrame:decisionHandler:)
     func webView(
         _ webView: WKWebView,
         requestGeolocationPermissionFor origin: WKSecurityOrigin,

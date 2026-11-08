@@ -101,7 +101,8 @@ struct PageTranslationPanel: View {
             VStack(alignment: .leading, spacing: 4) {
                 if total > 0 {
                     ProgressView(value: Double(done), total: Double(total))
-                    Text("Translating… \(done) of \(total) pieces of text").foregroundStyle(.secondary)
+                    Text("Translating… \(state.percentDone ?? 0)% (\(done) of \(total) pieces of text)")
+                        .foregroundStyle(.secondary)
                 } else {
                     ProgressView().progressViewStyle(.linear)
                     Text("Starting…").foregroundStyle(.secondary)

@@ -37,6 +37,18 @@ enum PageTranslationState: Equatable {
         }
     }
 
+    /// The share of the page translated so far, from 0 to 1, while it is
+    /// translated (none before the text is counted, or once done).
+    var progress: Double? {
+        guard case let .translating(_, done, total) = self, total > 0 else { return nil }
+        return min(1, max(0, Double(done) / Double(total)))
+    }
+
+    /// `progress` in whole percents, for the button's tooltip and the panel.
+    var percentDone: Int? {
+        progress.map { Int(($0 * 100).rounded(.down)) }
+    }
+
     /// Some of the page shows translated text.
     var showsTranslation: Bool {
         switch self {

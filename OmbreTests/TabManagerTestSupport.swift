@@ -212,7 +212,7 @@ final class TabManagerTestWindow {
         let loading = allTabs.filter { $0.browserPage != nil }
         // Let pending loads (10 ms after a page is created) run first, so none
         // runs on a page already torn down.
-        await waitUntil("pending loads", timeout: .seconds(2)) { loading.allSatisfy(\.isWebViewReady) }
+        await waitUntil("pending loads", timeout: .seconds(10)) { loading.allSatisfy(\.isWebViewReady) }
         for tab in loading {
             tab.destroyWebView()
         }

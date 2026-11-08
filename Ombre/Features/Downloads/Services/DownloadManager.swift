@@ -158,6 +158,7 @@ class DownloadManager: ObservableObject {
                 return
             }
 
+            let suggestedFilename = DownloadFileName.safe(suggestedFilename)
             let downloadsDir = self.getDownloadsDirectory()
             let destinationURL = downloadsDir.appendingPathComponent(suggestedFilename)
             let finalURL = self.createUniqueFilename(for: destinationURL)

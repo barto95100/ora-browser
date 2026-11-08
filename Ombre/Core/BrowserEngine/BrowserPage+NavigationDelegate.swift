@@ -242,24 +242,30 @@ extension BrowserPage: WKNavigationDelegate {
         decidePolicyFor navigationResponse: WKNavigationResponse,
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void
     ) {
-        // Shown unless WebKit can't, or the server says it is a file to save
-        // ("Content-Disposition: attachment"), like Safari.
-        if !BrowserDownloadPolicy.isDownload(navigationResponse) {
-            isDownloadNavigation = false
-            originalURL = nil
-            decisionHandler(.allow)
-            return
-        }
-
-        isDownloadNavigation = true
-        emitNavigationEvent(
-            phase: .finished,
-            url: originalURL,
-            title: webView.title,
-            progress: 0,
-            isLoading: false
+        let handling = BrowserDownloadPolicy.handling(
+            isForMainFrame: navigationResponse.isForMainFrame,
+            isDownload: BrowserDownloadPolicy.isDownload(navigationResponse)
         )
-        decisionHandler(.download)
+        switch handling {
+        case .show:
+            if navigationResponse.isForMainFrame {
+                isDownloadNavigation = false
+                originalURL = nil
+            }
+            decisionHandler(.allow)
+        case .frameDownload:
+            decisionHandler(.download)
+        case .pageDownload:
+            isDownloadNavigation = true
+            emitNavigationEvent(
+                phase: .finished,
+                url: originalURL,
+                title: webView.title,
+                progress: 0,
+                isLoading: false
+            )
+            decisionHandler(.download)
+        }
     }
 
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
@@ -296,8 +302,11 @@ extension BrowserPage: WKNavigationDelegate {
         guard let downloadURL = navigationResponse.response.url else { return }
         let task = BrowserDownloadTask(download: download, originalURL: downloadURL)
         delegate?.browserPage(self, didStartDownload: task)
-        isDownloadNavigation = false
-        originalURL = nil
+        // A frame's file leaves the page's own load alone (see above).
+        if navigationResponse.isForMainFrame {
+            isDownloadNavigation = false
+            originalURL = nil
+        }
     }
 
     // MARK: - Helpers

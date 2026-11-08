@@ -336,17 +336,23 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         WebNotificationCenter.shared.close(id, from: tab)
     }
 
+    /// Whether a tab goes once a load in it became a download: only when it
+    /// never showed a page (opened for the file). Otherwise the page shown
+    /// stays, like Safari: a load that becomes a download never replaces it,
+    /// so going back would leave the page before it.
+    nonisolated static func closesTab(afterDownloadNavigation: Bool, shown lastCommittedURL: URL?) -> Bool {
+        afterDownloadNavigation && lastCommittedURL == nil
+    }
+
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {
         MainActor.assumeIsolated {
             tab?.downloadManager?.handleDownload(download)
 
-            guard page.isDownloadNavigation, let tab else { return }
-
-            if page.lastCommittedURL != nil {
-                tab.goBack()
-            } else if let tabManager = tab.tabManager {
-                tabManager.closeTab(tab: tab)
-            }
+            guard let tab,
+                  Self.closesTab(afterDownloadNavigation: page.isDownloadNavigation, shown: page.lastCommittedURL),
+                  let tabManager = tab.tabManager
+            else { return }
+            tabManager.closeTab(tab: tab)
         }
     }
 

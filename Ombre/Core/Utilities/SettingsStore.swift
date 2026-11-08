@@ -63,13 +63,14 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
         }
     }
 
+    @MainActor
     static func createWithFavicon(
         id: String = UUID().uuidString,
         name: String,
         searchURL: String,
         aliases: [String] = [],
         isAIChat: Bool = false,
-        completion: @escaping (CustomSearchEngine) -> Void
+        completion: @escaping @MainActor @Sendable (CustomSearchEngine) -> Void
     ) {
         let faviconService = FaviconService.shared
 

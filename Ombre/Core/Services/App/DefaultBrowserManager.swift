@@ -27,7 +27,7 @@ final class DefaultBrowserManager: ObservableObject {
     private let ownBundleID: String?
     private let setAsDefault: SetAsDefault
     private let notificationCenter: NotificationCenter
-    private var activationObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var activationObserver: NSObjectProtocol?
 
     init(
         defaultBrowserBundleID: @escaping () -> String?,

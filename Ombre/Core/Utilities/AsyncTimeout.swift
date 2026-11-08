@@ -9,7 +9,7 @@ struct AsyncTimeoutError: Error, Equatable {}
 /// for the operation, which is cancelled and whose late result is dropped.
 /// Unlike a task group, a call that ignores cancellation can't keep the
 /// caller waiting.
-func withTimeout<T>(
+func withTimeout<T: Sendable>(
     seconds: Double,
     operation: @escaping @Sendable () async throws -> T
 ) async throws -> T {
@@ -34,7 +34,7 @@ func withTimeout<T>(
 
 /// The first result of `withTimeout`, whether it comes before or after the
 /// caller starts waiting.
-private final class TimeoutOutcome<T>: @unchecked Sendable {
+private final class TimeoutOutcome<T: Sendable>: @unchecked Sendable {
     private enum State {
         case pending
         case waiting(CheckedContinuation<T, Error>)
@@ -42,7 +42,7 @@ private final class TimeoutOutcome<T>: @unchecked Sendable {
         case delivered
     }
 
-    private let state = OSAllocatedUnfairLock<State>(initialState: .pending)
+    private let state = OSAllocatedUnfairLock<State>(uncheckedState: .pending)
 
     func finish(_ result: Swift.Result<T, Error>) {
         let continuation: CheckedContinuation<T, Error>? = state.withLockUnchecked { state in

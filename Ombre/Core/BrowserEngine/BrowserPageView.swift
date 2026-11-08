@@ -231,12 +231,13 @@ struct BrowserPageView: NSViewRepresentable {
         }
     }
 
+    @MainActor
     final class Coordinator: NSObject {
         weak var tabManager: TabManager?
         weak var historyManager: HistoryManager?
         weak var privacyMode: PrivacyMode?
         private weak var page: BrowserPage?
-        private var mouseEventMonitor: Any?
+        private nonisolated(unsafe) var mouseEventMonitor: Any?
         private weak var contentView: NSView?
 
         init(
@@ -352,6 +353,7 @@ struct BrowserPageView: NSViewRepresentable {
 
 /// A page that Escape can stop while it loads (see
 /// `BrowserPageView.cancelOperationHandler(for:)`).
+@MainActor
 protocol LoadingStoppable: AnyObject {
     var isLoading: Bool { get }
     func stopLoading()

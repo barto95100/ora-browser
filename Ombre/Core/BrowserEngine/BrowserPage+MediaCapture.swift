@@ -4,7 +4,7 @@ import Foundation
 extension BrowserPage {
     /// Pauses every media element of the page at once, in WebKit itself (does
     /// not depend on the page's scripts).
-    func pauseAllMedia(completion: @escaping () -> Void) {
+    func pauseAllMedia(completion: @escaping @MainActor @Sendable () -> Void) {
         webView.pauseAllMediaPlayback(completionHandler: completion)
     }
 

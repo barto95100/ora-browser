@@ -12,7 +12,7 @@ enum LocalFileAccess {
 
     /// Asks the user for access to a file, calls back with the file granted
     /// (the one picked, which may differ) or nil. Replaced in tests.
-    static var requestAccess: (URL, @escaping (URL?) -> Void) -> Void = showOpenPanel
+    static var requestAccess: @MainActor (URL, @escaping (URL?) -> Void) -> Void = showOpenPanel
 
     /// Whether Ombre may read the file now (picked this session, or in a
     /// folder the user allowed).

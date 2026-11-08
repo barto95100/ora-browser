@@ -8,6 +8,7 @@ struct WindowAccessor: NSViewRepresentable {
         Coordinator(self)
     }
 
+    @MainActor
     class Coordinator {
         var parent: WindowAccessor
         var observers: [Any] = []
@@ -41,16 +42,22 @@ struct WindowAccessor: NSViewRepresentable {
             let enterObserver = NotificationCenter.default.addObserver(
                 forName: NSWindow.willEnterFullScreenNotification,
                 object: window,
-                queue: nil,
-                using: coordinator.willEnterFullScreenNotification
-            )
+                queue: .main
+            ) { [weak coordinator] notification in
+                // Delivered on the main queue (`queue: .main`).
+                nonisolated(unsafe) let notification = notification
+                MainActor.assumeIsolated { coordinator?.willEnterFullScreenNotification(notification) }
+            }
 
             let exitObserver = NotificationCenter.default.addObserver(
                 forName: NSWindow.willExitFullScreenNotification,
                 object: window,
-                queue: nil,
-                using: coordinator.willExitFullScreenNotification
-            )
+                queue: .main
+            ) { [weak coordinator] notification in
+                // Delivered on the main queue (`queue: .main`).
+                nonisolated(unsafe) let notification = notification
+                MainActor.assumeIsolated { coordinator?.willExitFullScreenNotification(notification) }
+            }
 
             coordinator.observers = [enterObserver, exitObserver]
             updateTrafficLights(for: window)

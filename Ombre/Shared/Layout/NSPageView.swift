@@ -258,10 +258,13 @@ import SwiftUI
                     context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
                     self.animator().selectedIndex = index
                 } completionHandler: {
-                    self.completeTransition()
-                    self.isAnimating = false
-                    // What was asked meanwhile.
-                    self.applyRequest()
+                    // AppKit ends its animations on the main thread.
+                    MainActor.assumeIsolated {
+                        self.completeTransition()
+                        self.isAnimating = false
+                        // What was asked meanwhile.
+                        self.applyRequest()
+                    }
                 }
             }
         }

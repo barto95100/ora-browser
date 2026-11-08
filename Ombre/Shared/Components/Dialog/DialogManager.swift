@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 final class DialogManager: ObservableObject {
     @Published var dialogs: [Dialog] = []
 

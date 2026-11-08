@@ -23,7 +23,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
     private var observations: [NSKeyValueObservation] = []
-    private var inspectionObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var inspectionObserver: NSObjectProtocol?
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.
     var httpsUpgrade = HTTPSUpgradePolicy()
     /// How the next new tab asked by the page opens (context menu items, see
@@ -354,7 +354,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
     func takeSnapshot(
         configuration: BrowserSnapshotConfiguration,
-        completion: @escaping (NSImage?, Error?) -> Void
+        completion: @escaping @MainActor @Sendable (NSImage?, Error?) -> Void
     ) {
         let snapshotConfiguration = WKSnapshotConfiguration()
         snapshotConfiguration.afterScreenUpdates = configuration.afterScreenUpdates
@@ -364,7 +364,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.takeSnapshot(with: snapshotConfiguration, completionHandler: completion)
     }
 
-    func closeMediaPresentations(completion: @escaping () -> Void) {
+    func closeMediaPresentations(completion: @escaping @MainActor @Sendable () -> Void) {
         webView.closeAllMediaPresentations(completionHandler: completion)
     }
 

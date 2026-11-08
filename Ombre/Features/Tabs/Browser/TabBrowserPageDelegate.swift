@@ -163,9 +163,9 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
     }
 
-    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
+    @MainActor func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
         guard let tab else { return [] }
-        return MainActor.assumeIsolated { tab.translationMenuItems() }
+        return tab.translationMenuItems()
     }
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {

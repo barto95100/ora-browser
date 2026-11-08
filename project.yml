@@ -98,6 +98,11 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 5.9
+        # Toward Swift 6, a step at a time: "targeted" checks the code that
+        # already uses concurrency (Sendable, actors); "complete" comes next.
+        SWIFT_STRICT_CONCURRENCY: targeted
+        # Swift 6's: a key path literal is Sendable when it can be (sort orders).
+        SWIFT_UPCOMING_FEATURE_INFER_SENDABLE_FROM_CAPTURES: YES
         CODE_SIGN_STYLE: Automatic
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 106

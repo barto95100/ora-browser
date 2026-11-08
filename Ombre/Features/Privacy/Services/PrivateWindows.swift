@@ -18,7 +18,7 @@ final class PrivateWindows {
             Task { @MainActor in
                 // Unless a new private window opened meanwhile.
                 guard PrivateWindows.shared.isEmpty else { return }
-                await FaviconStore.shared.forgetPrivateIcons()
+                FaviconStore.shared.forgetPrivateIcons()
             }
         }
     ) {

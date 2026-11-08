@@ -305,24 +305,18 @@ final class PasswordManagerService: ObservableObject {
     func deleteEntries(for containerID: UUID) throws {
         let scopedEntries = entries(for: containerID)
 
-        defer {
-            refresh()
+        // All of them, even after a failure: the space is gone.
+        let failure = PasswordKeychain.deleteAll(scopedEntries.map(\.persistentReference)) { reference in
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecValuePersistentRef as String: reference
+            ]
+            return SecItemDelete(query as CFDictionary)
         }
-
-        do {
-            for entry in scopedEntries {
-                let query: [String: Any] = [
-                    kSecClass as String: kSecClassGenericPassword,
-                    kSecValuePersistentRef as String: entry.persistentReference
-                ]
-
-                let status = SecItemDelete(query as CFDictionary)
-                guard status == errSecSuccess || status == errSecItemNotFound else {
-                    throw PasswordManagerError.keychainStatus(status)
-                }
-            }
-            lastErrorMessage = nil
-        } catch {
+        // Refreshed first: refreshing clears the message.
+        refresh()
+        if let failure {
+            let error = PasswordManagerError.keychainStatus(failure)
             lastErrorMessage = error.localizedDescription
             throw error
         }
@@ -367,7 +361,7 @@ final class PasswordManagerService: ObservableObject {
 
         var error: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            return true
+            return PasswordKeychain.opensWithoutAsking(whenUnavailable: error)
         }
 
         return await withCheckedContinuation { continuation in
@@ -544,12 +538,12 @@ final class PasswordManagerService: ObservableObject {
 
     private func copyToPasteboard(_ value: String, clearingAfter timeout: TimeInterval?) {
         let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(value, forType: .string)
-
         guard let timeout else {
+            pasteboard.clearContents()
+            pasteboard.setString(value, forType: .string)
             return
         }
+        PasswordKeychain.writeSensitive(value, to: pasteboard)
 
         let expectedChangeCount = pasteboard.changeCount
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {

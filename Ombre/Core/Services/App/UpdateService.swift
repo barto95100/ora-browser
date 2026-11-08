@@ -4,13 +4,14 @@ import SwiftUI
 
 private let logger = Logger(category: "UpdateService")
 
+@MainActor
 class UpdateService: NSObject, ObservableObject {
     static let shared = UpdateService()
 
     /// Whether this build can update itself: it needs both its own appcast
     /// (`SUFeedURL`) and the public key that signs its updates (`SUPublicEDKey`).
     /// Without them, no Sparkle updater is created and the update controls are hidden.
-    static let isAvailable = updatesConfigured(in: Bundle.main.infoDictionary)
+    nonisolated static let isAvailable = updatesConfigured(in: Bundle.main.infoDictionary)
 
     @Published var canCheckForUpdates = false
     @Published var updateProgress: Double = 0.0
@@ -32,7 +33,7 @@ class UpdateService: NSObject, ObservableObject {
         setupUpdater()
     }
 
-    static func updatesConfigured(in info: [String: Any]?) -> Bool {
+    nonisolated static func updatesConfigured(in info: [String: Any]?) -> Bool {
         func hasValue(_ key: String) -> Bool {
             guard let value = info?[key] as? String else { return false }
             return !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

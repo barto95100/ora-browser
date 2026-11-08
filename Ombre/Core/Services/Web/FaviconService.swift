@@ -3,6 +3,7 @@ import CoreImage
 import FaviconFinder
 import SwiftUI
 
+@MainActor
 final class FaviconService: ObservableObject {
     static let shared = FaviconService()
     private var cache: [String: NSImage] = [:]

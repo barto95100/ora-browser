@@ -99,10 +99,6 @@ private final class GlobalTrackingStrip: NSView {
         super.viewWillMove(toWindow: newWindow)
     }
 
-    deinit {
-        hoverTracker?.stop()
-    }
-
     override func viewDidMoveToWindow() {
         if window == nil {
             hoverTracker?.stop()
@@ -116,10 +112,12 @@ private final class GlobalTrackingStrip: NSView {
     }
 }
 
+@MainActor
 private class GlobalHoverTracker {
     typealias LocalMonitorToken = Any
 
-    private var localMonitor: LocalMonitorToken?
+    /// Removed when the tracker goes (its deinit isn't on the main actor).
+    private nonisolated(unsafe) var localMonitor: LocalMonitorToken?
     private var armed = false
     private var isInside = false
 
@@ -206,6 +204,10 @@ private class GlobalHoverTracker {
             handler(event)
             return event
         }
+    }
+
+    deinit {
+        if let local = localMonitor { NSEvent.removeMonitor(local) }
     }
 
     func stop() {

@@ -48,6 +48,7 @@ struct NoteTextEditor: NSViewRepresentable {
         Coordinator.style(textView)
     }
 
+    @MainActor
     final class Coordinator: NSObject, NSTextViewDelegate {
         var text: Binding<String>
         /// The editor's own undo steps. With the window's, ⌘Z after the

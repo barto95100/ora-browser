@@ -19,6 +19,7 @@ struct Note: Identifiable, Hashable {
 /// Application Support folder (in its sandbox container), so they can be
 /// opened from the Finder or another editor:
 /// `Ombre/Notes/<Space name>/<Note title>.md`.
+@MainActor
 final class NotesStore {
     static let shared = NotesStore()
 
@@ -169,7 +170,7 @@ final class NotesStore {
 
     /// Whether a folder name is the space's name, or that name numbered
     /// ("Work 2") because another space has it too.
-    static func isFolderName(_ folderName: String, for base: String) -> Bool {
+    nonisolated static func isFolderName(_ folderName: String, for base: String) -> Bool {
         if folderName == base { return true }
         guard folderName.hasPrefix(base + " ") else { return false }
         let suffix = folderName.dropFirst(base.count + 1)
@@ -177,7 +178,7 @@ final class NotesStore {
     }
 
     /// A name usable as a file name: no slash or colon, not hidden.
-    static func fileName(from title: String, fallback: String) -> String {
+    nonisolated static func fileName(from title: String, fallback: String) -> String {
         let cleaned = title
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "-")

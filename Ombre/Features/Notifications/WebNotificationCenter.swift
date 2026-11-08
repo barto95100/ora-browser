@@ -2,7 +2,9 @@ import AppKit
 import UserNotifications
 
 /// Shows web notifications as macOS notifications, like Safari, and brings the
-/// user back to their tab when one is clicked. Used from the main thread.
+/// user back to their tab when one is clicked. Used from the main actor;
+/// macOS calls its delegate methods on its own queue.
+@MainActor
 final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
     static let shared = WebNotificationCenter()
 
@@ -63,15 +65,15 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
     /// macOS identifier of a notification: one per tag, so a notification
     /// replaces the previous one of its tab with the same tag, as the web
     /// standard says.
-    static func requestIdentifier(tabID: UUID, notification: BrowserWebNotification) -> String {
+    nonisolated static func requestIdentifier(tabID: UUID, notification: BrowserWebNotification) -> String {
         if let tag = notification.tag {
             return "\(tabID.uuidString)/tag/\(tag)"
         }
         return "\(tabID.uuidString)/id/\(notification.id)"
     }
 
-    private static let tabIDKey = "tabID"
-    private static let notificationIDKey = "notificationID"
+    private nonisolated static let tabIDKey = "tabID"
+    private nonisolated static let notificationIDKey = "notificationID"
 
     private static func key(tabID: UUID, notificationID: String) -> String {
         "\(tabID.uuidString)/\(notificationID)"
@@ -80,7 +82,7 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
     // MARK: - UNUserNotificationCenterDelegate
 
     /// Shown even while Ombre is in front, like Safari: the tab is often not the one in view.
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
@@ -88,11 +90,13 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
         completionHandler([.banner, .list, .sound])
     }
 
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        // Called back once on the main queue below.
+        nonisolated(unsafe) let completionHandler = completionHandler
         let userInfo = response.notification.request.content.userInfo
         let tabID = (userInfo[Self.tabIDKey] as? String).flatMap(UUID.init(uuidString:))
         let notificationID = userInfo[Self.notificationIDKey] as? String
@@ -126,9 +130,7 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
     private func openTab(_ tabID: UUID, notificationID: String?) {
         NSApp.activate()
         guard let tab = tabs[tabID]?.tab, let tabManager = tab.tabManager else { return }
-        MainActor.assumeIsolated {
-            tabManager.activateTab(id: tabID)
-        }
+        tabManager.activateTab(id: tabID)
         // The page is put in its window once the tab is shown.
         DispatchQueue.main.async {
             if let window = tab.browserPage?.window {

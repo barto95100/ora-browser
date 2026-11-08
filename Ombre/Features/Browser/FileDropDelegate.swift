@@ -46,20 +46,20 @@ enum FileDrop {
         let providers = info.itemProviders(for: [.fileURL])
         guard !providers.isEmpty else { return false }
         let window = window ?? windowUnderPointer()
-        var urls = [URL?](repeating: nil, count: providers.count)
+        let dropped = DroppedURLs(count: providers.count)
         let group = DispatchGroup()
         for (index, provider) in providers.enumerated() {
             group.enter()
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 DispatchQueue.main.async {
-                    urls[index] = url
+                    dropped.urls[index] = url
                     group.leave()
                 }
             }
         }
         group.notify(queue: .main) {
             MainActor.assumeIsolated {
-                open(urls.compactMap { $0 }, in: window)
+                open(dropped.urls.compactMap { $0 }, in: window)
             }
         }
         return true
@@ -79,5 +79,15 @@ enum FileDrop {
     static func windowUnderPointer() -> NSWindow? {
         let location = pointerLocation()
         return NSApp.orderedWindows.first { $0.isVisible && $0.frame.contains(location) }
+    }
+}
+
+/// The dropped files' addresses, in their drop order: filled on the main
+/// queue only, as each provider answers.
+private final class DroppedURLs: @unchecked Sendable {
+    var urls: [URL?]
+
+    init(count: Int) {
+        urls = Array(repeating: nil, count: count)
     }
 }

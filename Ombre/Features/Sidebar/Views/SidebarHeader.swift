@@ -183,6 +183,7 @@ private struct TitleBarHintAnchor: NSViewRepresentable {
         Coordinator()
     }
 
+    @MainActor
     final class Coordinator {
         private var panel: NSPanel?
 

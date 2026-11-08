@@ -1,7 +1,8 @@
 import CryptoKit
 import Foundation
 
-final class ContentBlockerArtifactStore {
+/// Files only, no state of its own: used from the ad blocker's actor too.
+final class ContentBlockerArtifactStore: @unchecked Sendable {
     struct RevisionManifest: Codable {
         let coverage: FilterListCoverage
     }

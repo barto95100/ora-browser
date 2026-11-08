@@ -26,6 +26,7 @@ struct SidebarSettingsButton: View {
 
 /// Normal browser windows: ⌘, shows the settings in them; elsewhere
 /// (private window, settings or passwords window) it opens the settings window.
+@MainActor
 enum BrowserWindows {
     static let normal = NSHashTable<NSWindow>.weakObjects()
     /// All browser windows, normal and private.

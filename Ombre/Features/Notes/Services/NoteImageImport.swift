@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 /// Images the user brings to a note: a screenshot pasted (⌘⇧⌃4 copies one),
 /// dropped (the screenshot thumbnail, a Finder file, an image of a page) or
 /// chosen from a file. All become PNG files of the note's `attachments`.
+@MainActor
 enum NoteImageImport {
     static let dropTypes: [UTType] = [.fileURL, .image]
 
@@ -43,27 +44,27 @@ enum NoteImageImport {
         return url
     }
 
-    static func pngData(fromFile url: URL) -> Data? {
+    nonisolated static func pngData(fromFile url: URL) -> Data? {
         NSImage(contentsOf: url).flatMap(pngData(from:))
     }
 
     /// A page snapshot, at its full (Retina) resolution.
-    static func pngData(fromSnapshot image: NSImage) -> Data? {
+    nonisolated static func pngData(fromSnapshot image: NSImage) -> Data? {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
         return NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:])
     }
 
-    static func pngData(from image: NSImage) -> Data? {
+    nonisolated static func pngData(from image: NSImage) -> Data? {
         guard let tiff = image.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
         return bitmap.representation(using: .png, properties: [:])
     }
 
-    static func isImageFile(_ url: URL) -> Bool {
+    nonisolated static func isImageFile(_ url: URL) -> Bool {
         UTType(filenameExtension: url.pathExtension)?.conforms(to: .image) ?? false
     }
 
     /// Images dropped, as PNG, on the main queue.
-    static func load(_ providers: [NSItemProvider], completion: @escaping (Data) -> Void) -> Bool {
+    static func load(_ providers: [NSItemProvider], completion: @escaping @MainActor @Sendable (Data) -> Void) -> Bool {
         var accepted = false
         for provider in providers {
             if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {

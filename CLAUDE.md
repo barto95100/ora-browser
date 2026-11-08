@@ -71,20 +71,23 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - Swift 5.9 (concurrence permissive), macOS 15.0 minimum, SwiftUI + AppKit, SwiftData, Swift Testing.
 - **lefthook** : pre-commit SwiftFormat + SwiftLint (erreurs bloquantes : `type_body_length` > 500,
   `file_length` > 800, `identifier_name` < 3 caractères, `large_tuple` > 2 ; avertissement ligne > 120).
-  Le pre-push compile l'app (pas les tests) dans `build/DerivedData`.
+  Le pre-push compile l'app (pas les tests) dans `build/DerivedData.noindex`.
 - **Tests isolés des données de Ludo** : `xcodebuild test` construit la configuration « Test »
   (identifiant `com.barto95100.ora.tests`, son propre conteneur) et l'app détecte qu'elle tourne sous les
   tests (`TestHost`) : base en mémoire, aucune fenêtre ni assistant, service à part dans le trousseau.
   Un test ne doit jamais agir sur un singleton qui verrait de vraies fenêtres ou de vraies données.
 - **Copies enregistrées dans Launch Services** : toute copie d'Ombre construite hors du DerivedData de Xcode
   (worktrees, hook, `build.sh`, app de tests, CI) et son `Updater.app` (Sparkle) doivent être désenregistrées,
-  sinon un clic sur une notification lance une autre copie. `scripts/unregister-copies.sh <dossier>…` le fait
-  (déjà appelé par le hook, `build.sh`, `scripts/test.sh` et la CI) ; `--check` liste ce qui reste.
-- **Avant chaque push : lancer les tests** : `scripts/test.sh` (`xcodebuild test` dans `build/TestData`, puis
+  sinon un clic sur une notification lance une autre copie. **Toujours construire dans un dossier `.noindex`**
+  (`build/DerivedData.noindex`, `build/TestData.noindex`, `build/Release.noindex`, `build/<Nom>Data.noindex`
+  pour une mesure) : Spotlight l'ignore, sinon il réenregistre l'app même désenregistrée.
+  `scripts/unregister-copies.sh <dossier>…` désenregistre (filet de sécurité, appelé par le hook, `build.sh`,
+  `scripts/test.sh` et la CI) ; `--check` liste les copies enregistrées et les apps du dépôt hors `.noindex`.
+- **Avant chaque push : lancer les tests** : `scripts/test.sh` (`xcodebuild test` dans `build/TestData.noindex`, puis
   désenregistre l'app de test ; options de `xcodebuild` en plus, ex. `-only-testing:OmbreTests/<Suite>`)
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
-- Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` fait
-  `Ombre.app` + DMG. Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
+- Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` ne laisse que
+  le DMG (`build/Release.noindex/Ombre-<version>.dmg`). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
   `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à
   Apple : pas encore demandé, donc absent (pas de clés d'accès d'ici là).
   Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).

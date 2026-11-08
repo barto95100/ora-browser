@@ -11,8 +11,15 @@
 #                                             these folders, and the ones
 #                                             registered there but now gone
 #   scripts/unregister-copies.sh --check      list the Ombre copies still
-#                                             registered; fails if there are
-#                                             more than one
+#                                             registered, and the apps built
+#                                             in this repository outside a
+#                                             .noindex folder; fails if there
+#                                             is more than one copy, or any
+#                                             such app
+#
+# Builds go to .noindex folders (build/DerivedData.noindex, build/TestData.noindex,
+# build/Release.noindex): Spotlight skips them. An app elsewhere on the disk is
+# registered again by Spotlight sooner or later, even after it was unregistered.
 set -uo pipefail
 
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
@@ -31,7 +38,14 @@ if [[ "${1:-}" == "--check" ]]; then
     [[ -n "$copies" ]] && sed 's/^/  /' <<<"$copies"
     # Xcode's Debug copy, plus an installed release in /Applications if any.
     others=$(grep -v '^/Applications/' <<<"$copies" | grep -c .)
-    [[ "$others" -le 1 ]]
+    # Apps built in the repository and its worktrees, outside .noindex.
+    root=$(dirname "$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir)")
+    exposed=$(find "$root" -path '*.noindex' -prune -o -type d -name '*.app' -print -prune 2>/dev/null)
+    if [[ -n "$exposed" ]]; then
+        echo "Apps Spotlight would register again (move them to a .noindex folder, or delete them):"
+        sed 's/^/  /' <<<"$exposed"
+    fi
+    [[ "$others" -le 1 && -z "$exposed" ]]
     exit
 fi
 

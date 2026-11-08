@@ -109,7 +109,9 @@ jobs:
 
       # The self-hosted Mac keeps its packages and builds between runs
       # instead, outside the checkout (which is cleaned each time); one
-      # runner only, or two runs would share them.
+      # runner only, or two runs would share them. Its builds go to a
+      # .noindex folder: Spotlight skips it, so it never registers the apps
+      # there again with Launch Services once they are unregistered.
       - name: Cache Swift packages
         if: runner.environment == 'github-hosted'
         uses: actions/cache@v6
@@ -137,7 +139,7 @@ jobs:
           else
             places=(
               -clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm"
-              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData"
+              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData.noindex"
             )
             signing=()
           fi
@@ -171,7 +173,7 @@ jobs:
           # right after it was unregistered. Wait for it (30 s at most),
           # then unregister twice, a few seconds apart.
           for _ in $(seq 30); do
-            pgrep -f "$RUNNER_WORKSPACE/DerivedData" >/dev/null || break
+            pgrep -f "$RUNNER_WORKSPACE/DerivedData.noindex" >/dev/null || break
             sleep 1
           done
           unregister

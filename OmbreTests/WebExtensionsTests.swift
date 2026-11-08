@@ -237,7 +237,8 @@ struct ExtensionUpdateTests {
         #expect(WebExtensionsManager.updateSummary(status: "Everything is up to date.", hasStoreExtensions: false)
             == none)
         #expect(WebExtensionsManager.updateSummary(status: nil, hasStoreExtensions: true)
-            == "Updates are checked once a day, like Chrome.")
+            == "Updates are checked once a day, like Chrome: the Chrome Web Store (Google) "
+            + "receives the list of these extensions and their versions.")
         #expect(WebExtensionsManager.updateSummary(status: "Everything is up to date.", hasStoreExtensions: true)
             == "Everything is up to date.")
     }

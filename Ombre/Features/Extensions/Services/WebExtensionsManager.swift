@@ -27,6 +27,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         let source: ExtensionRecord.Source
         /// The app that brings it, for a Safari extension.
         let appName: String?
+        /// The team that signs a Safari extension.
+        var signingTeam: String?
         let fallbackName: String
         let webExtension: WKWebExtension
 
@@ -49,12 +51,20 @@ final class WebExtensionsManager: NSObject, ObservableObject {
 
     enum Failure: LocalizedError {
         case appRemoved
+        /// Its `.appex` is no longer the one installed: another bundle id, or
+        /// not validly signed.
+        case appChanged
+        /// A Safari extension not signed by a developer team: not installed.
+        case notSigned
         case nativeMessagingUnsupported
         case noAnchor
 
         var errorDescription: String? {
             switch self {
             case .appRemoved: "The app that brings this extension isn't installed anymore."
+            case .appChanged: "The app that brings this extension has changed: remove the extension, "
+                + "then install it again."
+            case .notSigned: "This extension isn't signed by its developer: Ombre doesn't install it."
             case .nativeMessagingUnsupported: "Ombre can't talk to the extension's app."
             case .noAnchor: "No window to show the popup in."
             }
@@ -212,11 +222,16 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     /// installing it.
     func review(_ candidate: SafariExtensionCandidate) async throws -> Review {
         guard let bundle = Bundle(url: candidate.appexURL) else { throw Failure.appRemoved }
+        let appexURL = candidate.appexURL
+        guard let team = await Task.detached(priority: .userInitiated, operation: {
+            SafariExtensionIdentity.signingTeam(of: appexURL)
+        }).value else { throw Failure.notSigned }
         let webExtension = try await WKWebExtension(appExtensionBundle: bundle)
         return Review(
             id: UUID().uuidString,
             source: .safariApp(appexPath: candidate.appexURL.path, bundleIdentifier: candidate.bundleIdentifier),
             appName: candidate.appName,
+            signingTeam: team,
             fallbackName: candidate.name,
             webExtension: webExtension
         )
@@ -226,6 +241,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     /// on all of them, or each asked for the first time (like Safari).
     func install(_ review: Review, allowAllSites: Bool) {
         var record = ExtensionRecord(id: review.id, source: review.source, name: review.name, appName: review.appName)
+        record.signingTeam = review.signingTeam
         record.grantedPermissions = review.permissions
         record.grantedMatchPatterns = review.sites
         record.otherSites = allowAllSites ? .allow : .ask
@@ -288,6 +304,17 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             let webExtension: WKWebExtension
             if record.bundleIdentifier != nil {
                 guard let bundle = Bundle(path: record.path) else { throw Failure.appRemoved }
+                // The extension that was allowed, never another one at its path.
+                guard bundle.bundleIdentifier == record.bundleIdentifier else { throw Failure.appChanged }
+                let url = bundle.bundleURL
+                let team = await Task.detached(priority: .userInitiated) {
+                    SafariExtensionIdentity.signingTeam(of: url)
+                }.value
+                guard team != nil else { throw Failure.notSigned }
+                guard SafariExtensionIdentity.accepts(team: team, recorded: record.signingTeam) else {
+                    throw Failure.appChanged
+                }
+                if record.signingTeam == nil { updateRecord(id: id) { $0.signingTeam = team } }
                 webExtension = try await WKWebExtension(appExtensionBundle: bundle)
             } else {
                 // Ombre's package: a .zip, or a folder.

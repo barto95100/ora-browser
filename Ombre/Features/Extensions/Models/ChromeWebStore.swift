@@ -3,6 +3,8 @@ import Foundation
 /// Extensions from the Chrome Web Store, fetched like Chrome does.
 enum ChromeWebStore {
     /// The Chrome version Ombre asks for: extensions are served for it.
+    /// Review it with each Ombre version (the store may stop serving some
+    /// extensions to an old Chrome).
     static let chromeVersion = "141.0.0.0"
 
     /// The extension of a store page (`chromewebstore.google.com/detail/name/id`,

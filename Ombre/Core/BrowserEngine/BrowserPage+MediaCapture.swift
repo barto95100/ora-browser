@@ -30,7 +30,7 @@ extension BrowserPage {
     }
 
     /// Called by the capture state observers set up in `init`.
-    func mediaCaptureStateDidChange() {
+    nonisolated func mediaCaptureStateDidChange() {
         notifyOnMain { $0.delegate?.browserPage($0, didChangeMediaCaptureState: $0.mediaCaptureState) }
     }
 }

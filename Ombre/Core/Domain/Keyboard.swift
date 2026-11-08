@@ -114,6 +114,7 @@ struct KeyboardShortcutDefinition: Identifiable, Equatable {
     let defaultChord: KeyChord
 
     /// Current chord (either custom override or default)
+    @MainActor
     var currentChord: KeyChord {
         if let custom = CustomKeyboardShortcutManager.shared.getShortcut(id: id) {
             return custom
@@ -122,11 +123,13 @@ struct KeyboardShortcutDefinition: Identifiable, Equatable {
     }
 
     /// SwiftUI KeyboardShortcut for use in views
+    @MainActor
     var keyboardShortcut: KeyboardShortcut {
         currentChord.keyboardShortcut
     }
 
     /// Display string for the current shortcut (used in settings UI)
+    @MainActor
     var display: String {
         currentChord.display
     }

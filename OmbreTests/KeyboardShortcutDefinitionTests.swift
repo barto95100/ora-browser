@@ -4,6 +4,7 @@ import SwiftUI
 import Testing
 
 /// The shortcuts shown in the settings (INT-10).
+@MainActor
 struct KeyboardShortcutDefinitionTests {
     /// Two shortcuts on one chord: one of them never works.
     @Test func defaultChordsAreUnique() {

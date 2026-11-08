@@ -9,6 +9,7 @@ enum CookiesPolicy: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+@MainActor
 class PrivacyService {
     @MainActor static func clearAllWebsiteData(for containerId: UUID) async {
         await withCheckedContinuation { continuation in
@@ -28,12 +29,12 @@ class PrivacyService {
         _ container: TabContainer,
         _ types: Set<BrowserWebsiteDataType>,
         host: String? = nil,
-        _ completion: (() -> Void)?
+        _ completion: (@MainActor () -> Void)?
     ) {
         profile(for: container).clearData(ofTypes: types, forHost: host, completion: completion)
     }
 
-    static func clearCookies(_ container: TabContainer, completion: (() -> Void)? = nil) {
+    static func clearCookies(_ container: TabContainer, completion: (@MainActor () -> Void)? = nil) {
         self.clearData(
             container,
             [.cookies],
@@ -41,7 +42,7 @@ class PrivacyService {
         )
     }
 
-    static func clearCache(_ container: TabContainer, completion: (() -> Void)? = nil) {
+    static func clearCache(_ container: TabContainer, completion: (@MainActor () -> Void)? = nil) {
         self.clearData(
             container,
             [.cache],
@@ -51,11 +52,11 @@ class PrivacyService {
 
     /// A tab's website: in the tab's own store (its private window's
     /// session in private), or its space's when the tab isn't loaded.
-    static func clearCookiesForHost(for host: String, tab: Tab, completion: (() -> Void)? = nil) {
+    static func clearCookiesForHost(for host: String, tab: Tab, completion: (@MainActor () -> Void)? = nil) {
         clearSite(host, [.cookies], tab: tab, completion)
     }
 
-    static func clearCacheForHost(for host: String, tab: Tab, completion: (() -> Void)? = nil) {
+    static func clearCacheForHost(for host: String, tab: Tab, completion: (@MainActor () -> Void)? = nil) {
         clearSite(host, [.cache], tab: tab, completion)
     }
 
@@ -63,7 +64,7 @@ class PrivacyService {
         _ host: String,
         _ types: Set<BrowserWebsiteDataType>,
         tab: Tab,
-        _ completion: (() -> Void)?
+        _ completion: (@MainActor () -> Void)?
     ) {
         if let page = tab.browserPage {
             page.clearWebsiteData(ofTypes: types, forHost: host, completion: completion)

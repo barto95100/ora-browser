@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 
+@MainActor
 class CustomKeyboardShortcutManager: ObservableObject {
     static let shared = CustomKeyboardShortcutManager()
 

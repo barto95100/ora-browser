@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 enum KeyboardShortcuts {
     // MARK: - Tabs
 
@@ -104,6 +105,7 @@ enum KeyboardShortcuts {
             defaultChord: KeyChord(keyEquivalent: .init("9"), modifiers: [.command])
         )
 
+        @MainActor
         static func keyboardShortcut(for index: Int) -> KeyboardShortcut {
             switch index {
             case 1: return tab1.keyboardShortcut
@@ -362,10 +364,10 @@ enum KeyboardShortcuts {
     static func conflict(
         for chord: KeyChord,
         excluding id: String,
-        in shortcuts: [KeyboardShortcutDefinition] = allShortcuts,
-        chord current: (KeyboardShortcutDefinition) -> KeyChord = { $0.currentChord }
+        in shortcuts: [KeyboardShortcutDefinition]? = nil,
+        chord current: @MainActor (KeyboardShortcutDefinition) -> KeyChord = { $0.currentChord }
     ) -> KeyboardShortcutDefinition? {
-        shortcuts.first { $0.id != id && current($0).isSameKeys(as: chord) }
+        (shortcuts ?? allShortcuts).first { $0.id != id && current($0).isSameKeys(as: chord) }
     }
 
     /// Get shortcuts grouped by category for settings display

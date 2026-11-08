@@ -4,6 +4,7 @@ import Foundation
 /// A link previewed over the current page (Peek, like Arc): its own page, in
 /// the space and privacy mode of the tab it comes from, until it is closed or
 /// opened as a tab (the page then moves to the tab as it is).
+@MainActor
 final class PeekPage: ObservableObject, Identifiable {
     let id = UUID()
     let page: BrowserPage

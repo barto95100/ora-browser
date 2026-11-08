@@ -289,6 +289,7 @@ enum FingerprintingNoiseSeed {
     }
 }
 
+@MainActor
 final class BrowserPrivacyService {
     private enum StaticRuleListIdentifier: String {
         case trackers = "privacy.trackers.v1"
@@ -367,7 +368,7 @@ final class BrowserPrivacyService {
         settings.blockThirdPartyTrackers || settings.adBlock.enabled || settings.cookiesPolicy != .allowAll
     }
 
-    static func privacyScripts(
+    nonisolated static func privacyScripts(
         for privacySettings: SpacePrivacySettings,
         spaceID: UUID? = nil,
         isPrivate: Bool = false
@@ -390,9 +391,10 @@ final class BrowserPrivacyService {
     }
 
     /// A window property name that says nothing of the app, new at each launch.
-    static let installMarker = "_" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12).lowercased()
+    nonisolated static let installMarker = "_" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12)
+        .lowercased()
 
-    static func fingerprintingProtectionScriptSource(
+    nonisolated static func fingerprintingProtectionScriptSource(
         seed: UInt32 = FingerprintingNoiseSeed.seed(spaceID: nil, isPrivate: false)
     ) -> String {
         FingerprintingProtectionProfile.balanced.scriptSource(seed: seed)
@@ -420,7 +422,7 @@ final class BrowserPrivacyService {
     private func applyCookiePolicy(
         _ policy: CookiesPolicy,
         to dataStore: WKWebsiteDataStore,
-        completion: @escaping () -> Void
+        completion: @escaping @MainActor @Sendable () -> Void
     ) {
         guard #available(macOS 14.0, *) else {
             completion()

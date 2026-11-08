@@ -6,7 +6,7 @@ extension BrowserPage: WKNavigationDelegate {
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationAction: WKNavigationAction,
-        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
     ) {
         // Links the site marks as downloads (`<a download>`): downloaded by the
         // page itself (its cookies, so a signed-in site works). Answering
@@ -178,7 +178,7 @@ extension BrowserPage: WKNavigationDelegate {
     func webView(
         _ webView: WKWebView,
         didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+        completionHandler: @escaping @MainActor @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
            let serverTrust = challenge.protectionSpace.serverTrust,
@@ -202,7 +202,7 @@ extension BrowserPage: WKNavigationDelegate {
     /// user through the delegate. False for any other challenge.
     private func authenticate(
         _ challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+        completionHandler: @escaping @MainActor @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) -> Bool {
         let space = challenge.protectionSpace
         // A proxy's login stays WebKit's (the sheet speaks of a site).
@@ -240,7 +240,7 @@ extension BrowserPage: WKNavigationDelegate {
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationResponse: WKNavigationResponse,
-        decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void
     ) {
         // Shown unless WebKit can't, or the server says it is a file to save
         // ("Content-Disposition: attachment"), like Safari.

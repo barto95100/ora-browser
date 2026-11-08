@@ -176,7 +176,7 @@ extension BrowserPopupWindow: WKNavigationDelegate {
     func webView(
         _ webView: WKWebView,
         decidePolicyFor navigationResponse: WKNavigationResponse,
-        decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void
     ) {
         decisionHandler(BrowserDownloadPolicy.isDownload(navigationResponse) ? .download : .allow)
     }
@@ -229,7 +229,7 @@ extension BrowserPopupWindow: WKUIDelegate {
         _ webView: WKWebView,
         runJavaScriptAlertPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping () -> Void
+        completionHandler: @escaping @MainActor @Sendable () -> Void
     ) {
         let alert = NSAlert()
         alert.messageText = message
@@ -240,7 +240,7 @@ extension BrowserPopupWindow: WKUIDelegate {
         _ webView: WKWebView,
         runJavaScriptConfirmPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping (Bool) -> Void
+        completionHandler: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         let alert = NSAlert()
         alert.messageText = message
@@ -254,7 +254,7 @@ extension BrowserPopupWindow: WKUIDelegate {
         runJavaScriptTextInputPanelWithPrompt prompt: String,
         defaultText: String?,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping (String?) -> Void
+        completionHandler: @escaping @MainActor @Sendable (String?) -> Void
     ) {
         let alert = NSAlert()
         alert.messageText = prompt

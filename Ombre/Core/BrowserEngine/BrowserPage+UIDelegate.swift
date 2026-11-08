@@ -9,7 +9,7 @@ extension BrowserPage: WKUIDelegate {
         requestMediaCapturePermissionFor origin: WKSecurityOrigin,
         initiatedByFrame frame: WKFrameInfo,
         type: WKMediaCaptureType,
-        decisionHandler: @escaping (WKPermissionDecision) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
     ) {
         let permission: BrowserPermissionKind = switch type {
         case .camera: .camera
@@ -31,7 +31,7 @@ extension BrowserPage: WKUIDelegate {
         _ webView: WKWebView,
         requestGeolocationPermissionFor origin: WKSecurityOrigin,
         initiatedByFrame frame: WKFrameInfo,
-        decisionHandler: @escaping (WKPermissionDecision) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
     ) {
         requestGeolocation(for: origin, decisionHandler: decisionHandler)
     }
@@ -43,7 +43,7 @@ extension BrowserPage: WKUIDelegate {
         _ webView: WKWebView,
         origin: WKSecurityOrigin,
         frame: WKFrameInfo,
-        decisionHandler: @escaping (WKPermissionDecision) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
     ) {
         requestGeolocation(for: origin, decisionHandler: decisionHandler)
     }
@@ -57,7 +57,7 @@ extension BrowserPage: WKUIDelegate {
         origin: WKSecurityOrigin,
         frame: WKFrameInfo,
         withSystemAudio: Bool,
-        decisionHandler: @escaping (Int) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (Int) -> Void
     ) {
         guard let delegate else {
             decisionHandler(ScreenSharing.Decision.deny.rawValue)
@@ -76,7 +76,7 @@ extension BrowserPage: WKUIDelegate {
 
     private func requestGeolocation(
         for origin: WKSecurityOrigin,
-        decisionHandler: @escaping (WKPermissionDecision) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
     ) {
         guard let delegate else {
             decisionHandler(.deny)
@@ -97,7 +97,7 @@ extension BrowserPage: WKUIDelegate {
         _ webView: WKWebView,
         queryPermission name: String,
         forOrigin origin: WKSecurityOrigin,
-        completionHandler: @escaping (WKPermissionDecision) -> Void
+        completionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
     ) {
         let permission: BrowserPermissionKind? = switch name {
         case "camera": .camera
@@ -137,7 +137,7 @@ extension BrowserPage: WKUIDelegate {
         _ webView: WKWebView,
         runOpenPanelWith parameters: WKOpenPanelParameters,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping ([URL]?) -> Void
+        completionHandler: @escaping @MainActor @Sendable ([URL]?) -> Void
     ) {
         delegate?.browserPage(
             self,
@@ -195,7 +195,7 @@ extension BrowserPage: WKUIDelegate {
         _ webView: WKWebView,
         runJavaScriptAlertPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping () -> Void
+        completionHandler: @escaping @MainActor @Sendable () -> Void
     ) {
         // Answered once the dialog is closed, not before: the page waits.
         runDialog(.alert, message: message, frame: frame) { _ in completionHandler() }
@@ -205,7 +205,7 @@ extension BrowserPage: WKUIDelegate {
         _ webView: WKWebView,
         runJavaScriptConfirmPanelWithMessage message: String,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping (Bool) -> Void
+        completionHandler: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         runDialog(.confirm, message: message, frame: frame) { completionHandler($0.isConfirmed) }
     }
@@ -215,7 +215,7 @@ extension BrowserPage: WKUIDelegate {
         runJavaScriptTextInputPanelWithPrompt prompt: String,
         defaultText: String?,
         initiatedByFrame frame: WKFrameInfo,
-        completionHandler: @escaping (String?) -> Void
+        completionHandler: @escaping @MainActor @Sendable (String?) -> Void
     ) {
         runDialog(.prompt(defaultText: defaultText ?? ""), message: prompt, frame: frame) { reply in
             completionHandler(reply.isConfirmed ? reply.text : nil)

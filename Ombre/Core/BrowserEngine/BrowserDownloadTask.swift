@@ -1,10 +1,11 @@
 import Foundation
 @preconcurrency import WebKit
 
+@MainActor
 final class BrowserDownloadTask: NSObject, WKDownloadDelegate {
     let id = UUID()
     var originalURL: URL
-    var onDestinationRequest: ((URLResponse, String, @escaping (URL?) -> Void) -> Void)?
+    var onDestinationRequest: ((URLResponse, String, @escaping @MainActor @Sendable (URL?) -> Void) -> Void)?
     var onRedirect: ((URL) -> Void)?
     var onFinish: (() -> Void)?
     var onFail: ((Error) -> Void)?
@@ -30,7 +31,7 @@ final class BrowserDownloadTask: NSObject, WKDownloadDelegate {
         _ download: WKDownload,
         decideDestinationUsing response: URLResponse,
         suggestedFilename: String,
-        completionHandler: @escaping (URL?) -> Void
+        completionHandler: @escaping @MainActor @Sendable (URL?) -> Void
     ) {
         if let onDestinationRequest {
             onDestinationRequest(response, suggestedFilename, completionHandler)
@@ -43,7 +44,7 @@ final class BrowserDownloadTask: NSObject, WKDownloadDelegate {
         _ download: WKDownload,
         willPerformHTTPRedirection response: HTTPURLResponse,
         newRequest: URLRequest,
-        decisionHandler: @escaping (WKDownload.RedirectPolicy) -> Void
+        decisionHandler: @escaping @MainActor @Sendable (WKDownload.RedirectPolicy) -> Void
     ) {
         if let url = newRequest.url {
             originalURL = url

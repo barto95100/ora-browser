@@ -10,12 +10,23 @@ enum MozLZ4 {
     }
 
     private static let magic = Data("mozLz40\0".utf8)
+    /// Far more than any session file: a size beyond it is a corrupted (or
+    /// forged) header, never memory to set aside.
+    static let maxSize = 256 * 1024 * 1024
+    /// LZ4 can't grow a block by more than 255 times.
+    private static let maxRatio = 255
+
+    /// Whether a block could hold that much: else the header is wrong.
+    static func isPlausible(size: Int, blockSize: Int) -> Bool {
+        size <= maxSize && size <= blockSize * maxRatio
+    }
 
     static func decompress(_ data: Data) throws -> Data {
         guard data.count > 12, data.prefix(8) == magic else { throw Failure.notMozLZ4 }
         let size = data.subdata(in: 8 ..< 12).withUnsafeBytes { Int($0.loadUnaligned(as: UInt32.self).littleEndian) }
         guard size > 0 else { return Data() }
         let block = data.subdata(in: 12 ..< data.count)
+        guard isPlausible(size: size, blockSize: block.count) else { throw Failure.corrupted }
         var output = Data(count: size)
         let written = output.withUnsafeMutableBytes { outputBytes in
             block.withUnsafeBytes { inputBytes -> Int in

@@ -151,46 +151,6 @@ class TabManager: ObservableObject {
         return nil
     }
 
-    /// A tab made active and loaded at once (the Arc import).
-    func addTab(
-        title: String = "Untitled",
-        url: URL,
-        container: TabContainer,
-        favicon: URL? = nil,
-        historyManager: HistoryManager? = nil,
-        downloadManager: DownloadManager? = nil,
-        isPrivate: Bool
-    ) -> Tab {
-        let cleanHost: String? = {
-            guard let host = url.host else { return nil }
-            return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-        }()
-        let newTab = makeTab(
-            url: url,
-            title: cleanHost ?? "New Tab",
-            favicon: favicon,
-            in: container,
-            isPrivate: isPrivate,
-            historyManager: historyManager,
-            downloadManager: downloadManager
-        )
-        activeTab?.maybeIsActive = false
-        activeTab = newTab
-        activeTab?.maybeIsActive = true
-        newTab.lastAccessedAt = Date()
-        container.lastAccessedAt = Date()
-
-        newTab.restoreTransientState(
-            historyManager: historyManager ?? self.historyManager,
-            downloadManager: downloadManager ?? self.downloadManager,
-            tabManager: self,
-            isPrivate: isPrivate
-        )
-
-        modelContext.saveOrLog("add tab")
-        return newTab
-    }
-
     /// The one way a tab is made: added to its space, in its section's order.
     @discardableResult
     func makeTab(

@@ -130,8 +130,11 @@ private struct ZenSession {
                 userContextID: space["containerTabId"] as? Int
             )
         }
+        // One folder per id, the first: a forged file repeating a folder
+        // that contains itself would otherwise grow the tree exponentially.
+        var folderIDs = Set<String>()
         folders = (root["folders"] as? [[String: Any]] ?? []).compactMap { folder in
-            guard let id = folder["id"] as? String else { return nil }
+            guard let id = folder["id"] as? String, folderIDs.insert(id).inserted else { return nil }
             return Folder(
                 id: id,
                 name: (folder["name"] as? String).flatMap(\.nonBlank) ?? "Folder",

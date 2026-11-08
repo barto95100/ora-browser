@@ -100,6 +100,33 @@ struct ZenImporterTests {
         #expect(throws: MozLZ4.Failure.self) { try MozLZ4.decompress(Data("{}".utf8)) }
     }
 
+    /// A forged header can't make the app set aside gigabytes.
+    @Test func mozLZ4RefusesAnImpossibleSize() {
+        #expect(MozLZ4.isPlausible(size: 2550, blockSize: 10))
+        #expect(!MozLZ4.isPlausible(size: 2551, blockSize: 10))
+        #expect(!MozLZ4.isPlausible(size: Int(UInt32.max), blockSize: Int(UInt32.max)))
+        var file = Self.mozLZ4(literals: Data("tiny".utf8))
+        file.replaceSubrange(8 ..< 12, with: [0xFF, 0xFF, 0xFF, 0xFF])
+        #expect(throws: MozLZ4.Failure.corrupted) { try MozLZ4.decompress(file) }
+        // More than LZ4 could ever make of this block.
+        file.replaceSubrange(8 ..< 12, with: withUnsafeBytes(of: UInt32(10000).littleEndian, Array.init))
+        #expect(throws: MozLZ4.Failure.corrupted) { try MozLZ4.decompress(file) }
+    }
+
+    /// Folders repeated with the same id, inside themselves: imported once
+    /// (it used to take forever, the tree growing exponentially).
+    @Test func repeatedFoldersAreImportedOnce() throws {
+        let repeated = Array(
+            repeating: #"{"id": "f-loop", "name": "Loop", "parentId": "f-loop", "workspaceId": "{s}"}"#,
+            count: 4
+        )
+        let session = #"{"spaces": [{"uuid": "{s}", "name": "Space"}], "folders": ["#
+            + #"{"id": "f-loop", "name": "Loop", "parentId": null, "workspaceId": "{s}"}, "#
+            + repeated.joined(separator: ", ") + #"], "tabs": []}"#
+        let data = try ZenImporter.parse(Data(session.utf8))
+        #expect(data.spaces.first?.pinned == [.folder(name: "Loop", isOpen: true, items: [])])
+    }
+
     @Test func takenNamesGetTheBrowserName() {
         #expect(TabManager.importedName("Perso", browser: "Zen", taken: []) == "Perso")
         #expect(TabManager.importedName("Perso", browser: "Zen", taken: ["Perso"]) == "Perso (Zen)")

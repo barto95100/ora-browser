@@ -36,6 +36,20 @@ struct PageTranslationTests {
         }
     }
 
+    /// The ring and the panel show the share translated, only while it is.
+    @Test func progressIsTheShareTranslatedWhileTranslating() {
+        let pair = PageTranslationPair(
+            source: Locale.Language(identifier: "de"),
+            target: Locale.Language(identifier: "fr")
+        )
+        #expect(PageTranslationState.translating(pair, done: 0, total: 0).progress == nil)
+        #expect(PageTranslationState.translating(pair, done: 1, total: 3).percentDone == 33)
+        #expect(PageTranslationState.translating(pair, done: 3, total: 3).percentDone == 100)
+        #expect(PageTranslationState.translating(pair, done: 5, total: 3).progress == 1)
+        #expect(PageTranslationState.translated(pair).progress == nil)
+        #expect(PageTranslationState.preparing(pair).percentDone == nil)
+    }
+
     /// The page's prose is translated, spaces kept; code, fields and what the
     /// page marks as not to translate stay; the original comes back.
     @Test func pageTextIsReplacedAndRestored() async throws {

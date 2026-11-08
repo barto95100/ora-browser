@@ -26,7 +26,8 @@ struct PageTranslationHost: View {
 
 /// The address bar's translate button: shown when the page is in another
 /// language than the Mac's, or translated; opens the translation panel.
-/// Turns while translating (with the share done), never without end.
+/// While translating, a ring around the translate sign fills with the
+/// share done; a spinner only while macOS downloads a language.
 struct PageTranslationButton: View {
     let tab: Tab
     let runtime: TabRuntime
@@ -38,7 +39,7 @@ struct PageTranslationButton: View {
         switch runtime.translation {
         case .original: "Translate this page"
         case .preparing: "Waiting for the language download…"
-        case let .translating(_, done, total): total > 0 ? "Translating… \(done) of \(total)" : "Translating…"
+        case .translating: runtime.translation.percentDone.map { "Translating… \($0)%" } ?? "Translating…"
         case .translated: "Translated: show the original or change the language"
         case .failed: "The translation failed"
         }
@@ -63,18 +64,13 @@ struct PageTranslationButton: View {
     @ViewBuilder
     private var icon: some View {
         switch runtime.translation {
-        case let .translating(_, done, total) where total > 0:
-            // Drawn here, in the bar's readable color: AppKit's own ring
-            // keeps the system's colors, unseen over a bright header.
-            ZStack {
-                Circle().stroke(foregroundColor.opacity(0.35), lineWidth: 2)
-                Circle()
-                    .trim(from: 0, to: CGFloat(done) / CGFloat(total))
-                    .stroke(foregroundColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-            }
-            .frame(width: 12, height: 12)
-        case .preparing, .translating:
+        case .translating:
+            // The translate sign inside a ring filling as the page is
+            // translated: never mistaken for a download. Drawn here, in the
+            // bar's readable color (AppKit's ring keeps the system's colors).
+            TranslationProgressRing(progress: runtime.translation.progress ?? 0, color: foregroundColor)
+        case .preparing:
+            // Only a language macOS downloads first (its prompt is shown).
             ProgressView()
                 .scaleEffect(0.45)
                 .environment(\.colorScheme, isOverDark ? .dark : .light)
@@ -86,5 +82,25 @@ struct PageTranslationButton: View {
                 .font(.system(size: 11, weight: .medium))
                 .symbolVariant(runtime.translation.showsTranslation ? .fill : .none)
         }
+    }
+}
+
+/// The translate sign inside a ring showing the share translated.
+struct TranslationProgressRing: View {
+    let progress: Double
+    let color: Color
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(color.opacity(0.3), lineWidth: 1.5)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(color, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.2), value: progress)
+            Image(systemName: "translate")
+                .font(.system(size: 7, weight: .semibold))
+        }
+        .frame(width: 15, height: 15)
     }
 }

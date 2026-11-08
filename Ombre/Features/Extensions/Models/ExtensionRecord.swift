@@ -20,9 +20,15 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     var name: String
     /// The app that brings it, for a Safari extension.
     var appName: String?
+    /// The developer team that signs a Safari extension: it must stay the
+    /// same (see `SafariExtensionIdentity`).
+    var signingTeam: String?
     var isEnabled: Bool
     /// What the user allowed, as WebKit names them (`tabs`, `storage`…).
     var grantedPermissions: [String]
+    /// Optional permissions refused when it asked while running: not asked
+    /// again (it could ask in a loop).
+    var deniedPermissions: [String]
     /// The websites it asked for (`*://*/*`…), granted while `otherSites`
     /// is `.allow`.
     var grantedMatchPatterns: [String]
@@ -48,6 +54,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         self.appName = appName
         isEnabled = true
         grantedPermissions = []
+        deniedPermissions = []
         grantedMatchPatterns = []
         extraMatchPatterns = []
         otherSites = .ask
@@ -64,8 +71,10 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         source = try container.decode(Source.self, forKey: .source)
         name = try container.decode(String.self, forKey: .name)
         appName = try container.decodeIfPresent(String.self, forKey: .appName)
+        signingTeam = try container.decodeIfPresent(String.self, forKey: .signingTeam)
         isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
         grantedPermissions = try container.decode([String].self, forKey: .grantedPermissions)
+        deniedPermissions = try container.decodeIfPresent([String].self, forKey: .deniedPermissions) ?? []
         grantedMatchPatterns = try container.decode([String].self, forKey: .grantedMatchPatterns)
         extraMatchPatterns = try container.decodeIfPresent([String].self, forKey: .extraMatchPatterns) ?? []
         otherSites = try container.decodeIfPresent(SiteDecision.self, forKey: .otherSites) ?? .allow
@@ -74,6 +83,24 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         allowsPrivateBrowsing = try container.decodeIfPresent(Bool.self, forKey: .allowsPrivateBrowsing) ?? false
         version = try container.decodeIfPresent(String.self, forKey: .version)
         installedAt = try container.decode(Date.self, forKey: .installedAt)
+    }
+
+    /// Allows `names`: no longer refused.
+    mutating func grant(_ names: some Sequence<String>) {
+        let names = Set(names)
+        grantedPermissions = Array(Set(grantedPermissions).union(names)).sorted()
+        deniedPermissions.removeAll { names.contains($0) }
+    }
+
+    /// Refuses `names` from now on.
+    mutating func deny(_ names: some Sequence<String>) {
+        let names = Set(names).subtracting(grantedPermissions)
+        deniedPermissions = Array(Set(deniedPermissions).union(names)).sorted()
+    }
+
+    /// Of `asked`, what was neither allowed nor refused yet.
+    func undecidedPermissions(_ asked: [String]) -> [String] {
+        asked.filter { !grantedPermissions.contains($0) && !deniedPermissions.contains($0) }
     }
 
     /// The app's `.appex`, or the package in Ombre.

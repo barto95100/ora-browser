@@ -48,7 +48,8 @@ extension WebExtensionsManager {
 
     nonisolated static func updateSummary(status: String?, hasStoreExtensions: Bool) -> String {
         guard hasStoreExtensions else { return "No extension from the Chrome Web Store." }
-        return status ?? "Updates are checked once a day, like Chrome."
+        return status ?? "Updates are checked once a day, like Chrome: the Chrome Web Store (Google) "
+            + "receives the list of these extensions and their versions."
     }
 
     /// Forgets a check's result once the store extensions change, but not an
@@ -137,8 +138,9 @@ extension WebExtensionsManager {
     /// Accepts a reviewed update: what it asks for is allowed, then it runs.
     func acceptUpdate(id: String) {
         guard let pending = pendingUpdates.removeValue(forKey: id) else { return }
+        // Allowed first: the new version loads with it.
         updateRecord(id: id) { record in
-            record.grantedPermissions = Array(Set(record.grantedPermissions).union(pending.newPermissions)).sorted()
+            record.grant(pending.newPermissions)
             record.grantedMatchPatterns = Array(Set(record.grantedMatchPatterns).union(pending.newSites)).sorted()
         }
         do {
@@ -159,7 +161,13 @@ extension WebExtensionsManager {
     private func install(_ pending: PendingUpdate, id: String) throws {
         guard let record = installed.first(where: { $0.id == id })?.record else { return }
         let current = URL(fileURLWithPath: record.path)
-        _ = try FileManager.default.replaceItemAt(current, withItemAt: pending.package)
+        do {
+            _ = try FileManager.default.replaceItemAt(current, withItemAt: pending.package)
+        } catch {
+            // Not left on the disk: the next check downloads it again.
+            ExtensionPackages.remove(path: pending.package.path)
+            throw error
+        }
         Task {
             // Read again from its place: the downloaded copy has moved.
             do {

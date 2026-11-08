@@ -12,6 +12,9 @@ extension WebExtensionsManager {
         for name in record.grantedPermissions {
             context.setPermissionStatus(.grantedExplicitly, for: WKWebExtension.Permission(rawValue: name))
         }
+        for name in record.deniedPermissions {
+            context.setPermissionStatus(.deniedExplicitly, for: WKWebExtension.Permission(rawValue: name))
+        }
 
         let granted = ExtensionSiteAccess.grantedPatterns(for: record)
         let denied = ExtensionSiteAccess.deniedPatterns(for: record)
@@ -153,18 +156,22 @@ extension WebExtensionsManager {
         completion: @escaping (Set<WKWebExtension.Permission>) -> Void
     ) {
         guard let record = record(for: context) else { return completion([]) }
-        let names = permissions.map(\.rawValue).sorted()
+        let granted = permissions.filter { record.grantedPermissions.contains($0.rawValue) }
+        // Only what wasn't answered yet: a refusal is not asked again.
+        let names = record.undecidedPermissions(permissions.map(\.rawValue).sorted())
+        guard !names.isEmpty else { return completion(granted) }
         let lines = names.map { "• " + ExtensionPermissionText.describe($0) }.joined(separator: "\n")
         ask(
             title: "“\(record.name)” would like to:",
             message: lines,
             buttons: ["Allow", "Don't Allow"]
         ) { choice in
-            guard choice == 0 else { return completion([]) }
+            let allowed = choice == 0
             self.updateRecord(id: record.id) { record in
-                record.grantedPermissions = Array(Set(record.grantedPermissions).union(names)).sorted()
+                if allowed { record.grant(names) } else { record.deny(names) }
             }
-            completion(permissions)
+            // Never one refused before: it wasn't asked.
+            completion(allowed ? granted.union(permissions.filter { names.contains($0.rawValue) }) : granted)
         }
     }
 

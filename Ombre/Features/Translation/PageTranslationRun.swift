@@ -1,6 +1,6 @@
 import Foundation
 import os
-import Translation
+@preconcurrency import Translation
 
 private let logger = Logger(category: "Translation")
 
@@ -19,7 +19,7 @@ protocol PageTextAccess: AnyObject {
 
 /// What translates text: Apple's Translation, on the Mac (see
 /// `SessionTextTranslator`).
-protocol PageTextTranslating {
+protocol PageTextTranslating: Sendable {
     /// Makes sure both languages are on the Mac: macOS asks the user to
     /// download what's missing (its own prompt), and returns once it is.
     func prepare() async throws

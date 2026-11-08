@@ -98,6 +98,7 @@ struct SitePermissionsTests {
 
 // MARK: - SitePermissionStore
 
+@MainActor
 struct SitePermissionStoreTests {
     private let space = UUID()
     private let otherSpace = UUID()

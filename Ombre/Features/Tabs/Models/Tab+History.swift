@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 extension Tab {
     /// Records one visit per page shown. Title changes (e.g. "(3) Inbox") are
     /// not visits: they only update the entry's title.

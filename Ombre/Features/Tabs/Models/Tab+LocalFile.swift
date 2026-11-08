@@ -3,6 +3,7 @@ import AppKit
 /// Local files stay readable after a relaunch. The sandbox only lets Ombre read a
 /// file the user opened during the current session, so the tab keeps a
 /// security-scoped bookmark to it and uses it to get access back.
+@MainActor
 extension Tab {
     /// The local file the tab loads (pinned and favorite tabs load their saved URL).
     private var fileToLoad: URL? {

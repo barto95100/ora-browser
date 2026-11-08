@@ -37,8 +37,8 @@ final class GeolocationProvider {
     /// How long Core Location may take to find a first position.
     var positionTimeout: Duration = .seconds(30)
     /// Tells the user (replaced in tests).
-    var onNoPosition: () -> Void = GeolocationProvider.tellNoPosition
-    var onDenied: () -> Void = { LocationAuthorization.shared.positionRefused() }
+    var onNoPosition: @MainActor () -> Void = GeolocationProvider.tellNoPosition
+    var onDenied: @MainActor () -> Void = { LocationAuthorization.shared.positionRefused() }
 
     init(source: PositionSource, webKit: GeolocationWebKit?) {
         self.source = source

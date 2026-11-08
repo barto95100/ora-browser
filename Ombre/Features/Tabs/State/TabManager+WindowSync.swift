@@ -31,14 +31,17 @@ extension TabManager {
         windowSyncObserver = NotificationCenter.default.addObserver(
             forName: ModelContext.didSave, object: nil, queue: .main
         ) { [weak self] note in
-            guard let context = note.object as? ModelContext else { return }
+            guard note.object is ModelContext else { return }
             let inserted = Self.identifiers(.insertedIdentifiers, in: note)
             let updated = Self.identifiers(.updatedIdentifiers, in: note)
             let deleted = Self.identifiers(.deletedIdentifiers, in: note)
             // History, downloads…: nothing the window shows from its spaces.
             guard (inserted + updated + deleted).contains(where: { Self.syncedEntities.contains($0.entityName) })
             else { return }
+            // Delivered on the main queue (`queue: .main`).
+            nonisolated(unsafe) let note = note
             MainActor.assumeIsolated {
+                guard let context = note.object as? ModelContext else { return }
                 self?.otherContextSaved(context, inserted: inserted, updated: updated, deleted: deleted)
             }
         }

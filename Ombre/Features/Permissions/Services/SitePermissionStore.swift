@@ -9,7 +9,8 @@ import Foundation
 /// keeps its choices in memory only, forgotten when their window closes (see
 /// `PrivateWindows`).
 ///
-/// Like `SettingsStore`, this type is meant to be used from the main thread.
+/// Like `SettingsStore`, this type is used on the main actor.
+@MainActor
 final class SitePermissionStore: ObservableObject {
     static let shared = SitePermissionStore()
 

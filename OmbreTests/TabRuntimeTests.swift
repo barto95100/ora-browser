@@ -96,7 +96,7 @@ extension TabManagerTests {
             try await TabManagerTestWindow.run { window in
                 let space = try #require(window.tabManager.activeContainer)
                 let tab = window.addUnloadedTab("page", order: 1, in: space)
-                var redrawn = false
+                nonisolated(unsafe) var redrawn = false
                 withObservationTracking { _ = tab.isWebViewReady } onChange: { redrawn = true }
 
                 tab.isWebViewReady = true
@@ -125,7 +125,7 @@ extension TabManagerTests {
             try await TabManagerTestWindow.run { window in
                 let tab = try await window.openLoaded("page")
                 let runtime = try #require(tab.runtime)
-                var redrawn = false
+                nonisolated(unsafe) var redrawn = false
                 withObservationTracking {
                     _ = tab.isWebViewReady
                     _ = tab.browserPage
@@ -187,7 +187,7 @@ extension TabManagerTests {
         /// Every change redraws the page's overlays: only real ones count.
         @Test func hoveredLinkChangesOnlyWhenDifferent() {
             let runtime = TabRuntime()
-            var changes = 0
+            nonisolated(unsafe) var changes = 0
             withObservationTracking { _ = runtime.hoveredLinkURL } onChange: { changes += 1 }
             runtime.setHoveredLink(nil)
             runtime.setHoveredLink("")
@@ -209,7 +209,7 @@ extension TabManagerTests {
             runtime.navigationFailed(URLError(.notConnectedToInternet), url: URL(string: "https://example.com/"))
             #expect(runtime.navigationFailure?.url?.host == "example.com")
 
-            var changes = 0
+            nonisolated(unsafe) var changes = 0
             withObservationTracking { _ = runtime.navigationFailure } onChange: { changes += 1 }
             runtime.clearNavigationFailure()
             #expect(changes == 1)

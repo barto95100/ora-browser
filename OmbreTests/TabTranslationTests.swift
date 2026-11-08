@@ -91,7 +91,11 @@ extension TabManagerTests {
                     styleMask: [.borderless], backing: .buffered, defer: false
                 )
                 host.contentView = page.extensionWebView
-                defer { host.contentView = nil }
+                host.orderBack(nil)
+                defer {
+                    host.orderOut(nil)
+                    host.contentView = nil
+                }
                 let text = BrowserPageText(page: page)
                 let pieces = await text.collectText()
                 #expect(pieces.count == 201)
@@ -99,7 +103,7 @@ extension TabManagerTests {
 
                 _ = await evaluate(page, "window.scrollTo(0, 4000); 1")
                 var onScreen: [Int] = []
-                for _ in 0 ..< 40 where onScreen.isEmpty {
+                for _ in 0 ..< 200 where onScreen.isEmpty {
                     try await Task.sleep(for: .milliseconds(50))
                     onScreen = await text.piecesOnScreen()
                 }

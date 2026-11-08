@@ -74,6 +74,8 @@ struct PageTranslationQueue {
 
     private var pending: [Int]
     private var isPending: [Bool]
+    /// The texts on screen at the last report, not sent yet: before the others.
+    private var onScreenFirst: [Int] = []
     private var sentGroups = 0
 
     /// `done`: texts already translated (the page's memory).
@@ -93,8 +95,18 @@ struct PageTranslationQueue {
     }
 
     /// The next group, taken from the queue: the texts of `onScreen` (piece
-    /// numbers the user now sees) first, then the others in order.
+    /// numbers the user now sees; else those of the last report not sent
+    /// yet) first, then the others in order.
     mutating func next(onScreen: [Int] = []) -> [Int] {
+        if !onScreen.isEmpty {
+            var seen = Set<Int>()
+            onScreenFirst = onScreen.compactMap { piece in
+                guard plan.textOfPiece.indices.contains(piece), let text = plan.textOfPiece[piece],
+                      isPending[text], seen.insert(text).inserted
+                else { return nil }
+                return text
+            }
+        }
         let limit = sentGroups == 0 ? firstGroup : group
         sentGroups += 1
         var chosen: [Int] = []
@@ -109,9 +121,8 @@ struct PageTranslationQueue {
             characters += length
             return true
         }
-        for piece in onScreen where plan.textOfPiece.indices.contains(piece) {
-            guard let text = plan.textOfPiece[piece] else { continue }
-            if !take(text) { break }
+        for text in onScreenFirst where !take(text) {
+            break
         }
         for text in pending where !take(text) {
             break
@@ -120,6 +131,7 @@ struct PageTranslationQueue {
             isPending[text] = false
         }
         pending.removeAll { !isPending[$0] }
+        onScreenFirst.removeAll { !isPending[$0] }
         return chosen
     }
 }

@@ -139,6 +139,13 @@ struct PageTranslationRunTests {
         #expect(queue.next(onScreen: [28, 3, 20, 1]) == [20] + Array(5 ... 15))
         #expect(queue.next(onScreen: [999]) == Array(16 ... 19) + Array(21 ... 24))
         #expect(queue.isEmpty)
+
+        // More on screen than one group: the rest of the screen comes next.
+        let long = PageTranslationPlan(pieces: (0 ..< 60).map { "Text \($0)" })
+        var scrolled = PageTranslationQueue(plan: long)
+        _ = scrolled.next()
+        #expect(scrolled.next(onScreen: Array(30 ..< 50)) == Array(30 ..< 42))
+        #expect(scrolled.next() == Array(42 ..< 50) + Array(4 ..< 8))
     }
 
     // MARK: - Runs
@@ -166,7 +173,7 @@ struct PageTranslationRunTests {
         memory.remember("Hallo", as: "Bonjour")
         memory.remember("Welt", as: "Monde")
         let states = await run(page, MemorizingTranslator(base: base, memory: memory))
-        #expect(states == [.translated(pair)])
+        #expect(states == [.translating(pair, done: 0, total: 3), .translated(pair)])
         #expect(base.groups.isEmpty)
         #expect(page.shown == ["0": "Bonjour", "1": "Monde", "2": "Bonjour"])
     }
@@ -178,7 +185,7 @@ struct PageTranslationRunTests {
         let memory = PageTranslationMemory(pair: pair)
         memory.remember("Hallo", as: "Bonjour")
         let states = await run(page, MemorizingTranslator(base: base, memory: memory))
-        #expect(states.first == .translating(pair, done: 1, total: 2))
+        #expect(states.prefix(2) == [.translating(pair, done: 0, total: 2), .translating(pair, done: 1, total: 2)])
         #expect(base.groups == [[PageTextPiece(id: "1", text: "Welt")]])
         #expect(page.shown == ["0": "Bonjour", "1": "WELT"])
     }

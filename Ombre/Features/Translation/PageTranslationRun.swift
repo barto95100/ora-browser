@@ -87,6 +87,9 @@ enum PageTranslationRun {
             logger.notice("\(found, privacy: .public) (\(elapsed(since: start), privacy: .public) s)")
             guard !plan.texts.isEmpty else { throw PageTranslationFailure.nothingToTranslate }
             let total = plan.pieceCount
+            // Still this page's translation (another may have started while
+            // the text was read): only then anything is shown.
+            guard update(.translating(pair, done: 0, total: total)) else { return }
 
             var queue = await showRemembered(plan, page: page, translator: translator, since: start)
             shown = queue.donePieces
@@ -95,7 +98,7 @@ enum PageTranslationRun {
                 _ = update(.translated(pair))
                 return
             }
-            guard update(.translating(pair, done: shown, total: total)) else { return }
+            if shown > 0 { guard update(.translating(pair, done: shown, total: total)) else { return } }
             var firstShown = shown > 0
             while !queue.isEmpty {
                 let group = await queue.next(onScreen: page.piecesOnScreen())
@@ -142,7 +145,7 @@ enum PageTranslationRun {
         since start: Date
     ) async -> PageTranslationQueue {
         let known = await translator.remembered(plan.pieces(of: Array(plan.texts.indices)))
-        guard !known.isEmpty else { return PageTranslationQueue(plan: plan) }
+        guard !known.isEmpty, !Task.isCancelled else { return PageTranslationQueue(plan: plan) }
         page.showTranslations(plan.pageTranslations(known))
         let remembered = "\(known.count) texts from memory"
         logger.notice("\(remembered, privacy: .public) shown after \(elapsed(since: start), privacy: .public) s")

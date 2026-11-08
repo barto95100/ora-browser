@@ -10,21 +10,35 @@ set -euo pipefail
 # others needs a Developer ID certificate and notarization (paid Apple
 # Developer Program), not set up yet. Updates (Sparkle) are disabled.
 #
-# Output: build/Ombre-<version>.dmg
+# Output: build/Release.noindex/Ombre-<version>.dmg, and nothing else: the
+# archive and the app copies are deleted once the DMG is made. Everything is
+# built in a .noindex folder, which Spotlight skips: it would otherwise
+# register these copies with Launch Services (same bundle id as the app in
+# use), and a link or a notification click could launch one of them.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
 cd "$SCRIPT_DIR/.."
 
 VERSION=$(grep "MARKETING_VERSION:" project.yml | sed 's/.*MARKETING_VERSION: //' | tr -d ' ')
-ARCHIVE_PATH="build/Ombre.xcarchive"
-APP_PATH="build/Ombre.app"
-DMG_PATH="build/Ombre-${VERSION}.dmg"
+OUTPUT="build/Release.noindex"
+WORK="$OUTPUT/work"
+ARCHIVE_PATH="$WORK/Ombre.xcarchive"
+APP_PATH="$ARCHIVE_PATH/Products/Applications/Ombre.app"
+STAGING="$WORK/dmg"
+DMG_PATH="$OUTPUT/Ombre-${VERSION}.dmg"
+
+# Even when a step fails: unregister the copies, then delete them.
+cleanup() {
+    "$SCRIPT_DIR/unregister-copies.sh" "$WORK"
+    rm -rf "$WORK"
+}
+trap cleanup EXIT
 
 step "Building Ombre ${VERSION}"
 
-rm -rf "$ARCHIVE_PATH" "$APP_PATH" "$DMG_PATH"
-mkdir -p build
+rm -rf "$WORK" "$DMG_PATH"
+mkdir -p "$WORK"
 
 echo "Generating Xcode project..."
 xcodegen
@@ -42,8 +56,7 @@ else
     "${archive[@]}"
 fi
 
-[[ -d "$ARCHIVE_PATH/Products/Applications/Ombre.app" ]] || die "Archive failed: no Ombre.app in ${ARCHIVE_PATH}."
-ditto "$ARCHIVE_PATH/Products/Applications/Ombre.app" "$APP_PATH"
+[[ -d "$APP_PATH" ]] || die "Archive failed: no Ombre.app in ${ARCHIVE_PATH}."
 
 echo "Verifying the signature..."
 codesign --verify --deep --strict "$APP_PATH" || die "Signature verification failed."
@@ -53,19 +66,11 @@ grep "^TeamIdentifier=" <<<"$SIGNATURE" || true
 
 step "Packaging"
 
-STAGING="build/dmg"
-rm -rf "$STAGING"
 mkdir -p "$STAGING"
 ditto "$APP_PATH" "$STAGING/Ombre.app"
 ln -s /Applications "$STAGING/Applications"
 hdiutil create -volname "Ombre" -srcfolder "$STAGING" -ov -format UDZO "$DMG_PATH" >/dev/null \
     || die "DMG creation failed."
-rm -rf "$STAGING"
-
-# These copies have the app's bundle id: keep macOS from launching one of
-# them (a link, a notification click) instead of the app in use.
-"$SCRIPT_DIR/unregister-copies.sh" "$APP_PATH" "$ARCHIVE_PATH" "$STAGING"
-
 green "Build complete: ${DMG_PATH} ($(du -h "$DMG_PATH" | cut -f1))"
 
 # GPL-3.0: the source of every distributed version must stay findable.

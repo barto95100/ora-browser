@@ -136,6 +136,9 @@ jobs:
       # service must not set SessionCreate, or codesign can't reach the
       # login keychain.
       # Packages are the versions pinned in Package.resolved, never newer ones.
+      # On the self-hosted Mac, builds and packages (Sparkle's Updater.app) go
+      # to .noindex folders: Spotlight skips them, so it never registers these
+      # apps again with Launch Services once they are unregistered.
       - name: Build and run unit tests
         env:
           GITHUB_HOSTED: ${{ runner.environment == 'github-hosted' }}
@@ -146,8 +149,8 @@ jobs:
             signing=(CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER="")
           else
             places=(
-              -clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm"
-              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData"
+              -clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm.noindex"
+              -derivedDataPath "$RUNNER_WORKSPACE/DerivedData.noindex"
             )
             signing=()
           fi
@@ -181,7 +184,7 @@ jobs:
           # right after it was unregistered. Wait for it (30 s at most),
           # then unregister twice, a few seconds apart.
           for _ in $(seq 30); do
-            pgrep -f "$RUNNER_WORKSPACE/DerivedData" >/dev/null || break
+            pgrep -f "$RUNNER_WORKSPACE/DerivedData.noindex" >/dev/null || break
             sleep 1
           done
           unregister

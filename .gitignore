@@ -6,6 +6,9 @@
 *.xcworkspace
 DerivedData/
 build/
+# Build folders, named .noindex so that Spotlight skips them (it would
+# register the apps built there with Launch Services)
+*.noindex/
 *.ipa
 *.dSYM.zip
 *.dSYM

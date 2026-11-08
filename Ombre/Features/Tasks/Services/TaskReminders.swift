@@ -3,15 +3,16 @@ import UserNotifications
 
 /// The reminders of tasks: macOS notifications at their time. A click on
 /// one opens the task's space and its list (see `WebNotificationCenter`).
+@MainActor
 enum TaskReminders {
-    static let taskIDKey = "spaceTaskID"
-    static let spaceIDKey = "spaceTaskSpaceID"
+    nonisolated static let taskIDKey = "spaceTaskID"
+    nonisolated static let spaceIDKey = "spaceTaskSpaceID"
 
     private static var center: UNUserNotificationCenter {
         UNUserNotificationCenter.current()
     }
 
-    static func identifier(for taskID: UUID) -> String {
+    nonisolated static func identifier(for taskID: UUID) -> String {
         "task/\(taskID.uuidString)"
     }
 

@@ -5,7 +5,8 @@ struct FilterListFetchResult {
     let rawText: String?
 }
 
-final class FilterListUpdateService {
+/// Only a URL session (thread-safe): used from the ad blocker's actor.
+final class FilterListUpdateService: Sendable {
     private let session: URLSession
 
     init(session: URLSession = .shared) {

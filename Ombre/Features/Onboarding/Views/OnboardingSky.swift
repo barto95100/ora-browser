@@ -53,7 +53,7 @@ struct WindowVisibilityReader: NSViewRepresentable {
 
     final class ObservingView: NSView {
         var onChange: ((Bool) -> Void)?
-        private var observer: NSObjectProtocol?
+        private nonisolated(unsafe) var observer: NSObjectProtocol?
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
@@ -65,9 +65,12 @@ struct WindowVisibilityReader: NSViewRepresentable {
             observer = NotificationCenter.default.addObserver(
                 forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main
             ) { [weak self] notification in
-                guard let window = notification.object as? NSWindow else { return }
-                let isVisible = window.occlusionState.contains(.visible)
-                MainActor.assumeIsolated { self?.onChange?(isVisible) }
+                // Delivered on the main queue (`queue: .main`).
+                nonisolated(unsafe) let notification = notification
+                MainActor.assumeIsolated {
+                    guard let window = notification.object as? NSWindow else { return }
+                    self?.onChange?(window.occlusionState.contains(.visible))
+                }
             }
             let isVisible = window.occlusionState.contains(.visible)
             // Not during the view update that added it.
@@ -109,7 +112,7 @@ struct OnboardingSkyBackground: View {
 struct OnboardingStarField: View, Animatable {
     var shown: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { shown }
         set { shown = newValue }
     }

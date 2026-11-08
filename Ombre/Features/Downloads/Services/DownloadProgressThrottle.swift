@@ -4,7 +4,7 @@ import Foundation
 /// thread) into a single main-actor update per interval. Nothing runs while no
 /// notification arrives: no timer, no polling.
 final class DownloadProgressThrottle: @unchecked Sendable {
-    typealias Scheduler = (@escaping @MainActor () -> Void) -> Void
+    typealias Scheduler = (@escaping @MainActor @Sendable () -> Void) -> Void
 
     private let lock = NSLock()
     private var isScheduled = false

@@ -36,7 +36,7 @@ struct PasswordManagerProviderDescriptor: Identifiable, Hashable {
     }
 }
 
-final class PasswordManagerProviderRegistry {
+final class PasswordManagerProviderRegistry: Sendable {
     static let shared = PasswordManagerProviderRegistry()
 
     let providers: [PasswordManagerProviderDescriptor] = [

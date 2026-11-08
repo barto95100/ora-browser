@@ -67,6 +67,7 @@ struct PasswordEmailSuggestion: Identifiable, Hashable {
     }
 }
 
+@MainActor
 final class PasswordManagerService: ObservableObject {
     static let shared = PasswordManagerService()
 
@@ -331,7 +332,7 @@ final class PasswordManagerService: ObservableObject {
         Self.generateStrongPassword()
     }
 
-    static func generateStrongPassword() -> String {
+    nonisolated static func generateStrongPassword() -> String {
         if #available(macOS 11.0, *),
            let generated = SecCreateSharedWebCredentialPassword() as String?
         {
@@ -394,14 +395,14 @@ final class PasswordManagerService: ObservableObject {
         copyToPasteboard(value, clearingAfter: 90)
     }
 
-    static func normalizeHost(_ host: String) -> String {
+    nonisolated static func normalizeHost(_ host: String) -> String {
         host
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
             .trimmingCharacters(in: CharacterSet(charactersIn: "."))
     }
 
-    static func normalizedHost(from url: URL) -> String? {
+    nonisolated static func normalizedHost(from url: URL) -> String? {
         guard let host = url.host, !host.isEmpty else {
             return nil
         }
@@ -410,7 +411,7 @@ final class PasswordManagerService: ObservableObject {
 
     /// Whether a saved entry belongs to the page at `url`: same origin, or, for a legacy
     /// entry saved without an origin, same host (± `www.`) over HTTPS on the default port.
-    static func entry(origin entryOrigin: String?, host entryHost: String, matches url: URL) -> Bool {
+    nonisolated static func entry(origin entryOrigin: String?, host entryHost: String, matches url: URL) -> Bool {
         guard let origin = normalizedOrigin(from: url),
               let host = normalizedHost(from: url)
         else {
@@ -432,7 +433,7 @@ final class PasswordManagerService: ObservableObject {
         return normalizedEntryHost == host || normalizedEntryHost == alternateHost
     }
 
-    static func normalizedOrigin(from url: URL) -> String? {
+    nonisolated static func normalizedOrigin(from url: URL) -> String? {
         guard let scheme = url.scheme?.lowercased(),
               ["http", "https"].contains(scheme),
               let host = normalizedHost(from: url)
@@ -451,7 +452,7 @@ final class PasswordManagerService: ObservableObject {
         return components.url?.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
     }
 
-    static func looksLikeEmail(_ value: String) -> Bool {
+    nonisolated static func looksLikeEmail(_ value: String) -> Bool {
         let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedValue.isEmpty,
               let atIndex = trimmedValue.firstIndex(of: "@")
@@ -563,7 +564,7 @@ final class PasswordManagerService: ObservableObject {
         }
     }
 
-    private static func isSecureDefaultPort(_ url: URL) -> Bool {
+    private nonisolated static func isSecureDefaultPort(_ url: URL) -> Bool {
         guard url.scheme?.lowercased() == "https" else {
             return false
         }
@@ -571,7 +572,7 @@ final class PasswordManagerService: ObservableObject {
         return url.port == nil || url.port == defaultPort(for: "https")
     }
 
-    private static func defaultPort(for scheme: String) -> Int {
+    private nonisolated static func defaultPort(for scheme: String) -> Int {
         switch scheme {
         case "http":
             return 80

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SearchEngine {
+struct SearchEngine: Sendable {
     let name: String
     let color: Color
     let icon: String
@@ -8,7 +8,7 @@ struct SearchEngine {
     let searchURL: String
     let isAIChat: Bool
     let foregroundColor: Color?
-    let autoSuggestions: ((String) async -> [String])?
+    let autoSuggestions: (@Sendable (String) async -> [String])?
 
     init(
         name: String,
@@ -18,7 +18,7 @@ struct SearchEngine {
         searchURL: String,
         isAIChat: Bool,
         foregroundColor: Color? = nil,
-        autoSuggestions: ((String) async -> [String])? = nil
+        autoSuggestions: (@Sendable (String) async -> [String])? = nil
     ) {
         self.name = name
         self.color = color

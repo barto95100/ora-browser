@@ -3,6 +3,7 @@ import os.log
 
 private let logger = Logger(category: "FindController")
 
+@MainActor
 class FindController: NSObject {
     let page: BrowserPage
 

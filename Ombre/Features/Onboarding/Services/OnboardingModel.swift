@@ -42,7 +42,7 @@ final class OnboardingModel: ObservableObject {
     private(set) var isFinished = false
     /// Quitting closes the window too: that must not count as done.
     private var isTerminating = false
-    private var terminationObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var terminationObserver: NSObjectProtocol?
 
     init(
         modelContext: ModelContext,

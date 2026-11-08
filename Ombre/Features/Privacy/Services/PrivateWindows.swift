@@ -18,12 +18,17 @@ final class PrivateWindows {
             Task { @MainActor in
                 // Unless a new private window opened meanwhile.
                 guard PrivateWindows.shared.isEmpty else { return }
-                FaviconStore.shared.forgetPrivateIcons()
+                await forgetPrivateIcons()
             }
         }
     ) {
         self.permissions = permissions
         self.forgetIcons = forgetIcons
+    }
+
+    /// The icon store is an actor: its own work, off the main thread.
+    private nonisolated static func forgetPrivateIcons() async {
+        await FaviconStore.shared.forgetPrivateIcons()
     }
 
     var isEmpty: Bool {

@@ -24,6 +24,18 @@ struct GeolocationPermissionTests {
         #expect(declared)
     }
 
+    /// macOS 27's public method: its Swift name must match WebKit's
+    /// selector exactly (a near miss only warns, and is never called).
+    @Test func pageImplementsMacOS27sMethod() throws {
+        let selector =
+            NSSelectorFromString("webView:requestGeolocationPermissionForOrigin:initiatedByFrame:decisionHandler:")
+        #expect(BrowserPage.instancesRespond(to: selector))
+        if #available(macOS 27.0, *) {
+            let proto = try #require(objc_getProtocol("WKUIDelegate"))
+            #expect(protocol_getMethodDescription(proto, selector, false, true).name != nil)
+        }
+    }
+
     @MainActor
     @Test func pageAnswersWebKitsQuestion() {
         let page = BrowserPage(

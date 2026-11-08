@@ -22,6 +22,10 @@ enum PageTranslatorScript {
         let originals = [];
         // What each node shows once translated, to put back only those.
         let translatedValues = [];
+        // Whether the user scrolled since the text on screen was last read
+        // (any scrolling box of the page).
+        let scrolled = false;
+        addEventListener('scroll', () => { scrolled = true; }, { capture: true, passive: true });
 
         function isSkipped(element) {
             for (let node = element; node && node !== document.documentElement; node = node.parentElement) {
@@ -69,7 +73,22 @@ enum PageTranslatorScript {
                 nodes = visible.concat(others);
                 originals = nodes.map((node) => node.nodeValue);
                 translatedValues = new Array(nodes.length);
+                scrolled = false;
                 return JSON.stringify(originals.map((text) => text.trim()));
+            },
+            /// The pieces on screen not translated yet, once the user
+            /// scrolled since the last call (else none: nothing laid out).
+            onScreen() {
+                if (!scrolled) return '[]';
+                scrolled = false;
+                const height = window.innerHeight;
+                const found = [];
+                nodes.forEach((node, index) => {
+                    if (translatedValues[index] !== undefined || !node.parentElement) return;
+                    const box = node.parentElement.getBoundingClientRect();
+                    if (box.width > 0 && box.bottom > 0 && box.top < height) found.push(index);
+                });
+                return JSON.stringify(found);
             },
             /// Translations by piece number; the spaces around each piece are
             /// kept, and a piece the page changed meanwhile is left alone.

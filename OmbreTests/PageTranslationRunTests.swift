@@ -8,6 +8,8 @@ import Translation
 private final class FakePage: PageTextAccess {
     var pieces: [String]
     var shown: [String: String] = [:]
+    /// What the user scrolled to, given once at the next call.
+    var scrolledTo: [Int] = []
 
     init(_ pieces: [String]) {
         self.pieces = pieces
@@ -19,6 +21,11 @@ private final class FakePage: PageTextAccess {
 
     func showTranslations(_ translations: [String: String]) {
         shown.merge(translations) { _, new in new }
+    }
+
+    func piecesOnScreen() async -> [Int] {
+        defer { scrolledTo = [] }
+        return scrolledTo
     }
 }
 
@@ -75,7 +82,7 @@ struct PageTranslationRunTests {
 
     private func run(
         _ page: FakePage,
-        _ translator: FakeTranslator,
+        _ translator: PageTextTranslating,
         needsDownload: Bool = false,
         keepGoing: @escaping (PageTranslationState) -> Bool = { _ in true }
     ) async -> [PageTranslationState] {
@@ -91,20 +98,54 @@ struct PageTranslationRunTests {
 
     // MARK: - Plan
 
-    /// Each different text once (menus repeat), in small groups.
-    @Test func planSendsEachTextOnceInSmallGroups() {
-        let plan = PageTranslationPlan(pieces: ["Menü", "Hallo", "Menü", "", "Welt"], maxPieces: 2)
+    /// Each different text once (menus repeat).
+    @Test func planTranslatesEachTextOnce() {
+        let plan = PageTranslationPlan(pieces: ["Menü", "Hallo", "Menü", "", "Welt"])
         #expect(plan.texts == ["Menü", "Hallo", "Welt"])
         #expect(plan.positions == [[0, 2], [1], [4]])
-        #expect(plan.groups == [0 ..< 2, 2 ..< 3])
+        #expect(plan.textOfPiece == [0, 1, 0, nil, 2])
         #expect(plan.pieceCount == 4)
-        #expect(plan.pieceCount(ofFirst: 1) == 2)
         #expect(plan.pageTranslations(["0": "Menu", "2": "Monde"]) == ["0": "Menu", "2": "Menu", "4": "Monde"])
+    }
 
-        // A long text closes its group.
+    /// A small first group (shown within a second), then bigger ones; a
+    /// long text closes its group.
+    @Test func queueSendsASmallFirstGroup() {
+        let plan = PageTranslationPlan(pieces: (0 ..< 20).map { "Text \($0)" })
+        var queue = PageTranslationQueue(plan: plan)
+        #expect(queue.next() == [0, 1, 2, 3])
+        #expect(queue.next() == Array(4 ..< 16))
+        #expect(queue.donePieces == 16)
+        #expect(queue.next() == Array(16 ..< 20))
+        #expect(queue.isEmpty)
+
         let long = String(repeating: "a", count: 500)
-        let byLength = PageTranslationPlan(pieces: ["kurz", long, "noch"], maxPieces: 10, maxCharacters: 300)
-        #expect(byLength.groups == [0 ..< 1, 1 ..< 2, 2 ..< 3])
+        var byLength = PageTranslationQueue(plan: PageTranslationPlan(pieces: ["kurz", long, "noch"]))
+        byLength.firstGroup = (pieces: 10, characters: 300)
+        byLength.group = (pieces: 10, characters: 300)
+        #expect(byLength.next() == [0])
+        #expect(byLength.next() == [1])
+        #expect(byLength.next() == [2])
+    }
+
+    /// The text scrolled to comes first (piece numbers, a repeated text
+    /// once); the texts already known never.
+    @Test func queueTakesTheTextOnScreenFirst() {
+        let plan = PageTranslationPlan(pieces: (0 ..< 30).map { "Text \($0 % 25)" })
+        var queue = PageTranslationQueue(plan: plan, done: [1])
+        #expect(queue.next() == [0, 2, 3, 4])
+        // Piece 28 shows text 3 (sent already), piece 1 is known: only
+        // text 20 comes first, then the queue's order.
+        #expect(queue.next(onScreen: [28, 3, 20, 1]) == [20] + Array(5 ... 15))
+        #expect(queue.next(onScreen: [999]) == Array(16 ... 19) + Array(21 ... 24))
+        #expect(queue.isEmpty)
+
+        // More on screen than one group: the rest of the screen comes next.
+        let long = PageTranslationPlan(pieces: (0 ..< 60).map { "Text \($0)" })
+        var scrolled = PageTranslationQueue(plan: long)
+        _ = scrolled.next()
+        #expect(scrolled.next(onScreen: Array(30 ..< 50)) == Array(30 ..< 42))
+        #expect(scrolled.next() == Array(42 ..< 50) + Array(4 ..< 8))
     }
 
     // MARK: - Runs
@@ -116,10 +157,50 @@ struct PageTranslationRunTests {
         let states = await run(page, translator)
         #expect(!translator.prepared)
         #expect(states.first == .translating(pair, done: 0, total: 30))
-        #expect(states.contains(.translating(pair, done: 12, total: 30)))
+        #expect(states.contains(.translating(pair, done: 4, total: 30)))
+        #expect(states.contains(.translating(pair, done: 16, total: 30)))
         #expect(states.last == .translated(pair))
-        #expect(translator.groups.count == 3)
+        #expect(translator.groups.count == 4)
         #expect(page.shown["29"] == "TEXT 29")
+    }
+
+    /// Translated again from the page's memory: all shown at once, nothing
+    /// asked, no progress shown.
+    @Test func theMemoryIsShownAtOnce() async {
+        let page = FakePage(["Hallo", "Welt", "Hallo"])
+        let base = FakeTranslator()
+        let memory = PageTranslationMemory(pair: pair)
+        memory.remember("Hallo", as: "Bonjour")
+        memory.remember("Welt", as: "Monde")
+        let states = await run(page, MemorizingTranslator(base: base, memory: memory))
+        #expect(states == [.translating(pair, done: 0, total: 3), .translated(pair)])
+        #expect(base.groups.isEmpty)
+        #expect(page.shown == ["0": "Bonjour", "1": "Monde", "2": "Bonjour"])
+    }
+
+    /// Half known: the known part shown first, only the rest asked.
+    @Test func onlyWhatTheMemoryLacksIsAsked() async {
+        let page = FakePage(["Hallo", "Welt"])
+        let base = FakeTranslator()
+        let memory = PageTranslationMemory(pair: pair)
+        memory.remember("Hallo", as: "Bonjour")
+        let states = await run(page, MemorizingTranslator(base: base, memory: memory))
+        #expect(states.prefix(2) == [.translating(pair, done: 0, total: 2), .translating(pair, done: 1, total: 2)])
+        #expect(base.groups == [[PageTextPiece(id: "1", text: "Welt")]])
+        #expect(page.shown == ["0": "Bonjour", "1": "WELT"])
+    }
+
+    /// The user scrolls down: the text now on screen is translated next.
+    @Test func theTextScrolledToComesNext() async {
+        let page = FakePage((0 ..< 40).map { "Text \($0)" })
+        let translator = FakeTranslator()
+        _ = await run(page, translator) { state in
+            if case .translating(_, 4, _) = state { page.scrolledTo = [38, 39] }
+            return true
+        }
+        #expect(translator.groups.count > 1)
+        #expect(translator.groups[1].prefix(2).map(\.id) == ["38", "39"])
+        #expect(page.shown.count == 40)
     }
 
     /// A language to download: macOS's prompt first, then the translation.

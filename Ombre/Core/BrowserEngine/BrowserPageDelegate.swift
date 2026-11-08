@@ -25,7 +25,7 @@ protocol BrowserPageDelegate: AnyObject {
     /// The page's address changed, including same-page navigations.
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?)
     /// Items the app adds at the end of the page's context menu.
-    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem]
+    @MainActor func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem]
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?)
     func browserPage(_ page: BrowserPage, didFailNavigationWith error: Error, failingURL: URL?)
     func browserPage(_ page: BrowserPage, didReceiveScriptMessage message: BrowserScriptMessage)
@@ -82,7 +82,7 @@ protocol BrowserPageDelegate: AnyObject {
 }
 
 extension BrowserPageDelegate {
-    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
+    @MainActor func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
         []
     }
 

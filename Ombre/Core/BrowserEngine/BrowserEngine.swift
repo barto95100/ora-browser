@@ -111,9 +111,9 @@ final class BrowserEngine {
     /// removed from the disk (unless a page still uses it: logged).
     @MainActor
     func removeProfile(identifier: UUID) async {
-        profileCacheLock.lock()
-        profileCache[ProfileKey(identifier: identifier, isPrivate: false)] = nil
-        profileCacheLock.unlock()
+        profileCacheLock.withLock {
+            profileCache[ProfileKey(identifier: identifier, isPrivate: false)] = nil
+        }
         do {
             try await WKWebsiteDataStore.remove(forIdentifier: identifier)
         } catch {

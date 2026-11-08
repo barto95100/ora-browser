@@ -30,7 +30,7 @@ extension BrowserPage: WKUIDelegate {
     func webView(
         _ webView: WKWebView,
         requestGeolocationPermissionFor origin: WKSecurityOrigin,
-        initiatedBy frame: WKFrameInfo,
+        initiatedByFrame frame: WKFrameInfo,
         decisionHandler: @escaping (WKPermissionDecision) -> Void
     ) {
         requestGeolocation(for: origin, decisionHandler: decisionHandler)

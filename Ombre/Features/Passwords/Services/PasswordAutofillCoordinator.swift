@@ -199,7 +199,8 @@ final class PasswordAutofillCoordinator {
     }
 
     func autofill(_ entry: SavedPasswordSummary, for overlay: PasswordAutofillOverlayState) {
-        Task { [weak self] in
+        // On the main thread, like every other use of the coordinator.
+        Task { @MainActor [weak self] in
             guard let self else { return }
 
             let authenticated = await self.passwordManager.authenticate(

@@ -56,9 +56,14 @@ enum PageLanguage {
     @MainActor
     static func supportedLanguages() async -> [Locale.Language] {
         if let supported { return supported }
-        let languages = await LanguageAvailability().supportedLanguages
+        let languages = await askSupportedLanguages()
         supported = languages
         return languages
+    }
+
+    /// Off the main actor: `LanguageAvailability` stays where it was made.
+    private nonisolated static func askSupportedLanguages() async -> [Locale.Language] {
+        await LanguageAvailability().supportedLanguages
     }
 
     @MainActor private static var supported: [Locale.Language]?

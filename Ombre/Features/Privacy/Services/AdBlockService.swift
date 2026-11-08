@@ -395,7 +395,10 @@ actor AdBlockService {
         }
     }
 
-    private func updateRecord(_ record: FilterListRecord, mutate: @escaping (inout FilterListRecord) -> Void) async {
+    private func updateRecord(
+        _ record: FilterListRecord,
+        mutate: @escaping @Sendable (inout FilterListRecord) -> Void
+    ) async {
         await MainActor.run {
             guard var storedRecord = SettingsStore.shared.adBlockFilterList(id: record.id) else { return }
             mutate(&storedRecord)

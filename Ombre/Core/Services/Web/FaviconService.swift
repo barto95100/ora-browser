@@ -102,7 +102,9 @@ final class FaviconService: ObservableObject {
         guard !isFetching.contains(domain) else { return }
         isFetching.insert(domain)
 
-        Task(priority: .utility) { [weak self] in
+        // On the main thread, which owns the caches (the download itself
+        // doesn't block it).
+        Task(priority: .utility) { @MainActor [weak self] in
             guard let self else { return }
             let payload = await self.fetchFaviconPayload(for: domain)
             await MainActor.run {
@@ -145,50 +147,6 @@ final class FaviconService: ObservableObject {
             return (faviconImage.image, faviconImage.data, favicon.url.source)
         } catch {
             return nil
-        }
-    }
-
-    func downloadAndSaveFavicon(
-        for domain: String,
-        faviconURL _: URL,
-        to saveURL: URL,
-        completion: @escaping (URL?, Bool) -> Void
-    ) {
-        let normalizedDomain = normalizeDomain(domain)
-        if let cachedFavicon = cache[normalizedDomain],
-           let data = cachedFavicon.tiffRepresentation
-        {
-            do {
-                try data.write(to: saveURL, options: .atomic)
-                completion(faviconURL(for: normalizedDomain), true)
-            } catch {
-                completion(nil, false)
-            }
-            return
-        }
-
-        Task(priority: .utility) { [weak self] in
-            guard let self else {
-                completion(nil, false)
-                return
-            }
-
-            let payload = await self.fetchFaviconPayload(for: normalizedDomain)
-            await MainActor.run {
-                guard let payload else {
-                    completion(nil, false)
-                    return
-                }
-
-                self.completeFetch(for: normalizedDomain, favicon: payload.image, sourceURL: payload.sourceURL)
-
-                do {
-                    try payload.data.write(to: saveURL, options: .atomic)
-                    completion(payload.sourceURL, true)
-                } catch {
-                    completion(nil, false)
-                }
-            }
         }
     }
 }

@@ -162,7 +162,23 @@ jobs:
             -disableAutomaticPackageResolution \
             -resultBundlePath "$RUNNER_TEMP/TestResults.xcresult" \
             "${signing[@]}" \
-            | xcbeautify --renderer github-actions
+            OMBRE_WARNINGS_AS_ERRORS=YES \
+            2>&1 | tee "$RUNNER_TEMP/build.log" | xcbeautify --renderer github-actions
+
+      # Warnings stay at 0: the compilers' warnings already fail the build
+      # above (OMBRE_WARNINGS_AS_ERRORS); this catches the others (linker,
+      # asset catalog, build phases), except the packages' own. Xcode's App Intents
+      # step warns on every app without App Intents: not ours.
+      - name: Check for warnings
+        run: |
+          warnings=$(grep -E '(^|[^[:alnum:]])warning: ' "$RUNNER_TEMP/build.log" \
+            | grep -v -e appintentsmetadataprocessor -e '/spm.noindex/' -e '/\.spm/' -e '/SourcePackages/' \
+            | sort -u || true)
+          if [ -n "$warnings" ]; then
+            echo "$warnings"
+            echo "::error::The build has warnings: fix them (the project keeps 0)."
+            exit 1
+          fi
 
       # Otherwise clicking a notification could open one of these copies
       # (the app, the tests' app and Sparkle's Updater.app, in Debug and Test).

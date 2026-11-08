@@ -100,7 +100,7 @@ struct LocalFileAccessTests {
     func aReadableFileOpensAtOnce() async throws {
         let file = try readableFile()
         defer { try? FileManager.default.removeItem(at: file) }
-        try await withRequests(answer: { $0 }) { requests in
+        await withRequests(answer: { $0 }) { requests in
             var opened: URL?
             LocalFileAccess.whenReadable(file) { opened = $0 }
             #expect(opened == file)
@@ -116,7 +116,7 @@ struct LocalFileAccessTests {
             try? FileManager.default.removeItem(at: file)
             try? FileManager.default.removeItem(at: granted)
         }
-        try await withRequests(answer: { _ in granted }) { requests in
+        await withRequests(answer: { _ in granted }) { requests in
             var opened: URL?
             LocalFileAccess.whenReadable(file) { opened = $0 }
             #expect(requests.asked == [file])
@@ -128,7 +128,7 @@ struct LocalFileAccessTests {
     func aDeclinedFileStaysClosed() async throws {
         let file = try unreadableFile()
         defer { try? FileManager.default.removeItem(at: file) }
-        try await withRequests(answer: { _ in nil }) { requests in
+        await withRequests(answer: { _ in nil }) { requests in
             var opened: URL?
             LocalFileAccess.whenReadable(file) { opened = $0 }
             #expect(requests.asked == [file])

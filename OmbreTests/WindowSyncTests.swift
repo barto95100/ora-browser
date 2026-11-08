@@ -24,7 +24,7 @@ extension TabManagerTests {
             try await TabManagerTestWindow.runTwo { first, second in
                 let space = try second.activeSpace
                 #expect(try space.id == (first.activeSpace).id)
-                var redrawn = false
+                nonisolated(unsafe) var redrawn = false
                 withObservationTracking { _ = space.tabs } onChange: { redrawn = true }
 
                 let opened = try first.open("opened")
@@ -40,7 +40,7 @@ extension TabManagerTests {
                 let opened = try first.open("page")
                 await caughtUp()
                 let shown = try #require(tab(opened.id, in: second))
-                var redrawn = false
+                nonisolated(unsafe) var redrawn = false
                 withObservationTracking { _ = shown.title } onChange: { redrawn = true }
 
                 opened.title = "New title"
@@ -160,7 +160,7 @@ extension TabManagerTests {
         @Test func unrelatedSaveIsIgnored() async throws {
             try await TabManagerTestWindow.runTwo { first, second in
                 let space = try second.activeSpace
-                var redrawn = false
+                nonisolated(unsafe) var redrawn = false
                 withObservationTracking { _ = space.tabs } onChange: { redrawn = true }
 
                 first.modelContext.insert(Download(originalURL: TabManagerTestWindow.url("a.zip"), fileName: "a.zip"))

@@ -103,6 +103,11 @@ targets:
         SWIFT_STRICT_CONCURRENCY: complete
         # Swift 6's: a key path literal is Sendable when it can be (sort orders).
         SWIFT_UPCOMING_FEATURE_INFER_SENDABLE_FROM_CAPTURES: YES
+        # Warnings stay at 0: the CI builds with OMBRE_WARNINGS_AS_ERRORS=YES,
+        # so any new one fails it (packages don't read this, only our targets).
+        OMBRE_WARNINGS_AS_ERRORS: NO
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: $(OMBRE_WARNINGS_AS_ERRORS)
+        GCC_TREAT_WARNINGS_AS_ERRORS: $(OMBRE_WARNINGS_AS_ERRORS)
         CODE_SIGN_STYLE: Automatic
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 106
@@ -152,6 +157,10 @@ targets:
       base:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Ombre.app/Contents/MacOS/Ombre"
         BUNDLE_LOADER: "$(TEST_HOST)"
+        # As the app's (see there).
+        OMBRE_WARNINGS_AS_ERRORS: NO
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: $(OMBRE_WARNINGS_AS_ERRORS)
+        GCC_TREAT_WARNINGS_AS_ERRORS: $(OMBRE_WARNINGS_AS_ERRORS)
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: Q76T6LDBBZ

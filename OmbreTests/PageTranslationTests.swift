@@ -28,9 +28,9 @@ struct PageTranslationTests {
         #expect(!PageLanguage.offersTranslation(of: nil, to: mac))
     }
 
-    private func evaluate(_ page: BrowserPage, _ script: String, world: WKContentWorld = .page) async -> Any? {
+    private func evaluate(_ page: BrowserPage, _ script: String, world: WKContentWorld? = nil) async -> Any? {
         await withCheckedContinuation { continuation in
-            page.extensionWebView.evaluateJavaScript(script, in: nil, in: world) { result in
+            page.extensionWebView.evaluateJavaScript(script, in: nil, in: world ?? .page) { result in
                 continuation.resume(returning: try? result.get())
             }
         }

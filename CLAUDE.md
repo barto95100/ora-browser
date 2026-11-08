@@ -69,7 +69,8 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   fichier et après chaque changement de branche. Les réglages se changent dans `project.yml`, jamais dans
   Xcode (« Update to recommended settings » → ignorer).
 - Swift 5.9 avec la vérification de concurrence **complète** (`SWIFT_STRICT_CONCURRENCY: complete`, 0 avertissement :
-  en garder 0 ; ce qui touche l'interface, WebKit ou AppKit est `@MainActor`), macOS 15.0 minimum,
+  en garder 0, la CI et `scripts/test.sh` échouent sur tout avertissement de l'app ou des tests,
+  `OMBRE_WARNINGS_AS_ERRORS=YES` ; ce qui touche l'interface, WebKit ou AppKit est `@MainActor`), macOS 15.0 minimum,
   SwiftUI + AppKit, SwiftData, Swift Testing.
 - **lefthook** : pre-commit SwiftFormat + SwiftLint (erreurs bloquantes : `type_body_length` > 500,
   `file_length` > 800, `identifier_name` < 3 caractères, `large_tuple` > 2 ; avertissement ligne > 120).

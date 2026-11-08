@@ -13,7 +13,7 @@ final class PrivateWindows {
     private let forgetIcons: () -> Void
 
     init(
-        permissions: SitePermissionStore = .shared,
+        permissions: SitePermissionStore? = nil,
         forgetIcons: @escaping () -> Void = {
             Task { @MainActor in
                 // Unless a new private window opened meanwhile.
@@ -22,7 +22,7 @@ final class PrivateWindows {
             }
         }
     ) {
-        self.permissions = permissions
+        self.permissions = permissions ?? .shared
         self.forgetIcons = forgetIcons
     }
 

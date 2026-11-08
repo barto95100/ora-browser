@@ -121,6 +121,7 @@ extension TabBrowserPageDelegate {
 }
 
 /// Name and password fields of the login sheet.
+@MainActor
 private struct HTTPAuthenticationFields {
     let user = NSTextField()
     let password = NSSecureTextField()

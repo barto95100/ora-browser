@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 extension Tab {
     /// Pauses the device if the page is using it, resumes it if it is paused.
     func toggleCapture(_ device: BrowserCaptureDevice) {

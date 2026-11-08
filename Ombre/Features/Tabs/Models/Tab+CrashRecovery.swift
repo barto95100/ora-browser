@@ -1,13 +1,14 @@
 import Foundation
 
+@MainActor
 extension Tab {
     /// Whether this tab is the one shown in its window.
-    @MainActor var isShownInWindow: Bool {
+    var isShownInWindow: Bool {
         tabManager?.activeTab?.id == id
     }
 
     /// The process rendering the page ended: the page is blank until reloaded.
-    @MainActor func handleWebContentProcessTermination() {
+    func handleWebContentProcessTermination() {
         // Whatever the dead page was showing or asking for is gone.
         cancelPermissionRequest()
         passwordCoordinator?.clearAutofillState()
@@ -28,7 +29,7 @@ extension Tab {
     }
 
     /// Reloads a page left unloaded by a crash, now that its tab is shown.
-    @MainActor func recoverFromCrashIfNeeded() {
+    func recoverFromCrashIfNeeded() {
         if crashRecovery.tabDidBecomeVisible() {
             reloadAfterCrash()
         }

@@ -141,6 +141,7 @@ class Tab: ObservableObject, Identifiable {
     /// Safari's tinted tab bar), else the top of the page, read a second
     /// later once it has drawn (after a load, a switch to the tab, back or
     /// forward); nothing is polled while a page loads.
+    @MainActor
     func updateHeaderColor() {
         if let themeColor = browserPage?.themeColor {
             updateBackgroundColor(Color(nsColor: themeColor))
@@ -152,6 +153,7 @@ class Tab: ObservableObject, Identifiable {
         }
     }
 
+    @MainActor
     func updateHistory() {
         // No space left (the tab is being deleted): nothing to record.
         guard let historyManager, let container = parentContainer else { return }
@@ -180,12 +182,14 @@ class Tab: ObservableObject, Identifiable {
         pageDelegate = delegate
     }
 
+    @MainActor
     func goForward() {
         lastAccessedAt = Date()
         browserPage?.goForward()
         updateHeaderColor()
     }
 
+    @MainActor
     func goBack() {
         lastAccessedAt = Date()
         browserPage?.goBack()
@@ -395,19 +399,17 @@ class Tab: ObservableObject, Identifiable {
 
     /// Shown by the page's error view; only while the tab has a page in an
     /// open window (an error arriving after it went is dropped).
+    @MainActor
     func setNavigationError(_ error: Error, for url: URL?) {
         DispatchQueue.main.async {
-            MainActor.assumeIsolated {
-                guard self.browserPage != nil, let tabManager = self.tabManager, !tabManager.isTornDown else { return }
-                tabManager.runtime(for: self).navigationFailed(error, url: url)
-            }
+            guard self.browserPage != nil, let tabManager = self.tabManager, !tabManager.isTornDown else { return }
+            tabManager.runtime(for: self).navigationFailed(error, url: url)
         }
     }
 
+    @MainActor
     func clearNavigationError() {
-        DispatchQueue.main.async {
-            MainActor.assumeIsolated { self.runtime?.clearNavigationFailure() }
-        }
+        DispatchQueue.main.async { self.runtime?.clearNavigationFailure() }
     }
 
     /// The address that failed to load, if the page shows an error.
@@ -444,22 +446,27 @@ class Tab: ObservableObject, Identifiable {
         browserPage?.load(URLRequest(url: url))
     }
 
+    @MainActor
     var canGoBack: Bool {
         browserPage?.canGoBack ?? false
     }
 
+    @MainActor
     var canGoForward: Bool {
         browserPage?.canGoForward ?? false
     }
 
+    @MainActor
     var currentPageURL: URL? {
         browserPage?.currentURL
     }
 
+    @MainActor
     var pageWindow: NSWindow? {
         browserPage?.window
     }
 
+    @MainActor
     func reload() {
         browserPage?.reload()
     }
@@ -483,13 +490,15 @@ class Tab: ObservableObject, Identifiable {
         )
     }
 
+    @MainActor
     func evaluateJavaScript(_ script: String, completion: ((Any?, Error?) -> Void)? = nil) {
         browserPage?.evaluateJavaScript(script, completion: completion)
     }
 
+    @MainActor
     func takeSnapshot(
         configuration: BrowserSnapshotConfiguration,
-        completion: @escaping (NSImage?, Error?) -> Void
+        completion: @escaping @MainActor @Sendable (NSImage?, Error?) -> Void
     ) {
         browserPage?.takeSnapshot(configuration: configuration, completion: completion)
     }

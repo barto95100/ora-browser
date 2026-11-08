@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 extension Tab {
     /// Shows a permission prompt for this tab. A request still waiting for an
     /// answer is denied first, so only one prompt is ever visible.

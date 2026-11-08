@@ -249,7 +249,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
         // A site allowed to send notifications: macOS must allow Ombre too
         // (asked once, right after the user allowed the site).
-        let answer: (BrowserPermissionDecision) -> Void = switch permission {
+        let answer: @MainActor (BrowserPermissionDecision) -> Void = switch permission {
         case .notifications: { decision in
                 if decision == .grant {
                     WebNotificationCenter.shared.requestAuthorizationIfNeeded()

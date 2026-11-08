@@ -314,23 +314,20 @@ struct FloatingTabSwitcher: View {
     }
 
     private func takeSnapshot(for tab: Tab, url: String, group: DispatchGroup) {
-        DispatchQueue.global(qos: .userInteractive).async {
-            let config = self.createSnapshotConfiguration(for: tab)
+        let config = createSnapshotConfiguration(for: tab)
+        DispatchQueue.main.async {
+            tab.takeSnapshot(configuration: config) { image, _ in
+                defer { group.leave() }
 
-            DispatchQueue.main.async {
-                tab.takeSnapshot(configuration: config) { image, _ in
-                    defer { group.leave() }
-
-                    guard let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                        return
-                    }
-
-                    // Preserve the original aspect ratio of the snapshot
-                    let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
-                    let nsImage = NSImage(cgImage: cgImage, size: originalSize)
-
-                    self.tabSnapshots[tab] = TabSnapshot(image: nsImage, url: url)
+                guard let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                    return
                 }
+
+                // Preserve the original aspect ratio of the snapshot
+                let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
+                let nsImage = NSImage(cgImage: cgImage, size: originalSize)
+
+                self.tabSnapshots[tab] = TabSnapshot(image: nsImage, url: url)
             }
         }
     }

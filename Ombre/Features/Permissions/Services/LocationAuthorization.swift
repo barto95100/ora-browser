@@ -70,15 +70,10 @@ final class LocationAuthorization: NSObject {
 
     /// The answer to a site asking for the position, once the user decided:
     /// when allowed, macOS must let Ombre use Location Services too.
-    nonisolated static func askingMacOS(
+    static func askingMacOS(
         then decisionHandler: @escaping (BrowserPermissionDecision) -> Void
-    ) -> (BrowserPermissionDecision) -> Void {
-        { decision in
-            // WebKit and the permission banner call back on the main thread.
-            MainActor.assumeIsolated {
-                shared.answer(decision, then: decisionHandler)
-            }
-        }
+    ) -> @MainActor (BrowserPermissionDecision) -> Void {
+        { decision in shared.answer(decision, then: decisionHandler) }
     }
 
     /// The site's answer: a refusal as it is, an approval once macOS agrees.
@@ -122,7 +117,7 @@ final class LocationAuthorization: NSObject {
     /// Whether WebKit can be given positions (replaced in tests).
     var isProviderAvailable: () -> Bool = { GeolocationProvider.shared.isAvailable }
     /// Shows the reason (replaced in tests).
-    var onRefusal: (Outcome) -> Void = LocationAuthorization.show
+    var onRefusal: @MainActor (Outcome) -> Void = LocationAuthorization.show
 
     private static func show(_ outcome: Outcome) {
         let message = switch outcome {

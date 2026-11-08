@@ -128,6 +128,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         profile: BrowserEngineProfile
     ) {
         ombreWebView.contextMenuOwner = self
+        // Positions for its pages (`GeolocationProvider`, WebKit has none on macOS).
+        if let pool = processPool(of: ombreWebView.configuration) { GeolocationProvider.shared.install(on: pool) }
 
         observations = [
             // Address and title, including same-page navigations (history API,

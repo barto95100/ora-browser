@@ -4,9 +4,8 @@ import os
 private let logger = Logger(category: "Geolocation")
 
 /// macOS's own permission for Ombre to use Location Services, asked when a
-/// site the user allowed wants the position. WebKit reads the position from
-/// Core Location but never asks macOS: without this, the page waited forever
-/// (macOS never showed its prompt, the status stayed "not determined").
+/// site the user allowed wants the position (WebKit never asks macOS: the
+/// page waited forever). The positions then come from `GeolocationProvider`.
 @MainActor
 final class LocationAuthorization: NSObject {
     static let shared = LocationAuthorization()
@@ -17,6 +16,8 @@ final class LocationAuthorization: NSObject {
         case denied
         /// macOS showed no answer in time.
         case noAnswer
+        /// This WebKit can't be given positions (`GeolocationProvider`).
+        case unavailable
     }
 
     /// How long macOS's prompt may stay open.
@@ -50,52 +51,6 @@ final class LocationAuthorization: NSObject {
             logger.error("macOS gave no answer about Location Services")
             self?.finish(.noAnswer)
         }
-    }
-
-    /// Whether Core Location finds the position the site will get (WebKit
-    /// reads it on its own and tells the page, not Ombre): logged, and the
-    /// user told when it can't, so a map showing nothing has an explanation.
-    func checkPosition() {
-        guard !isCheckingPosition else { return }
-        isCheckingPosition = true
-        let started = ContinuousClock.now
-        var answered = false
-        let finish: (Error?) -> Void = { [weak self] error in
-            guard !answered else { return }
-            answered = true
-            self?.isCheckingPosition = false
-            let elapsed = ContinuousClock.now - started
-            if let error {
-                let code = (error as NSError).code
-                logger.error("No position: error \(code, privacy: .public), \(elapsed, privacy: .public)")
-                if code == CLError.denied.rawValue {
-                    self?.tell(.denied)
-                } else {
-                    self?.onNoPosition()
-                }
-            } else {
-                logger.info("Core Location found the position after \(elapsed, privacy: .public)")
-            }
-        }
-        manager.requestOneLocation(finish)
-        Task { [positionTimeout] in
-            try? await Task.sleep(for: positionTimeout)
-            finish(CLError(.locationUnknown))
-        }
-    }
-
-    private var isCheckingPosition = false
-    /// Tells the user (replaced in tests).
-    var onNoPosition: () -> Void = LocationAuthorization.tellNoPosition
-    /// How long Core Location may take to find the position.
-    var positionTimeout: Duration = .seconds(30)
-
-    static func tellNoPosition() {
-        ToastManager.shared.show(
-            "macOS couldn't find your location. Check that Wi-Fi is on, then try again.",
-            type: .error,
-            duration: 10
-        )
     }
 
     private func authorizationChanged() {
@@ -135,13 +90,24 @@ final class LocationAuthorization: NSObject {
             decisionHandler(decision)
             return
         }
+        guard isProviderAvailable() else {
+            logger.error("Position for the site: refused, WebKit can't be given positions")
+            tell(.unavailable)
+            decisionHandler(.deny)
+            return
+        }
         ensureAuthorized { [self] outcome in
             let result = outcome == .authorized ? "allowed" : "refused"
             logger.info("Position for the site: \(result, privacy: .public)")
             tell(outcome)
             decisionHandler(outcome == .authorized ? .grant : .deny)
-            if outcome == .authorized { checkPosition() }
         }
+    }
+
+    /// Core Location refused a position after all (Location Services
+    /// turned off meanwhile): said once, like a refusal.
+    func positionRefused() {
+        tell(.denied)
     }
 
     /// Tells the user why a site gets no position, once per launch for each
@@ -153,6 +119,8 @@ final class LocationAuthorization: NSObject {
     }
 
     private var told: Set<Outcome> = []
+    /// Whether WebKit can be given positions (replaced in tests).
+    var isProviderAvailable: () -> Bool = { GeolocationProvider.shared.isAvailable }
     /// Shows the reason (replaced in tests).
     var onRefusal: (Outcome) -> Void = LocationAuthorization.show
 
@@ -164,6 +132,8 @@ final class LocationAuthorization: NSObject {
                 + "Privacy & Security › Location Services."
         case .noAnswer:
             "macOS didn't answer about Location Services. Try again, or check System Settings › Privacy & Security."
+        case .unavailable:
+            "This version of macOS doesn't let Ombre give sites your location."
         }
         ToastManager.shared.show(message, type: .error, duration: 10)
     }
@@ -195,21 +165,16 @@ protocol LocationManaging: AnyObject {
     var authorizationStatus: CLAuthorizationStatus { get }
     var onAuthorizationChange: (() -> Void)? { get set }
     func requestAuthorization()
-    /// Asks Core Location for one position; nil error once it has one.
-    func requestOneLocation(_ completion: @escaping (Error?) -> Void)
 }
 
 @MainActor
 final class SystemLocationManager: NSObject, LocationManaging, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     var onAuthorizationChange: (() -> Void)?
-    private var locationRequests: [(Error?) -> Void] = []
 
     override init() {
         super.init()
         manager.delegate = self
-        // Only to tell whether a position comes (WebKit gets its own).
-        manager.desiredAccuracy = kCLLocationAccuracyReduced
     }
 
     var authorizationStatus: CLAuthorizationStatus {
@@ -220,26 +185,7 @@ final class SystemLocationManager: NSObject, LocationManaging, CLLocationManager
         manager.requestWhenInUseAuthorization()
     }
 
-    func requestOneLocation(_ completion: @escaping (Error?) -> Void) {
-        locationRequests.append(completion)
-        manager.requestLocation()
-    }
-
     nonisolated func locationManagerDidChangeAuthorization(_: CLLocationManager) {
         Task { @MainActor in self.onAuthorizationChange?() }
-    }
-
-    nonisolated func locationManager(_: CLLocationManager, didUpdateLocations _: [CLLocation]) {
-        Task { @MainActor in self.finishLocationRequests(nil) }
-    }
-
-    nonisolated func locationManager(_: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in self.finishLocationRequests(error) }
-    }
-
-    private func finishLocationRequests(_ error: Error?) {
-        let requests = locationRequests
-        locationRequests = []
-        requests.forEach { $0(error) }
     }
 }

@@ -120,6 +120,11 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   perd l'un ou l'autre. Le sélecteur de macOS donne l'accès : pas de permission « Enregistrement de l'écran ».
   Géolocalisation (décision de Ludo) : méthode publique de macOS 27, et avant elle la méthode **de délégué** privée
   `_webView:requestGeolocationPermissionForOrigin:…` (test qui échoue si WebKit ne la déclare plus).
+  **Troisième exception tolérée** (décision de Ludo, 08/11/2026) : le fournisseur de position (`GeolocationProvider`).
+  Sur macOS, WebKit ne donne aucune position aux pages sans un fournisseur posé par l'app ; Ombre fait comme Safari,
+  avec les fonctions C de WebKit (`WKGeolocationManagerSetProvider`, `WKContextGetGeolocationManager`, etc.).
+  Elles sont **résolues à l'exécution (`dlsym`), jamais liées** : si l'une manque, les sites sont refusés et Ombre le
+  dit une fois, sans plantage ; `GeolocationProviderTests` échoue alors (et vérifie la disposition de la structure C).
 
 ## Leçons apprises (éviter de les refaire)
 

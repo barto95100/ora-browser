@@ -39,7 +39,8 @@ if [[ "${1:-}" == "--check" ]]; then
     # Xcode's Debug copy, plus an installed release in /Applications if any.
     others=$(grep -v '^/Applications/' <<<"$copies" | grep -c .)
     # Apps built in the repository and its worktrees, outside .noindex.
-    root=$(dirname "$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir)")
+    common=$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir) || exit 2
+    root=$(dirname "$common")
     exposed=$(find "$root" -path '*.noindex' -prune -o -type d -name '*.app' -print -prune 2>/dev/null)
     if [[ -n "$exposed" ]]; then
         echo "Apps Spotlight would register again (move them to a .noindex folder, or delete them):"

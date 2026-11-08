@@ -76,6 +76,43 @@ extension TabManagerTests {
             }
         }
 
+        /// The page's script tells which pieces the user scrolled to, once
+        /// per scroll: those the translation takes next.
+        @Test func thePageTellsWhatWasScrolledTo() async throws {
+            let paragraphs = (0 ..< 200).map { "<p style=\"height:40px;margin:0\">Absatz Nummer \($0)</p>" }
+            let html = "<html lang=\"de\"><body style=\"margin:0\"><p id=\"a\">Guten Morgen</p>"
+                + paragraphs.joined() + "</body></html>"
+            try await TabManagerTestWindow.run { window in
+                let tab = try await tab(showing: html, in: window)
+                let page = try #require(tab.browserPage)
+                // On screen: the tests' windows have no size.
+                let host = NSWindow(
+                    contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
+                    styleMask: [.borderless], backing: .buffered, defer: false
+                )
+                host.contentView = page.extensionWebView
+                defer { host.contentView = nil }
+                let text = BrowserPageText(page: page)
+                let pieces = await text.collectText()
+                #expect(pieces.count == 201)
+                #expect(await text.piecesOnScreen().isEmpty)
+
+                _ = await evaluate(page, "window.scrollTo(0, 4000); 1")
+                var onScreen: [Int] = []
+                for _ in 0 ..< 40 where onScreen.isEmpty {
+                    try await Task.sleep(for: .milliseconds(50))
+                    onScreen = await text.piecesOnScreen()
+                }
+                // Paragraph n is at 40 × (n + 1) points: about 99 to 110.
+                let shown = onScreen.map { pieces[$0] }
+                #expect(shown.contains("Absatz Nummer 100"))
+                #expect(!shown.contains("Absatz Nummer 0"))
+                #expect(shown.count < 20)
+                // Read once per scroll.
+                #expect(await text.piecesOnScreen().isEmpty)
+            }
+        }
+
         /// The page's context menu: translate, or the original again; the panel.
         @Test func contextMenuOffersTranslationOrTheOriginal() async throws {
             try await TabManagerTestWindow.run { window in
@@ -123,7 +160,9 @@ extension TabManagerTests {
                 let session = try #require(runtime.translationSession?.session)
 
                 // Again after the original: same session, from the page's memory.
-                #expect(runtime.translationMemory?.translations.isEmpty == false)
+                let translatedPair = PageTranslationPair(source: pair.0, target: pair.1)
+                #expect(runtime.existingTranslationMemory(for: translatedPair, page: tab.url)?.translations
+                    .isEmpty == false)
                 tab.showOriginalPage()
                 #expect(await text(tab, "a") == "Guten Morgen")
                 let start = Date()
@@ -137,7 +176,8 @@ extension TabManagerTests {
         }
 
         /// The page's memory: translated again from it, never asked twice;
-        /// a new document starts with none.
+        /// kept for a new document at the same address (a reload), gone
+        /// with the page's view.
         @Test func aPageIsTranslatedOnce() async throws {
             try await TabManagerTestWindow.run { window in
                 let tab = try await tab(showing: Self.german, in: window)
@@ -150,7 +190,10 @@ extension TabManagerTests {
                 for _ in 0 ..< 2 {
                     let runID = UUID()
                     runtime.translationRunID = runID
-                    let translator = MemorizingTranslator(base: counting, memory: runtime.translationMemory(for: pair))
+                    let translator = MemorizingTranslator(
+                        base: counting,
+                        memory: runtime.translationMemory(for: pair, page: tab.url)
+                    )
                     await tab.runTranslation(pair, translator: translator, needsDownload: false, runID: runID)
                     #expect(runtime.translation == .translated(pair))
                     #expect(await text(tab, "a") == "GUTEN MORGEN")
@@ -159,7 +202,9 @@ extension TabManagerTests {
                 #expect(counting.translatedPieces == 2)
 
                 runtime.resetTranslation()
-                #expect(runtime.translationMemory == nil)
+                #expect(runtime.existingTranslationMemory(for: pair, page: tab.url) != nil)
+                runtime.reset()
+                #expect(runtime.existingTranslationMemory(for: pair, page: tab.url) == nil)
             }
         }
 

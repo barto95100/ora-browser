@@ -127,10 +127,13 @@ struct PageTranslationPanel: View {
     private var actions: some View {
         HStack {
             Spacer()
-            if state != .original {
-                Button(state.isBusy ? "Stop" : "Show Original") {
-                    tab.showOriginalPage()
-                }
+            if state.isBusy {
+                Button("Stop") { tab.stopTranslatingPage() }
+            }
+            if state != .original, !state.isPreparing {
+                // While translating: the original now, the translation going
+                // on behind it (see `Tab.showOriginalPage`).
+                Button("Show Original") { tab.showOriginalPage() }
             }
             if !state.isBusy {
                 Button("Translate") {

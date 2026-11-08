@@ -10,7 +10,6 @@ struct LocationAuthorizationTests {
         var authorizationStatus: CLAuthorizationStatus
         var onAuthorizationChange: (() -> Void)?
         var requests = 0
-        var locationRequests: [(Error?) -> Void] = []
 
         init(_ status: CLAuthorizationStatus) {
             authorizationStatus = status
@@ -18,10 +17,6 @@ struct LocationAuthorizationTests {
 
         func requestAuthorization() {
             requests += 1
-        }
-
-        func requestOneLocation(_ completion: @escaping (Error?) -> Void) {
-            locationRequests.append(completion)
         }
 
         /// macOS's answer to its prompt.
@@ -79,49 +74,6 @@ struct LocationAuthorizationTests {
         #expect(outcomes == [.noAnswer])
     }
 
-    @Test
-    func aPositionFoundTellsNothing() async {
-        let manager = FakeManager(.authorizedAlways)
-        let authorization = LocationAuthorization(manager: manager)
-        var told = 0
-        authorization.onNoPosition = { told += 1 }
-        authorization.positionTimeout = .milliseconds(50)
-        authorization.checkPosition()
-        #expect(manager.locationRequests.count == 1)
-        manager.locationRequests.first?(nil)
-        try? await Task.sleep(for: .milliseconds(120))
-        #expect(told == 0)
-    }
-
-    @Test
-    func noPositionIsTold() {
-        let manager = FakeManager(.authorizedAlways)
-        let authorization = LocationAuthorization(manager: manager)
-        var told = 0
-        authorization.onNoPosition = { told += 1 }
-        authorization.positionTimeout = .seconds(5)
-        authorization.checkPosition()
-        manager.locationRequests.first?(CLError(.locationUnknown))
-        #expect(told == 1)
-    }
-
-    @Test
-    func aPositionThatNeverComesIsTold() async {
-        let manager = FakeManager(.authorizedAlways)
-        let authorization = LocationAuthorization(manager: manager)
-        var told = 0
-        authorization.onNoPosition = { told += 1 }
-        authorization.positionTimeout = .milliseconds(50)
-        authorization.checkPosition()
-        for _ in 0 ..< 100 where told == 0 {
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-        #expect(told == 1)
-        // The late answer is ignored.
-        manager.locationRequests.first?(nil)
-        #expect(told == 1)
-    }
-
     // MARK: - The site's answer
 
     /// What WebKit is told, and what the user is told.
@@ -132,12 +84,13 @@ struct LocationAuthorizationTests {
 
     private func answering(
         _ decision: BrowserPermissionDecision,
-        with manager: FakeManager
+        with manager: FakeManager,
+        isProviderAvailable: Bool = true
     ) -> (LocationAuthorization, Answers) {
         let authorization = LocationAuthorization(manager: manager)
         let answers = Answers()
         authorization.onRefusal = { answers.told.append($0) }
-        authorization.onNoPosition = {}
+        authorization.isProviderAvailable = { isProviderAvailable }
         authorization.answer(decision) { answers.decisions.append($0) }
         return (authorization, answers)
     }
@@ -161,8 +114,6 @@ struct LocationAuthorizationTests {
         manager.answer(.authorizedAlways)
         #expect(answers.decisions == [.grant])
         #expect(answers.told.isEmpty)
-        // Then a position is looked for.
-        #expect(manager.locationRequests.count == 1)
     }
 
     @Test
@@ -172,7 +123,6 @@ struct LocationAuthorizationTests {
         authorization.answer(.grant) { answers.decisions.append($0) }
         #expect(answers.decisions == [.deny, .deny])
         #expect(answers.told == [.denied])
-        #expect(manager.locationRequests.isEmpty)
     }
 
     @Test
@@ -192,12 +142,24 @@ struct LocationAuthorizationTests {
         #expect(manager.requests == 2)
     }
 
+    /// A WebKit without the provider's functions: every site refused,
+    /// macOS never asked, the user told once.
+    @Test
+    func withoutTheProviderSitesAreRefusedAndToldOnce() {
+        let manager = FakeManager(.notDetermined)
+        let (authorization, answers) = answering(.grant, with: manager, isProviderAvailable: false)
+        authorization.answer(.grant) { answers.decisions.append($0) }
+        #expect(answers.decisions == [.deny, .deny])
+        #expect(answers.told == [.unavailable])
+        #expect(manager.requests == 0)
+    }
+
     @Test
     func positionRefusedLaterSaysLocationIsOff() {
         let manager = FakeManager(.authorizedAlways)
         let (authorization, answers) = answering(.grant, with: manager)
-        manager.locationRequests.first?(CLError(.denied))
+        authorization.positionRefused()
+        authorization.positionRefused()
         #expect(answers.told == [.denied])
-        withExtendedLifetime(authorization) {}
     }
 }

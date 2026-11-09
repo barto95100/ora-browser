@@ -67,11 +67,11 @@ struct PasswordStorageTests {
             persistentReference: Data()
         )
         var failures: [(title: String, message: String)] = []
-        PasswordDeleteConfirmation.perform({ _ in
-            throw PasswordManagerError.keychainStatus(errSecInteractionNotAllowed)
-        }, on: entry) { title, error in
-            failures.append((title, error.localizedDescription))
-        }
+        PasswordDeleteConfirmation.perform(
+            { _ in throw PasswordManagerError.keychainStatus(errSecInteractionNotAllowed) },
+            on: entry,
+            onFailure: { title, error in failures.append((title, error.localizedDescription)) }
+        )
         let failure = try #require(failures.first)
         #expect(failures.count == 1)
         #expect(failure.title.contains("ludo") && failure.title.contains("example.com"))
@@ -79,9 +79,11 @@ struct PasswordStorageTests {
 
         // A delete that works says nothing.
         var deleted = false
-        PasswordDeleteConfirmation.perform({ _ in deleted = true }, on: entry) { _, _ in
-            Issue.record("A delete that worked was reported as failed")
-        }
+        PasswordDeleteConfirmation.perform(
+            { _ in deleted = true },
+            on: entry,
+            onFailure: { _, _ in Issue.record("A delete that worked was reported as failed") }
+        )
         #expect(deleted)
     }
 
@@ -91,9 +93,11 @@ struct PasswordStorageTests {
         defer { try? removeSaved(on: url) }
         try service.upsertCredential(for: url, username: "ludo", password: "s3cret", containerID: nil)
         let entry = try #require(service.matchingEntries(for: url).first)
-        PasswordDeleteConfirmation.perform({ try service.delete($0) }, on: entry) { _, error in
-            Issue.record("Delete failed: \(error.localizedDescription)")
-        }
+        PasswordDeleteConfirmation.perform(
+            { try service.delete($0) },
+            on: entry,
+            onFailure: { _, error in Issue.record("Delete failed: \(error.localizedDescription)") }
+        )
         #expect(service.matchingEntries(for: url).isEmpty)
     }
 

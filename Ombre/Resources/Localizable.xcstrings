@@ -41,22 +41,6 @@
         }
       }
     },
-    "%@ · %lld set" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$lld set"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · sites réglés : %2$lld"
-          }
-        }
-      }
-    },
     "%@ integration coming soon." : {
       "localizations" : {
         "fr" : {
@@ -572,7 +556,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Accès sur %@"
+            "value" : "Accès à %@"
           }
         }
       }
@@ -674,7 +658,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ajouter depuis un dossier ou un zip…"
+            "value" : "Ajouter depuis un dossier ou un fichier zip…"
           }
         }
       }
@@ -2560,7 +2544,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les extensions nécessitent macOS 15.4 ou ultérieur."
+            "value" : "Les extensions nécessitent macOS 15.4 ou une version ultérieure."
           }
         }
       }
@@ -2732,7 +2716,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oublier (sera redemandé la prochaine fois)"
+            "value" : "Oublier (la question sera reposée la prochaine fois)"
           }
         }
       }
@@ -2764,7 +2748,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fournie par %@"
+            "value" : "Provenant de %@"
           }
         }
       }
@@ -2774,7 +2758,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Depuis un fichier"
+            "value" : "Provenant d’un fichier"
           }
         }
       }
@@ -2784,7 +2768,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fournie par une app"
+            "value" : "Provenant d’une app"
           }
         }
       }
@@ -2794,7 +2778,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Depuis le Chrome Web Store"
+            "value" : "Provenant du Chrome Web Store"
           }
         }
       }
@@ -3253,7 +3237,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Savoir quand vous êtes absent"
+            "value" : "Détecter votre inactivité"
           }
         }
       }
@@ -4041,7 +4025,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Plus demandé tant que le refus n’est pas oublié."
+            "value" : "Elles ne seront plus demandées, sauf si vous les oubliez."
           }
         }
       }
@@ -4817,7 +4801,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lire et modifier les pages de : %@"
+            "value" : "Lire et modifier les pages sur : %@"
           }
         }
       }
@@ -6872,7 +6856,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mises à jour : %@."
+            "value" : "Extensions mises à jour : %@."
           }
         }
       }
@@ -6882,7 +6866,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mises à jour : %@. Une mise à jour attend votre accord."
+            "value" : "Extensions mises à jour : %@. Une mise à jour attend votre accord."
           }
         }
       }
@@ -7185,6 +7169,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom arrière"
+          }
+        }
+      }
+    },
+    "%lld sites set" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld site réglé"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sites réglés"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld site set"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sites set"
+                }
+              }
+            }
           }
         }
       }

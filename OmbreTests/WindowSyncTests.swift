@@ -144,14 +144,23 @@ extension TabManagerTests {
                 await caughtUp()
                 let there = try #require(tab(opened.id, in: second))
 
+                // The case seen on 05/11: activated and saved in the other
+                // window, then read again in both and in the database.
                 second.tabManager.activateTab(there)
+                second.modelContext.saveOrLog("test")
                 await caughtUp()
                 first.tabManager.activateTab(opened)
+                first.modelContext.saveOrLog("test")
                 await caughtUp()
 
                 #expect(opened.parentContainer != nil)
                 #expect(there.parentContainer != nil)
                 #expect(second.tabManager.activeTab?.parentContainer != nil)
+                let openedID = opened.id
+                let stored = try ModelContext(first.modelContainer)
+                    .fetch(FetchDescriptor<Tab>(predicate: #Predicate { $0.id == openedID }))
+                #expect(stored.count == 1)
+                #expect(try stored.first?.parentContainer?.id == (first.activeSpace).id)
             }
         }
 

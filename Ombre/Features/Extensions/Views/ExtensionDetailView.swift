@@ -153,11 +153,11 @@ struct ExtensionDetailView: View {
     /// One line under the extension's name.
     static func summary(of record: ExtensionRecord) -> String {
         let other = switch record.otherSites {
-        case .ask: "Asks on each website"
-        case .allow: "All websites"
-        case .deny: "No website"
+        case .ask: String(localized: "Asks on each website")
+        case .allow: String(localized: "All websites")
+        case .deny: String(localized: "No website")
         }
         let count = ExtensionSiteAccess.activeRules(record.siteRules).count
-        return count == 0 ? other : "\(other) · \(count) set"
+        return count == 0 ? other : String(localized: "\(other) · \(count) set")
     }
 }

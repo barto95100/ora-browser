@@ -55,9 +55,9 @@ enum ChromeWebStore {
 
         var errorDescription: String? {
             switch self {
-            case .notFound: "The Chrome Web Store didn't send this extension."
-            case .notFromTheStore: "The extension was sent from outside the Chrome Web Store."
-            case .tooLarge: "This extension is too large."
+            case .notFound: String(localized: "The Chrome Web Store didn't send this extension.")
+            case .notFromTheStore: String(localized: "The extension was sent from outside the Chrome Web Store.")
+            case .tooLarge: String(localized: "This extension is too large.")
             }
         }
     }
@@ -83,7 +83,7 @@ enum CRXArchive {
         case notAnExtension
 
         var errorDescription: String? {
-            "This file isn't a browser extension."
+            String(localized: "This file isn't a browser extension.")
         }
     }
 
@@ -93,7 +93,7 @@ enum CRXArchive {
     static func zipData(from data: Data) throws -> Data {
         let data = Data(data)
         if data.prefix(4) == zipMagic { return data }
-        guard data.count > 16, data.prefix(4) == Data("Cr24".utf8) else { throw Failure.notAnExtension }
+        guard data.count > 16, data.prefix(4) == Data("Cr24".utf8) else { throw Failure.notAnExtension } // not shown
         let start: Int
         switch uint32(data, at: 4) {
         case 3:
@@ -119,7 +119,7 @@ enum CRXArchive {
 enum ExtensionPackages {
     static var folder: URL {
         ExtensionRegistry.standard.fileURL.deletingLastPathComponent()
-            .appendingPathComponent("Packages", isDirectory: true)
+            .appendingPathComponent("Packages", isDirectory: true) // not shown
     }
 
     /// Keeps a `.zip` for an extension.

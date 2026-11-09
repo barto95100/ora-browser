@@ -47,15 +47,17 @@ extension WebExtensionsManager {
     }
 
     nonisolated static func updateSummary(status: String?, hasStoreExtensions: Bool) -> String {
-        guard hasStoreExtensions else { return "No extension from the Chrome Web Store." }
-        return status ?? "Updates are checked once a day, like Chrome: the Chrome Web Store (Google) "
-            + "receives the list of these extensions and their versions."
+        guard hasStoreExtensions else { return String(localized: "No extension from the Chrome Web Store.") }
+        return status ?? String(
+            // swiftlint:disable:next line_length
+            localized: "Updates are checked once a day, like Chrome: the Chrome Web Store (Google) receives the list of these extensions and their versions."
+        )
     }
 
     /// Forgets a check's result once the store extensions change, but not an
     /// update still waiting for review.
     func resetUpdateStatus() {
-        updateStatus = pendingUpdates.isEmpty ? nil : "An update needs your review."
+        updateStatus = pendingUpdates.isEmpty ? nil : String(localized: "An update needs your review.")
     }
 
     /// `reinstall` (Debug, ⌥-click): asks as if every version were 0, to
@@ -96,14 +98,15 @@ extension WebExtensionsManager {
             }
             let waiting = pendingUpdates.count
             updateStatus = switch (updated.isEmpty, waiting) {
-            case (true, 0): "Everything is up to date."
-            case (false, 0): "Updated: \(updated.joined(separator: ", "))."
-            case (true, _): "An update needs your review."
-            case (false, _): "Updated: \(updated.joined(separator: ", ")). An update needs your review."
+            case (true, 0): String(localized: "Everything is up to date.")
+            case (false, 0): String(localized: "Updated: \(updated.formatted(.list(type: .and))).")
+            case (true, _): String(localized: "An update needs your review.")
+            case (false, _):
+                String(localized: "Updated: \(updated.formatted(.list(type: .and))). An update needs your review.")
             }
         } catch {
             logger.error("Extension update check failed: \(error.localizedDescription, privacy: .public)")
-            updateStatus = "Couldn't check for updates."
+            updateStatus = String(localized: "Couldn't check for updates.")
         }
     }
 
@@ -183,8 +186,8 @@ extension WebExtensionsManager {
     static func chromeRequest(_ url: URL) -> URLRequest {
         var request = URLRequest(url: url)
         request.setValue(
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
-                + "Chrome/\(ChromeWebStore.chromeVersion) Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) " // not shown
+                + "Chrome/\(ChromeWebStore.chromeVersion) Safari/537.36", // not shown
             forHTTPHeaderField: "User-Agent"
         )
         return request

@@ -202,9 +202,8 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
             return
         }
         if loggedNativeCommands.insert("\(extensionContext.uniqueIdentifier):\(command)").inserted {
-            logger.notice(
-                "\(self.name(of: extensionContext), privacy: .public) native message: \(command, privacy: .public)"
-            )
+            let name = name(of: extensionContext)
+            logger.notice("\(name, privacy: .public) native message: \(command, privacy: .public)")
         }
         replyHandler(nil, Failure.nativeMessagingUnsupported)
     }

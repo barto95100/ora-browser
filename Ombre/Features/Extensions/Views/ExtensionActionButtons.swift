@@ -121,7 +121,8 @@ private struct ExtensionActionButton: View {
         .onHover { isHovering = $0 }
         .background(AnchorReader(anchor: anchor, extensionID: record.id))
         .opacity(action?.isEnabled == false ? 0.4 : 1)
-        .help(hostAsking.map { "\(record.name) wants to access \($0)" } ?? action?.label ?? record.name)
+        .help(hostAsking.map { String(localized: "\(record.name) wants to access \($0)") } ?? action?.label ?? record
+            .name)
         .accessibilityLabel(Text(action?.label ?? record.name))
         .popover(isPresented: Binding(
             get: { askingHost != nil },
@@ -167,16 +168,16 @@ private struct ExtensionMenuItems: View {
             let isPrivate = tab?.isPrivate ?? false
             let current = manager.siteDecision(for: host, in: record, isPrivate: isPrivate)
             Menu("Access on \(host)") {
-                choice("Allow", checked: current == .allow) {
+                choice(String(localized: "Allow"), checked: current == .allow) {
                     manager.decideSite(host, .allow, id: record.id, isPrivate: isPrivate)
                 }
-                choice("Allow for One Day", checked: false) {
+                choice(String(localized: "Allow for One Day"), checked: false) {
                     manager.decideSite(host, .allow, forOneDay: true, id: record.id, isPrivate: isPrivate)
                 }
-                choice("Ask", checked: current == .ask) {
+                choice(String(localized: "Ask"), checked: current == .ask) {
                     manager.decideSite(host, .ask, id: record.id, isPrivate: isPrivate)
                 }
-                choice("Don't Allow", checked: current == .deny) {
+                choice(String(localized: "Don't Allow"), checked: current == .deny) {
                     manager.decideSite(host, .deny, id: record.id, isPrivate: isPrivate)
                 }
             }

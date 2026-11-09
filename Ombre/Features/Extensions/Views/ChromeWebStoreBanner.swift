@@ -104,7 +104,7 @@ private struct ChromeWebStoreBannerContent: View {
             do {
                 review = try await manager.reviewFromWebStore(storeID)
             } catch {
-                failure = "Couldn't add it: \(error.localizedDescription)"
+                failure = String(localized: "Couldn't add it: \(error.localizedDescription)")
             }
             isDownloading = false
         }

@@ -5,7 +5,26 @@
     " — %@" : {},
     " / %@" : {},
     "·" : {},
-    "“%@” is in Ombre." : {},
+    "“%@” is in Ombre." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » est dans Ombre."
+          }
+        }
+      }
+    },
+    "“%@” would like to:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » voudrait :"
+          }
+        }
+      }
+    },
     "%@ — last used %@" : {
       "localizations" : {
         "en" : {
@@ -18,6 +37,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ — utilisé %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld set"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · sites réglés : %2$lld"
           }
         }
       }
@@ -74,6 +109,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ demande votre attention."
+          }
+        }
+      }
+    },
+    "%@ wants to access %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ wants to access %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ veut accéder à %2$@"
           }
         }
       }
@@ -526,7 +577,16 @@
         }
       }
     },
-    "Access on %@" : {},
+    "Access on %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès sur %@"
+          }
+        }
+      }
+    },
     "Actions" : {
       "localizations" : {
         "fr" : {
@@ -577,7 +637,16 @@
         }
       }
     },
-    "Add “%@”?" : {},
+    "Add “%@”?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter « %@ » ?"
+          }
+        }
+      }
+    },
     "Add a remote AdGuard-style list URL to make it available in this space." : {
       "localizations" : {
         "fr" : {
@@ -600,8 +669,36 @@
         }
       }
     },
-    "Add Extension" : {},
-    "Add from Folder or Zip…" : {},
+    "Add Extension" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter l’extension"
+          }
+        }
+      }
+    },
+    "Add from Folder or Zip…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter depuis un dossier ou un zip…"
+          }
+        }
+      }
+    },
+    "Add items to context menus" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des éléments aux menus contextuels"
+          }
+        }
+      }
+    },
     "Add New Search Engine" : {
       "localizations" : {
         "fr" : {
@@ -613,7 +710,16 @@
       }
     },
     "Add subtask" : {},
-    "Add this extension to Ombre." : {},
+    "Add this extension to Ombre." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter cette extension à Ombre."
+          }
+        }
+      }
+    },
     "Add to Favorites" : {
       "localizations" : {
         "fr" : {
@@ -624,8 +730,26 @@
         }
       }
     },
-    "Add to Ombre…" : {},
-    "Add…" : {},
+    "Add to Ombre…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à Ombre…"
+          }
+        }
+      }
+    },
+    "Add…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter…"
+          }
+        }
+      }
+    },
     "Added %@" : {
       "localizations" : {
         "fr" : {
@@ -720,13 +844,48 @@
         }
       }
     },
-    "Allow" : {},
+    "All websites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les sites web"
+          }
+        }
+      }
+    },
+    "Allow" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser"
+          }
+        }
+      }
+    },
     "Allow “%@” on %@?" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Allow “%1$@” on %2$@?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser « %1$@ » sur %2$@ ?"
+          }
+        }
+      }
+    },
+    "Allow “%@” on all websites?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser « %@ » sur tous les sites web ?"
           }
         }
       }
@@ -762,8 +921,26 @@
         }
       }
     },
-    "Allow for One Day" : {},
-    "Allow in Private Browsing" : {},
+    "Allow for One Day" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser pendant un jour"
+          }
+        }
+      }
+    },
+    "Allow in Private Browsing" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser en navigation privée"
+          }
+        }
+      }
+    },
     "Allow Ombre to read “%@” so this page can show its images and styles." : {
       "localizations" : {
         "fr" : {
@@ -774,7 +951,26 @@
         }
       }
     },
-    "Allow on all websites" : {},
+    "Allow on all websites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser sur tous les sites web"
+          }
+        }
+      }
+    },
+    "Allow on All Websites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser sur tous les sites web"
+          }
+        }
+      }
+    },
     "Allow Web Inspector" : {
       "localizations" : {
         "fr" : {
@@ -785,7 +981,26 @@
         }
       }
     },
-    "Always Allow on This Website" : {},
+    "Always Allow" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours autoriser"
+          }
+        }
+      }
+    },
+    "Always Allow on This Website" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours autoriser sur ce site web"
+          }
+        }
+      }
+    },
     "Always translate %@" : {},
     "An unexpected error occurred while loading this page." : {
       "localizations" : {
@@ -793,6 +1008,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une erreur inattendue s’est produite pendant le chargement de cette page."
+          }
+        }
+      }
+    },
+    "An update needs your review." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une mise à jour attend votre accord."
           }
         }
       }
@@ -818,6 +1043,16 @@
         }
       }
     },
+    "Apps from the App Store can bring Safari extensions. Ombre runs them like Safari." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les apps de l’App Store peuvent apporter des extensions Safari. Ombre les exécute comme Safari."
+          }
+        }
+      }
+    },
     "Are you sure you want to quit?" : {
       "localizations" : {
         "fr" : {
@@ -828,7 +1063,16 @@
         }
       }
     },
-    "Ask" : {},
+    "Ask" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander"
+          }
+        }
+      }
+    },
     "Ask %@" : {
       "localizations" : {
         "fr" : {
@@ -849,7 +1093,26 @@
         }
       }
     },
-    "Ask on each website" : {},
+    "Ask on each website" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander sur chaque site web"
+          }
+        }
+      }
+    },
+    "Asks on each website" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demande sur chaque site web"
+          }
+        }
+      }
+    },
     "Attach Current Page" : {},
     "auth.username" : {
       "extractionState" : "extracted_with_value",
@@ -982,6 +1245,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquer l’empreinte numérique"
+          }
+        }
+      }
+    },
+    "Block or change web requests" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer ou modifier les requêtes web"
+          }
+        }
+      }
+    },
+    "Block or change web requests on allowed sites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer ou modifier les requêtes web sur les sites autorisés"
           }
         }
       }
@@ -1264,13 +1547,32 @@
         }
       }
     },
-    "Checking…" : {},
+    "Checking…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification…"
+          }
+        }
+      }
+    },
     "Choose" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisir"
+          }
+        }
+      }
+    },
+    "Choose an extension: a folder with a manifest.json, a .zip or a .crx." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez une extension : un dossier avec un manifest.json, un .zip ou un .crx."
           }
         }
       }
@@ -1654,6 +1956,26 @@
         }
       }
     },
+    "Couldn't add it: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de l’ajouter : %@"
+          }
+        }
+      }
+    },
+    "Couldn't check for updates." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de vérifier les mises à jour."
+          }
+        }
+      }
+    },
     "Count browsing time" : {
       "localizations" : {
         "fr" : {
@@ -1872,7 +2194,16 @@
         }
       }
     },
-    "Details" : {},
+    "Details" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails"
+          }
+        }
+      }
+    },
     "Details…" : {},
     "Developer" : {
       "localizations" : {
@@ -1894,7 +2225,16 @@
         }
       }
     },
-    "Don't Allow" : {},
+    "Don't Allow" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne pas autoriser"
+          }
+        }
+      }
+    },
     "Don't allow this page to show more dialogs" : {
       "localizations" : {
         "fr" : {
@@ -1915,7 +2255,16 @@
         }
       }
     },
-    "Downloading…" : {},
+    "Downloading…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement…"
+          }
+        }
+      }
+    },
     "Downloads" : {
       "localizations" : {
         "fr" : {
@@ -2091,12 +2440,32 @@
         }
       }
     },
+    "Everything is up to date." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est à jour."
+          }
+        }
+      }
+    },
     "Expanded" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Développé"
+          }
+        }
+      }
+    },
+    "Extension" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extension"
           }
         }
       }
@@ -2111,7 +2480,16 @@
         }
       }
     },
-    "Extensions need macOS 15.4 or later." : {},
+    "Extensions need macOS 15.4 or later." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les extensions nécessitent macOS 15.4 ou ultérieur."
+          }
+        }
+      }
+    },
     "Fast, secure, and beautiful browser built for macOS" : {
       "localizations" : {
         "fr" : {
@@ -2254,7 +2632,26 @@
         }
       }
     },
-    "Forget (asked again next time)" : {},
+    "Follow navigation in tabs" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivre la navigation dans les onglets"
+          }
+        }
+      }
+    },
+    "Forget (asked again next time)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier (sera redemandé la prochaine fois)"
+          }
+        }
+      }
+    },
     "Forget this site" : {},
     "Forward" : {
       "localizations" : {
@@ -2277,7 +2674,56 @@
       }
     },
     "From" : {},
-    "From %@" : {},
+    "From %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fournie par %@"
+          }
+        }
+      }
+    },
+    "From a file" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depuis un fichier"
+          }
+        }
+      }
+    },
+    "From an app" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fournie par une app"
+          }
+        }
+      }
+    },
+    "From the Chrome Web Store" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depuis le Chrome Web Store"
+          }
+        }
+      }
+    },
+    "From Your Apps" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fournies par vos apps"
+          }
+        }
+      }
+    },
     "From your browsing time" : {},
     "Full license text" : {},
     "Fullscreen" : {
@@ -2597,9 +3043,66 @@
         }
       }
     },
-    "It could see what you do in private windows." : {},
-    "It will be able to read and change this website's pages." : {},
-    "It will be able to:" : {},
+    "Installed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installées"
+          }
+        }
+      }
+    },
+    "It could see what you do in private windows." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle pourrait voir ce que vous faites dans les fenêtres privées."
+          }
+        }
+      }
+    },
+    "It will be able to read and change every page you visit." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle pourra lire et modifier toutes les pages que vous visitez."
+          }
+        }
+      }
+    },
+    "It will be able to read and change these pages." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle pourra lire et modifier ces pages."
+          }
+        }
+      }
+    },
+    "It will be able to read and change this website's pages." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle pourra lire et modifier les pages de ce site web."
+          }
+        }
+      }
+    },
+    "It will be able to:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle pourra :"
+          }
+        }
+      }
+    },
     "Its address uses a network port reserved for other services, which browsers don't open." : {
       "localizations" : {
         "fr" : {
@@ -2610,7 +3113,16 @@
         }
       }
     },
-    "Its data in Ombre is deleted. The app that brings it stays installed." : {},
+    "Its data in Ombre is deleted. The app that brings it stays installed." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses données dans Ombre sont supprimées. L’app qui la fournit reste installée."
+          }
+        }
+      }
+    },
     "Keep browsing time for:" : {
       "localizations" : {
         "fr" : {
@@ -2621,13 +3133,32 @@
         }
       }
     },
-    "Keyboard Shortcuts" : {},
+    "Keyboard Shortcuts" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis clavier"
+          }
+        }
+      }
+    },
     "Keyboard shortcuts and command mappings." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourcis clavier et commandes associées."
+          }
+        }
+      }
+    },
+    "Know when you're away" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Savoir quand vous êtes absent"
           }
         }
       }
@@ -2853,8 +3384,26 @@
         }
       }
     },
-    "Manage Extension…" : {},
-    "Manage Extensions…" : {},
+    "Manage Extension…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer l’extension…"
+          }
+        }
+      }
+    },
+    "Manage Extensions…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer les extensions…"
+          }
+        }
+      }
+    },
     "Manage Passwords" : {
       "localizations" : {
         "fr" : {
@@ -2865,7 +3414,16 @@
         }
       }
     },
-    "Manage…" : {},
+    "Manage…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer…"
+          }
+        }
+      }
+    },
     "Max recent tabs:" : {
       "localizations" : {
         "fr" : {
@@ -2908,7 +3466,16 @@
         }
       }
     },
-    "More Extensions on the App Store…" : {},
+    "More Extensions on the App Store…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus d’extensions sur l’App Store…"
+          }
+        }
+      }
+    },
     "More spaces" : {
       "localizations" : {
         "fr" : {
@@ -2940,7 +3507,16 @@
         }
       }
     },
-    "Move to Extensions Menu" : {},
+    "Move to Extensions Menu" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer dans le menu des extensions"
+          }
+        }
+      }
+    },
     "Move to Folder" : {
       "localizations" : {
         "fr" : {
@@ -3177,7 +3753,26 @@
     "No browsing time today" : {},
     "No Downloads" : {},
     "No downloads yet" : {},
-    "No extensions yet. Add one from your apps below." : {},
+    "No extension from the Chrome Web Store." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune extension du Chrome Web Store."
+          }
+        }
+      }
+    },
+    "No extensions yet. Add one from your apps below." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune extension pour l’instant. Ajoutez-en une parmi vos apps ci-dessous."
+          }
+        }
+      }
+    },
     "No history yet" : {},
     "No matches" : {
       "localizations" : {
@@ -3191,7 +3786,16 @@
     },
     "No note for this tab yet" : {},
     "No note yet" : {},
-    "No other extension found in your apps." : {},
+    "No other extension found in your apps." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune autre extension dans vos apps."
+          }
+        }
+      }
+    },
     "No results" : {},
     "No results for “%@”" : {},
     "No saved passwords match that search." : {
@@ -3236,7 +3840,36 @@
       }
     },
     "No task yet" : {},
-    "No website set yet." : {},
+    "No website" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun site web"
+          }
+        }
+      }
+    },
+    "No website set yet." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun site web réglé pour l’instant."
+          }
+        }
+      }
+    },
+    "No window to show the popup in." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune fenêtre où afficher la fenêtre surgissante."
+          }
+        }
+      }
+    },
     "No Zen session in this folder. Choose a profile in Zen's Profiles folder." : {
       "localizations" : {
         "fr" : {
@@ -3258,7 +3891,16 @@
       }
     },
     "Not a site address." : {},
-    "Not asked again until forgotten." : {},
+    "Not asked again until forgotten." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus demandé tant que le refus n’est pas oublié."
+          }
+        }
+      }
+    },
     "Not downloaded yet" : {
       "localizations" : {
         "fr" : {
@@ -3289,7 +3931,16 @@
         }
       }
     },
-    "Not Now" : {},
+    "Not Now" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        }
+      }
+    },
     "Notes" : {
       "localizations" : {
         "fr" : {
@@ -3351,6 +4002,32 @@
         }
       }
     },
+    "Ombre can't talk to the extension's app." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre ne peut pas communiquer avec l’app de l’extension."
+          }
+        }
+      }
+    },
+    "Ombre couldn't read %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ombre couldn't read %1$@: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu lire %1$@ : %2$@"
+          }
+        }
+      }
+    },
     "Ombre couldn't read this Zen session." : {
       "localizations" : {
         "fr" : {
@@ -3383,13 +4060,32 @@
       }
     },
     "Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0." : {},
-    "Ombre's own shortcuts come first." : {},
+    "Ombre's own shortcuts come first." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les raccourcis d’Ombre sont prioritaires."
+          }
+        }
+      }
+    },
     "On" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activé"
+          }
+        }
+      }
+    },
+    "On an extension's page in the Chrome Web Store, click “Add to Ombre”. Some Chrome extensions use features WebKit doesn't have: they may not work fully." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur la page d’une extension dans le Chrome Web Store, cliquez sur « Ajouter à Ombre ». Certaines extensions Chrome utilisent des fonctions que WebKit n’a pas : elles peuvent ne pas fonctionner entièrement."
           }
         }
       }
@@ -3449,13 +4145,32 @@
       }
     },
     "OPENS" : {},
-    "Options…" : {},
+    "Options…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Options…"
+          }
+        }
+      }
+    },
     "Orange" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orange"
+          }
+        }
+      }
+    },
+    "Other Extensions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres extensions"
           }
         }
       }
@@ -3470,8 +4185,26 @@
         }
       }
     },
-    "Other websites" : {},
-    "Otherwise it is in the extensions menu (puzzle piece)." : {},
+    "Other websites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres sites web"
+          }
+        }
+      }
+    },
+    "Otherwise it is in the extensions menu (puzzle piece)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinon, elle est dans le menu des extensions (pièce de puzzle)."
+          }
+        }
+      }
+    },
     "Page Not Found" : {
       "localizations" : {
         "fr" : {
@@ -3513,7 +4246,16 @@
         }
       }
     },
-    "Password managers need all websites to fill in your logins." : {},
+    "Password managers need all websites to fill in your logins." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les gestionnaires de mots de passe ont besoin de tous les sites web pour remplir vos identifiants."
+          }
+        }
+      }
+    },
     "Passwords" : {
       "localizations" : {
         "fr" : {
@@ -3585,7 +4327,16 @@
         }
       }
     },
-    "Pin Next to the Sidebar Button" : {},
+    "Pin Next to the Sidebar Button" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler à côté du bouton de la barre latérale"
+          }
+        }
+      }
+    },
     "Pin Tab" : {
       "localizations" : {
         "fr" : {
@@ -3840,6 +4591,36 @@
       }
     },
     "Read" : {},
+    "Read and change cookies" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire et modifier les cookies"
+          }
+        }
+      }
+    },
+    "Read and change pages on: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire et modifier les pages de : %@"
+          }
+        }
+      }
+    },
+    "Read the clipboard" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire le presse-papiers"
+          }
+        }
+      }
+    },
     "Ready in %lld enabled lists." : {
       "localizations" : {
         "en" : {
@@ -3920,7 +4701,16 @@
         }
       }
     },
-    "Refused Permissions" : {},
+    "Refused Permissions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisations refusées"
+          }
+        }
+      }
+    },
     "Reload" : {
       "localizations" : {
         "fr" : {
@@ -3964,7 +4754,16 @@
         }
       }
     },
-    "Remove “%@”?" : {},
+    "Remove “%@”?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer « %@ » ?"
+          }
+        }
+      }
+    },
     "Remove from Favorites" : {
       "localizations" : {
         "fr" : {
@@ -4008,7 +4807,16 @@
         }
       }
     },
-    "Remove…" : {},
+    "Remove…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer…"
+          }
+        }
+      }
+    },
     "Removed %@" : {
       "localizations" : {
         "fr" : {
@@ -4111,7 +4919,16 @@
         }
       }
     },
-    "Review…" : {},
+    "Review…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examiner…"
+          }
+        }
+      }
+    },
     "Right" : {
       "localizations" : {
         "fr" : {
@@ -4154,6 +4971,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Règles : %1$lld converties, %2$lld ignorées"
+          }
+        }
+      }
+    },
+    "Run scripts in pages" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuter des scripts dans les pages"
+          }
+        }
+      }
+    },
+    "Run tasks on a schedule" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuter des tâches planifiées"
           }
         }
       }
@@ -4290,12 +5127,42 @@
         }
       }
     },
+    "See blocked requests" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir les requêtes bloquées"
+          }
+        }
+      }
+    },
     "See it with View › Show Browsing Time (⌥⌘Y)." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Consultez-le avec Présentation › Afficher le temps de navigation (⌥⌘Y)."
+          }
+        }
+      }
+    },
+    "See web requests" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir les requêtes web"
+          }
+        }
+      }
+    },
+    "See your tabs' addresses and titles" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir l’adresse et le titre de vos onglets"
           }
         }
       }
@@ -4445,13 +5312,32 @@
       }
     },
     "Show in Finder" : {},
-    "Show next to the sidebar button" : {},
+    "Show next to the sidebar button" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher à côté du bouton de la barre latérale"
+          }
+        }
+      }
+    },
     "Show Notes" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher les notes"
+          }
+        }
+      }
+    },
+    "Show notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher des notifications"
           }
         }
       }
@@ -4746,6 +5632,26 @@
       }
     },
     "Stop" : {},
+    "Store data" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stocker des données"
+          }
+        }
+      }
+    },
+    "Store unlimited data" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stocker des données sans limite"
+          }
+        }
+      }
+    },
     "Strict" : {
       "localizations" : {
         "fr" : {
@@ -4928,7 +5834,26 @@
         }
       }
     },
-    "Talking to its app (such as Touch ID unlock) only works in Safari." : {},
+    "Talk to its app" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Communiquer avec son app"
+          }
+        }
+      }
+    },
+    "Talking to its app (such as Touch ID unlock) only works in Safari." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La communication avec son app (comme le déverrouillage par Touch ID) ne fonctionne que dans Safari."
+          }
+        }
+      }
+    },
     "Task" : {},
     "Tasks" : {
       "localizations" : {
@@ -4951,6 +5876,46 @@
         }
       }
     },
+    "The app that brings this extension has changed: remove the extension, then install it again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’app qui fournit cette extension a changé : retirez l’extension, puis installez-la de nouveau."
+          }
+        }
+      }
+    },
+    "The app that brings this extension isn't installed anymore." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’app qui fournit cette extension n’est plus installée."
+          }
+        }
+      }
+    },
+    "The Chrome Web Store didn't send this extension." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Chrome Web Store n’a pas envoyé cette extension."
+          }
+        }
+      }
+    },
+    "The Chrome Web Store sent a different extension from the one requested." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Chrome Web Store a envoyé une autre extension que celle demandée."
+          }
+        }
+      }
+    },
     "The connection to this site is not secure." : {
       "localizations" : {
         "fr" : {
@@ -4967,6 +5932,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’emoji est utilisé quand aucun symbole n’est choisi."
+          }
+        }
+      }
+    },
+    "The extension was sent from outside the Chrome Web Store." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’extension a été envoyée depuis l’extérieur du Chrome Web Store."
           }
         }
       }
@@ -5027,6 +6002,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le moteur de recherche choisi dans Réglages › Recherche a une adresse non valide."
+          }
+        }
+      }
+    },
+    "The tab you use it on" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’onglet où vous l’utilisez"
           }
         }
       }
@@ -5110,6 +6095,66 @@
     },
     "These sites stay closed during a focus cycle in %@. Breaks open them again." : {},
     "Third-party components" : {},
+    "This extension is too large." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette extension est trop volumineuse."
+          }
+        }
+      }
+    },
+    "This extension isn't signed by its developer: Ombre doesn't install it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette extension n’est pas signée par son développeur : Ombre ne l’installe pas."
+          }
+        }
+      }
+    },
+    "This extension package is damaged." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paquet de cette extension est endommagé."
+          }
+        }
+      }
+    },
+    "This extension package isn't signed by its developer: it was changed." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paquet de cette extension n’est pas signé par son développeur : il a été modifié."
+          }
+        }
+      }
+    },
+    "This file isn't a browser extension." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier n’est pas une extension de navigateur."
+          }
+        }
+      }
+    },
+    "This folder has no manifest.json: it isn't an extension." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce dossier n’a pas de manifest.json : ce n’est pas une extension."
+          }
+        }
+      }
+    },
     "This page is already in %@." : {
       "localizations" : {
         "fr" : {
@@ -5140,7 +6185,16 @@
         }
       }
     },
-    "This version asks for more than what you allowed:" : {},
+    "This version asks for more than what you allowed:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version demande plus que ce que vous avez autorisé :"
+          }
+        }
+      }
+    },
     "This webpage stopped working several times in a row, so Ombre didn't reload it again." : {
       "localizations" : {
         "fr" : {
@@ -5310,8 +6364,26 @@
         }
       }
     },
-    "until %@" : {},
-    "Until then, the current version keeps running." : {},
+    "until %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jusqu’à %@"
+          }
+        }
+      }
+    },
+    "Until then, the current version keeps running." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’ici là, la version actuelle continue de fonctionner."
+          }
+        }
+      }
+    },
     "Update" : {
       "localizations" : {
         "fr" : {
@@ -5328,6 +6400,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Update “%1$@” to version %2$@?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour « %1$@ » vers la version %2$@ ?"
           }
         }
       }
@@ -5352,12 +6430,42 @@
         }
       }
     },
+    "Updated: %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mises à jour : %@."
+          }
+        }
+      }
+    },
+    "Updated: %@. An update needs your review." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mises à jour : %@. Une mise à jour attend votre accord."
+          }
+        }
+      }
+    },
     "Updates" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mises à jour"
+          }
+        }
+      }
+    },
+    "Updates are checked once a day, like Chrome: the Chrome Web Store (Google) receives the list of these extensions and their versions." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mises à jour sont vérifiées une fois par jour, comme dans Chrome : le Chrome Web Store (Google) reçoit la liste de ces extensions et de leurs versions."
           }
         }
       }
@@ -5443,10 +6551,47 @@
         }
       }
     },
-    "Version %@ asks for more." : {},
+    "Version %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@"
+          }
+        }
+      }
+    },
+    "Version %@ asks for more." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ demande davantage."
+          }
+        }
+      }
+    },
     "Waiting for macOS to download %@…" : {},
-    "Websites" : {},
-    "Websites:" : {},
+    "Websites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sites web"
+          }
+        }
+      }
+    },
+    "Websites:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sites web :"
+          }
+        }
+      }
+    },
     "Welcome to Ombre" : {
       "localizations" : {
         "fr" : {
@@ -5474,6 +6619,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Travail"
+          }
+        }
+      }
+    },
+    "Write to the clipboard" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire dans le presse-papiers"
           }
         }
       }

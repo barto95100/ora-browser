@@ -12,8 +12,8 @@ extension WebExtensionsManager {
 
         var errorDescription: String? {
             switch self {
-            case .download: "The Chrome Web Store didn't send this extension."
-            case .noManifest: "This folder has no manifest.json: it isn't an extension."
+            case .download: String(localized: "The Chrome Web Store didn't send this extension.")
+            case .noManifest: String(localized: "This folder has no manifest.json: it isn't an extension.")
             }
         }
     }
@@ -36,7 +36,7 @@ extension WebExtensionsManager {
             package: package,
             id: id,
             source: .chromeWebStore(storeID: storeID, packagePath: package.path),
-            fallbackName: "Extension"
+            fallbackName: String(localized: "Extension")
         )
     }
 
@@ -76,8 +76,8 @@ extension WebExtensionsManager {
         panel.canChooseFiles = true
         panel.allowsMultipleSelection = false
         panel.allowedContentTypes = [.zip, .folder, .init(filenameExtension: "crx") ?? .data]
-        panel.message = "Choose an extension: a folder with a manifest.json, a .zip or a .crx."
-        panel.prompt = "Choose"
+        panel.message = String(localized: "Choose an extension: a folder with a manifest.json, a .zip or a .crx.")
+        panel.prompt = String(localized: "Choose")
         return panel.runModal() == .OK ? panel.url : nil
     }
 

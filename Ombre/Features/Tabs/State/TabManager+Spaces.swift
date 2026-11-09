@@ -62,6 +62,8 @@ extension TabManager {
             if let peek, persistedContainer.tabs.contains(where: { $0.id == peek.openerTabID }) {
                 closePeek()
             }
+            // Its popups too: same data store, and their tab goes.
+            BrowserPopupWindow.closePopups(inSpace: containerId)
             let wasActiveContainer = activeContainer?.id == containerId
             prepareForContainerDeletion(isActiveContainer: wasActiveContainer)
             deleteContainerContents(persistedContainer)

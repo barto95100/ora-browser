@@ -99,6 +99,21 @@ extension TabManagerTests {
             }
         }
 
+        /// Deleting the space closes its popups (same data store, and their
+        /// tab goes).
+        @Test func deletingTheSpaceClosesItsPopups() async throws {
+            try await TabManagerTestWindow.run { window in
+                let (tab, popup) = try await openPopup(in: window)
+                let webView = popup.popupPage.page.webView
+                let space = tab.container
+                _ = window.tabManager.createContainer(name: "Other", emoji: "🌿")
+
+                await window.tabManager.deleteContainer(space).value
+
+                #expect(BrowserPopupWindow.popup(showing: webView) == nil)
+            }
+        }
+
         /// Its downloads still have somewhere to go once its tab is closed.
         @Test func downloadsOutliveTheOpenerTab() async throws {
             try await TabManagerTestWindow.run { window in

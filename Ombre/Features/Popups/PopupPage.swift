@@ -157,23 +157,41 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     /// Any other window the popup opens (`target="_blank"`, `window.open`
     /// without a size, "Open Link in New Tab"): a tab linked to it beside its
     /// tab, as the context menu says; another popup window once that tab is
-    /// closed.
+    /// closed (or unloaded, or moved to another space).
     func browserPage(
         _ page: BrowserPage,
         linkedPageWith configuration: WKWebViewConfiguration,
         for url: URL?,
         disposition: BrowserNewTabDisposition
     ) -> WKWebView? {
-        // A closed tab (or one being closed) has no place for a tab beside it.
-        if let tab = popup?.context.openerTab, !tab.isClosing, tab.parentContainer != nil,
-           let tabManager = tab.tabManager,
-           let webView = tabManager.openLinkedTab(
-               url: url, from: tab, configuration: configuration, disposition: disposition
-           )
-        {
-            return webView
+        if let tab = liveOpenerTab, let tabManager = tab.tabManager {
+            // The tab's window comes forward with the tab, not behind the popup.
+            let window = tab.browserPage?.window
+            if let webView = tabManager.openLinkedTab(
+                url: url, from: tab, configuration: configuration, disposition: disposition
+            ) {
+                if disposition == .foreground { window?.makeKeyAndOrderFront(nil) }
+                return webView
+            }
         }
         return browserPage(page, openPopupWith: configuration, windowFeatures: WKWindowFeatures(), openerOrigin: nil)
+    }
+
+    /// ⌘-click and the like: a tab beside the opener tab, if it is still there.
+    func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
+        guard let tab = liveOpenerTab, let tabManager = tab.tabManager else { return }
+        tabManager.openLinkTab(url, from: tab, disposition: disposition)
+    }
+
+    /// The opener tab, if a tab can still open beside it: not closed or
+    /// being closed (checked before anything else of a deleted tab is read),
+    /// with its page, in the popup's space (the tab may have moved; the
+    /// popup's data is its first space's).
+    private var liveOpenerTab: Tab? {
+        guard let popup, let tab = popup.context.openerTab, !tab.isClosing, tab.modelContext != nil,
+              !tab.isDeleted, tab.browserPage != nil, tab.parentContainer?.id == popup.context.spaceID
+        else { return nil }
+        return tab
     }
 
     /// `window.close()` from the popup.

@@ -38,6 +38,13 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         }
     }
 
+    /// Closes the popups of a space being deleted.
+    static func closePopups(inSpace spaceID: UUID) {
+        for popup in openPopups where popup.popupPage.context.spaceID == spaceID {
+            popup.window.close()
+        }
+    }
+
     /// The open popups opened from `window` (not counting theirs).
     static func popupCount(openedFrom window: NSWindow) -> Int {
         openPopups.filter { $0.openerWindow === window }.count

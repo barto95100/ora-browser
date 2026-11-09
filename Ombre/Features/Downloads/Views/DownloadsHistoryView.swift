@@ -70,7 +70,7 @@ struct DownloadsHistoryView: View {
     private var searchBar: some View {
         OmbreInput(
             text: $searchText,
-            placeholder: "Search files...",
+            placeholder: String(localized: "Search files..."),
             size: .md,
             leadingIcon: "magnifyingglass"
         )
@@ -117,7 +117,7 @@ struct DownloadsHistoryView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     if !filteredActive.isEmpty {
-                        sectionHeader("Active")
+                        sectionHeader(String(localized: "Active"))
                         ForEach(filteredActive) { download in
                             DownloadHistoryRow(download: download)
                         }
@@ -218,23 +218,23 @@ struct DownloadsHistoryView: View {
         // Ordered buckets: (label, lowerBound). A download goes into the first bucket
         // whose lowerBound is <= its date.
         let buckets: [(String, Date)] = [
-            ("Today", startOfToday),
-            ("Yesterday", startOfYesterday),
-            ("This Week", startOfThisWeek),
-            ("Last Week", startOfLastWeek),
-            ("2 Weeks Ago", startOf2WeeksAgo),
-            ("Last Month", startOf1MonthAgo),
-            ("2 Months Ago", startOf2MonthsAgo),
-            ("3 Months Ago", startOf3MonthsAgo),
-            ("6 Months Ago", startOf6MonthsAgo),
-            ("Last Year", startOf1YearAgo),
-            ("Older", .distantPast)
+            (String(localized: "Today"), startOfToday),
+            (String(localized: "Yesterday"), startOfYesterday),
+            (String(localized: "This Week"), startOfThisWeek),
+            (String(localized: "Last Week"), startOfLastWeek),
+            (String(localized: "2 Weeks Ago"), startOf2WeeksAgo),
+            (String(localized: "Last Month"), startOf1MonthAgo),
+            (String(localized: "2 Months Ago"), startOf2MonthsAgo),
+            (String(localized: "3 Months Ago"), startOf3MonthsAgo),
+            (String(localized: "6 Months Ago"), startOf6MonthsAgo),
+            (String(localized: "Last Year"), startOf1YearAgo),
+            (String(localized: "Older"), .distantPast)
         ]
 
         var grouped: [String: [Download]] = [:]
         for download in downloads {
             let date = download.completedAt ?? download.createdAt
-            let label = buckets.first { date >= $0.1 }?.0 ?? "Older"
+            let label = buckets.first { date >= $0.1 }?.0 ?? String(localized: "Older")
             grouped[label, default: []].append(download)
         }
 

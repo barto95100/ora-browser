@@ -37,18 +37,18 @@ enum HistorySections {
     }
 
     static func title(for day: Date, now: Date, calendar: Calendar) -> String {
-        if calendar.isDate(day, inSameDayAs: now) { return "Today" }
+        if calendar.isDate(day, inSameDayAs: now) { return String(localized: "Today") }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
            calendar.isDate(day, inSameDayAs: yesterday)
         {
-            return "Yesterday"
+            return String(localized: "Yesterday")
         }
         let style = Date.FormatStyle(calendar: calendar, timeZone: calendar.timeZone)
             .weekday(.wide).day().month(.wide)
-        if calendar.component(.year, from: day) == calendar.component(.year, from: now) {
-            return day.formatted(style)
-        }
-        return day.formatted(style.year())
+        let date = calendar.component(.year, from: day) == calendar.component(.year, from: now)
+            ? day.formatted(style) : day.formatted(style.year())
+        // A heading: capitalized like "Today" (French dates are lower case).
+        return date.prefix(1).capitalized + date.dropFirst()
     }
 }
 
@@ -65,10 +65,14 @@ enum HistoryClearRange: CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .lastHour: "the Last Hour"
-        case .today: "Today"
-        case .todayAndYesterday: "Today and Yesterday"
-        case .all: "All History"
+        // What "Clear …" removes: their own keys (French changes them).
+        case .lastHour: String(localized: "history.clear.lastHour", defaultValue: "the Last Hour")
+        case .today: String(localized: "history.clear.today", defaultValue: "Today")
+        case .todayAndYesterday: String(
+                localized: "history.clear.todayAndYesterday",
+                defaultValue: "Today and Yesterday"
+            )
+        case .all: String(localized: "history.clear.all", defaultValue: "All History")
         }
     }
 

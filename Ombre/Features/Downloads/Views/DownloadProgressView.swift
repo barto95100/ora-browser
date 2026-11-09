@@ -108,18 +108,18 @@ struct DownloadProgressView: View {
         return switch download.status {
         case .downloading:
             if download.displayFileSize > 0 {
-                "\(download.formattedDownloadedSize) of \(download.formattedFileSize)"
+                String(localized: "\(download.formattedDownloadedSize) of \(download.formattedFileSize)")
             } else {
                 download.formattedDownloadedSize
             }
         case .completed:
-            "Downloaded"
+            String(localized: "Downloaded")
         case .failed:
-            "Failed"
+            String(localized: "Failed")
         case .cancelled:
-            "Cancelled"
+            String(localized: "Cancelled")
         default:
-            "Pending"
+            String(localized: "Pending")
         }
     }
 }

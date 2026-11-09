@@ -194,18 +194,21 @@ struct DownloadListItem: View {
         switch download.status {
         case .downloading:
             if download.displayFileSize > 0 {
-                return "\(download.formattedDownloadedSize) of \(download.formattedFileSize) • \(Int(download.displayProgress * 100))%"
+                let percent = Int(download.displayProgress * 100)
+                return String(
+                    localized: "\(download.formattedDownloadedSize) of \(download.formattedFileSize) · \(percent)%"
+                )
             } else {
                 return download.formattedDownloadedSize
             }
         case .completed:
             return timeAgoString(from: download.completedAt ?? download.createdAt)
         case .failed:
-            return "Failed • \(timeAgoString(from: download.createdAt))"
+            return String(localized: "Failed • \(timeAgoString(from: download.createdAt))")
         case .cancelled:
-            return "Cancelled • \(timeAgoString(from: download.createdAt))"
+            return String(localized: "Cancelled • \(timeAgoString(from: download.createdAt))")
         default:
-            return "Pending"
+            return String(localized: "Pending")
         }
     }
 

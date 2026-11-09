@@ -97,6 +97,38 @@
         }
       }
     },
+    "%@ of %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@"
+          }
+        }
+      }
+    },
+    "%@ of %@ · %lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ of %2$@ · %3$lld%%"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@ · %3$lld %%"
+          }
+        }
+      }
+    },
     "%@ wants to access %@" : {
       "localizations" : {
         "en" : {
@@ -488,9 +520,27 @@
         }
       }
     },
-    "%lld%%" : {},
+    "%lld%%" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
+          }
+        }
+      }
+    },
     "•" : {},
-    "⌘-click opens in the background" : {},
+    "⌘-click opens in the background" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘ + clic : ouvrir en arrière-plan"
+          }
+        }
+      }
+    },
     "1 day" : {
       "localizations" : {
         "fr" : {
@@ -541,12 +591,52 @@
         }
       }
     },
+    "2 Months Ago" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il y a 2 mois"
+          }
+        }
+      }
+    },
+    "2 Weeks Ago" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il y a 2 semaines"
+          }
+        }
+      }
+    },
+    "3 Months Ago" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il y a 3 mois"
+          }
+        }
+      }
+    },
     "6 hours" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "6 heures"
+          }
+        }
+      }
+    },
+    "6 Months Ago" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il y a 6 mois"
           }
         }
       }
@@ -607,6 +697,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actions"
+          }
+        }
+      }
+    },
+    "Active" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En cours"
           }
         }
       }
@@ -1563,7 +1663,36 @@
         }
       }
     },
-    "Cancel Download" : {},
+    "Cancel Download" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler le téléchargement"
+          }
+        }
+      }
+    },
+    "Cancelled" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulé"
+          }
+        }
+      }
+    },
+    "Cancelled • %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulé • %@"
+          }
+        }
+      }
+    },
     "Capture an Area of the Page" : {},
     "Capture the Visible Page" : {},
     "Capture Visible Page" : {},
@@ -1658,9 +1787,36 @@
         }
       }
     },
-    "Clear" : {},
-    "Clear %@?" : {},
-    "Clear %@…" : {},
+    "Clear" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer"
+          }
+        }
+      }
+    },
+    "Clear %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique : %@ ?"
+          }
+        }
+      }
+    },
+    "Clear %@…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer %@…"
+          }
+        }
+      }
+    },
     "Clear all browsing time?" : {
       "localizations" : {
         "fr" : {
@@ -1711,7 +1867,16 @@
         }
       }
     },
-    "Clear Completed" : {},
+    "Clear Completed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer les téléchargements terminés"
+          }
+        }
+      }
+    },
     "Clear Cookies" : {
       "localizations" : {
         "fr" : {
@@ -1752,7 +1917,16 @@
         }
       }
     },
-    "Clear History…" : {},
+    "Clear History…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique…"
+          }
+        }
+      }
+    },
     "Close" : {},
     "Close (Esc)" : {
       "localizations" : {
@@ -1973,7 +2147,16 @@
         }
       }
     },
-    "Copy Link" : {},
+    "Copy Link" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le lien"
+          }
+        }
+      }
+    },
     "Copy Page Crash Command (All Tabs in Space)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1995,7 +2178,16 @@
         }
       }
     },
-    "Copy Path" : {},
+    "Copy Path" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le chemin d’accès"
+          }
+        }
+      }
+    },
     "Copy URL" : {
       "localizations" : {
         "fr" : {
@@ -2240,7 +2432,16 @@
         }
       }
     },
-    "Delete from History" : {},
+    "Delete from History" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer de l’historique"
+          }
+        }
+      }
+    },
     "Delete saved password" : {
       "localizations" : {
         "fr" : {
@@ -2350,6 +2551,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Terminé"
+          }
+        }
+      }
+    },
+    "Download cancelled %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement annulé : %@"
+          }
+        }
+      }
+    },
+    "Download failed %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du téléchargement : %@"
+          }
+        }
+      }
+    },
+    "Downloaded" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargé"
+          }
+        }
+      }
+    },
+    "Downloaded %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement terminé : %@"
+          }
+        }
+      }
+    },
+    "Downloading %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement de %@"
           }
         }
       }
@@ -2589,6 +2840,26 @@
         }
       }
     },
+    "Failed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec"
+          }
+        }
+      }
+    },
+    "Failed • %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec • %@"
+          }
+        }
+      }
+    },
     "Fast, secure, and beautiful browser built for macOS" : {
       "localizations" : {
         "fr" : {
@@ -2599,7 +2870,16 @@
         }
       }
     },
-    "Files you download will appear here" : {},
+    "Files you download will appear here" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les fichiers que vous téléchargez apparaîtront ici"
+          }
+        }
+      }
+    },
     "Filter lists are already current" : {
       "localizations" : {
         "fr" : {
@@ -3040,6 +3320,74 @@
         }
       }
     },
+    "history.clear.all" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "All History"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tout l’historique"
+          }
+        }
+      }
+    },
+    "history.clear.lastHour" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "the Last Hour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la dernière heure"
+          }
+        }
+      }
+    },
+    "history.clear.today" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Today"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aujourd’hui"
+          }
+        }
+      }
+    },
+    "history.clear.todayAndYesterday" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Today and Yesterday"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aujourd’hui et hier"
+          }
+        }
+      }
+    },
     "Home" : {
       "localizations" : {
         "fr" : {
@@ -3158,6 +3506,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installées"
+          }
+        }
+      }
+    },
+    "Interrupted" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompu"
           }
         }
       }
@@ -3292,12 +3650,42 @@
         }
       }
     },
+    "Last Month" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le mois dernier"
+          }
+        }
+      }
+    },
     "Last updated %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dernière mise à jour : %@"
+          }
+        }
+      }
+    },
+    "Last Week" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semaine dernière"
+          }
+        }
+      }
+    },
+    "Last Year" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’année dernière"
           }
         }
       }
@@ -3666,7 +4054,16 @@
         }
       }
     },
-    "Move to Trash" : {},
+    "Move to Trash" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer dans la corbeille"
+          }
+        }
+      }
+    },
     "Move to Trash…" : {},
     "Moved to %@ %@" : {
       "localizations" : {
@@ -3910,8 +4307,26 @@
         }
       }
     },
-    "No Downloads" : {},
-    "No downloads yet" : {},
+    "No Downloads" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun téléchargement"
+          }
+        }
+      }
+    },
+    "No downloads yet" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun téléchargement pour l’instant"
+          }
+        }
+      }
+    },
     "No extension from the Chrome Web Store." : {
       "localizations" : {
         "fr" : {
@@ -3932,7 +4347,16 @@
         }
       }
     },
-    "No history yet" : {},
+    "No history yet" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun historique pour l’instant"
+          }
+        }
+      }
+    },
     "No matches" : {
       "localizations" : {
         "fr" : {
@@ -3955,8 +4379,26 @@
         }
       }
     },
-    "No results" : {},
-    "No results for “%@”" : {},
+    "No results" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun résultat"
+          }
+        }
+      }
+    },
+    "No results for “%@”" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun résultat pour « %@ »"
+          }
+        }
+      }
+    },
     "No saved passwords match that search." : {
       "localizations" : {
         "fr" : {
@@ -4171,6 +4613,16 @@
         }
       }
     },
+    "Older" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus anciens"
+          }
+        }
+      }
+    },
     "Ombre" : {
       "localizations" : {
         "fr" : {
@@ -4350,14 +4802,42 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ouvert"
+            "value" : "Ouvrir"
+          }
+        }
+      }
+    },
+    "Open %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir %@"
           }
         }
       }
     },
     "Open Image" : {},
-    "Open in Background" : {},
-    "Open in New Tab" : {},
+    "Open in Background" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir en arrière-plan"
+          }
+        }
+      }
+    },
+    "Open in New Tab" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans un nouvel onglet"
+          }
+        }
+      }
+    },
     "Open in New Tab (⌘O)" : {
       "localizations" : {
         "fr" : {
@@ -4460,7 +4940,16 @@
         }
       }
     },
-    "Pages visited in this space are removed from its history." : {},
+    "Pages visited in this space are removed from its history." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les pages visitées dans cet espace sont supprimées de son historique."
+          }
+        }
+      }
+    },
     "Password" : {
       "localizations" : {
         "fr" : {
@@ -4558,6 +5047,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aperçu"
+          }
+        }
+      }
+    },
+    "Pending" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente"
           }
         }
       }
@@ -5029,8 +5528,26 @@
         }
       }
     },
-    "Remove from List" : {},
-    "Remove from Ombre" : {},
+    "Remove from List" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer de la liste"
+          }
+        }
+      }
+    },
+    "Remove from Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer d’Ombre"
+          }
+        }
+      }
+    },
     "Remove tabs after:" : {
       "localizations" : {
         "fr" : {
@@ -5169,7 +5686,16 @@
         }
       }
     },
-    "Retry Download" : {},
+    "Retry Download" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relancer le téléchargement"
+          }
+        }
+      }
+    },
     "Reveal password" : {
       "localizations" : {
         "fr" : {
@@ -5396,7 +5922,26 @@
         }
       }
     },
-    "Search History" : {},
+    "Search files..." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des fichiers…"
+          }
+        }
+      }
+    },
+    "Search History" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans l’historique"
+          }
+        }
+      }
+    },
     "Search on %@" : {
       "localizations" : {
         "fr" : {
@@ -5639,7 +6184,16 @@
         }
       }
     },
-    "Show All Downloads" : {},
+    "Show All Downloads" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher tous les téléchargements"
+          }
+        }
+      }
+    },
     "Show Browsing Time" : {
       "localizations" : {
         "fr" : {
@@ -5672,7 +6226,16 @@
         }
       }
     },
-    "Show in Finder" : {},
+    "Show in Finder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher dans le Finder"
+          }
+        }
+      }
+    },
     "Show next to the sidebar button" : {
       "localizations" : {
         "fr" : {
@@ -6676,6 +7239,16 @@
         }
       }
     },
+    "This Week" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette semaine"
+          }
+        }
+      }
+    },
     "Time" : {},
     "TIME" : {},
     "Time & Focus" : {
@@ -6700,7 +7273,16 @@
     },
     "Title" : {},
     "To" : {},
-    "Today" : {},
+    "Today" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aujourd’hui"
+          }
+        }
+      }
+    },
     "Toggle Sidebar" : {
       "localizations" : {
         "fr" : {
@@ -7159,6 +7741,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oui, en faire ma planète"
+          }
+        }
+      }
+    },
+    "Yesterday" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier"
           }
         }
       }

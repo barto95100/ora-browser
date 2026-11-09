@@ -414,12 +414,17 @@ final class PasswordAutofillCoordinator {
         )
 
         let saveAction: () -> Void = {
-            _ = try? self.passwordManager.upsertCredential(
-                for: pageURL,
-                username: trimmedUsername,
-                password: trimmedPassword,
-                containerID: self.tab?.container.id
-            )
+            do {
+                try self.passwordManager.upsertCredential(
+                    for: pageURL,
+                    username: trimmedUsername,
+                    password: trimmedPassword,
+                    containerID: self.tab?.container.id
+                )
+            } catch {
+                // Logged with its status by the service; never a silent failure.
+                self.presentSaveFailure(error, host: normalizedHost)
+            }
         }
 
         Task { @MainActor [weak self] in
@@ -458,6 +463,24 @@ final class PasswordAutofillCoordinator {
                 break
             }
         }
+    }
+
+    /// The password wasn't saved: said, not shown as saved.
+    @MainActor
+    private func presentSaveFailure(_ error: Error, host: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = Self.saveFailureTitle(host: host)
+        alert.informativeText = error.localizedDescription
+        if let window = presentationWindow() {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
+    }
+
+    nonisolated static func saveFailureTitle(host: String) -> String {
+        "Ombre couldn't save the password for \(host)"
     }
 
     @MainActor

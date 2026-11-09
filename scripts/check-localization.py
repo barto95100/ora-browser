@@ -57,6 +57,7 @@ ZONES = {
     ],
     "passwords": [
         "Ombre/Features/Passwords/",
+        "Ombre/Core/BrowserEngine/HTTPAuthentication.swift",
     ],
 }
 

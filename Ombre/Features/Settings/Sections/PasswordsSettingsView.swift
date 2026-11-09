@@ -382,7 +382,7 @@ struct PasswordsSettingsView: View {
         isAuthenticating = true
         Task {
             let authenticated = await passwordManager
-                .authenticate(reason: String(localized: "Unlock your saved passwords in Ombre"))
+                .authenticate(reason: String(localized: "unlock your saved passwords"))
             await MainActor.run {
                 isUnlocked = authenticated
                 isAuthenticating = false

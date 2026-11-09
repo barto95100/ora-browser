@@ -165,14 +165,15 @@ struct PopupCloseTests {
             defer: true
         )
         other.isReleasedWhenClosed = false
+        let context = PopupContext(spaceID: UUID(), isPrivate: false, privateSession: nil, downloadManager: nil)
 
         _ = BrowserPopupWindow.open(
             configuration: WKWebViewConfiguration(), windowFeatures: WKWindowFeatures(), openerWindow: opener,
-            opener: nil
+            opener: nil, context: context
         )
         _ = BrowserPopupWindow.open(
             configuration: WKWebViewConfiguration(), windowFeatures: WKWindowFeatures(), openerWindow: other,
-            opener: nil
+            opener: nil, context: context
         )
         #expect(BrowserPopupWindow.popupCount(openedFrom: opener) == 1)
 

@@ -84,6 +84,24 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
     }
 
+    /// A popup in this tab's space; its downloads go to this window's.
+    func browserPage(
+        _ page: BrowserPage,
+        openPopupWith configuration: WKWebViewConfiguration,
+        windowFeatures: WKWindowFeatures,
+        openerOrigin: URL?
+    ) -> WKWebView? {
+        guard let tab else { return nil }
+        return BrowserPopupWindow.open(
+            configuration: configuration,
+            windowFeatures: windowFeatures,
+            openerWindow: page.window,
+            opener: page,
+            openerOrigin: openerOrigin,
+            context: PopupContext(tab: tab)
+        )
+    }
+
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
         guard let tab, let tabManager = tab.tabManager else { return }
         MainActor.assumeIsolated {

@@ -15,24 +15,14 @@ struct WebKitDelegateSelectorsTests {
         "webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:",
         "webView:runJavaScriptAlertPanelWithMessage:initiatedByFrame:completionHandler:",
         "webView:runJavaScriptConfirmPanelWithMessage:initiatedByFrame:completionHandler:",
-        "webView:runJavaScriptTextInputPanelWithPrompt:defaultText:initiatedByFrame:completionHandler:"
-    ]
-
-    private static let popupSelectors = [
-        "webView:decidePolicyForNavigationResponse:decisionHandler:",
-        "webView:runJavaScriptAlertPanelWithMessage:initiatedByFrame:completionHandler:",
-        "webView:runJavaScriptConfirmPanelWithMessage:initiatedByFrame:completionHandler:",
-        "webView:runJavaScriptTextInputPanelWithPrompt:defaultText:initiatedByFrame:completionHandler:"
+        "webView:runJavaScriptTextInputPanelWithPrompt:defaultText:initiatedByFrame:completionHandler:",
+        "webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:",
+        "webViewDidClose:"
     ]
 
     @Test(arguments: pageSelectors)
     func pageAnswers(_ selector: String) {
         #expect(BrowserPage.instancesRespond(to: NSSelectorFromString(selector)))
-    }
-
-    @Test(arguments: popupSelectors)
-    func popupAnswers(_ selector: String) {
-        #expect(BrowserPopupWindow.instancesRespond(to: NSSelectorFromString(selector)))
     }
 
     /// Optional: without it, a redirected download keeps its first address.

@@ -161,15 +161,12 @@ extension BrowserPage: WKUIDelegate {
         // A sized `window.open` is a popup (e.g. "Sign in with…"): it gets its
         // own window, linked to this page. Anything else opens in a new tab.
         if BrowserPopupWindow.isPopup(windowFeatures) {
-            return MainActor.assumeIsolated {
-                BrowserPopupWindow.open(
-                    configuration: configuration,
-                    windowFeatures: windowFeatures,
-                    openerWindow: webView.window,
-                    opener: self,
-                    openerOrigin: PopupTitle.origin(of: navigationAction.sourceFrame)
-                )
-            }
+            return delegate?.browserPage(
+                self,
+                openPopupWith: configuration,
+                windowFeatures: windowFeatures,
+                openerOrigin: PopupTitle.origin(of: navigationAction.sourceFrame)
+            )
         }
         // A click on a `target="_blank"` link (not a script, not "Open Link in
         // New Tab" from the context menu): Peek, from a pinned tab, like a
@@ -192,6 +189,11 @@ extension BrowserPage: WKUIDelegate {
             delegate?.browserPage(self, didRequestOpenInNewTab: url, disposition: disposition)
         }
         return nil
+    }
+
+    /// `window.close()` from the page.
+    func webViewDidClose(_ webView: WKWebView) {
+        delegate?.browserPageDidClose(self)
     }
 
     func webView(

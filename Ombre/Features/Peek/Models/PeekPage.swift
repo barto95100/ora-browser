@@ -1,4 +1,5 @@
 import AppKit
+@preconcurrency import WebKit
 import Foundation
 
 /// A link previewed over the current page (Peek, like Arc): its own page, in
@@ -123,6 +124,24 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         return .cancel
     }
 
+    /// A popup from Peek: in the space of the tab Peek comes from.
+    func browserPage(
+        _ page: BrowserPage,
+        openPopupWith configuration: WKWebViewConfiguration,
+        windowFeatures: WKWindowFeatures,
+        openerOrigin: URL?
+    ) -> WKWebView? {
+        guard let opener else { return nil }
+        return BrowserPopupWindow.open(
+            configuration: configuration,
+            windowFeatures: windowFeatures,
+            openerWindow: page.window,
+            opener: page,
+            openerOrigin: openerOrigin,
+            context: PopupContext(tab: opener)
+        )
+    }
+
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
         openTab(url, inFront: disposition != .background)
     }
@@ -194,6 +213,8 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         origin: URL?
     ) -> BrowserPermissionDecision {
         guard let peek else { return .prompt }
+        // Refused when asked (see above): never "granted".
+        if permission == .notifications { return .deny }
         return SitePermissionGate.query(permission, origin: origin, spaceID: peek.spaceID, isPrivate: peek.isPrivate)
     }
 

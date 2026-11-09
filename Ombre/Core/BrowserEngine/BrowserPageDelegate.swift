@@ -22,6 +22,17 @@ protocol BrowserPageDelegate: AnyObject {
         for url: URL?,
         disposition: BrowserNewTabDisposition
     ) -> WKWebView?
+    /// The page opens a popup (`window.open` with a size, see
+    /// `BrowserPopupWindow`): the web view of its page, made with WebKit's
+    /// `configuration` in the page's space; nil refuses it.
+    func browserPage(
+        _ page: BrowserPage,
+        openPopupWith configuration: WKWebViewConfiguration,
+        windowFeatures: WKWindowFeatures,
+        openerOrigin: URL?
+    ) -> WKWebView?
+    /// The page closed itself (`window.close()`).
+    func browserPageDidClose(_ page: BrowserPage)
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent)
     /// The page's address changed, including same-page navigations.
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?)
@@ -97,6 +108,17 @@ extension BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {}
 
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {}
+
+    func browserPage(
+        _ page: BrowserPage,
+        openPopupWith configuration: WKWebViewConfiguration,
+        windowFeatures: WKWindowFeatures,
+        openerOrigin: URL?
+    ) -> WKWebView? {
+        nil
+    }
+
+    func browserPageDidClose(_ page: BrowserPage) {}
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {}
 

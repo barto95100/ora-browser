@@ -537,13 +537,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld site réglé"
+                  "value" : "%lld site configuré"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld sites réglés"
+                  "value" : "%lld sites configurés"
                 }
               }
             }
@@ -1303,7 +1303,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toujours traduire : %@"
+            "value" : "Toujours traduire %@"
           }
         }
       }
@@ -2140,16 +2140,6 @@
         }
       }
     },
-    "Clear %@?" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Effacer l’historique : %@ ?"
-          }
-        }
-      }
-    },
     "Clear %@…" : {
       "localizations" : {
         "fr" : {
@@ -2166,6 +2156,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer tout le temps de navigation ?"
+          }
+        }
+      }
+    },
+    "Clear all history?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer tout l’historique ?"
           }
         }
       }
@@ -2266,6 +2266,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Effacer l’historique…"
+          }
+        }
+      }
+    },
+    "Clear the history of the last hour?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique de la dernière heure ?"
+          }
+        }
+      }
+    },
+    "Clear the history of today and yesterday?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique d’aujourd’hui et d’hier ?"
+          }
+        }
+      }
+    },
+    "Clear today's history?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique d’aujourd’hui ?"
           }
         }
       }
@@ -4918,16 +4948,6 @@
         }
       }
     },
-    "Never translate %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ne jamais traduire : %@"
-          }
-        }
-      }
-    },
     "New Folder" : {
       "localizations" : {
         "fr" : {
@@ -5343,7 +5363,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucun site web réglé pour l’instant."
+            "value" : "Aucun site web configuré pour l’instant."
           }
         }
       }
@@ -8844,6 +8864,23 @@
         }
       }
     },
+    "translation.neverSite" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Never translate %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne jamais traduire ce site"
+          }
+        }
+      }
+    },
     "Try Again" : {
       "localizations" : {
         "fr" : {
@@ -8909,7 +8946,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Détacher l’onglet"
+            "value" : "Désépingler l’onglet"
           }
         }
       }

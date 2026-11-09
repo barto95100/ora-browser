@@ -157,15 +157,18 @@ struct PageTranslationPanel: View {
 
     private func choices(source: Locale.Language) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Toggle("Always translate \(PageLanguage.name(of: source))", isOn: $alwaysTranslates)
+            Toggle("Always translate \(PageLanguage.objectName(of: source))", isOn: $alwaysTranslates)
                 .onChange(of: alwaysTranslates) { _, always in
                     settings.setAlwaysTranslates(source, always)
                 }
             if let site = PageTranslationSettings.site(tab.url.host) {
-                Toggle("Never translate \(site)", isOn: $neverOnThisSite)
-                    .onChange(of: neverOnThisSite) { _, never in
-                        settings.setNeverTranslates(host: site, never)
-                    }
+                Toggle(
+                    String(localized: "translation.neverSite", defaultValue: "Never translate \(site)"),
+                    isOn: $neverOnThisSite
+                )
+                .onChange(of: neverOnThisSite) { _, never in
+                    settings.setNeverTranslates(host: site, never)
+                }
             }
         }
         .toggleStyle(.checkbox)

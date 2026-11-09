@@ -76,6 +76,17 @@ enum HistoryClearRange: CaseIterable, Identifiable {
         }
     }
 
+    /// The confirmation's title: a whole sentence per range (French can't
+    /// put the range's title into one).
+    var confirmationTitle: String {
+        switch self {
+        case .lastHour: String(localized: "Clear the history of the last hour?")
+        case .today: String(localized: "Clear today's history?")
+        case .todayAndYesterday: String(localized: "Clear the history of today and yesterday?")
+        case .all: String(localized: "Clear all history?")
+        }
+    }
+
     /// Pages visited since this date are removed; nil removes everything.
     func startDate(now: Date = Date(), calendar: Calendar = .current) -> Date? {
         switch self {

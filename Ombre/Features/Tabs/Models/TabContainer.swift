@@ -27,7 +27,7 @@ class TabContainer: ObservableObject, Identifiable {
 
     init(
         id: UUID = UUID(),
-        name: String = String(localized: "Default"),
+        name: String = String(localized: "space.default", defaultValue: "Default"),
         emoji: String = "💩"
     ) {
         let nowDate = Date()

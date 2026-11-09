@@ -28,7 +28,10 @@ extension TabManager {
     }
 
     @discardableResult
-    func createContainer(name: String = String(localized: "Default"), emoji: String = "•") -> TabContainer {
+    func createContainer(
+        name: String = String(localized: "space.default", defaultValue: "Default"),
+        emoji: String = "•"
+    ) -> TabContainer {
         let newContainer = TabContainer(name: name, emoji: emoji)
         newContainer.order = nextContainerOrder()
         modelContext.insert(newContainer)

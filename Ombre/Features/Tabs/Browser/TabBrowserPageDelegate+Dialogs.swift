@@ -128,7 +128,7 @@ private struct HTTPAuthenticationFields {
     let view: NSView
 
     init(user proposedUser: String?) {
-        user.placeholderString = String(localized: "Name")
+        user.placeholderString = String(localized: "auth.username", defaultValue: "Name")
         user.stringValue = proposedUser ?? ""
         user.contentType = .username
         password.placeholderString = String(localized: "Password")

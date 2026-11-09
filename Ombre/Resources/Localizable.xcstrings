@@ -464,6 +464,23 @@
     },
     "Ask on each website" : {},
     "Attach Current Page" : {},
+    "auth.username" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom d’utilisateur"
+          }
+        }
+      }
+    },
     "Authenticate to view saved passwords." : {},
     "Auto" : {
       "localizations" : {
@@ -814,16 +831,6 @@
         }
       }
     },
-    "Closed" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermé"
-          }
-        }
-      }
-    },
     "Code" : {
       "localizations" : {
         "fr" : {
@@ -834,12 +841,39 @@
         }
       }
     },
+    "Collapsed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit"
+          }
+        }
+      }
+    },
     "Color" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleur"
+          }
+        }
+      }
+    },
+    "color.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune"
           }
         }
       }
@@ -1095,7 +1129,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Téléchargements (%lld %%)"
+            "value" : "Téléchargements (%lld %%)"
           }
         }
       }
@@ -1126,7 +1160,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Déposez ici pour épingler un onglet"
+            "value" : "Déposez un onglet ici pour l’épingler"
           }
         }
       }
@@ -1206,6 +1240,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comme le niveau Ombre, avec en plus l’empreinte numérique masquée dans toutes les fenêtres. Quelques sites risquent de mal fonctionner."
+          }
+        }
+      }
+    },
+    "Expanded" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développé"
           }
         }
       }
@@ -1889,7 +1933,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nouveau dossier à l’intérieur"
+            "value" : "Nouveau sous-dossier"
           }
         }
       }
@@ -2049,16 +2093,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune session Zen dans ce dossier. Choisissez un profil dans le dossier Profiles de Zen."
-          }
-        }
-      }
-    },
-    "None" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun"
           }
         }
       }
@@ -3060,6 +3094,23 @@
         }
       }
     },
+    "space.default" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Principal"
+          }
+        }
+      }
+    },
     "Spaces" : {},
     "Spaces whose name is already used get “(Zen)” after their name." : {
       "localizations" : {
@@ -3178,7 +3229,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aller à l’onglet "
+            "value" : "Passer à l’onglet "
           }
         }
       }
@@ -3335,6 +3386,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thème"
+          }
+        }
+      }
+    },
+    "theme.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun"
           }
         }
       }

@@ -67,7 +67,7 @@ struct FolderItem: View {
         // field stays reachable while it is renamed).
         .accessibilityElement(children: isRenaming ? .contain : .ignore)
         .accessibilityLabel(folder.name)
-        .accessibilityValue(folder.isOpened ? "Open" : "Closed")
+        .accessibilityValue(folder.isOpened ? "Expanded" : "Collapsed")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
             guard !isRenaming else { return }

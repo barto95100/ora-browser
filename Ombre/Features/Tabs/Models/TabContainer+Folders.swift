@@ -97,7 +97,7 @@ extension TabContainer {
         // Taken before the move: a tab coming from elsewhere takes the target's place.
         let ids = contentIDs(of: targetFolderID)
         if moved.type != .pinned {
-            moved.switchSections(from: moved, to: target)
+            moved.move(toSectionOf: target)
         }
         moved.folderID = targetFolderID
         renumberPinned(TabReordering.reordered(ids, moving: moved.id, onto: target.id))
@@ -116,7 +116,7 @@ extension TabContainer {
         let targetFolderID = folder(of: target)?.id
         let ids = contentIDs(of: targetFolderID)
         if tab.type != .pinned {
-            tab.switchSections(from: tab, to: target)
+            tab.move(toSectionOf: target)
         }
         tab.folderID = targetFolderID
         renumberPinned(TabReordering.inserted(ids, inserting: tab.id, after: target.id))

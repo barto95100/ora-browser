@@ -62,7 +62,7 @@ class TabContainer: ObservableObject, Identifiable {
         // in the list yet, so it takes the target's place.
         let ids = displayedTabs(of: target.type).map(\.id)
         if moved.type != target.type {
-            moved.switchSections(from: moved, to: target)
+            moved.move(toSectionOf: target)
         }
         renumber(TabReordering.reordered(ids, moving: moved.id, onto: target.id))
     }
@@ -77,7 +77,7 @@ class TabContainer: ObservableObject, Identifiable {
         }
         let ids = displayedTabs(of: target.type).map(\.id)
         if tab.type != target.type {
-            tab.switchSections(from: tab, to: target)
+            tab.move(toSectionOf: target)
         }
         renumber(TabReordering.inserted(ids, inserting: tab.id, after: target.id))
     }

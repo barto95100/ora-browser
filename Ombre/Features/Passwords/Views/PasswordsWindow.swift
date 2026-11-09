@@ -60,7 +60,7 @@ private struct PasswordsWindowView: View {
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @Environment(\.theme) private var theme
-    @StateObject private var passwordManager = PasswordManagerService.shared
+    @ObservedObject private var passwordManager = PasswordManagerService.shared
 
     @State private var searchText = ""
     @State private var isUnlocked = false

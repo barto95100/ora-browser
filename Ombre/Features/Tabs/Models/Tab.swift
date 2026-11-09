@@ -127,16 +127,18 @@ class Tab: ObservableObject, Identifiable {
         backgroundColorHex = color.toHex() ?? "#000000"
     }
 
-    func switchSections(from: Tab, to: Tab) {
-        if to.type != .pinned {
-            from.folderID = nil
+    /// Moves this tab to `target`'s section (favorites, pinned or normal):
+    /// out of its folder unless pinned, keeping its address when it stays.
+    func move(toSectionOf target: Tab) {
+        if target.type != .pinned {
+            folderID = nil
         }
-        from.type = to.type
-        switch to.type {
+        type = target.type
+        switch target.type {
         case .pinned, .fav:
-            from.savedURL = from.url
+            savedURL = url
         case .normal:
-            from.savedURL = nil
+            savedURL = nil
         }
     }
 

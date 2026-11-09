@@ -57,7 +57,6 @@ import SwiftUI
         let pageObjects: [T]
         let idKeyPath: KeyPath<T, String>
 
-        let onContentPrepared: ((T) -> Void)?
         let contentView: (T) -> V
 
         /// Construct a ``NSPageView``.
@@ -69,13 +68,11 @@ import SwiftUI
             selection: Binding<Int>,
             pageObjects: [T],
             idKeyPath: KeyPath<T, String>,
-            onContentPrepared: ((T) -> Void)? = nil,
             @ViewBuilder contentView: @escaping (T) -> V
         ) {
             self.selection = selection
             self.pageObjects = pageObjects
             self.idKeyPath = idKeyPath
-            self.onContentPrepared = onContentPrepared
             self.contentView = contentView
         }
 
@@ -94,7 +91,6 @@ import SwiftUI
                 }
                 return PageIdentity.object(withID: id, in: controller.pageObjects, idKeyPath: idKeyPath)
             }
-            controller.onContentPrepared = onContentPrepared
             controller.onSelectedIndexChanged = { index in
                 withTransaction(selection.transaction) {
                     selection.wrappedValue = index
@@ -152,7 +148,6 @@ import SwiftUI
         var objectToView: ((T) -> V)?
 
         var onSelectedIndexChanged: ((Int) -> Void)?
-        var onContentPrepared: ((T) -> Void)?
         var initialIndex = 0
         private var previousBoundsSize: CGSize = .zero
         private(set) var isAnimating = false
@@ -297,9 +292,6 @@ import SwiftUI
             let controller = NSPageViewContentController<T, V>()
             controller.content = objectToView
             controller.object = idToObject?(identifier)
-            if let object = controller.object {
-                onContentPrepared?(object)
-            }
             return controller
         }
 

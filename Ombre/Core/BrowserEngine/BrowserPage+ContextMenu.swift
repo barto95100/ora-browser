@@ -54,8 +54,11 @@ final class OmbreWebView: WKWebView {
 /// The added items run WebKit's own "open link" action with another way to
 /// open it, so the link is the one WebKit found under the mouse.
 extension BrowserPage {
-    private static let openLinkIdentifier = "WKMenuItemIdentifierOpenLinkInNewWindow"
-    private static let openImageIdentifier = "WKMenuItemIdentifierOpenImageInNewWindow"
+    /// WebKit's identifiers of its items (exported constants of a private
+    /// header, read here as strings): `ContextMenuIdentifierTests` fails if
+    /// WebKit changes them, else the added items would vanish silently.
+    static let openLinkIdentifier = "WKMenuItemIdentifierOpenLinkInNewWindow"
+    static let openImageIdentifier = "WKMenuItemIdentifierOpenImageInNewWindow"
 
     func adjustContextMenu(_ menu: NSMenu) {
         if let openLink = menu.items.first(where: { $0.identifier?.rawValue == Self.openLinkIdentifier }) {

@@ -4,8 +4,8 @@ import SwiftUI
 struct PasswordsSettingsView: View {
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
-    @StateObject private var settings = SettingsStore.shared
-    @StateObject private var passwordManager = PasswordManagerService.shared
+    @ObservedObject private var settings = SettingsStore.shared
+    @ObservedObject private var passwordManager = PasswordManagerService.shared
     private let providers = PasswordManagerProviderRegistry.shared
 
     @State private var searchText = ""

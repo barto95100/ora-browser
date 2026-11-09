@@ -32,9 +32,12 @@ struct SuggestResponse: Decodable {
     }
 }
 
+/// On the main actor, like the settings it reads (it used to be so only
+/// through an `@ObservedObject` wrapper, which did nothing else here).
+@MainActor
 class SearchEngineService: ObservableObject {
     private var theme: Theme?
-    @ObservedObject private var settingsStore = SettingsStore.shared
+    private let settingsStore = SettingsStore.shared
 
     func setTheme(_ theme: Theme) {
         self.theme = theme

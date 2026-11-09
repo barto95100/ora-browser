@@ -24,7 +24,7 @@ struct URLBar: View {
     @State private var launcherInput = ""
     @FocusState private var isLauncherFocused: Bool
     @State private var mouseHasMoved = false
-    @State private var mouseMonitor: Any?
+    @State private var mouseMonitor = MouseMovedMonitor()
     @State private var mouseDownMonitor: Any?
     @State private var editingFieldFrame: CGRect = .zero
     @State private var suggestionsFrame: CGRect = .zero
@@ -110,16 +110,7 @@ struct URLBar: View {
         }
 
         mouseHasMoved = false
-        if mouseMonitor == nil {
-            mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { event in
-                mouseHasMoved = true
-                if let monitor = mouseMonitor {
-                    NSEvent.removeMonitor(monitor)
-                    mouseMonitor = nil
-                }
-                return event
-            }
-        }
+        mouseMonitor.start { mouseHasMoved = true }
 
         // End editing when the user clicks anywhere else in the window. The
         // event is passed through untouched, so the click still reaches its
@@ -151,10 +142,7 @@ struct URLBar: View {
     }
 
     private func cleanupInlineLauncher() {
-        if let monitor = mouseMonitor {
-            NSEvent.removeMonitor(monitor)
-            mouseMonitor = nil
-        }
+        mouseMonitor.stop()
         if let monitor = mouseDownMonitor {
             NSEvent.removeMonitor(monitor)
             mouseDownMonitor = nil

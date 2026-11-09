@@ -18,7 +18,7 @@ struct FloatingTabSwitcher: View {
     /// The tabs shown: chosen once when the switcher opens.
     @State private var recentTabs: [Tab] = []
     @State private var mouseHasMoved = false
-    @State private var mouseMonitor: Any?
+    @State private var mouseMonitor = MouseMovedMonitor()
 
     // MARK: - Constants
 
@@ -329,21 +329,11 @@ struct FloatingTabSwitcher: View {
 
     private func startMouseMonitor() {
         mouseHasMoved = false
-        mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { event in
-            mouseHasMoved = true
-            if let monitor = mouseMonitor {
-                NSEvent.removeMonitor(monitor)
-                mouseMonitor = nil
-            }
-            return event
-        }
+        mouseMonitor.start { mouseHasMoved = true }
     }
 
     private func stopMouseMonitor() {
-        if let monitor = mouseMonitor {
-            NSEvent.removeMonitor(monitor)
-            mouseMonitor = nil
-        }
+        mouseMonitor.stop()
     }
 
     private func closeFloatingTabSwitch() {

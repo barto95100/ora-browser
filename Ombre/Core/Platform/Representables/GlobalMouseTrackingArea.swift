@@ -27,11 +27,7 @@ struct GlobalMouseTrackingArea: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSView {
         let view = GlobalTrackingStrip(edge: edge, padding: padding, slack: slack)
-
-        view.onHoverChange = { hovering in
-            self.mouseEntered = hovering
-        }
-
+        view.onHoverChange = hoverChange
         return view
     }
 
@@ -40,7 +36,14 @@ struct GlobalMouseTrackingArea: NSViewRepresentable {
             strip.edge = edge
             strip.padding = padding
             strip.slack = slack
+            // The current binding, not the one of the first creation.
+            strip.onHoverChange = hoverChange
         }
+    }
+
+    private var hoverChange: (Bool) -> Void {
+        let binding = $mouseEntered
+        return { hovering in binding.wrappedValue = hovering }
     }
 }
 

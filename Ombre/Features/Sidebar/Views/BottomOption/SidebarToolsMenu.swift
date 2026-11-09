@@ -58,22 +58,22 @@ struct SidebarToolsMenu: View {
         guard let event = NSApp.currentEvent, let view = event.window?.contentView else { return }
         let menu = NSMenu()
         let downloadsTitle = isDownloading
-            ? "Downloads (\(Int((totalProgress * 100).rounded())) %)"
-            : "Downloads"
+            ? String(localized: "Downloads (\(Int((totalProgress * 100).rounded())) %)")
+            : String(localized: "Downloads")
         menu.addItem(ClosureMenuItem(downloadsTitle, symbol: "arrow.down.circle") {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
                 downloadManager.isShowingDownloadsHistory.toggle()
             }
         })
-        menu.addItem(ClosureMenuItem("Notes", symbol: "note.text") {
+        menu.addItem(ClosureMenuItem(String(localized: "Notes"), symbol: "note.text") {
             appState.toggleTabNote(hasPage: tabManager.activeTab != nil)
         })
-        let tasks = ClosureMenuItem("Tasks", symbol: "checklist", key: "t") {
+        let tasks = ClosureMenuItem(String(localized: "Tasks"), symbol: "checklist", key: "t") {
             appState.showTasks.toggle()
         }
         tasks.isEnabled = tabManager.activeTab != nil
         menu.addItem(tasks)
-        menu.addItem(ClosureMenuItem("Browsing Time", symbol: "hourglass") {
+        menu.addItem(ClosureMenuItem(String(localized: "Browsing Time"), symbol: "hourglass") {
             appState.toggleTimeSummary(hasPage: tabManager.activeTab != nil)
         })
         menu.autoenablesItems = false

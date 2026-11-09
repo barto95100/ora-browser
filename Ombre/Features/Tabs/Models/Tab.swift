@@ -364,8 +364,10 @@ class Tab: ObservableObject, Identifiable {
         }
         logger.error("No search engine makes an address: the search isn't sent")
         let alert = NSAlert()
-        alert.messageText = "Ombre couldn't search"
-        alert.informativeText = "The search engine chosen in Settings › Search has an invalid address."
+        alert.messageText = String(localized: "Ombre couldn't search")
+        alert
+            .informativeText =
+            String(localized: "The search engine chosen in Settings › Search has an invalid address.")
         if let window = pageWindow {
             alert.beginSheetModal(for: window)
         } else {

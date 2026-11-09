@@ -61,9 +61,17 @@ struct PeekView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 12)
-            toolbarButton("rectangle.split.2x1", help: "Open in Split View", action: onOpenInSplitView)
-            toolbarButton("arrow.up.left.and.arrow.down.right", help: "Open in New Tab (⌘O)", action: onOpenInTab)
-            toolbarButton("xmark", help: "Close (Esc)", action: onClose)
+            toolbarButton(
+                "rectangle.split.2x1",
+                help: String(localized: "Open in Split View"),
+                action: onOpenInSplitView
+            )
+            toolbarButton(
+                "arrow.up.left.and.arrow.down.right",
+                help: String(localized: "Open in New Tab (⌘O)"),
+                action: onOpenInTab
+            )
+            toolbarButton("xmark", help: String(localized: "Close (Esc)"), action: onClose)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)

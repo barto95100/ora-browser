@@ -35,7 +35,18 @@ enum SpaceColor: String, CaseIterable, Identifiable {
     }
 
     var title: String {
-        rawValue.capitalized
+        switch self {
+        case .gray: String(localized: "Gray")
+        case .blue: String(localized: "Blue")
+        case .indigo: String(localized: "Indigo")
+        case .purple: String(localized: "Purple")
+        case .pink: String(localized: "Pink")
+        case .red: String(localized: "Red")
+        case .orange: String(localized: "Orange")
+        case .yellow: String(localized: "Yellow")
+        case .green: String(localized: "Green")
+        case .teal: String(localized: "Teal")
+        }
     }
 }
 
@@ -70,7 +81,20 @@ enum SpaceTheme: String, CaseIterable, Identifiable {
     }
 
     var title: String {
-        self == .rose ? "Rosé" : rawValue.capitalized
+        switch self {
+        case .graphite: String(localized: "Graphite")
+        case .midnight: String(localized: "Midnight")
+        case .mocha: String(localized: "Mocha")
+        case .slate: String(localized: "Slate")
+        case .plum: String(localized: "Plum")
+        case .lavender: String(localized: "Lavender")
+        case .ember: String(localized: "Ember")
+        case .rose: String(localized: "Rosé")
+        case .solarized: String(localized: "Solarized")
+        case .indigo: String(localized: "Indigo")
+        case .sage: String(localized: "Sage")
+        case .ocean: String(localized: "Ocean")
+        }
     }
 
     var background: Color {

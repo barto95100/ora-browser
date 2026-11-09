@@ -65,7 +65,7 @@ class SearchEngineService: ObservableObject {
     var builtInSearchEngines: [SearchEngine] {
         [
             SearchEngine(
-                name: "YouTube",
+                name: "YouTube", // no translation
                 color: Color(hex: "#FC0D1B"),
                 icon: "",
                 aliases: ["youtube", "you", "youtu", "yo", "yt"],
@@ -73,7 +73,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: false
             ),
             SearchEngine(
-                name: "ChatGPT",
+                name: "ChatGPT", // no translation
                 color: theme?.foreground ?? .white,
                 icon: "openai-capsule-logo",
                 aliases: ["chat", "chatgpt", "gpt", "cgpt", "openai", "cha"],
@@ -82,7 +82,7 @@ class SearchEngineService: ObservableObject {
                 foregroundColor: theme?.background ?? .black
             ),
             SearchEngine(
-                name: "Claude",
+                name: "Claude", // no translation
                 color: Color(hex: "#DE7C4C"),
                 icon: "claude-capsule-logo",
                 aliases: ["claude", "cl", "cla", "anthropic"],
@@ -90,7 +90,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: true
             ),
             SearchEngine(
-                name: "Google",
+                name: "Google", // no translation
                 color: .blue,
                 icon: "google-capsule-logo",
                 aliases: ["google", "goo", "g", "search"],
@@ -100,7 +100,7 @@ class SearchEngineService: ObservableObject {
                 autoSuggestions: self.googleSuggestions
             ),
             SearchEngine(
-                name: "DuckDuckGo",
+                name: "DuckDuckGo", // no translation
                 color: Color(hex: "#DE5833"),
                 icon: "duckduckgo-capsule-logo",
                 aliases: ["duckduckgo", "ddg", "duck"],
@@ -108,7 +108,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: false
             ),
             SearchEngine(
-                name: "Kagi",
+                name: "Kagi", // no translation
                 color: Color(hex: "#FFB319"),
                 icon: "kagi-capsule-logo",
                 aliases: ["kagi", "kg"],
@@ -116,7 +116,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: false
             ),
             SearchEngine(
-                name: "Bing",
+                name: "Bing", // no translation
                 color: Color(hex: "#02B7E9"),
                 icon: "bing-capsule-logo",
                 aliases: ["bing", "b", "microsoft"],
@@ -124,7 +124,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: false
             ),
             SearchEngine(
-                name: "Grok",
+                name: "Grok", // no translation
                 color: theme?.foreground ?? .white,
                 icon: "grok-capsule-logo",
                 aliases: ["grok", "gr", "gro"],
@@ -133,7 +133,7 @@ class SearchEngineService: ObservableObject {
                 foregroundColor: theme?.background ?? .black
             ),
             SearchEngine(
-                name: "Perplexity",
+                name: "Perplexity", // no translation
                 color: Color(hex: "#20808D"),
                 icon: "perplexity-capsule-logo",
                 aliases: ["perplexity", "perplex", "pplx", "ppl", "per"],
@@ -141,7 +141,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: true
             ),
             SearchEngine(
-                name: "Reddit",
+                name: "Reddit", // no translation
                 color: Color(hex: "#FF4500"),
                 icon: "reddit-capsule-logo",
                 aliases: ["reddit", "r", "rd", "rdit", "red"],
@@ -149,7 +149,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: false
             ),
             SearchEngine(
-                name: "T3Chat",
+                name: "T3Chat", // no translation
                 color: Color(hex: "#960971"),
                 icon: "t3chat-capsule-logo",
                 aliases: ["t3chat", "t3", "t3c", "tchat"],
@@ -166,35 +166,35 @@ class SearchEngineService: ObservableObject {
                 foregroundColor: theme?.background ?? .black
             ),
             SearchEngine(
-                name: "Gemini",
+                name: "Gemini", // no translation
                 color: Color(hex: "#4285F4"),
                 icon: "gemini-color-capsule-logo",
-                aliases: ["gemini", "gem", "bard", "google ai", "gai"],
+                aliases: ["gemini", "gem", "bard", "google ai", "gai"], // no translation
                 searchURL: "https://gemini.google.com/app?q={query}",
                 isAIChat: true
             ),
             SearchEngine(
-                name: "Copilot",
+                name: "Copilot", // no translation
                 color: Color(hex: "#0078D4"),
                 icon: "copilot-color-capsule-logo",
-                aliases: ["copilot", "microsoft copilot", "bing chat", "bing", "ms copilot"],
+                aliases: ["copilot", "microsoft copilot", "bing chat", "bing", "ms copilot"], // no translation
                 searchURL: "https://copilot.microsoft.com/?q={query}",
                 isAIChat: true
             ),
             SearchEngine(
-                name: "GitHub Copilot",
+                name: "GitHub Copilot", // no translation
                 color: Color(hex: "#24292F"),
                 icon: "copilot-color-capsule-logo",
-                aliases: ["github copilot", "gh copilot", "github ai", "ghc"],
+                aliases: ["github copilot", "gh copilot", "github ai", "ghc"], // no translation
                 searchURL: "https://github.com/copilot?q={query}",
                 isAIChat: true,
                 foregroundColor: .white
             ),
             SearchEngine(
-                name: "Meta AI",
+                name: "Meta AI", // no translation
                 color: Color(hex: "#0866FF"),
                 icon: "",
-                aliases: ["meta ai", "meta", "llama", "facebook ai", "mai"],
+                aliases: ["meta ai", "meta", "llama", "facebook ai", "mai"], // no translation
                 searchURL: "https://www.meta.ai/?q={query}",
                 isAIChat: true
             )
@@ -241,7 +241,7 @@ class SearchEngineService: ObservableObject {
         }
 
         // Fallback to Google if no custom default is set
-        return searchEngines.first(where: { $0.name == "Google" })
+        return searchEngines.first(where: { $0.name == "Google" }) // no translation
     }
 
     /// Where a search typed in a space goes: its engine, else the engine for
@@ -294,7 +294,7 @@ class SearchEngineService: ObservableObject {
         }
 
         // Fallback to ChatGPT if no custom default is set
-        return searchEngines.first(where: { $0.isAIChat && $0.name == "ChatGPT" })
+        return searchEngines.first(where: { $0.isAIChat && $0.name == "ChatGPT" }) // no translation
     }
 
     func getSearchEngine(_ engineName: SearchEngineID) -> SearchEngine? {

@@ -57,7 +57,7 @@ struct FavTabItem: View {
             return MediaBadge(
                 symbolName: device.symbolName(isPaused: isPaused),
                 color: isPaused ? .white.opacity(0.9) : .red,
-                help: isPaused ? "Paused" : "In use"
+                help: isPaused ? String(localized: "Paused") : String(localized: "In use")
             )
         }
         if tab.isPlayingMedia {
@@ -146,8 +146,8 @@ struct FavTabItem: View {
         }
         .onHover { isHovering = $0 }
         .tabAccessibility(tab: tab, isSelected: isSelected, activate: onTap, actions: [
-            (name: "Close Tab", action: onClose),
-            (name: "Remove from Favorites", action: onFavoriteToggle)
+            (name: String(localized: "Close Tab"), action: onClose),
+            (name: String(localized: "Remove from Favorites"), action: onFavoriteToggle)
         ])
         .contextMenu {
             Button(action: onFavoriteToggle) {

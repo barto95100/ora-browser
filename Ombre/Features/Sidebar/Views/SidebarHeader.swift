@@ -35,7 +35,8 @@ struct SidebarHeader: View {
                     action: { sidebarManager.toggleSidebar() }
                 )
                 .modifier(TitleBarHint(
-                    text: "Toggle Sidebar (\(KeyboardShortcuts.App.toggleSidebar.currentChord.display))"
+                    text: String(localized: "Toggle Sidebar")
+                        + " (\(KeyboardShortcuts.App.toggleSidebar.currentChord.display))"
                 ))
                 // Right of the sidebar button, as many as fit.
                 ExtensionStrip(foregroundColor: theme.foreground)

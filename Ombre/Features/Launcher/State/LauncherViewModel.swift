@@ -105,10 +105,10 @@ class LauncherViewModel: ObservableObject {
         guard let tabManager else { return [] }
         let containerId = tabManager.activeContainer?.id
         let searchEngine = searchEngineService.getDefaultSearchEngine(for: containerId)
-        let engineName = searchEngine?.name ?? "Google"
+        let engineName = searchEngine?.name ?? "Google" // no translation
         return [
             LauncherSuggestion(
-                type: .suggestedQuery, title: "Search on \(engineName)",
+                type: .suggestedQuery, title: String(localized: "Search on \(engineName)"),
                 action: { [weak self] in self?.onSubmit?(nil) }
             ),
             createAISuggestion(engineName: .grok),
@@ -140,7 +140,7 @@ class LauncherViewModel: ObservableObject {
         guard let engine = searchEngineService.getSearchEngine(engineName) else {
             return LauncherSuggestion(
                 type: .aiChat,
-                title: query ?? engineName.rawValue,
+                title: query ?? engineName.rawValue, // no translation
                 name: engineName.rawValue,
                 action: {}
             )
@@ -252,7 +252,7 @@ class LauncherViewModel: ObservableObject {
         guard let tabManager else { return }
         let containerId = tabManager.activeContainer?.id
         let searchEngine = searchEngineService.getDefaultSearchEngine(for: containerId)
-        let engineName = searchEngine?.name ?? "Google"
+        let engineName = searchEngine?.name ?? "Google" // no translation
         suggestions.append(
             LauncherSuggestion(
                 type: .suggestedQuery,
@@ -369,9 +369,9 @@ class LauncherViewModel: ObservableObject {
 
         // Starts with a question word
         let questionPrefixes = [
-            "who ", "what ", "where ", "when ", "how ", "why ", "which ",
-            "is ", "are ", "can ", "does ", "do ", "should ", "would ",
-            "could ", "will ", "was ", "were ", "has ", "have "
+            "who ", "what ", "where ", "when ", "how ", "why ", "which ", // no translation
+            "is ", "are ", "can ", "does ", "do ", "should ", "would ", // no translation
+            "could ", "will ", "was ", "were ", "has ", "have " // no translation
         ]
         if questionPrefixes.contains(where: { lowercased.hasPrefix($0) }) {
             return true
@@ -384,9 +384,9 @@ class LauncherViewModel: ObservableObject {
 
         // Imperative / command phrases
         let imperativePhrases = [
-            "write me", "help me", "create a", "give me", "list of",
-            "make a", "tell me", "show me", "find me", "build a",
-            "design a", "plan a", "write a", "make me", "help with"
+            "write me", "help me", "create a", "give me", "list of", // no translation
+            "make a", "tell me", "show me", "find me", "build a", // no translation
+            "design a", "plan a", "write a", "make me", "help with" // no translation
         ]
         if imperativePhrases.contains(where: { lowercased.contains($0) }) {
             return true
@@ -394,7 +394,7 @@ class LauncherViewModel: ObservableObject {
 
         // Action keywords
         let actionKeywords = [
-            "summarize", "rewrite", "explain", "generate", "how to",
+            "summarize", "rewrite", "explain", "generate", "how to", // no translation
             "translate", "compare", "alternatives", "improve", "suggest",
             "recommend", "analyze", "convert", "calculate", "define",
             "describe", "simplify", "debug", "optimize", "refactor",

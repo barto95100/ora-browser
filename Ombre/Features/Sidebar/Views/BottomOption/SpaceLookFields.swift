@@ -33,7 +33,7 @@ struct SpaceLookFields: View {
     private var iconSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                sectionTitle("Icon")
+                sectionTitle(String(localized: "Icon"))
                 Spacer()
                 Button(isEmojiMode ? "Symbols" : "Emoji") {
                     choseMode = true
@@ -74,7 +74,7 @@ struct SpaceLookFields: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(symbol == nil ? "No symbol (emoji)" : symbol ?? "")
+        .help(symbol == nil ? String(localized: "No symbol (emoji)") : symbol ?? "")
     }
 
     private var emojiPicker: some View {
@@ -106,9 +106,9 @@ struct SpaceLookFields: View {
     private var colorSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                sectionTitle("Color")
+                sectionTitle(String(localized: "Color"))
                 Spacer()
-                Text(look.color?.title ?? "None")
+                Text(look.color?.title ?? String(localized: "None"))
                     .font(.system(size: 12))
                     .foregroundColor(theme.mutedForeground)
             }
@@ -139,7 +139,7 @@ struct SpaceLookFields: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(choice?.title ?? "None")
+        .help(choice?.title ?? String(localized: "None"))
     }
 
     // MARK: - Theme
@@ -147,9 +147,9 @@ struct SpaceLookFields: View {
     private var themeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                sectionTitle("Theme")
+                sectionTitle(String(localized: "Theme"))
                 Spacer()
-                Text(look.theme?.title ?? "None")
+                Text(look.theme?.title ?? String(localized: "None"))
                     .font(.system(size: 12))
                     .foregroundColor(theme.mutedForeground)
             }
@@ -194,7 +194,7 @@ struct SpaceLookFields: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(choice?.title ?? "None")
+        .help(choice?.title ?? String(localized: "None"))
     }
 
     private func sectionTitle(_ title: String) -> some View {

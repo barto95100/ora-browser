@@ -156,7 +156,7 @@ final class MediaController: ObservableObject {
 
     func togglePlayPause(_ tabID: UUID? = nil) {
         guard let id = tabID ?? primary?.tabID else { return }
-        eval(id, "window.__media && window.__media.toggle && window.__media.toggle()")
+        eval(id, "window.__media && window.__media.toggle && window.__media.toggle()") // no translation
         if let idx = sessions.firstIndex(where: { $0.tabID == id }) {
             sessions[idx].isPlaying.toggle()
         }
@@ -165,19 +165,22 @@ final class MediaController: ObservableObject {
     func nextTrack(_ tabID: UUID? = nil) {
         guard let id = tabID ?? primary?.tabID else { return }
         // The new title arrives through the page's title change.
-        eval(id, "window.__media && window.__media.next && window.__media.next()")
+        eval(id, "window.__media && window.__media.next && window.__media.next()") // no translation
     }
 
     func previousTrack(_ tabID: UUID? = nil) {
         guard let id = tabID ?? primary?.tabID else { return }
-        eval(id, "window.__media && window.__media.previous && window.__media.previous()")
+        eval(id, "window.__media && window.__media.previous && window.__media.previous()") // no translation
     }
 
     func setVolume(for tabID: UUID? = nil, _ value: Double) {
         guard let id = tabID ?? primary?.tabID else { return }
         let clampedVolume = clamp(value)
         if let idx = sessions.firstIndex(where: { $0.tabID == id }) { sessions[idx].volume = clampedVolume }
-        eval(id, "window.__media && window.__media.setVolume && window.__media.setVolume(\(clampedVolume))")
+        eval(
+            id,
+            "window.__media && window.__media.setVolume && window.__media.setVolume(\(clampedVolume))" // no translation
+        )
     }
 
     func volumeDelta(for tabID: UUID? = nil, _ delta: Double) {
@@ -185,12 +188,15 @@ final class MediaController: ObservableObject {
         if let idx = sessions.firstIndex(where: { $0.tabID == id }) {
             sessions[idx].volume = clamp(sessions[idx].volume + delta)
         }
-        eval(id, "window.__media && window.__media.deltaVolume && window.__media.deltaVolume(\(delta))")
+        eval(
+            id,
+            "window.__media && window.__media.deltaVolume && window.__media.deltaVolume(\(delta))" // no translation
+        )
     }
 
     func closeSession(_ tabID: UUID? = nil) {
         guard let id = tabID ?? primary?.tabID else { return }
-        eval(id, "window.__media && window.__media.pause && window.__media.pause()")
+        eval(id, "window.__media && window.__media.pause && window.__media.pause()") // no translation
         if let idx = sessions.firstIndex(where: { $0.tabID == id }) {
             sessions.remove(at: idx)
         }

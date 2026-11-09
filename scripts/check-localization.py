@@ -36,6 +36,14 @@ ZONES = {
         "Ombre/Features/Onboarding/",
         "Ombre/Features/Importer/",
     ],
+    "sidebar": [
+        "Ombre/Features/Sidebar/",
+        "Ombre/Features/Tabs/",
+        "Ombre/Features/Launcher/",
+        "Ombre/Features/Peek/",
+        "Ombre/Features/Search/",
+        "Ombre/Features/Player/",
+    ],
 }
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -60,6 +68,7 @@ NOT_SHOWN_ARGUMENT = re.compile(
     r"|(?:@AppStorage\(|@SceneStorage\(|Notification\.Name\(|URL\(string:|UTType\(|"
     r"NSPasteboard\.PasteboardType\(|\.accessibilityIdentifier\()\s*"
     r'"(?:[^"\\\n]|\\.)*"'
+    r"|(?:saveOrLog|subfolder)\(\s*\"(?:[^\"\\\n]|\\.)*\""
     r"|static let \w+ = \"(?:[^\"\\\n]|\\.)*\""
 )
 

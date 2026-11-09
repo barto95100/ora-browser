@@ -6,7 +6,7 @@ extension TabManager {
     /// in it; first in `parent`; or first. Its name is edited right away.
     @discardableResult
     func createFolder(in container: TabContainer, with tab: Tab? = nil, parent: Folder? = nil) -> Folder {
-        let folder = Folder(name: "New Folder", isOpened: true, container: container)
+        let folder = Folder(name: String(localized: "New Folder"), isOpened: true, container: container)
         modelContext.insert(folder)
         container.folders.append(folder)
         container.insertFolder(folder, at: tab, in: parent)

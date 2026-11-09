@@ -203,7 +203,7 @@ struct ContainerView: View {
                 toContainer: newContainer
             )
         toastManager.show(
-            "Moved to \(newContainer.emoji) \(newContainer.name)",
+            String(localized: "Moved to \(newContainer.emoji) \(newContainer.name)"),
             icon: .system("arrow.right.arrow.left")
         )
     }

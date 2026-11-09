@@ -52,7 +52,10 @@ extension Tab {
                           settings.alwaysTranslates(source), !settings.neverTranslates(host: address.host)
                 {
                     logger
-                        .info("Translating at once: \(source.minimalIdentifier, privacy: .public) is always translated")
+                        .info(
+                            "Translating at once: \(source.minimalIdentifier, privacy: .public) is always translated" // not
+                            // shown
+                        )
                     self.translatePage()
                 }
             }
@@ -81,7 +84,7 @@ extension Tab {
         guard source.languageCode != target.languageCode else {
             runtime.translation = .failed(
                 pair,
-                message: "This page is already in \(PageLanguage.name(of: target)).",
+                message: String(localized: "This page is already in \(PageLanguage.name(of: target))."),
                 isPartial: false
             )
             return
@@ -98,11 +101,14 @@ extension Tab {
                 status = try await InstalledTranslationLanguages.status(of: pair)
             } catch {
                 guard runtime.translationRunID == runID else { return }
-                self.translationFailed(pair, "macOS didn't say whether it can translate this page. Try again.")
+                self.translationFailed(
+                    pair,
+                    String(localized: "macOS didn't say whether it can translate this page. Try again.")
+                )
                 return
             }
             guard runtime.translationRunID == runID else { return }
-            let answer = "\(status) (\(String(format: "%.2f", Date().timeIntervalSince(start))) s)"
+            let answer = "\(status) (\(String(format: "%.2f", Date().timeIntervalSince(start))) s)" // not shown
             logger.notice("\(languages, privacy: .public): \(answer, privacy: .public)")
             self.startTranslation(pair, status: status, runID: runID)
         }
@@ -263,7 +269,9 @@ extension Tab {
         runtime.translationRunID = nil
         runtime.translation = .failed(
             pair,
-            message: "The translation stopped before it finished (the page was hidden or reloaded). Try again.",
+            message: String(
+                localized: "The translation stopped before it finished (the page was hidden or reloaded). Try again."
+            ),
             isPartial: runtime.translation.showsTranslation
         )
         runtime.showsTranslationPanel = true
@@ -292,14 +300,25 @@ extension Tab {
         var items: [NSMenuItem] = []
         if runtime.translation == .original {
             if source.languageCode != target.languageCode {
-                items.append(TranslationMenuItem("Translate to \(PageLanguage.name(of: target))") { [weak self] in
-                    self?.translatePage()
-                })
+                items
+                    .append(
+                        TranslationMenuItem(String(
+                            localized: "Translate to \(PageLanguage.name(of: target))"
+                        )) { [weak self] in
+                            self?.translatePage()
+                        }
+                    )
             }
         } else {
-            items.append(TranslationMenuItem("Show Original") { [weak self] in self?.showOriginalPage() })
+            items
+                .append(TranslationMenuItem(String(localized: "Show Original")) { [weak self] in
+                    self?.showOriginalPage()
+                })
         }
-        items.append(TranslationMenuItem("Translate Page…") { [weak self] in self?.showTranslationPanel() })
+        items
+            .append(TranslationMenuItem(String(localized: "Translate Page…")) { [weak self] in
+                self?.showTranslationPanel()
+            })
         return items
     }
 }

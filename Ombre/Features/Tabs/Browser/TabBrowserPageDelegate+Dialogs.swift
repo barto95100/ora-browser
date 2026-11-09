@@ -27,9 +27,9 @@ extension TabBrowserPageDelegate {
         alert.messageText = dialog.title
         alert.informativeText = dialog.message
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "OK"))
         if dialog.kind != .alert {
-            alert.addButton(withTitle: "Cancel")
+            alert.addButton(withTitle: String(localized: "Cancel"))
         }
         var textField: NSTextField?
         if case let .prompt(defaultText) = dialog.kind {
@@ -41,7 +41,7 @@ extension TabBrowserPageDelegate {
         }
         if offersToStopDialogs {
             alert.showsSuppressionButton = true
-            alert.suppressionButton?.title = "Don't allow this page to show more dialogs"
+            alert.suppressionButton?.title = String(localized: "Don't allow this page to show more dialogs")
         }
 
         dialogSheet = alert.window
@@ -79,8 +79,8 @@ extension TabBrowserPageDelegate {
         alert.messageText = HTTPAuthentication.title(for: request)
         alert.informativeText = HTTPAuthentication.message(for: request)
         alert.alertStyle = request.isSecure ? .informational : .warning
-        alert.addButton(withTitle: "Log In")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "Log In"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         let fields = HTTPAuthenticationFields(user: request.proposedUser)
         alert.accessoryView = fields.view
         // The name filled in again: straight to the password, like Safari.
@@ -128,10 +128,10 @@ private struct HTTPAuthenticationFields {
     let view: NSView
 
     init(user proposedUser: String?) {
-        user.placeholderString = "Name"
+        user.placeholderString = String(localized: "Name")
         user.stringValue = proposedUser ?? ""
         user.contentType = .username
-        password.placeholderString = "Password"
+        password.placeholderString = String(localized: "Password")
         password.contentType = .password
         let stack = NSStackView(views: [user, password])
         stack.orientation = .vertical

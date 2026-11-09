@@ -199,9 +199,16 @@ struct TabItem: View {
         }
         .onHover { isHovering = $0 }
         .tabAccessibility(tab: tab, isSelected: isSelected, activate: onTap, actions: [
-            (name: "Close Tab", action: onClose),
-            (name: tab.type == .pinned ? "Unpin Tab" : "Pin Tab", action: onPinToggle),
-            (name: tab.type == .fav ? "Remove from Favorites" : "Add to Favorites", action: onFavoriteToggle)
+            (name: String(localized: "Close Tab"), action: onClose),
+            (
+                name: tab.type == .pinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab"),
+                action: onPinToggle
+            ),
+            (
+                name: tab
+                    .type == .fav ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites"),
+                action: onFavoriteToggle
+            )
         ])
         .contextMenu { contextMenuItems }
         .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isDragging)

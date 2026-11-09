@@ -27,7 +27,7 @@ final class WebNotificationBridge: NSObject, WKScriptMessageHandlerWithReply {
               let body = message.body as? [String: Any],
               let action = body["action"] as? String
         else {
-            replyHandler(nil, "Notifications are not available")
+            replyHandler(nil, "Notifications are not available") // not shown
             return
         }
         let origin = Self.url(of: message.frameInfo.securityOrigin)
@@ -55,7 +55,7 @@ final class WebNotificationBridge: NSObject, WKScriptMessageHandlerWithReply {
             }
             replyHandler(nil, nil)
         default:
-            replyHandler(nil, "Unknown action")
+            replyHandler(nil, "Unknown action") // not shown
         }
     }
 
@@ -125,7 +125,7 @@ extension BrowserPage {
         // From the app's world: the page's own `dispatchEvent` or
         // `CustomEvent`, which it may have replaced, never sees the channel.
         webView.evaluateJavaScript(
-            "window.dispatchEvent(new CustomEvent('\(notificationChannel)', { detail: \(detailString) }))",
+            "window.dispatchEvent(new CustomEvent('\(notificationChannel)', { detail: \(detailString) }))", // not shown
             in: nil,
             in: Self.appWorld,
             completionHandler: nil

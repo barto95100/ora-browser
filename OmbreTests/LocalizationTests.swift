@@ -32,4 +32,10 @@ struct LocalizationTests {
         #expect(BrowserImportSheet.summary(of: ImportedSpace(name: "Test", favorites: [], pinned: []))
             == "0 favorites · 0 pinned tabs · 0 folders")
     }
+
+    /// macOS's own prompts (camera, microphone, location) explain in French too.
+    @Test func thePrivacyPromptsSpeakFrench() throws {
+        let camera = try french().localizedString(forKey: "NSCameraUsageDescription", value: nil, table: "InfoPlist")
+        #expect(camera.hasPrefix("Permet aux sites web d’utiliser la caméra"))
+    }
 }

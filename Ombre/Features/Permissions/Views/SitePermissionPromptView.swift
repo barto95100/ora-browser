@@ -56,10 +56,10 @@ struct SitePermissionPromptView: View {
 
             HStack(spacing: 8) {
                 Spacer()
-                OmbreButton(label: "Don't Allow", variant: .secondary, size: .sm) {
+                OmbreButton(label: String(localized: "Don't Allow"), variant: .secondary, size: .sm) {
                     onAnswer(false, remember)
                 }
-                OmbreButton(label: "Allow", size: .sm) {
+                OmbreButton(label: String(localized: "Allow"), size: .sm) {
                     onAnswer(true, remember)
                 }
             }
@@ -82,22 +82,22 @@ struct SitePermissionPromptView: View {
 
     private var requestDescription: String {
         if request.types == [.notifications] {
-            return "wants to send you notifications"
+            return String(localized: "wants to send you notifications")
         }
         if request.types == [.location] {
-            return "wants to know your location"
+            return String(localized: "wants to know your location")
         }
         if request.types == [.screen] {
-            return "wants to share your screen"
+            return String(localized: "wants to share your screen")
         }
-        return "wants to use your \(capabilityDescription)"
+        return capabilityRequest
     }
 
-    private var capabilityDescription: String {
+    private var capabilityRequest: String {
         switch (request.types.contains(.camera), request.types.contains(.microphone)) {
-        case (true, true): "camera and microphone"
-        case (true, false): "camera"
-        default: "microphone"
+        case (true, true): String(localized: "wants to use your camera and microphone")
+        case (true, false): String(localized: "wants to use your camera")
+        default: String(localized: "wants to use your microphone")
         }
     }
 

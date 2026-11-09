@@ -293,9 +293,8 @@ actor AdBlockService {
             } catch {
                 guard artifactStore.rawListText(for: record.id) != nil else { throw error }
                 let reason = AdBlockServiceError.logReason(for: error)
-                logger.error(
-                    "\(record.id, privacy: .public): update failed, \(reason, privacy: .public); keeps its last copy"
-                )
+                let id = record.id
+                logger.error("\(id, privacy: .public): update failed, \(reason, privacy: .public); keeps its last copy")
                 var fallbackRecord = record
                 fallbackRecord.lastErrorMessage = error.localizedDescription
                 return FilterListFetchResult(record: fallbackRecord, rawText: nil)

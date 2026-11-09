@@ -28,7 +28,7 @@ class EmojiViewModel: ObservableObject {
 
     private func loadEmojis() {
         guard let url = Bundle.main.url(forResource: "emoji-set", withExtension: "json") else {
-            error = "JSON file not found."
+            error = String(localized: "The emoji list is missing.")
             isLoading = false
             return
         }

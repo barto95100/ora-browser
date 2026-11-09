@@ -68,6 +68,10 @@ ZONES = {
         "Ombre/Features/Tasks/",
         "Ombre/Features/TimeFocus/",
     ],
+    # Everything else: with it, every file of the app is checked.
+    "rest": [
+        "Ombre/",
+    ],
 }
 
 # Files that never show a text (paths, keys, logs): not read for literals.
@@ -76,6 +80,23 @@ NOT_SHOWN_FILES = {
     "Ombre/Features/Extensions/Services/ExtensionRegistry.swift",
     "Ombre/Features/Extensions/Services/SafariExtensionScanner.swift",
     "Ombre/Features/TimeFocus/Services/BrowsingTimeStore.swift",
+    "Ombre/Core/Utilities/TestHost.swift",
+    "Ombre/Core/Utilities/AppIdentity.swift",
+    "Ombre/Core/Utilities/StaleData.swift",
+    "Ombre/Core/Extensions/ModelConfiguration+Shared.swift",
+    "Ombre/Core/Persistence/ModelContext+SaveOrLog.swift",
+    "Ombre/Core/BrowserEngine/SafariUserAgent.swift",
+    "Ombre/Core/BrowserEngine/WeakScriptMessageHandler.swift",
+    "Ombre/Core/BrowserEngine/Scripts/WebNotificationScript.swift",
+    "Ombre/Core/BrowserEngine/HTTPSUpgradePolicy.swift",
+    "Ombre/Core/BrowserEngine/RestrictedPort.swift",
+    "Ombre/Core/Services/Web/FaviconService.swift",
+    "Ombre/Features/Privacy/Services/BrowserPrivacyService.swift",
+    "Ombre/Features/Privacy/Services/ContentBlockerArtifactStore.swift",
+    # JSON keys (the categories show as icons; its one error is translated).
+    "Ombre/Shared/EmojiPicker/EmojiPickerModel.swift",
+    # Legal texts and component names, kept in English like README.md.
+    "Ombre/Features/About/LicensesView.swift",
 }
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -100,7 +121,7 @@ NOT_SHOWN_ARGUMENT = re.compile(
     r"|(?:@AppStorage\(|@SceneStorage\(|Notification\.Name\(|URL\(string:|UTType\(|"
     r"NSPasteboard\.PasteboardType\(|\.accessibilityIdentifier\()\s*"
     r'"(?:[^"\\\n]|\\.)*"'
-    r"|(?:saveOrLog|subfolder)\(\s*\"(?:[^\"\\\n]|\\.)*\""
+    r"|(?:saveOrLog|subfolder|function)\(\s*\"(?:[^\"\\\n]|\\.)*\""
     r"|static let \w+ = \"(?:[^\"\\\n]|\\.)*\""
 )
 
@@ -164,6 +185,17 @@ def read_extracted(derived: Path):
     return found
 
 
+def preview_starts():
+    """The line where each file's previews start (development only)."""
+    starts = {}
+    for source in (ROOT / "Ombre").rglob("*.swift"):
+        for number, line in enumerate(source.read_text().splitlines(), start=1):
+            if line.lstrip().startswith("#Preview"):
+                starts[str(source.relative_to(ROOT))] = number
+                break
+    return starts
+
+
 def check_catalog(catalog, extracted, every):
     problems = []
     strings = catalog["strings"]
@@ -173,11 +205,12 @@ def check_catalog(catalog, extracted, every):
     # The parser writes %arg where the catalog has %lld, %@…
     by_shape = {shape(key): item for key, item in strings.items()}
     seen = set()
+    previews = preview_starts()
     for path, entries in sorted(extracted.items()):
         if not in_zone(path, every):
             continue
         for (line, _), key in sorted(entries.items()):
-            if key in seen or not PROSE.search(key):
+            if key in seen or not PROSE.search(key) or line >= previews.get(path, line + 1):
                 continue
             seen.add(key)
             item = strings.get(key) or by_shape.get(shape(key), {})
@@ -214,6 +247,9 @@ def check_sources(extracted, every):
         in_block = False
         for number, line in enumerate(source.read_text().splitlines(), start=1):
             # Multi-line literals hold scripts and pages, not interface texts.
+            # Previews are for development, at the end of a file.
+            if line.lstrip().startswith("#Preview"):
+                break
             if line.count('"""') % 2 == 1:
                 in_block = not in_block
                 continue

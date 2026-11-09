@@ -108,10 +108,10 @@ final class GeolocationProvider {
         guard code != CLError.locationUnknown.rawValue else { return }
         if code == CLError.denied.rawValue {
             onDenied()
-            giveUp(message: "Location Services are off for Ombre.")
+            giveUp(message: "Location Services are off for Ombre.") // not shown
         } else {
             onNoPosition()
-            giveUp(message: "macOS couldn't find the location.")
+            giveUp(message: "macOS couldn't find the location.") // not shown
         }
     }
 
@@ -123,7 +123,7 @@ final class GeolocationProvider {
             guard !Task.isCancelled, let self else { return }
             logger.error("Core Location found no position in time")
             onNoPosition()
-            giveUp(message: "macOS couldn't find the location.")
+            giveUp(message: "macOS couldn't find the location.") // not shown
         }
     }
 
@@ -142,7 +142,7 @@ final class GeolocationProvider {
         guard !provider.toldNoPosition else { return }
         provider.toldNoPosition = true
         ToastManager.shared.show(
-            "macOS couldn't find your location. Check that Wi-Fi is on, then try again.",
+            String(localized: "macOS couldn't find your location. Check that Wi-Fi is on, then try again."),
             type: .error,
             duration: 10
         )
@@ -213,13 +213,13 @@ protocol GeolocationWebKit {
 /// missing). On Cocoa, a `WKContextRef` is the `WKProcessPool` itself.
 struct WebKitGeolocation: GeolocationWebKit {
     static let symbols = [
-        "WKContextGetGeolocationManager",
-        "WKGeolocationManagerSetProvider",
-        "WKGeolocationManagerProviderDidChangePosition",
-        "WKGeolocationManagerProviderDidFailToDeterminePositionWithErrorMessage",
-        "WKGeolocationPositionCreate_b",
-        "WKStringCreateWithUTF8CString",
-        "WKRelease"
+        "WKContextGetGeolocationManager", // not shown
+        "WKGeolocationManagerSetProvider", // not shown
+        "WKGeolocationManagerProviderDidChangePosition", // not shown
+        "WKGeolocationManagerProviderDidFailToDeterminePositionWithErrorMessage", // not shown
+        "WKGeolocationPositionCreate_b", // not shown
+        "WKStringCreateWithUTF8CString", // not shown
+        "WKRelease" // not shown
     ]
 
     private typealias GetManager = @convention(c) (UnsafeRawPointer) -> UnsafeRawPointer?
@@ -267,11 +267,11 @@ struct WebKitGeolocation: GeolocationWebKit {
             unsafeBitCast(found[name], to: T.self)
         }
         return WebKitGeolocation(
-            getManager: function("WKContextGetGeolocationManager", as: GetManager.self),
+            getManager: function("WKContextGetGeolocationManager", as: GetManager.self), // not shown
             setProviderFunction: function("WKGeolocationManagerSetProvider", as: SetProvider.self),
             didChange: function("WKGeolocationManagerProviderDidChangePosition", as: DidChange.self),
             didFailFunction: function(
-                "WKGeolocationManagerProviderDidFailToDeterminePositionWithErrorMessage",
+                "WKGeolocationManagerProviderDidFailToDeterminePositionWithErrorMessage", // not shown
                 as: DidFail.self
             ),
             createPosition: function("WKGeolocationPositionCreate_b", as: CreatePosition.self),

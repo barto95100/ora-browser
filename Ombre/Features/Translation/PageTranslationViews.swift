@@ -37,11 +37,12 @@ struct PageTranslationButton: View {
 
     private var help: String {
         switch runtime.translation {
-        case .original: "Translate this page"
-        case .preparing: "Waiting for the language download…"
-        case .translating: runtime.translation.percentDone.map { "Translating… \($0)%" } ?? "Translating…"
-        case .translated: "Translated: show the original or change the language"
-        case .failed: "The translation failed"
+        case .original: String(localized: "Translate this page")
+        case .preparing: String(localized: "Waiting for the language download…")
+        case .translating: runtime.translation.percentDone
+            .map { String(localized: "Translating… \($0)%") } ?? String(localized: "Translating…")
+        case .translated: String(localized: "Translated: show the original or change the language")
+        case .failed: String(localized: "The translation failed")
         }
     }
 

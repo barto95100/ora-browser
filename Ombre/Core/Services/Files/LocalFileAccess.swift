@@ -57,7 +57,7 @@ enum LocalFileAccess {
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
         panel.prompt = String(localized: "Open")
-        panel.message = "Allow Ombre to open “\(url.lastPathComponent)”."
+        panel.message = String(localized: "Allow Ombre to open “\(url.lastPathComponent)”.")
         let handler: (NSApplication.ModalResponse) -> Void = { response in
             completion(response == .OK ? panel.url : nil)
         }

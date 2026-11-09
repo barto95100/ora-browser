@@ -5,11 +5,8 @@ import SwiftUI
 @MainActor
 final class TabBrowserPageDelegate: BrowserPageDelegate {
     weak var tab: Tab?
-    /// When the page may show `alert`, `confirm` and `prompt` dialogs.
-    var dialogPolicy = JavaScriptDialogPolicy()
-    /// The dialog sheet open for the page, and its window (see `dismissDialog`).
-    weak var dialogSheet: NSWindow?
-    weak var dialogParentWindow: NSWindow?
+    /// The page's dialogs and login sheets.
+    let sheets = PageSheetPresenter()
     weak var mediaController: MediaController?
     weak var passwordCoordinator: PasswordAutofillCoordinator?
 
@@ -113,7 +110,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             WebExtensionsHub.tabChanged(tab, url: true, loading: true)
 
         case .committed:
-            dialogPolicy.pageDidCommitNewDocument()
+            sheets.dialogPolicy.pageDidCommitNewDocument()
             // A new document: its language is checked once it has loaded.
             MainActor.assumeIsolated { tab.runtime?.resetTranslation() }
             tab.isLoading = event.isLoading
@@ -243,43 +240,18 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         origin: URL?,
         decisionHandler: @escaping (BrowserPermissionDecision) -> Void
     ) {
-        guard let tab, let origin = origin.flatMap(SiteOrigin.init(url:)) else {
+        guard let tab else {
             decisionHandler(.deny)
             return
         }
-        // A site allowed to send notifications: macOS must allow Ombre too
-        // (asked once, right after the user allowed the site).
-        let answer: @MainActor (BrowserPermissionDecision) -> Void = switch permission {
-        case .notifications: { decision in
-                if decision == .grant {
-                    WebNotificationCenter.shared.requestAuthorizationIfNeeded()
-                }
-                decisionHandler(decision)
-            }
-        // A site allowed to know the position: macOS must let Ombre use
-        // Location Services too (WebKit never asks it).
-        case .geolocation: LocationAuthorization.askingMacOS(then: decisionHandler)
-        default: decisionHandler
-        }
-
-        let types = permission.sitePermissionTypes
-        let saved = SitePermissionStore.shared.permissions(
-            for: origin,
-            in: tab.container.id,
-            isPrivate: tab.isPrivate
+        SitePermissionGate.request(
+            permission,
+            origin: origin,
+            spaceID: tab.container.id,
+            isPrivate: tab.isPrivate,
+            present: { tab.presentPermissionRequest($0) },
+            decisionHandler: decisionHandler
         )
-
-        switch saved.decision(for: types) {
-        case .allow:
-            answer(.grant)
-        case .deny:
-            answer(.deny)
-        case .ask:
-            let request = SitePermissionRequest(origin: origin, types: types) { granted in
-                answer(granted ? .grant : .deny)
-            }
-            tab.presentPermissionRequest(request)
-        }
     }
 
     func browserPage(
@@ -287,14 +259,8 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         queryPermission permission: BrowserPermissionKind,
         origin: URL?
     ) -> BrowserPermissionDecision {
-        guard let tab, let origin = origin.flatMap(SiteOrigin.init(url:)) else {
-            return .prompt
-        }
-
-        return SitePermissionStore.shared
-            .permissions(for: origin, in: tab.container.id, isPrivate: tab.isPrivate)
-            .decision(for: permission.sitePermissionTypes)
-            .permissionQueryDecision
+        guard let tab else { return .prompt }
+        return SitePermissionGate.query(permission, origin: origin, spaceID: tab.container.id, isPrivate: tab.isPrivate)
     }
 
     func browserPage(
@@ -302,13 +268,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         runOpenPanelWith options: BrowserOpenPanelOptions,
         completion: @escaping ([URL]?) -> Void
     ) {
-        let openPanel = NSOpenPanel()
-        openPanel.canChooseFiles = true
-        openPanel.canChooseDirectories = options.allowsDirectories
-        openPanel.allowsMultipleSelection = options.allowsMultipleSelection
-        openPanel.begin { result in
-            completion(result == .OK ? openPanel.urls : nil)
-        }
+        BrowserOpenPanel.run(options, completion: completion)
     }
 
     func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool {

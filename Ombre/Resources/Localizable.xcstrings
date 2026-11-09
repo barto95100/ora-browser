@@ -636,6 +636,16 @@
         }
       }
     },
+    "Additional mobile ad-network coverage for embedded and responsive mobile ads." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture supplémentaire des régies publicitaires mobiles, pour les publicités intégrées et adaptatives."
+          }
+        }
+      }
+    },
     "Address" : {
       "localizations" : {
         "fr" : {
@@ -652,6 +662,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Publicités"
+          }
+        }
+      }
+    },
+    "Aggressive Auto-Refresh" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour automatique fréquente"
           }
         }
       }
@@ -803,7 +823,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App"
+            "value" : "Application"
           }
         }
       }
@@ -1012,7 +1032,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloqués pendant la concentration · %@"
+            "value" : "Sites bloqués pendant la concentration · %@"
           }
         }
       }
@@ -1042,7 +1062,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Né pour votre Mac. Faites d’Ombre votre navigateur par défaut."
+            "value" : "Conçu pour votre Mac. Faites d’Ombre votre navigateur par défaut."
           }
         }
       }
@@ -1113,6 +1133,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Importez vos espaces depuis Zen"
+          }
+        }
+      }
+    },
+    "Broader tracker and analytics coverage from AdGuard’s privacy list." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture plus large des traqueurs et outils de mesure, issue de la liste de confidentialité d’AdGuard."
           }
         }
       }
@@ -1654,6 +1684,16 @@
         }
       }
     },
+    "Core AdGuard ads list for general web ad blocking." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste publicitaire principale d’AdGuard, pour le blocage des publicités sur le web."
+          }
+        }
+      }
+    },
     "Count browsing time" : {
       "localizations" : {
         "fr" : {
@@ -1675,6 +1715,16 @@
         }
       }
     },
+    "Custom Filter List" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de filtres personnalisée"
+          }
+        }
+      }
+    },
     "Custom list name" : {
       "localizations" : {
         "fr" : {
@@ -1691,6 +1741,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listes personnalisées"
+          }
+        }
+      }
+    },
+    "Custom remotely hosted filter list." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de filtres personnalisée hébergée en ligne."
           }
         }
       }
@@ -1782,7 +1842,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Par défaut"
+            "value" : "Réglages par défaut"
           }
         }
       }
@@ -2129,6 +2189,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les listes de filtres sont déjà à jour"
+          }
+        }
+      }
+    },
+    "Filter lists must use an https:// address." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les listes de filtres doivent utiliser une adresse https://."
           }
         }
       }
@@ -2647,7 +2717,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dernière mise à jour %@"
+            "value" : "Dernière mise à jour : %@"
           }
         }
       }
@@ -2866,12 +2936,22 @@
       }
     },
     "Manage…" : {},
+    "Manual Refresh Only" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour manuelle uniquement"
+          }
+        }
+      }
+    },
     "Max recent tabs:" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Onglets récents au maximum :"
+            "value" : "Nombre maximal d’onglets récents :"
           }
         }
       }
@@ -3175,6 +3255,16 @@
     },
     "No browsing time for this period" : {},
     "No browsing time today" : {},
+    "No cached filter rules are available for %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle de filtrage en cache pour %@."
+          }
+        }
+      }
+    },
     "No Downloads" : {},
     "No downloads yet" : {},
     "No extensions yet. Add one from your apps below." : {},
@@ -3236,6 +3326,16 @@
       }
     },
     "No task yet" : {},
+    "No WebKit-compatible rules were produced for %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle compatible avec WebKit n’a été produite pour %@."
+          }
+        }
+      }
+    },
     "No website set yet." : {},
     "No Zen session in this folder. Choose a profile in Zen's Profiles folder." : {
       "localizations" : {
@@ -3383,6 +3483,16 @@
       }
     },
     "Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0." : {},
+    "Ombre Passwords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots de passe Ombre"
+          }
+        }
+      }
+    },
     "Ombre's own shortcuts come first." : {},
     "On" : {
       "localizations" : {
@@ -3390,6 +3500,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activé"
+          }
+        }
+      }
+    },
+    "On Launch + Daily" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au lancement et chaque jour"
           }
         }
       }
@@ -3651,7 +3771,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fondé sur les listes de filtres AdGuard intégrées, compilées pour WebKit dans cet espace."
+            "value" : "Utilise les listes de filtres AdGuard intégrées, compilées pour WebKit, dans cet espace."
           }
         }
       }
@@ -3661,7 +3781,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Préférences"
+            "value" : "Réglages"
           }
         }
       }
@@ -4019,6 +4139,16 @@
         }
       }
     },
+    "Removes common tracking parameters from requested URLs when WebKit rules can express them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retire les paramètres de suivi courants des adresses demandées, quand les règles WebKit le permettent."
+          }
+        }
+      }
+    },
     "Removes the space with its tabs, folders and website data." : {
       "localizations" : {
         "fr" : {
@@ -4153,7 +4283,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Règles : %1$lld converties, %2$lld ignorées"
+            "value" : "Règles converties : %1$lld · ignorées : %2$lld"
           }
         }
       }
@@ -4214,7 +4344,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Recherche"
+            "value" : "Rechercher"
           }
         }
       }
@@ -4290,6 +4420,23 @@
         }
       }
     },
+    "searchEngine.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        }
+      }
+    },
     "See it with View › Show Browsing Time (⌥⌘Y)." : {
       "localizations" : {
         "fr" : {
@@ -4360,6 +4507,23 @@
         }
       }
     },
+    "settings.search" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche"
+          }
+        }
+      }
+    },
     "Share" : {
       "localizations" : {
         "fr" : {
@@ -4397,6 +4561,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourci déjà utilisé"
+          }
+        }
+      }
+    },
+    "shortcut.category.edit" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Édition"
           }
         }
       }
@@ -4746,6 +4927,16 @@
       }
     },
     "Stop" : {},
+    "Store encrypted credentials in Ombre and show Ombre's autofill overlay." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stocke les identifiants chiffrés dans Ombre et affiche le remplissage automatique d’Ombre."
+          }
+        }
+      }
+    },
     "Strict" : {
       "localizations" : {
         "fr" : {
@@ -4929,6 +5120,16 @@
       }
     },
     "Talking to its app (such as Touch ID unlock) only works in Safari." : {},
+    "Targets cookie notices, popups, widgets, and other page annoyances." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible les bandeaux de cookies, fenêtres surgissantes, widgets et autres nuisances des pages."
+          }
+        }
+      }
+    },
     "Task" : {},
     "Tasks" : {
       "localizations" : {
@@ -4967,6 +5168,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’emoji est utilisé quand aucun symbole n’est choisi."
+          }
+        }
+      }
+    },
+    "The filter list download failed with status %lld." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le téléchargement de la liste de filtres a échoué (code %lld)."
+          }
+        }
+      }
+    },
+    "The filter list is larger than 32 MB: Ombre doesn't download it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste de filtres dépasse 32 Mo : Ombre ne la télécharge pas."
+          }
+        }
+      }
+    },
+    "The filter list response could not be read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse de la liste de filtres n’a pas pu être lue."
           }
         }
       }
@@ -5347,7 +5578,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mise à jour"
+            "value" : "Mise à jour des listes"
           }
         }
       }

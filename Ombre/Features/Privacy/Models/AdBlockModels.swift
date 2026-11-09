@@ -12,11 +12,11 @@ enum AdBlockUpdateMode: String, CaseIterable, Codable, Identifiable {
     var title: String {
         switch self {
         case .onLaunchDaily:
-            "On Launch + Daily"
+            String(localized: "On Launch + Daily")
         case .manualOnly:
-            "Manual Refresh Only"
+            String(localized: "Manual Refresh Only")
         case .aggressiveAuto:
-            "Aggressive Auto-Refresh"
+            String(localized: "Aggressive Auto-Refresh")
         }
     }
 
@@ -178,17 +178,17 @@ enum AdBlockServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidCustomListURL:
-            "Filter lists must use an https:// address."
+            String(localized: "Filter lists must use an https:// address.")
         case .invalidFilterResponse:
-            "The filter list response could not be read."
+            String(localized: "The filter list response could not be read.")
         case let .downloadFailed(statusCode):
-            "The filter list download failed with status \(statusCode)."
+            String(localized: "The filter list download failed with status \(statusCode).")
         case let .missingCachedList(name):
-            "No cached filter rules are available for \(name)."
+            String(localized: "No cached filter rules are available for \(name).")
         case let .emptyFilterList(name):
-            "No WebKit-compatible rules were produced for \(name)."
+            String(localized: "No WebKit-compatible rules were produced for \(name).")
         case .filterListTooLarge:
-            "The filter list is larger than 32 MB: Ombre doesn't download it."
+            String(localized: "The filter list is larger than 32 MB: Ombre doesn't download it.")
         }
     }
 
@@ -197,15 +197,15 @@ enum AdBlockServiceError: LocalizedError {
     static func logReason(for error: Error) -> String {
         switch error {
         case let AdBlockServiceError.downloadFailed(statusCode):
-            return "HTTP \(statusCode)"
+            return "HTTP \(statusCode)" // not shown
         case let AdBlockServiceError.filterListTooLarge(bytes):
             let limit = FilterListUpdateService.maxListSize
-            return "larger than \(limit) bytes (\(bytes) bytes announced or received)"
+            return "larger than \(limit) bytes (\(bytes) bytes announced or received)" // not shown
         case let error as URLError:
-            return "network error \(error.code.rawValue)"
+            return "network error \(error.code.rawValue)" // not shown
         case let error as AdBlockServiceError:
             // The case only: a custom list's name is the user's.
-            return "\(error)".components(separatedBy: "(").first ?? "AdBlockServiceError"
+            return "\(error)".components(separatedBy: "(").first ?? "AdBlockServiceError" // not shown
         default:
             // Domain and code only: a file error's text holds its path.
             let error = error as NSError

@@ -136,8 +136,9 @@ struct GeneralSettingsView: View {
     }
 
     private func getAppVersion() -> String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown" // not shown
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown" // not shown
+        let version = Bundle.main
+            .infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown" // no translation
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown" // no translation
         return "v\(version) (\(build))"
     }
 }

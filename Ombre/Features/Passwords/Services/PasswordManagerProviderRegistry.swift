@@ -42,8 +42,8 @@ final class PasswordManagerProviderRegistry: Sendable {
     let providers: [PasswordManagerProviderDescriptor] = [
         PasswordManagerProviderDescriptor(
             kind: .ombre,
-            title: "Ombre Passwords",
-            summary: "Store encrypted credentials in Ombre and show Ombre's autofill overlay.",
+            title: String(localized: "Ombre Passwords"),
+            summary: String(localized: "Store encrypted credentials in Ombre and show Ombre's autofill overlay."),
             vaultStoredInOmbre: true,
             autofillMode: .builtInOverlay,
             isAvailable: true

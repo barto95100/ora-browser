@@ -48,6 +48,9 @@ ZONES = {
         "Ombre/Features/Settings/",
         "Ombre/Core/Constants/KeyboardShortcuts.swift",
         "Ombre/Core/Utilities/SettingsStore.swift",
+        "Ombre/Features/Privacy/Models/AdBlockModels.swift",
+        "Ombre/Features/Privacy/Services/FilterListCatalogService.swift",
+        "Ombre/Features/Passwords/Services/PasswordManagerProviderRegistry.swift",
     ],
 }
 
@@ -192,7 +195,7 @@ def check_sources(extracted, every):
                 continue
             if in_block or line.lstrip().startswith("//") or NOT_SHOWN.search(line):
                 continue
-            if RAW_VALUE.search(line):
+            if RAW_VALUE.search(code_part(line)):
                 problems.append(f"{path}:{number}: raw value shown (give it a translated title): {line.strip()}")
             for match in LITERAL.finditer(NOT_SHOWN_ARGUMENT.sub(blank, code_part(line))):
                 text = match.group(1)

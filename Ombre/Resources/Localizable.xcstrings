@@ -94,7 +94,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ est bloqué · retour dans %2$@"
+            "value" : "%1$@ est bloqué · accessible dans %2$@"
           }
         }
       }
@@ -1077,7 +1077,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tout est fait"
+            "value" : "Tout est terminé"
           }
         }
       }
@@ -1568,7 +1568,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Retour à la concentration pour %lld min."
+            "value" : "Retour à la concentration pour %lld min."
           }
         }
       }
@@ -1665,7 +1665,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloqués pendant la concentration"
+            "value" : "Sites bloqués pendant la concentration"
           }
         }
       }
@@ -3244,7 +3244,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se termine à %@"
+            "value" : "Fin à %@"
           }
         }
       }
@@ -5871,7 +5871,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OUVERTURES"
+            "value" : "VISITES"
           }
         }
       }
@@ -6373,7 +6373,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lire"
+            "value" : "Lecture"
           }
         }
       }
@@ -7664,7 +7664,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lancer la concentration"
+            "value" : "Démarrer la concentration"
           }
         }
       }
@@ -8627,7 +8627,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "C’est l’heure d’une pause de %lld min."
+            "value" : "Place à une pause de %lld min."
           }
         }
       }
@@ -8683,7 +8683,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aujourd’hui : %1$lld / %2$lld min"
+            "value" : "Aujourd’hui : %1$lld / %2$lld min"
           }
         }
       }

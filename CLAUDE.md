@@ -136,8 +136,9 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - Catalogue `Ombre/Resources/Localizable.xcstrings` ; textes en `String` → `String(localized:)`, valeur enregistrée
   affichée → propriété `title` traduite. `scripts/check-localization.sh` (aussi en CI) liste ce qui manque dans les
   zones traduites (`ZONES` de `scripts/check-localization.py`) ; `scripts/add-translations.py` ajoute une table JSON.
-- Vouvoiement ; typographie française : espace insécable avant `? : ; !` et dans « », apostrophe ’, points de suspension « … ».
-- Glossaire (mêmes termes que Safari et macOS) :
+- Textes de l'app : vouvoiement ; typographie française : espace insécable U+00A0 avant `? : ; !` et dans « », apostrophe ’,
+  points de suspension `…`.
+- Glossaire (termes de Safari et macOS, sauf les choix de Ludo marqués *) :
 
   | Anglais | Français |
   |---|---|
@@ -145,8 +146,8 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   | Tab / Pinned tab | Onglet / Onglet épinglé |
   | Favorite | Favori |
   | Bookmark | Signet |
-  | Split View | Vue partagée |
-  | Peek | Aperçu |
+  | Split View | Vue partagée * (macOS garde « Split View ») |
+  | Peek | Aperçu * |
   | Private window / Private Browsing | Fenêtre privée / Navigation privée |
   | Settings | Réglages |
   | Trackers / Ads | Traqueurs / Publicités |

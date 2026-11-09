@@ -38,12 +38,12 @@ final class FilterListUpdateService: Sendable {
         expectedLength: Int64,
         limit: Int = maxListSize
     ) async throws -> Data {
-        if expectedLength > Int64(limit) { throw AdBlockServiceError.filterListTooLarge }
+        if expectedLength > Int64(limit) { throw AdBlockServiceError.filterListTooLarge(bytes: expectedLength) }
         var data = Data()
         if expectedLength > 0 { data.reserveCapacity(Int(expectedLength)) }
         for try await byte in bytes {
             data.append(byte)
-            if data.count > limit { throw AdBlockServiceError.filterListTooLarge }
+            if data.count > limit { throw AdBlockServiceError.filterListTooLarge(bytes: Int64(data.count)) }
         }
         return data
     }

@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct ShortcutsSettingsView: View {
-    @StateObject private var shortcutManager = CustomKeyboardShortcutManager.shared
+    @ObservedObject private var shortcutManager = CustomKeyboardShortcutManager.shared
     @State private var editingShortcut: KeyboardShortcutDefinition?
     /// A shortcut typed that another one already uses: not kept.
     @State private var conflictMessage: String?

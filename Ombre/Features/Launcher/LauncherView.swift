@@ -16,7 +16,7 @@ struct LauncherView: View {
     @FocusState private var isTextFieldFocused: Bool
     @State private var match: LauncherMatch?
     @State private var mouseHasMoved = false
-    @State private var mouseMonitor: Any?
+    @State private var mouseMonitor = MouseMovedMonitor()
 
     var clearOverlay: Bool? = false
 
@@ -115,20 +115,10 @@ struct LauncherView: View {
                     onDismiss: { appState.showLauncher = false }
                 )
                 mouseHasMoved = false
-                mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { event in
-                    mouseHasMoved = true
-                    if let monitor = mouseMonitor {
-                        NSEvent.removeMonitor(monitor)
-                        mouseMonitor = nil
-                    }
-                    return event
-                }
+                mouseMonitor.start { mouseHasMoved = true }
             }
             .onDisappear {
-                if let monitor = mouseMonitor {
-                    NSEvent.removeMonitor(monitor)
-                    mouseMonitor = nil
-                }
+                mouseMonitor.stop()
                 viewModel.reset()
                 // New Split View is over once the launcher closes.
                 tabManager.pendingSplitLeftTabID = nil

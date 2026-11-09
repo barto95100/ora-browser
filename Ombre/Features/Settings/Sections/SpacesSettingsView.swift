@@ -11,8 +11,8 @@ struct SpacesSettingsView: View {
 
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
-    @StateObject private var settings = SettingsStore.shared
-    @State private var searchService = SearchEngineService()
+    @ObservedObject private var settings = SettingsStore.shared
+    @StateObject private var searchService = SearchEngineService()
     @State private var selectedContainerId: UUID?
     @State private var completedClearActions: Set<ClearDataAction> = []
     @State private var newCustomFilterListURL = ""
@@ -273,22 +273,8 @@ struct SpacesSettingsView: View {
     }
 
     private func clearHistory(for container: TabContainer) -> Bool {
-        let containerId = container.id
-        let descriptor = FetchDescriptor<History>(
-            predicate: #Predicate { $0.container?.id == containerId }
-        )
-
-        do {
-            let histories = try modelContext.fetch(descriptor)
-            for history in histories {
-                modelContext.delete(history)
-            }
-            try modelContext.save()
-            return true
-        } catch {
-            print("Failed to clear history for container \(container.id): \(error.localizedDescription)")
-            return false
-        }
+        HistoryManager(modelContainer: modelContext.container, modelContext: modelContext)
+            .clearContainerHistory(container)
     }
 
     private func clearDataButtonTitle(

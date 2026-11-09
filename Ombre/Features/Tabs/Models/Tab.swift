@@ -1,7 +1,10 @@
 import AppKit
 @preconcurrency import WebKit
+import os
 import SwiftData
 import SwiftUI
+
+private let logger = Logger(category: "Tab")
 
 enum TabType: String, Codable {
     case pinned
@@ -351,20 +354,20 @@ class Tab: ObservableObject, Identifiable {
             return
         }
 
-        // 2) Otherwise, treat as a search query using the selected search engine
-        let searchEngineService = SearchEngineService()
-        if let engine = searchEngineService.getDefaultSearchEngine(for: self.container.id),
-           let searchURL = searchEngineService.createSearchURL(for: engine, query: input)
-        {
+        // 2) Otherwise, a search with the engine chosen for the space (or for
+        // all spaces); never another one.
+        if let searchURL = SearchEngineService().searchURL(for: input, containerId: container.id) {
             browserPage?.load(URLRequest(url: searchURL))
             return
         }
-
-        // 3) Fallback to Google if for some reason engine lookup fails
-        if let fallbackURL = URL(string: "https://www.google.com/search?client=safari&rls=en&ie=UTF-8&oe=UTF-8&q="
-            + (input.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")
-        ) {
-            browserPage?.load(URLRequest(url: fallbackURL))
+        logger.error("No search engine makes an address: the search isn't sent")
+        let alert = NSAlert()
+        alert.messageText = "Ombre couldn't search"
+        alert.informativeText = "The search engine chosen in Settings › Search has an invalid address."
+        if let window = pageWindow {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
         }
     }
 

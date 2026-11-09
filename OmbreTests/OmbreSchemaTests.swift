@@ -94,5 +94,22 @@ extension TabManagerTests {
                 #expect(found == [byTitle.id, byAddress.id])
             }
         }
+
+        /// With no text, only the active space's tabs (it used to be all the
+        /// spaces'); with no space, none (ONG-15).
+        @Test func anEmptySearchStaysInTheActiveSpace() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let other = window.createSpace("Other")
+                let here = window.addUnloadedTab("here", order: 1, in: space)
+                _ = window.addUnloadedTab("elsewhere", order: 1, in: other)
+                window.tabManager.activateContainer(space)
+                try window.modelContext.save()
+
+                #expect(Set(window.tabManager.search("").map(\.id)) == [here.id])
+                let none = TabSearchingService().search("here", activeContainer: nil, modelContext: window.modelContext)
+                #expect(none.isEmpty)
+            }
+        }
     }
 }

@@ -205,7 +205,7 @@ final class PasswordAutofillCoordinator {
             guard let self else { return }
 
             let authenticated = await self.passwordManager.authenticate(
-                reason: String(localized: "Autofill the saved password for \(entry.displayUsername) on \(entry.host)")
+                reason: String(localized: "autofill the saved password for \(entry.displayUsername) on \(entry.host)")
             )
             guard authenticated,
                   let password = try? self.passwordManager.revealPassword(for: entry)

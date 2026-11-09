@@ -1326,18 +1326,18 @@
         }
       }
     },
-    "Autofill the saved password for %@ on %@" : {
+    "autofill the saved password for %@ on %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Autofill the saved password for %1$@ on %2$@"
+            "value" : "autofill the saved password for %1$@ on %2$@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Remplir le mot de passe enregistré de %1$@ sur %2$@"
+            "value" : "remplir le mot de passe enregistré de %1$@ sur %2$@"
           }
         }
       }
@@ -3606,7 +3606,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erreur du trousseau %d."
+            "value" : "Erreur du trousseau (%d)."
           }
         }
       }
@@ -3808,6 +3808,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se connecter"
+          }
+        }
+      }
+    },
+    "Log in to %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter à %@"
           }
         }
       }
@@ -4117,7 +4127,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jamais pour ce site"
+            "value" : "Jamais pour ce site web"
           }
         }
       }
@@ -4417,7 +4427,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sans nom d’utilisateur"
+            "value" : "Aucun nom d’utilisateur"
           }
         }
       }
@@ -5838,7 +5848,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Identifiants enregistrés"
+            "value" : "Mots de passe enregistrés"
           }
         }
       }
@@ -6921,6 +6931,16 @@
         }
       }
     },
+    "The name or password was not accepted." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nom ou le mot de passe n’a pas été accepté."
+          }
+        }
+      }
+    },
     "The page took too long to load. Try again or check your connection." : {
       "localizations" : {
         "fr" : {
@@ -6947,6 +6967,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le moteur de recherche choisi dans Réglages › Recherche a une adresse non valide."
+          }
+        }
+      }
+    },
+    "The site says: “%@”" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le site indique : « %@ »"
           }
         }
       }
@@ -7040,6 +7070,16 @@
     },
     "These sites stay closed during a focus cycle in %@. Breaks open them again." : {},
     "Third-party components" : {},
+    "This connection isn't private: the password will be sent unencrypted." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette connexion n’est pas privée : le mot de passe sera envoyé sans chiffrement."
+          }
+        }
+      }
+    },
     "This extension is too large." : {
       "localizations" : {
         "fr" : {
@@ -7318,12 +7358,12 @@
         }
       }
     },
-    "Unlock your saved passwords in Ombre" : {
+    "unlock your saved passwords" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Déverrouiller vos mots de passe enregistrés dans Ombre"
+            "value" : "déverrouiller vos mots de passe enregistrés"
           }
         }
       }

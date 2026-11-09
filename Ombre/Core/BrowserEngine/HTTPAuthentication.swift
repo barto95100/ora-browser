@@ -45,19 +45,19 @@ enum HTTPAuthentication {
     }
 
     static func title(for request: HTTPAuthenticationRequest) -> String {
-        "Log in to \(request.host)"
+        String(localized: "Log in to \(request.host)")
     }
 
     static func message(for request: HTTPAuthenticationRequest) -> String {
         var lines: [String] = []
         if let realm = request.realm, !realm.isEmpty {
-            lines.append("The site says: “\(realm)”")
+            lines.append(String(localized: "The site says: “\(realm)”"))
         }
         if request.previousFailureCount > 0 {
-            lines.append("The name or password was not accepted.")
+            lines.append(String(localized: "The name or password was not accepted."))
         }
         if !request.isSecure {
-            lines.append("This connection isn't private: the password will be sent unencrypted.")
+            lines.append(String(localized: "This connection isn't private: the password will be sent unencrypted."))
         }
         return lines.joined(separator: "\n\n")
     }

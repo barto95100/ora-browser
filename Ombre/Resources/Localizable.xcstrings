@@ -115,7 +115,7 @@
     },
     "%lld cycles" : {
       "localizations" : {
-        "fr" : {
+        "en" : {
           "variations" : {
             "plural" : {
               "one" : {
@@ -133,7 +133,7 @@
             }
           }
         },
-        "en" : {
+        "fr" : {
           "variations" : {
             "plural" : {
               "one" : {
@@ -155,24 +155,6 @@
     },
     "%lld days" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld jour"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld jours"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -186,6 +168,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld days"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld jour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld jours"
                 }
               }
             }
@@ -295,24 +295,6 @@
     },
     "%lld items" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld élément"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld éléments"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -326,6 +308,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld items"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld élément"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld éléments"
                 }
               }
             }
@@ -851,6 +851,23 @@
     },
     "Ask on each website" : {},
     "Attach Current Page" : {},
+    "auth.username" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom d’utilisateur"
+          }
+        }
+      }
+    },
     "Authenticate to view saved passwords." : {
       "localizations" : {
         "fr" : {
@@ -1435,16 +1452,6 @@
         }
       }
     },
-    "Closed" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermé"
-          }
-        }
-      }
-    },
     "Code" : {
       "localizations" : {
         "fr" : {
@@ -1455,12 +1462,39 @@
         }
       }
     },
+    "Collapsed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit"
+          }
+        }
+      }
+    },
     "Color" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couleur"
+          }
+        }
+      }
+    },
+    "color.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune"
           }
         }
       }
@@ -2053,6 +2087,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Comme le niveau Ombre, avec en plus l’empreinte numérique masquée dans toutes les fenêtres. Quelques sites risquent de mal fonctionner."
+          }
+        }
+      }
+    },
+    "Expanded" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développé"
           }
         }
       }
@@ -3798,24 +3842,6 @@
     "Read" : {},
     "Ready in %lld enabled lists." : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Prêt avec %lld liste activée."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Prêt avec %lld listes activées."
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -3829,6 +3855,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Ready in %lld enabled lists."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Prêt avec %lld liste activée."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Prêt avec %lld listes activées."
                 }
               }
             }
@@ -4566,6 +4610,23 @@
         }
       }
     },
+    "space.default" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Principal"
+          }
+        }
+      }
+    },
     "Spaces" : {
       "localizations" : {
         "fr" : {
@@ -5006,6 +5067,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thème"
+          }
+        }
+      }
+    },
+    "theme.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun"
           }
         }
       }
@@ -5506,94 +5584,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom arrière"
-          }
-        }
-      }
-    },
-    "auth.username" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Name"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nom d’utilisateur"
-          }
-        }
-      }
-    },
-    "Collapsed" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réduit"
-          }
-        }
-      }
-    },
-    "color.none" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "None"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucune"
-          }
-        }
-      }
-    },
-    "Expanded" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Développé"
-          }
-        }
-      }
-    },
-    "space.default" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Default"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Principal"
-          }
-        }
-      }
-    },
-    "theme.none" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "None"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun"
           }
         }
       }

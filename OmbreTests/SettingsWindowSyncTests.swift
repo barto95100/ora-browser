@@ -10,6 +10,7 @@ import Testing
 struct SettingsWindowSyncTests {
     final class Seen {
         var names: [String] = []
+        var draws = 0
     }
 
     private struct SpacesList: View {
@@ -19,6 +20,7 @@ struct SettingsWindowSyncTests {
         var body: some View {
             let names = spaces.map(\.name)
             seen.names = names
+            seen.draws += 1
             return Text(names.joined(separator: ","))
         }
     }
@@ -34,17 +36,18 @@ struct SettingsWindowSyncTests {
     }
 
     private func waitUntil(_ condition: () -> Bool) async throws {
-        for _ in 0 ..< 40 where !condition() {
+        for _ in 0 ..< 100 where !condition() {
             try await Task.sleep(for: .milliseconds(50))
         }
     }
 
-    @Test func aSpaceAddedOrRenamedInABrowserWindowShowsInSettings() async throws {
+    @Test func aSpaceChangedInABrowserWindowShowsInSettings() async throws {
         let container = DatabaseRecovery.inMemoryContainer()
         let seen = Seen()
         let window = showSpaces(of: container, seen: seen)
         defer { window.close() }
-        try await waitUntil { true }
+        try await waitUntil { seen.draws > 0 }
+        #expect(seen.draws > 0)
 
         let browser = ModelContext(container)
         let space = TabContainer(name: "Work")
@@ -57,5 +60,11 @@ struct SettingsWindowSyncTests {
         try browser.save()
         try await waitUntil { seen.names.contains("Home") }
         #expect(seen.names.contains("Home"))
+
+        // Deleted there: gone here, never read as a deleted object.
+        browser.delete(space)
+        try browser.save()
+        try await waitUntil { !seen.names.contains("Home") }
+        #expect(!seen.names.contains("Home"))
     }
 }

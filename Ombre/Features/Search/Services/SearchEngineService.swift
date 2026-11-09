@@ -241,6 +241,35 @@ class SearchEngineService: ObservableObject {
         return searchEngines.first(where: { $0.name == "Google" })
     }
 
+    /// Where a search typed in a space goes: its engine, else the engine for
+    /// all spaces. Nil when neither makes an address: nothing is sent (never
+    /// to another engine than the one chosen).
+    func searchURL(for query: String, containerId: UUID?) -> URL? {
+        let chosenIDs = [
+            containerId.flatMap(settingsStore.defaultSearchEngineId(for:)),
+            settingsStore.globalDefaultSearchEngine
+        ].compactMap(\.self)
+        // Ombre's default (Google) only when no engine is chosen at all; a
+        // chosen engine since removed is still a choice: not replaced.
+        let engines = chosenIDs.isEmpty
+            ? [getDefaultSearchEngine(for: nil)]
+            : chosenIDs.map { id in searchEngines.first { $0.name == id } }
+        return Self.firstSearchURL(for: query, engines: engines)
+    }
+
+    nonisolated static func firstSearchURL(for query: String, engines: [SearchEngine?]) -> URL? {
+        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        for engine in engines.compactMap(\.self) {
+            let address = engine.searchURL.replacingOccurrences(of: "{query}", with: encodedQuery)
+            if let url = URL(string: address), let scheme = url.scheme?.lowercased(),
+               ["http", "https"].contains(scheme), url.host?.isEmpty == false
+            {
+                return url
+            }
+        }
+        return nil
+    }
+
     func getDefaultAIChat(for containerId: UUID? = nil) -> SearchEngine? {
         if let containerId,
            let defaultId = settingsStore.defaultAIEngineId(for: containerId),

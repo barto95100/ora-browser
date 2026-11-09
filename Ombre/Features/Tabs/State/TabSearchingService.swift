@@ -20,67 +20,55 @@ final class TabSearchingService: TabSearchingProviding {
         activeContainer: TabContainer? = nil,
         modelContext: ModelContext
     ) -> [Tab] {
-        let activeContainerId = activeContainer?.id ?? UUID()
+        // No space: no tab (never those of all the spaces).
+        guard let activeContainerId = activeContainer?.id else { return [] }
         let trimmedText = text.trimmingCharacters(in: .whitespaces)
 
         let predicate: Predicate<Tab>
         if trimmedText.isEmpty {
-            predicate = #Predicate { _ in true }
+            predicate = #Predicate { tab in tab.parentContainer?.id == activeContainerId }
         } else {
             predicate = #Predicate { tab in
-                (
-                    tab.urlString.localizedStandardContains(trimmedText) ||
-                        tab.title
-                        .localizedStandardContains(
-                            trimmedText
-                        )
-                ) && tab.parentContainer?.id == activeContainerId
+                (tab.urlString.localizedStandardContains(trimmedText)
+                    || tab.title.localizedStandardContains(trimmedText))
+                    && tab.parentContainer?.id == activeContainerId
             }
         }
 
-        let descriptor = FetchDescriptor<Tab>(predicate: predicate)
-
-        do {
-            let results = try modelContext.fetch(descriptor)
-            let now = Date()
-
-            return results.sorted { result1, result2 in
-                let result1Score = combinedScore(for: result1, query: trimmedText, now: now)
-                let result2Score = combinedScore(for: result2, query: trimmedText, now: now)
-                return result1Score > result2Score
-            }
-
-        } catch {
+        guard let results = try? modelContext.fetch(FetchDescriptor<Tab>(predicate: predicate)) else {
             return []
         }
+        let query = trimmedText.lowercased()
+        return Self.ranked(
+            results,
+            match: { Self.scoreMatch(title: $0.title, url: $0.urlString, query: query) },
+            accessedAt: \.lastAccessedAt
+        )
     }
 
-    private func combinedScore(for tab: Tab, query: String, now: Date) -> Double {
-        let match = scoreMatch(tab, text: query)
-
-        let timeInterval: TimeInterval = if let accessedAt = tab.lastAccessedAt {
-            now.timeIntervalSince(accessedAt)
-        } else {
-            1_000_000 // far in the past → lowest recency
-        }
-
-        let recencyBoost = max(0, 1_000_000 - timeInterval)
-        return Double(match * 1000) + recencyBoost
+    /// The best match first; between equal matches, the most recently used.
+    /// Each score is computed once.
+    nonisolated static func ranked<T>(
+        _ items: [T],
+        match: (T) -> Int,
+        accessedAt: (T) -> Date?
+    ) -> [T] {
+        items
+            .map { (item: $0, match: match($0), accessedAt: accessedAt($0) ?? .distantPast) }
+            .sorted { $0.match != $1.match ? $0.match > $1.match : $0.accessedAt > $1.accessedAt }
+            .map(\.item)
     }
 
-    private func scoreMatch(_ tab: Tab, text: String) -> Int {
-        let text = text.lowercased()
-        let title = tab.title.lowercased()
-        let url = tab.urlString.lowercased()
-
+    /// How well a tab's title or address matches `query` (lowercased).
+    nonisolated static func scoreMatch(title: String, url: String, query: String) -> Int {
+        guard !query.isEmpty else { return 0 }
         func score(_ field: String) -> Int {
-            if field == text { return 100 }
-            if field.hasPrefix(text) { return 90 }
-            if field.contains(text) { return 75 }
-            if text.contains(field) { return 50 }
+            if field == query { return 100 }
+            if field.hasPrefix(query) { return 90 }
+            if field.contains(query) { return 75 }
+            if !field.isEmpty, query.contains(field) { return 50 }
             return 0
         }
-
-        return max(score(title), score(url))
+        return max(score(title.lowercased()), score(url.lowercased()))
     }
 }

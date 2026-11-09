@@ -275,20 +275,30 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         )
     }
 
-    /// To the downloads of the tab's window, even once that tab is closed.
-    /// A popup only opened for the file then closes, like such a tab.
+    /// Once the site may download (asked in the popup), to the downloads of
+    /// the tab's window, even once that tab is closed. A popup only opened
+    /// for the file then closes, like such a tab.
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {
         guard let popup, let downloadManager = popup.context.downloadManager else {
             download.cancel()
             return
         }
-        downloadManager.handleDownload(download)
-        if TabBrowserPageDelegate.closesTab(
+        // Read now: the page's download state changes once WebKit goes on.
+        let closesPopup = TabBrowserPageDelegate.closesTab(
             afterDownloadNavigation: page.isDownloadNavigation,
             shown: page.lastCommittedURL
-        ) {
-            popup.closeWindow?()
-        }
+        )
+        DownloadPermission.check(
+            download,
+            site: page.lastCommittedURL ?? download.originalURL,
+            spaceID: popup.context.spaceID,
+            isPrivate: popup.context.isPrivate,
+            present: { popup.presentPermissionRequest($0) },
+            start: { downloadManager.handleDownload(download) },
+            done: { [weak popup] in
+                if closesPopup { popup?.closeWindow?() }
+            }
+        )
     }
 
     func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool {

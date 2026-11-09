@@ -168,10 +168,21 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         peek?.update(isLoading: false)
     }
 
+    /// Once the site may download (asked in Peek), to the opener's window.
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {
-        MainActor.assumeIsolated {
-            opener?.downloadManager?.handleDownload(download)
+        guard let peek, let opener else {
+            download.cancel()
+            return
         }
+        let downloadManager = opener.downloadManager
+        DownloadPermission.check(
+            download,
+            site: page.lastCommittedURL ?? download.originalURL,
+            spaceID: peek.spaceID,
+            isPrivate: peek.isPrivate,
+            present: { peek.presentPermissionRequest($0) },
+            start: { downloadManager?.handleDownload(download) }
+        )
     }
 
     /// The opener's space protections, as in a tab: an exempted site isn't

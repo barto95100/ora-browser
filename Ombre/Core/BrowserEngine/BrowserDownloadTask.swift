@@ -5,6 +5,9 @@ import Foundation
 final class BrowserDownloadTask: NSObject, WKDownloadDelegate {
     let id = UUID()
     var originalURL: URL
+    /// Asked by the user from the page's context menu ("Download Linked
+    /// File"…), not by the site: no download permission is asked.
+    var isRequestedByUser = false
     var onDestinationRequest: ((URLResponse, String, @escaping @MainActor @Sendable (URL?) -> Void) -> Void)?
     var onRedirect: ((URL) -> Void)?
     var onFinish: (() -> Void)?

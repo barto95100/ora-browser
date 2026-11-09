@@ -90,6 +90,9 @@ struct SitePermissionPromptView: View {
         if request.types == [.screen] {
             return String(localized: "wants to share your screen")
         }
+        if request.types == [.downloads] {
+            return String(localized: "wants to download files")
+        }
         return capabilityRequest
     }
 
@@ -110,6 +113,9 @@ struct SitePermissionPromptView: View {
         }
         if request.types.contains(.screen) {
             return "rectangle.inset.filled.on.rectangle"
+        }
+        if request.types.contains(.downloads) {
+            return "arrow.down.circle.fill"
         }
         return request.types.contains(.camera) ? "video.fill" : "mic.fill"
     }

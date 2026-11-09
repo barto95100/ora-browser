@@ -322,16 +322,43 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         afterDownloadNavigation && lastCommittedURL == nil
     }
 
+    /// Once the site may download (see `DownloadPermission`), to the
+    /// window's downloads. A tab only opened for the file then goes.
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {
-        MainActor.assumeIsolated {
-            tab?.downloadManager?.handleDownload(download)
-
-            guard let tab,
-                  Self.closesTab(afterDownloadNavigation: page.isDownloadNavigation, shown: page.lastCommittedURL),
-                  let tabManager = tab.tabManager
-            else { return }
-            tabManager.closeTab(tab: tab)
+        guard let tab else {
+            download.cancel()
+            return
         }
+        // Read now: the page's download state changes once WebKit goes on.
+        let closesTab = Self.closesTab(
+            afterDownloadNavigation: page.isDownloadNavigation,
+            shown: page.lastCommittedURL
+        )
+        let downloadManager = tab.downloadManager
+        DownloadPermission.check(
+            download,
+            site: page.lastCommittedURL ?? download.originalURL,
+            spaceID: tab.container.id,
+            isPrivate: tab.isPrivate,
+            present: { request in
+                // A tab out of sight (opened in the background for the file):
+                // asked in the tab in front, if it is of the same space (the
+                // choice is kept there) and asks nothing else.
+                var target = tab
+                if !(tab.tabManager?.isShown(tab) ?? false), let front = tab.tabManager?.activeTab,
+                   front.container.id == tab.container.id, front.isPrivate == tab.isPrivate,
+                   front.permissionRequest == nil
+                {
+                    target = front
+                }
+                target.presentPermissionRequest(request)
+            },
+            start: { downloadManager?.handleDownload(download) },
+            done: { [weak tab] in
+                guard closesTab, let tab, let tabManager = tab.tabManager else { return }
+                tabManager.closeTab(tab: tab)
+            }
+        )
     }
 
     func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {

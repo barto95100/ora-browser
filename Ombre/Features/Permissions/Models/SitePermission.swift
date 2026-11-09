@@ -7,6 +7,8 @@ enum SitePermissionType: String, Codable, CaseIterable, Identifiable {
     case notifications
     case location
     case screen
+    /// Files a site downloads (Safari's "Allow downloads on…").
+    case downloads
 
     var id: String {
         rawValue
@@ -95,19 +97,22 @@ struct SitePermissions: Codable, Hashable {
     var notifications: SitePermissionState = .ask
     var location: SitePermissionState = .ask
     var screen: SitePermissionState = .ask
+    var downloads: SitePermissionState = .ask
 
     init(
         camera: SitePermissionState = .ask,
         microphone: SitePermissionState = .ask,
         notifications: SitePermissionState = .ask,
         location: SitePermissionState = .ask,
-        screen: SitePermissionState = .ask
+        screen: SitePermissionState = .ask,
+        downloads: SitePermissionState = .ask
     ) {
         self.camera = camera
         self.microphone = microphone
         self.notifications = notifications
         self.location = location
         self.screen = screen
+        self.downloads = downloads
     }
 
     /// Tolerate missing keys so that capabilities added later decode as `.ask`.
@@ -118,6 +123,7 @@ struct SitePermissions: Codable, Hashable {
         notifications = try container.decodeIfPresent(SitePermissionState.self, forKey: .notifications) ?? .ask
         location = try container.decodeIfPresent(SitePermissionState.self, forKey: .location) ?? .ask
         screen = try container.decodeIfPresent(SitePermissionState.self, forKey: .screen) ?? .ask
+        downloads = try container.decodeIfPresent(SitePermissionState.self, forKey: .downloads) ?? .ask
     }
 
     subscript(type: SitePermissionType) -> SitePermissionState {
@@ -128,6 +134,7 @@ struct SitePermissions: Codable, Hashable {
             case .notifications: notifications
             case .location: location
             case .screen: screen
+            case .downloads: downloads
             }
         }
         set {
@@ -137,6 +144,7 @@ struct SitePermissions: Codable, Hashable {
             case .notifications: notifications = newValue
             case .location: location = newValue
             case .screen: screen = newValue
+            case .downloads: downloads = newValue
             }
         }
     }
@@ -170,6 +178,7 @@ extension SitePermissionType {
         case .notifications: String(localized: "Notifications")
         case .location: String(localized: "Location")
         case .screen: String(localized: "Screen Sharing")
+        case .downloads: String(localized: "Downloads")
         }
     }
 }

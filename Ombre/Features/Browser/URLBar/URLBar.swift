@@ -352,7 +352,7 @@ struct URLBar: View {
                         .font(.system(size: 14))
                         .foregroundColor(buttonForegroundColor)
                     if let title = parts.title {
-                        Text(" / \(title)")
+                        Text(verbatim: " / \(title)")
                             .font(.system(size: 14))
                             .foregroundColor(tabManager.activeTab.map { foreground($0).secondary } ?? .gray)
                     }

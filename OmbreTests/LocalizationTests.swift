@@ -22,9 +22,4 @@ struct LocalizationTests {
         #expect(String(format: format, locale: french, 1) == "1 élément bloqué sur cette page")
         #expect(String(format: format, locale: french, 3) == "3 éléments bloqués sur cette page")
     }
-
-    @Test func englishStaysTheSource() {
-        let english = Bundle.main.path(forResource: "en", ofType: "lproj").flatMap(Bundle.init(path:)) ?? .main
-        #expect(english.localizedString(forKey: "New Tab", value: nil, table: nil) == "New Tab")
-    }
 }

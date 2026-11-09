@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lists the interface's texts without a French translation.
 
-Usage: check-localization.py <derived data> <Localizable.xcstrings> [--all]
+Usage: check-localization.py <derived data> <Localizable.xcstrings> [--all] [--committed <catalog>]
 
 Reads what the compiler found to translate (`.stringsdata`, written by
 `xcodebuild -exportLocalizations`, which also adds the new texts to the
@@ -12,7 +12,9 @@ catalog) and reports, for the translated zones (`ZONES`, or every file with
 - a text written in the code that the compiler can't see (a `String` given
   to AppKit, an error message…): wrap it in `String(localized:)`, or end the
   line with `// not shown` when it never reaches the screen;
-- a text the catalog still has but the code no longer uses (stale).
+- a text the catalog still has but the code no longer uses (stale);
+- with --committed, a text of the code missing from that catalog (the CI
+  passes the committed one: the export adds the new texts to the file).
 Exits with 1 when something is reported.
 """
 
@@ -27,32 +29,50 @@ ZONES = {
         "Ombre/App/",
         "Ombre/Features/Browser/",
         "Ombre/Features/FindInPage/",
+        "Ombre/Shared/Components/Dialog/",
+        "Ombre/Core/Utilities/ClipboardUtils.swift",
     ],
 }
 
 ROOT = Path(__file__).resolve().parent.parent
 LITERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
-PLACEHOLDER = re.compile(r"%(?:\d+\$)?(?:arg|lld|ld|d|@|f|\.\d+f|%)")
+PLACEHOLDER = re.compile(r"%(?:\d+\$)?(?:arg|ll[du]|l[du]|lf|[du@f]|\.\d+f|%)")
 # A text for people: a word of 2+ letters, and a space or a capital first.
 PROSE = re.compile(r"^(?=.*[A-Za-z]{2})(?:[A-Z]|.*\s)")
 # An enum's raw value shown as is: saved text, never translated.
-RAW_VALUE = re.compile(r"\b(?:Text|Label|Button|title:)\(?[^\"]*\.rawValue\b")
+RAW_VALUE = re.compile(
+    r"\b(?:Text|Label|Button|title:|help|accessibilityLabel)\(?[^\"]*\.rawValue\b|\\\([^()\"]*\.rawValue\)"
+)
 # Lines whose texts never reach the screen.
 NOT_SHOWN = re.compile(
-    r"// not shown|// no translation|logger\.|Logger\(|log\.|print\(|fatalError\(|precondition|assert|"
-    r"forKey:|@AppStorage|@SceneStorage|UserDefaults|Notification\.Name|"
-    r"systemName:|systemImage:|systemSymbolName:|named:|URL\(string:|"
-    r"#Preview|#selector|NSPredicate|evaluateJavaScript|callAsyncJavaScript|"
-    r"\.accessibilityIdentifier|identifier:|windowID|openWindow\(id:|"
-    r"Text\(verbatim:|LocalizedStringKey|String\(localized:|localized:|"
-    r"case \w+ = |static let \w+ = \"|userInfo:|forHTTPHeaderField:|"
-    r"UTType|\.json|\.plist|NSPasteboard|contentType"
+    r"// not shown|// no translation|\blogger\.|\bLogger\(|\bprint\(|\bfatalError\(|\bprecondition|\bassert|"
+    r"#Preview|#selector|NSPredicate|evaluateJavaScript|callAsyncJavaScript|case \w+ = \""
+)
+# A text given to one of these is a name or a key, not shown: only it is skipped.
+NOT_SHOWN_ARGUMENT = re.compile(
+    r"(?:forKey|systemName|systemImage|systemSymbolName|named|identifier|id|forHTTPHeaderField|"
+    r"forResource|ofType|withExtension|contentType|userInfo|verbatim|localized|defaultValue)\s*:\s*"
+    r'"(?:[^"\\\n]|\\.)*"'
+    r"|(?:@AppStorage\(|@SceneStorage\(|Notification\.Name\(|URL\(string:|UTType\(|"
+    r"NSPasteboard\.PasteboardType\(|\.accessibilityIdentifier\()\s*"
+    r'"(?:[^"\\\n]|\\.)*"'
+    r"|static let \w+ = \"(?:[^\"\\\n]|\\.)*\""
 )
 
 
 def bare(text: str) -> str:
     """The text without its placeholders or interpolations."""
     return PLACEHOLDER.sub("", re.sub(r"\\\(.*?\)", "", text))
+
+
+def blank(match) -> str:
+    """Spaces in place of a skipped text: the other texts keep their column."""
+    return " " * len(match.group(0))
+
+
+def placeholders(text: str) -> list:
+    """The placeholders' kinds, positions aside (%1$@ is a %@)."""
+    return sorted(re.sub(r"%\d+\$", "%", found) for found in PLACEHOLDER.findall(text))
 
 
 def shape(text: str) -> str:
@@ -71,6 +91,9 @@ def read_extracted(derived: Path):
     for data in derived.glob("Localization/Strings/*Ombre.xcodeproj-Ombre-*/**/*.stringsdata"):
         content = json.loads(data.read_text())
         source = Path(content["source"])
+        # Left by a file since removed or renamed (the folder is kept).
+        if not source.exists():
+            continue
         try:
             path = str(source.relative_to(ROOT))
         except ValueError:
@@ -110,9 +133,9 @@ def check_catalog(catalog, extracted, every):
             else:
                 problems.append(f"{path}:{line}: no French: {key!r}")
                 continue
-            wanted = sorted(PLACEHOLDER.findall(key))
+            wanted = placeholders(key)
             for value in values:
-                if sorted(PLACEHOLDER.findall(value)) != wanted and "%#@" not in value:
+                if placeholders(value) != wanted and "%#@" not in value:
                     problems.append(f"{path}:{line}: placeholders differ in French: {key!r} -> {value!r}")
     return problems
 
@@ -138,7 +161,7 @@ def check_sources(extracted, every):
                 continue
             if RAW_VALUE.search(line):
                 problems.append(f"{path}:{number}: raw value shown (give it a translated title): {line.strip()}")
-            for match in LITERAL.finditer(line):
+            for match in LITERAL.finditer(NOT_SHOWN_ARGUMENT.sub(blank, line)):
                 text = match.group(1)
                 if not PROSE.search(re.sub(r"\\\(.*?\)", "", text)):
                     continue
@@ -160,6 +183,12 @@ def main():
         return 2
     catalog = json.loads(catalog_path.read_text())
     problems = check_catalog(catalog, extracted, every) + check_sources(extracted, every)
+    if "--committed" in sys.argv:
+        # The catalog as committed, before the export added the code's new texts.
+        committed = json.loads(Path(sys.argv[sys.argv.index("--committed") + 1]).read_text())["strings"]
+        for key, item in sorted(catalog["strings"].items()):
+            if key not in committed and item.get("extractionState") != "stale":
+                problems.append(f"not in the committed catalog (run scripts/check-localization.sh): {key!r}")
     for problem in problems:
         print(problem)
     zones = "every file" if every else ", ".join(ZONES)

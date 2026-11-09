@@ -181,8 +181,9 @@ jobs:
           fi
 
       # Every text of the translated zones has its French (scripts/check-localization.py),
-      # and the catalog lists all the texts of the code (the export adds the new
-      # ones: committed without them, it differs).
+      # and the committed catalog lists all the texts of the code (the export
+      # adds the new ones to the file; keys compared, not bytes: another Xcode
+      # may write the file differently).
       - name: Check translations
         env:
           GITHUB_HOSTED: ${{ runner.environment == 'github-hosted' }}
@@ -197,6 +198,8 @@ jobs:
             places=(-clonedSourcePackagesDirPath "$RUNNER_WORKSPACE/spm.noindex" -derivedDataPath "$derived")
             signing=()
           fi
+          committed="$RUNNER_TEMP/committed.xcstrings"
+          cp Ombre/Resources/Localizable.xcstrings "$committed"
           xcodebuild -exportLocalizations \
             -project Ombre.xcodeproj \
             -scheme Ombre \
@@ -206,12 +209,8 @@ jobs:
             -disableAutomaticPackageResolution \
             "${signing[@]}" \
             -quiet
-          python3 -I scripts/check-localization.py "$derived" Ombre/Resources/Localizable.xcstrings
-          if ! git diff --quiet -- Ombre/Resources/Localizable.xcstrings; then
-            git diff --stat -- Ombre/Resources/Localizable.xcstrings
-            echo "::error::Localizable.xcstrings misses texts of the code: run scripts/check-localization.sh and commit it."
-            exit 1
-          fi
+          python3 -I scripts/check-localization.py "$derived" Ombre/Resources/Localizable.xcstrings \
+            --committed "$committed"
 
       # Otherwise clicking a notification could open one of these copies
       # (the app, the tests' app and Sparkle's Updater.app, in Debug and Test).

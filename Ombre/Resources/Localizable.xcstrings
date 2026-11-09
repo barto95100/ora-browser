@@ -6,7 +6,6 @@
     " / %@" : {},
     "·" : {},
     "“%@” is in Ombre." : {},
-    "/" : {},
     "%@ is blocked · back in %@" : {
       "localizations" : {
         "en" : {
@@ -241,6 +240,23 @@
         }
       }
     },
+    "badge.private" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Private"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privée"
+          }
+        }
+      }
+    },
     "Block %@ during focus" : {},
     "Block all" : {
       "localizations" : {
@@ -258,7 +274,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloquer les tiers"
+            "value" : "Bloquer les cookies tiers"
           }
         }
       }
@@ -311,7 +327,16 @@
         }
       }
     },
-    "Cancel" : {},
+    "Cancel" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
     "Cancel Download" : {},
     "Capture an Area of the Page" : {},
     "Capture the Visible Page" : {},
@@ -322,7 +347,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Modifiables dans Réglages › Espaces."
+            "value" : "À modifier dans Réglages › Espaces."
           }
         }
       }
@@ -405,6 +430,16 @@
     },
     "Closed" : {},
     "Completed (%lld)" : {},
+    "Confirm" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirmer"
+          }
+        }
+      }
+    },
     "Connection Not Secure" : {
       "localizations" : {
         "fr" : {
@@ -458,6 +493,17 @@
       }
     },
     "Copy Link" : {},
+    "Copy Page Crash Command (All Tabs in Space)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier la commande de plantage (tous les onglets de l’espace)"
+          }
+        }
+      }
+    },
     "Copy Path" : {},
     "Copy URL" : {
       "localizations" : {
@@ -486,6 +532,17 @@
       }
     },
     "Day" : {},
+    "Debug" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débogage"
+          }
+        }
+      }
+    },
     "Default" : {},
     "Delete" : {},
     "Delete “%@”?" : {},
@@ -506,7 +563,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ignorer"
+            "value" : "Fermer"
           }
         }
       }
@@ -739,6 +796,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clair"
+          }
+        }
+      }
+    },
+    "Link copied" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien copié"
           }
         }
       }
@@ -1039,7 +1106,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Protections de la confidentialité"
+            "value" : "Protection de la confidentialité"
           }
         }
       }
@@ -1052,13 +1119,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Protections de la confidentialité, %lld élément bloqué"
+                  "value" : "Protection de la confidentialité, %lld élément bloqué"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "Protections de la confidentialité, %lld éléments bloqués"
+                  "value" : "Protection de la confidentialité, %lld éléments bloqués"
                 }
               }
             }
@@ -1227,7 +1294,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reprendre la caméra"
+            "value" : "Réactiver la caméra"
           }
         }
       }
@@ -1237,7 +1304,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reprendre le micro"
+            "value" : "Réactiver le micro"
           }
         }
       }
@@ -1269,7 +1336,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rechercher sur le web ou saisir une adresse…"
+            "value" : "Rechercher ou saisir une adresse"
           }
         }
       }
@@ -1375,6 +1442,17 @@
         }
       }
     },
+    "Show Onboarding Again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revoir l’assistant de bienvenue"
+          }
+        }
+      }
+    },
     "Show Original" : {},
     "Show Subtasks" : {},
     "Show Tasks" : {
@@ -1436,7 +1514,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Système"
+            "value" : "Automatique"
           }
         }
       }
@@ -1662,39 +1740,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom arrière"
-          }
-        }
-      }
-    },
-    "Copy Page Crash Command (All Tabs in Space)" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copier la commande de plantage (tous les onglets de l’espace)"
-          }
-        }
-      }
-    },
-    "Debug" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Débogage"
-          }
-        }
-      }
-    },
-    "Show Onboarding Again" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revoir l’assistant de bienvenue"
           }
         }
       }

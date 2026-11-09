@@ -131,6 +131,35 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   Elles sont **résolues à l'exécution (`dlsym`), jamais liées** : si l'une manque, les sites sont refusés et Ombre le
   dit une fois, sans plantage ; `GeolocationProviderTests` échoue alors (et vérifie la disposition de la structure C).
 
+## Traduction (français / anglais, selon la langue du Mac)
+
+- Catalogue `Ombre/Resources/Localizable.xcstrings` ; textes en `String` → `String(localized:)`, valeur enregistrée
+  affichée → propriété `title` traduite. `scripts/check-localization.sh` (aussi en CI) liste ce qui manque dans les
+  zones traduites (`ZONES` de `scripts/check-localization.py`) ; `scripts/add-translations.py` ajoute une table JSON.
+- Textes de l'app : vouvoiement ; typographie française : espace insécable U+00A0 avant `? : ; !` et dans « », apostrophe ’,
+  points de suspension `…`.
+- Glossaire (termes de Safari et macOS, sauf les choix de Ludo marqués *) :
+
+  | Anglais | Français |
+  |---|---|
+  | Space | Espace |
+  | Tab / Pinned tab | Onglet / Onglet épinglé |
+  | Favorite | Favori |
+  | Bookmark | Signet |
+  | Split View | Vue partagée * (macOS garde « Split View ») |
+  | Peek | Aperçu * |
+  | Private window / Private Browsing | Fenêtre privée / Navigation privée |
+  | Settings | Réglages |
+  | Trackers / Ads | Traqueurs / Publicités |
+  | Fingerprint | Empreinte numérique |
+  | Essentials (Zen) | Essentials (terme gardé par Zen en français) |
+  | Address bar / URL | Barre d’adresse / adresse |
+  | Sidebar | Barre latérale |
+  | Downloads / History | Téléchargements / Historique |
+  | Extension | Extension |
+  | Passwords | Mots de passe |
+  | Shade levels: Sunny / Ombre / Deep shade | Plein soleil / Ombre / Ombre profonde |
+
 ## Leçons apprises (éviter de les refaire)
 
 - Les vues AppKit (ScrollView, images) ne suivent pas les transitions `.move` : utiliser l'opacité.

@@ -952,7 +952,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tout ce que fait Ombre, plus l’empreinte numérique masquée dans toutes les fenêtres. Quelques sites risquent de mal fonctionner."
+            "value" : "Comme le niveau Ombre, avec en plus l’empreinte numérique masquée dans toutes les fenêtres. Quelques sites risquent de mal fonctionner."
           }
         }
       }
@@ -1144,7 +1144,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Combien d’ombre vous faut-il ?"
+            "value" : "Quelle part d’ombre voulez-vous ?"
           }
         }
       }
@@ -1156,7 +1156,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les images et les styles placés à côté de ce fichier ne peuvent pas être affichés."
+            "value" : "Les images et les styles situés dans le même dossier que ce fichier ne peuvent pas être affichés."
           }
         }
       }
@@ -2292,7 +2292,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Partir à l’exploration"
+            "value" : "Commencer l’exploration"
           }
         }
       }
@@ -2624,7 +2624,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oui, ce sera ma planète"
+            "value" : "Oui, en faire ma planète"
           }
         }
       }

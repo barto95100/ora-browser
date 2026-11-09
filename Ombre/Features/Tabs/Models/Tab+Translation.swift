@@ -51,11 +51,8 @@ extension Tab {
                 } else if PageLanguage.offersTranslation(of: source, to: PageLanguage.userLanguages),
                           settings.alwaysTranslates(source), !settings.neverTranslates(host: address.host)
                 {
-                    logger
-                        .info(
-                            "Translating at once: \(source.minimalIdentifier, privacy: .public) is always translated" // not
-                            // shown
-                        )
+                    let language = source.minimalIdentifier
+                    logger.info("Translating at once: \(language, privacy: .public) is always translated")
                     self.translatePage()
                 }
             }

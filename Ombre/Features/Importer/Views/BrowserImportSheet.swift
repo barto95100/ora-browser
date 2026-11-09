@@ -168,20 +168,27 @@ struct BrowserImportSheet: View {
         loadArc(file)
     }
 
+    /// Read off the main thread (a heavy sidebar is several megabytes).
     private func loadArc(_ file: URL) {
-        let accessing = file.startAccessingSecurityScopedResource()
-        defer { if accessing { file.stopAccessingSecurityScopedResource() } }
-        do {
-            let read = try ArcImporter.read(file: file)
-            failure = nil
-            data = read
-            selected = Set(read.spaces.indices)
-        } catch ArcImporter.Failure.nothingToImport {
-            failure = String(localized: "This file has no pinned tabs, folders or favorites to import.")
-            data = nil
-        } catch {
-            failure = String(localized: "Ombre couldn't read this file. Choose StorableSidebar.json in Arc's folder.")
-            data = nil
+        Task {
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<ImportedBrowserData, Error> in
+                let accessing = file.startAccessingSecurityScopedResource()
+                defer { if accessing { file.stopAccessingSecurityScopedResource() } }
+                return Result { try ArcImporter.read(file: file) }
+            }.value
+            switch result {
+            case let .success(read):
+                failure = nil
+                data = read
+                selected = Set(read.spaces.indices)
+            case .failure(ArcImporter.Failure.nothingToImport):
+                failure = String(localized: "This file has no pinned tabs, folders or favorites to import.")
+                data = nil
+            case .failure:
+                failure =
+                    String(localized: "Ombre couldn't read this file. Choose StorableSidebar.json in Arc's folder.")
+                data = nil
+            }
         }
     }
 

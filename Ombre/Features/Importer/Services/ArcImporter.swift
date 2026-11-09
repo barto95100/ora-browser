@@ -26,8 +26,11 @@ enum ArcImporter {
     /// file could nest without end).
     static let maxDepth = 16
 
+    static let maxFileSize = 128 * 1024 * 1024
+
     static func read(file: URL) throws -> ImportedBrowserData {
-        guard let data = try? Data(contentsOf: file) else { throw Failure.unreadable }
+        let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        guard size <= maxFileSize, let data = try? Data(contentsOf: file) else { throw Failure.unreadable }
         return try parse(data)
     }
 
@@ -39,13 +42,18 @@ enum ArcImporter {
 
         var items: [String: [String: Any]] = [:]
         var spaces: [[String: Any]] = []
-        var topAppsIDs: [String] = []
+        // Each profile's favorites container: `[{profile}, "id", {profile}, "id"…]`.
+        var topApps: [(profile: String, id: String)] = []
         for container in containers {
             for case let item as [String: Any] in container["items"] as? [Any] ?? [] {
                 if let id = item["id"] as? String { items[id] = item }
             }
             spaces += (container["spaces"] as? [Any] ?? []).compactMap { $0 as? [String: Any] }
-            topAppsIDs += (container["topAppsContainerIDs"] as? [Any] ?? []).compactMap { $0 as? String }
+            let list = container["topAppsContainerIDs"] as? [Any] ?? []
+            for (index, entry) in list.enumerated() {
+                guard let id = entry as? String else { continue }
+                topApps.append((profileKey(index > 0 ? list[index - 1] : nil), id))
+            }
         }
 
         let reader = ItemReader(items: items)
@@ -60,16 +68,33 @@ enum ArcImporter {
             return result
         }
 
-        // Arc's favorites are shared by the spaces: they go to the first one.
-        let favorites = topAppsIDs.flatMap { reader.tabs(in: $0) }
-        if !favorites.isEmpty {
+        // A profile's favorites are shared by its spaces: they go to its first
+        // space (or the first space), each address once.
+        let profiles = spaces.compactMap { space -> String? in
+            space["containerIDs"] is [Any] ? profileKey(space["profile"]) : nil
+        }
+        for (profile, id) in topApps {
+            let favorites = reader.tabs(in: id)
+            guard !favorites.isEmpty else { continue }
             if imported.isEmpty { imported = [ImportedSpace(name: String(localized: "Space"))] }
-            imported[0].favorites = favorites
+            let target = profiles.firstIndex(of: profile) ?? 0
+            for favorite in favorites where !imported[target].favorites.contains(where: { $0.url == favorite.url }) {
+                imported[target].favorites.append(favorite)
+            }
         }
 
         let data = ImportedBrowserData(spaces: imported)
         guard !data.spaces.isEmpty, !data.isEmpty else { throw Failure.nothingToImport }
         return data
+    }
+
+    /// A profile as Arc writes it (`{"default": true}`, or `{"custom": {…}}`), as a key.
+    static func profileKey(_ value: Any?) -> String {
+        guard let profile = value as? [String: Any], profile["default"] == nil,
+              let custom = profile["custom"],
+              let data = try? JSONSerialization.data(withJSONObject: custom, options: .sortedKeys)
+        else { return "default" }
+        return String(decoding: data, as: UTF8.self)
     }
 
     /// The id following `label` in an alternating list (`["pinned", "<id>"]`).
@@ -84,33 +109,42 @@ enum ArcImporter {
     /// `emoji`, a Unicode scalar's value).
     static func emoji(of space: [String: Any]) -> String? {
         let icon = (space["customInfo"] as? [String: Any])?["iconType"] as? [String: Any]
-        if let emoji = (icon?["emoji_v2"] as? String).flatMap(\.nonBlank) { return emoji }
+        if let emoji = (icon?["emoji_v2"] as? String).flatMap(\.nonBlank), emoji.isEmoji { return emoji }
         if let value = (icon?["emoji"] as? NSNumber)?.uint32Value, let scalar = Unicode.Scalar(value) {
-            return String(Character(scalar))
+            let emoji = String(Character(scalar))
+            return emoji.isEmoji ? emoji : nil
         }
         return nil
     }
 }
 
-private struct ItemReader {
+private final class ItemReader {
     let items: [String: [String: Any]]
+    /// Every item is read once: a forged file can't repeat or loop through one.
+    private var visited: Set<String> = []
+
+    init(items: [String: [String: Any]]) {
+        self.items = items
+    }
 
     /// A container's or folder's items, in the sidebar's order.
     func children(of id: String, depth: Int) -> [ImportedPinnedItem] {
+        // Past this, nothing more is read (folders deeper than `maxDepth` are flattened).
+        guard depth <= ArcImporter.maxDepth * 4 else { return [] }
+        visited.insert(id)
         let ids = (items[id]?["childrenIds"] as? [Any])?.compactMap { $0 as? String } ?? []
         return ids.flatMap { item(id: $0, depth: depth) }
     }
 
-    /// The web tabs directly in a container (the favorites).
+    /// The web tabs in a container (the favorites), folders' tabs included.
     func tabs(in id: String) -> [ImportedTab] {
-        children(of: id, depth: ArcImporter.maxDepth).compactMap { item in
-            if case let .tab(tab) = item { return tab }
-            return nil
-        }
+        ImportedPinnedItem.tabs(in: children(of: id, depth: ArcImporter.maxDepth))
     }
 
     private func item(id: String, depth: Int) -> [ImportedPinnedItem] {
-        guard let item = items[id], let data = item["data"] as? [String: Any] else { return [] }
+        guard visited.insert(id).inserted, let item = items[id], let data = item["data"] as? [String: Any] else {
+            return []
+        }
         if let tab = data["tab"] as? [String: Any] {
             return tabItem(tab, customTitle: item["title"] as? String).map { [.tab($0)] } ?? []
         }
@@ -140,8 +174,14 @@ private struct ItemReader {
 }
 
 private extension String {
-    /// Nil for an empty or blank text.
+    /// The text without its outer spaces, or nil when nothing is left.
     var nonBlank: String? {
-        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : self
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// One emoji (Ombre shows it as the space's icon).
+    var isEmoji: Bool {
+        count == 1 && unicodeScalars.contains { $0.properties.isEmoji && $0.value > 0x7F }
     }
 }

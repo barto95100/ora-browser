@@ -90,6 +90,66 @@ struct ArcImporterTests {
         }
     }
 
+    @Test func aFolderInsideItselfStops() throws {
+        let json = #"""
+        {"sidebar": {"containers": [{
+          "spaces": [{"id": "s", "title": "Loop", "containerIDs": ["pinned", "p"]}],
+          "items": [
+            "p", {"id": "p", "childrenIds": ["a"], "data": {"itemContainer": {}}},
+            "a", {"id": "a", "childrenIds": ["b", "t"], "title": "A", "data": {"list": {}}},
+            "b", {"id": "b", "childrenIds": ["a"], "title": "B", "data": {"list": {}}},
+            "t", {"id": "t", "childrenIds": [], "data": {"tab": {"savedURL": "https://loop.example.com/"}}}
+          ]}]}}
+        """#
+        let data = try ArcImporter.parse(Data(json.utf8))
+        #expect(ImportedPinnedItem.tabCount(in: data.spaces[0].pinned) == 1)
+    }
+
+    /// A forged file listing the same folder twice at each level reads it once.
+    @Test func aSharedFolderIsReadOnce() throws {
+        var items = [#""p", {"id": "p", "childrenIds": ["f0"], "data": {"itemContainer": {}}}"#]
+        for level in 0 ..< 40 {
+            let next = "f\(level + 1)"
+            items
+                .append(
+                    #""f\#(level)", {"id": "f\#(level)", "childrenIds": ["\#(next)", "\#(next)"], "title": "F", "data": {"list": {}}}"#
+                )
+        }
+        items
+            .append(
+                #""f40", {"id": "f40", "childrenIds": [], "data": {"tab": {"savedURL": "https://x.example.com/"}}}"#
+            )
+        let json = #"{"sidebar": {"containers": [{"spaces": [{"id": "s", "title": "S", "containerIDs": ["pinned", "p"]}], "items": [\#(items.joined(separator: ","))]}]}}"#
+        let data = try ArcImporter.parse(Data(json.utf8))
+        #expect(ImportedPinnedItem.tabCount(in: data.spaces[0].pinned) == 1)
+    }
+
+    @Test func eachProfileKeepsItsFavorites() throws {
+        let json = #"""
+        {"sidebar": {"containers": [{
+          "spaces": [
+            {"id": "a", "title": "Home", "profile": {"default": true}, "containerIDs": ["pinned", "pa"]},
+            {"id": "b", "title": "Job", "profile": {"custom": {"_0": {"directoryBasename": "Profile 1"}}},
+             "customInfo": {"iconType": {"emoji_v2": "not an emoji"}}, "containerIDs": ["pinned", "pb"]}
+          ],
+          "items": [
+            "pa", {"id": "pa", "childrenIds": [], "data": {"itemContainer": {}}},
+            "pb", {"id": "pb", "childrenIds": [], "data": {"itemContainer": {}}},
+            "ta", {"id": "ta", "childrenIds": ["fa"], "data": {"itemContainer": {}}},
+            "fa", {"id": "fa", "childrenIds": [], "data": {"tab": {"savedURL": "https://home.example.com/"}}},
+            "tb", {"id": "tb", "childrenIds": ["fb"], "data": {"itemContainer": {}}},
+            "fb", {"id": "fb", "childrenIds": [], "data": {"tab": {"savedURL": "https://job.example.com/"}}}
+          ],
+          "topAppsContainerIDs": [{"default": true}, "ta", {"custom": {"_0": {"directoryBasename": "Profile 1"}}}, "tb"]
+        }]}}
+        """#
+        let data = try ArcImporter.parse(Data(json.utf8))
+        #expect(data.spaces[0].favorites.map(\.url.host) == ["home.example.com"])
+        #expect(data.spaces[1].favorites.map(\.url.host) == ["job.example.com"])
+        // Not an emoji: no icon rather than a text.
+        #expect(data.spaces[1].emoji == nil)
+    }
+
     @Test func aFolderNestingWithoutEndIsCut() throws {
         // Each folder holds the next one; the last holds a tab.
         var items: [String] = []

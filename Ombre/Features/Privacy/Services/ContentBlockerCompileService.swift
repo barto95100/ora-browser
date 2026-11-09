@@ -1,5 +1,8 @@
 import ContentBlockerConverter
 import Foundation
+import OSLog
+
+private let logger = Logger(category: "ContentBlocker")
 
 struct CompiledFilterArtifacts {
     let revision: String
@@ -24,7 +27,7 @@ final class ContentBlockerCompileService {
         }
 
         let revision = artifactStore.revisionHash(for: contiguousRawText)
-        let shardResults = compileShards(from: rules)
+        let shardResults = ConverterOutput.silenced { compileShards(from: rules) }
         let jsonShards = shardResults
             .map(\.safariRulesJSON)
             .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -43,6 +46,12 @@ final class ContentBlockerCompileService {
             safariRuleCount: safariRuleCount,
             shardCount: jsonShards.count
         )
+
+        // One line per list instead of one per rule Safari can't use.
+        logger.debug("""
+        \(record.name, privacy: .public): \(convertedRuleCount) of \(totalRuleCount) rules converted, \
+        \(skippedRuleCount) skipped
+        """)
 
         guard coverage.shardCount > 0, coverage.safariRuleCount > 0 else {
             throw AdBlockServiceError.emptyFilterList(record.name)

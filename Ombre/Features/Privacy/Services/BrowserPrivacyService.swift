@@ -313,6 +313,39 @@ final class BrowserPrivacyService {
     private var cachedRuleLists: [String: WKContentRuleList] = [:]
     private var pendingRuleListCallbacks: [String: [(WKContentRuleList?) -> Void]] = [:]
 
+    /// Removes from WebKit's store the rule lists Ombre will never load
+    /// again (see `ContentBlockerArtifactStore.isStale`): old versions of
+    /// the filter lists (64 MB each for AdGuard Base) and the old app's.
+    func removeStaleRuleLists() async {
+        let identifiers: [String] = await withCheckedContinuation { continuation in
+            ruleListStore.getAvailableContentRuleListIdentifiers { continuation.resume(returning: $0 ?? []) }
+        }
+        let folder = StaleData.library?.appendingPathComponent("WebKit/ContentRuleLists", isDirectory: true)
+        var removed: [(name: String, bytes: Int64)] = []
+        var activeRevisions: [String: String] = [:]
+        for record in SettingsStore.shared.adBlockFilterLists {
+            activeRevisions[record.id] = record.activeRevision
+        }
+        let stale = identifiers.filter { artifactStore.isStale(ruleList: $0, activeRevisions: activeRevisions) }
+        for identifier in stale {
+            // WebKit's file, for the log only.
+            let bytes = folder
+                .map { StaleData.size(of: $0.appendingPathComponent("ContentRuleList-\(identifier)")) } ?? 0
+            let error: Error? = await withCheckedContinuation { continuation in
+                ruleListStore.removeContentRuleList(forIdentifier: identifier) { continuation.resume(returning: $0) }
+            }
+            if let error {
+                StaleData.logger.error("""
+                Removing rule list \(identifier, privacy: .public) failed: \
+                \(error.localizedDescription, privacy: .public)
+                """)
+            } else {
+                removed.append((identifier, bytes))
+            }
+        }
+        StaleData.logRemovals(removed, of: "rule list")
+    }
+
     func activeRuleListIdentifiers(for spaceID: UUID) -> [String] {
         let privacySettings = SettingsStore.shared.privacySettings(for: spaceID)
         guard privacySettings.adBlock.enabled else { return [] }

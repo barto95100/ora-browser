@@ -56,6 +56,10 @@ actor AdBlockService {
         if isFirstStart || !newIDs.isEmpty {
             scheduleBackgroundRefresh()
         }
+        // Once the current lists are compiled: the older ones can go.
+        if isFirstStart {
+            await BrowserPrivacyService.shared.removeStaleRuleLists()
+        }
     }
 
     func registerSpace(containerId: UUID) {

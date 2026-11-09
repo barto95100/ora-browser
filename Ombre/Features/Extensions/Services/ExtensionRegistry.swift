@@ -10,11 +10,18 @@ struct ExtensionRegistry {
             .appendingPathComponent("extensions.json")
     )
 
-    func load() -> [ExtensionRecord] {
-        guard let data = try? Data(contentsOf: fileURL) else { return [] }
+    /// The records, only when the file was read and decoded as it is; nil
+    /// otherwise (missing, unreadable): nothing is then known installed.
+    func read() -> [ExtensionRecord]? {
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        if let records = try? decoder.decode([ExtensionRecord].self, from: data) { return records }
+        return try? decoder.decode([ExtensionRecord].self, from: data)
+    }
+
+    func load() -> [ExtensionRecord] {
+        if let records = read() { return records }
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return [] }
         // Unreadable: kept aside rather than overwritten by the next save.
         let aside = fileURL.deletingPathExtension().appendingPathExtension("unreadable.json")
         try? FileManager.default.removeItem(at: aside)

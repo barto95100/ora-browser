@@ -7,6 +7,8 @@ Historique détaillé : document de suivi du projet claude.ai « ORA BRowser » 
 ## Règles de Ludo (à respecter toujours)
 
 - **Répondre en français**, même si le code, les commits et les PR sont en anglais.
+- **Résumés et questions pour Ludo toujours en français** : fin de lot, compte rendu d'étape, question de
+  décision, étapes de test (y compris après une reprise de contexte ou un long travail en anglais).
 - **Une étape à la fois** : proposer, attendre son retour. Il trouve vite qu'on va « trop vite ».
   (Sauf en **mode autonome**, voir plus bas.)
 - Après chaque changement : **étapes de test précises et numérotées**, courtes (pas de longues explications).

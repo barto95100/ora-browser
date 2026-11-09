@@ -361,6 +361,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         if let rect = configuration.rect {
             snapshotConfiguration.rect = rect
         }
+        if let width = configuration.width {
+            snapshotConfiguration.snapshotWidth = NSNumber(value: Double(width))
+        }
         webView.takeSnapshot(with: snapshotConfiguration, completionHandler: completion)
     }
 

@@ -135,6 +135,12 @@ struct FocusCard: View {
         }
         return String(format: "%d:%02d", minutes, rest)
     }
+
+    /// The minutes left, rounded up: "13 min" for 12:30.
+    static func minutesLeft(_ seconds: TimeInterval) -> String {
+        let minutes = Int((max(seconds, 0) / 60).rounded(.up))
+        return minutes >= 60 ? String(format: "%d h %02d", minutes / 60, minutes % 60) : "\(minutes) min"
+    }
 }
 
 /// A small filled or outlined button of the focus card.

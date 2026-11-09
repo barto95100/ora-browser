@@ -487,6 +487,9 @@ final class BrowserPrivacyService {
     private func finishLoadingRuleList(_ identifier: String, ruleList: WKContentRuleList?) {
         cacheLock.lock()
         if let ruleList {
+            for replaced in artifactStore.replacedRuleLists(cachedRuleLists.keys, by: identifier) {
+                cachedRuleLists[replaced] = nil
+            }
             cachedRuleLists[identifier] = ruleList
         }
         let callbacks = pendingRuleListCallbacks.removeValue(forKey: identifier) ?? []

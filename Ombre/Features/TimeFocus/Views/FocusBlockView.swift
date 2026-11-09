@@ -53,17 +53,25 @@ struct FocusIndicator: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var session = FocusSession.shared
     @Environment(\.theme) private var theme
+    @Environment(\.controlActiveState) private var activeState
+
+    /// The seconds only in the window in front; the others show the minutes
+    /// left, redrawn once a minute (not each second in every window).
+    private var showsSeconds: Bool {
+        activeState == .key || activeState == .active
+    }
 
     var body: some View {
         if session.isRunning {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
+            TimelineView(.periodic(from: .now, by: showsSeconds ? 1 : 60)) { context in
                 Button {
                     appState.showTimeSummary = true
                 } label: {
                     HStack(spacing: 3) {
                         Image(systemName: session.isFocusing ? "moon.stars.fill" : "cup.and.saucer.fill")
                             .font(.system(size: 10))
-                        Text(FocusCard.clock(session.remaining(at: context.date)))
+                        let remaining = session.remaining(at: context.date)
+                        Text(showsSeconds ? FocusCard.clock(remaining) : FocusCard.minutesLeft(remaining))
                             .font(.system(size: 11, weight: .semibold).monospacedDigit())
                     }
                     .foregroundColor(session.isFocusing ? theme.accent : foregroundColor)

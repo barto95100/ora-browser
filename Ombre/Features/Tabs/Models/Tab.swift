@@ -500,7 +500,9 @@ class Tab: ObservableObject, Identifiable {
         configuration: BrowserSnapshotConfiguration,
         completion: @escaping @MainActor @Sendable (NSImage?, Error?) -> Void
     ) {
-        browserPage?.takeSnapshot(configuration: configuration, completion: completion)
+        // No page (unloaded meanwhile): answered at once, never left waiting.
+        guard let browserPage else { return completion(nil, nil) }
+        browserPage.takeSnapshot(configuration: configuration, completion: completion)
     }
 }
 

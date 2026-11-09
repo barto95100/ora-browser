@@ -122,6 +122,16 @@ final class ContentBlockerArtifactStore: @unchecked Sendable {
         "\(identifierPrefix).\(listID).\(revision).\(shardIndex)"
     }
 
+    /// The cached rule lists that `identifier` replaces: the same list's
+    /// other revisions (several megabytes each, else kept until quitting).
+    func replacedRuleLists(_ cached: some Sequence<String>, by identifier: String) -> [String] {
+        guard let new = parse(identifier: identifier) else { return [] }
+        return cached.filter { candidate in
+            guard let old = parse(identifier: candidate) else { return false }
+            return old.listID == new.listID && old.revision != new.revision
+        }
+    }
+
     private func parse(identifier: String) -> (listID: String, revision: String, shardIndex: Int)? {
         let prefix = "\(identifierPrefix)."
         guard identifier.hasPrefix(prefix) else { return nil }

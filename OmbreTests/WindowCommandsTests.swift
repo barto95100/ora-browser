@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 @testable import Ombre
 import SwiftData
 import SwiftUI
@@ -277,5 +278,27 @@ struct KeyModifierListenerTests {
         #expect(released == nil)
         #expect(monitoring.removed.count == 2)
         #expect(Set(monitoring.removed.map(ObjectIdentifier.init)) == Set(monitoring.added.map(ObjectIdentifier.init)))
+    }
+
+    /// A modifier key no longer redraws the views observing the listener
+    /// (the window's root); the tab switcher hears each change once (PERF-22).
+    @Test func modifierKeysAreSentNotPublished() {
+        let listener = KeyModifierListener(monitoring: FakeMonitoring())
+        var redraws = 0
+        var changes: [NSEvent.ModifierFlags] = []
+        let redrawWatch = listener.objectWillChange.sink { redraws += 1 }
+        let changeWatch = listener.modifierFlagsChanged.sink { changes.append($0) }
+        defer { redrawWatch.cancel()
+            changeWatch.cancel()
+        }
+
+        listener.flagsChanged(to: .control)
+        // The same key, with only a device bit different (left/right ⌃).
+        listener.flagsChanged(to: [.control, NSEvent.ModifierFlags(rawValue: 0x1)])
+        listener.flagsChanged(to: [])
+
+        #expect(redraws == 0)
+        #expect(changes == [.control, []])
+        #expect(listener.modifierFlags.isEmpty)
     }
 }

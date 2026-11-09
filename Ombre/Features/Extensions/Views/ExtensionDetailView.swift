@@ -34,6 +34,8 @@ struct ExtensionDetailView: View {
 
             websites
 
+            refusedPermissions
+
             shortcuts
 
             if let context = item.context, context.optionsPageURL != nil {
@@ -94,6 +96,33 @@ struct ExtensionDetailView: View {
                 }
                 .labelsHidden()
                 .fixedSize()
+            }
+        }
+    }
+
+    // MARK: - Refused permissions
+
+    /// What was refused when it asked: not asked again, until forgotten.
+    @ViewBuilder private var refusedPermissions: some View {
+        if !record.deniedPermissions.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Refused Permissions").font(.headline)
+                Text("Not asked again until forgotten.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                ForEach(record.deniedPermissions, id: \.self) { name in
+                    HStack {
+                        Text(ExtensionPermissionText.describe(name))
+                        Spacer()
+                        Button {
+                            manager.forgetRefusedPermission(name, id: record.id)
+                        } label: {
+                            Image(systemName: "minus.circle")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Forget (asked again next time)")
+                    }
+                }
             }
         }
     }

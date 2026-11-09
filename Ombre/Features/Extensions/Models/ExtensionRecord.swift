@@ -98,6 +98,11 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         deniedPermissions = Array(Set(deniedPermissions).union(names)).sorted()
     }
 
+    /// Forgets a refusal: the extension may ask for `name` again.
+    mutating func forgetRefusal(of name: String) {
+        deniedPermissions.removeAll { $0 == name }
+    }
+
     /// Of `asked`, what was neither allowed nor refused yet.
     func undecidedPermissions(_ asked: [String]) -> [String] {
         asked.filter { !grantedPermissions.contains($0) && !deniedPermissions.contains($0) }

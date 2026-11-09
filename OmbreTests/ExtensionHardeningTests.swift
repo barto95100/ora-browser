@@ -31,6 +31,18 @@ struct ExtensionHardeningTests {
         #expect(record.deniedPermissions.isEmpty)
     }
 
+    /// Forgotten from Settings: it may ask again, without a reinstall.
+    @Test func aForgottenRefusalCanBeAskedAgain() {
+        var record = record()
+        record.deny(["tabs", "history"])
+        record.forgetRefusal(of: "tabs")
+        #expect(record.deniedPermissions == ["history"])
+        #expect(record.undecidedPermissions(["storage", "tabs", "history"]) == ["tabs"])
+        #expect(!record.grantedPermissions.contains("tabs"))
+        record.forgetRefusal(of: "bookmarks")
+        #expect(record.deniedPermissions == ["history"])
+    }
+
     /// Saved before refusals were remembered: none.
     @Test func olderRecordsHaveNoRefusals() throws {
         var saved = try JSONSerialization.jsonObject(with: JSONEncoder().encode(record())) as? [String: Any]

@@ -97,6 +97,14 @@ extension WebExtensionsManager {
         updateRecord(id: id) { $0.isPinned = pinned }
     }
 
+    /// Forgets a refused permission (SEC-14): the running extension may
+    /// ask for it again, without being removed and installed again.
+    func forgetRefusedPermission(_ name: String, id: String) {
+        updateRecord(id: id) { $0.forgetRefusal(of: name) }
+        installed.first { $0.id == id }?.context?
+            .setPermissionStatus(.unknown, for: WKWebExtension.Permission(rawValue: name))
+    }
+
     func setAllowsPrivateBrowsing(_ allowed: Bool, id: String) {
         updateRecord(id: id) { $0.allowsPrivateBrowsing = allowed }
     }

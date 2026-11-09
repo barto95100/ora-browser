@@ -11,7 +11,7 @@ struct OnboardingProtectionStep: View {
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 10) {
-                OnboardingEyebrow(text: "Step \(stepNumber) · Protection")
+                OnboardingEyebrow(text: String(localized: "Step \(stepNumber) · Protection"))
                 Text("How much shade do you want?")
                     .font(.system(size: 40, weight: .black))
                     .tracking(-0.6)
@@ -115,26 +115,30 @@ extension ProtectionLevel {
     /// The settings' name.
     var title: String {
         switch self {
-        case .standard: "Standard"
-        case .strict: "Strict"
-        case .off: "Off"
+        case .standard: String(localized: "Standard")
+        case .strict: String(localized: "Strict")
+        case .off: String(localized: "Off")
         }
     }
 
     /// The assistant's name: how much shade.
     var shadeTitle: String {
         switch self {
-        case .off: "Sunny"
-        case .standard: "Ombre"
-        case .strict: "Deep shade"
+        case .off: String(localized: "Sunny")
+        case .standard: String(localized: "Ombre")
+        case .strict: String(localized: "Deep shade")
         }
     }
 
     var shadeSummary: String {
         switch self {
-        case .off: "No blocking. Pages load exactly as their sites made them."
-        case .standard: "Blocks ads and trackers. Hides your fingerprint in private windows, like Safari."
-        case .strict: "Everything in Ombre, plus fingerprint hiding in every window. A few sites may act up."
+        case .off: String(localized: "No blocking. Pages load exactly as their sites made them.")
+        case .standard: String(
+                localized: "Blocks ads and trackers. Hides your fingerprint in private windows, like Safari."
+            )
+        case .strict: String(
+                localized: "Everything in Ombre, plus fingerprint hiding in every window. A few sites may act up."
+            )
         }
     }
 

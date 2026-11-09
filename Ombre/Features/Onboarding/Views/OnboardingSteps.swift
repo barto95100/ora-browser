@@ -49,7 +49,7 @@ struct OnboardingWelcomeStep: View {
 
     private var words: some View {
         VStack(spacing: 14) {
-            Text("Bonjour, Hello, Hola".uppercased())
+            Text("Bonjour, Hello, Hola".uppercased()) // no translation: in three languages
                 .font(.system(size: 13, weight: .heavy))
                 .tracking(2.9)
                 .foregroundStyle(Color(hex: "#FFE0CC"))
@@ -230,10 +230,10 @@ struct OnboardingReadyStep: View {
     @State private var hasPopped = false
 
     private let shortcuts: [(KeyboardShortcutDefinition, String)] = [
-        (KeyboardShortcuts.Tabs.new, "New tab or search"),
-        (KeyboardShortcuts.App.toggleSidebar, "Show or hide the sidebar"),
-        (KeyboardShortcuts.Tabs.pin, "Pin the current tab"),
-        (KeyboardShortcuts.Window.newPrivate, "Slip into the shadows")
+        (KeyboardShortcuts.Tabs.new, String(localized: "New tab or search")),
+        (KeyboardShortcuts.App.toggleSidebar, String(localized: "Show or hide the sidebar")),
+        (KeyboardShortcuts.Tabs.pin, String(localized: "Pin the current tab")),
+        (KeyboardShortcuts.Window.newPrivate, String(localized: "Slip into the shadows"))
     ]
 
     var body: some View {

@@ -6,6 +6,22 @@
     " / %@" : {},
     "·" : {},
     "“%@” is in Ombre." : {},
+    "%@ — last used %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ — last used %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — utilisé %2$@"
+          }
+        }
+      }
+    },
     "%@ is blocked · back in %@" : {
       "localizations" : {
         "en" : {
@@ -54,6 +70,86 @@
     },
     "%lld cycles" : {},
     "%lld days" : {},
+    "%lld favorites" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld favori"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld favoris"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld favorite"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld favorites"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld folders" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld dossier"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld dossiers"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld folder"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld folders"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld item%@" : {
       "localizations" : {
         "en" : {
@@ -65,18 +161,105 @@
       }
     },
     "%lld min" : {},
-    "%lld spaces imported." : {},
+    "%lld pinned tabs" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet épinglé"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets épinglés"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pinned tab"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pinned tabs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld spaces imported." : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld espace importé."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld espaces importés."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld space imported."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld spaces imported."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld%%" : {},
     "•" : {},
     "⌘-click opens in the background" : {},
     "1 day" : {},
     "1 hour" : {},
-    "1 space imported." : {},
     "1 year" : {},
     "2 days" : {},
     "6 hours" : {},
     "12 hours" : {},
-    "A calm little planet for the whole web." : {},
+    "A calm little planet for the whole web." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une petite planète paisible pour tout le web."
+          }
+        }
+      }
+    },
     "A Problem Repeatedly Occurred" : {
       "localizations" : {
         "fr" : {
@@ -225,6 +408,16 @@
     "Ask on each website" : {},
     "Attach Current Page" : {},
     "Authenticate to view saved passwords." : {},
+    "Auto" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto"
+          }
+        }
+      }
+    },
     "Auto Clear Tabs" : {},
     "Auto Picture-in-Picture on tab switch" : {},
     "Auto-check for updates" : {},
@@ -281,8 +474,77 @@
     },
     "Block third-party trackers" : {},
     "Blocked During Focus" : {},
+    "Blocks ads and trackers. Hides your fingerprint in private windows, like Safari." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloque les publicités et les traqueurs. Masque votre empreinte numérique dans les fenêtres privées, comme Safari."
+          }
+        }
+      }
+    },
     "Born for your Mac. Make Ombre your default browser." : {},
-    "Bring your spaces from Zen" : {},
+    "Briefcase" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mallette"
+          }
+        }
+      }
+    },
+    "Bring %lld spaces" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Importer %lld espace"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Importer %lld espaces"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Bring %lld space"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Bring %lld spaces"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Bring your spaces from Zen" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importez vos espaces depuis Zen"
+          }
+        }
+      }
+    },
     "Browsing Time" : {
       "localizations" : {
         "fr" : {
@@ -341,7 +603,16 @@
     "Capture an Area of the Page" : {},
     "Capture the Visible Page" : {},
     "Capture Visible Page" : {},
-    "Change it any time per space in Settings, or per site from the shield in the address bar." : {},
+    "Change it any time per space in Settings, or per site from the shield in the address bar." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifiable à tout moment par espace dans les réglages, ou par site avec le bouclier de la barre d’adresse."
+          }
+        }
+      }
+    },
     "Change them in Settings › Spaces." : {
       "localizations" : {
         "fr" : {
@@ -373,8 +644,37 @@
       }
     },
     "Checking…" : {},
+    "Choose" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir"
+          }
+        }
+      }
+    },
     "Choose Image…" : {},
-    "Choose Zen Profile…" : {},
+    "Choose your Zen profile folder, or the Profiles folder to use the latest profile." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez le dossier de votre profil Zen, ou le dossier Profiles pour utiliser le profil le plus récent."
+          }
+        }
+      }
+    },
+    "Choose Zen Profile…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir un profil Zen…"
+          }
+        }
+      }
+    },
     "Clear" : {},
     "Clear %@?" : {},
     "Clear %@…" : {},
@@ -429,6 +729,16 @@
       }
     },
     "Closed" : {},
+    "Code" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        }
+      }
+    },
     "Completed (%lld)" : {},
     "Confirm" : {
       "localizations" : {
@@ -451,6 +761,16 @@
       }
     },
     "Content-blocking filter lists are downloaded from their authors and keep their own licenses." : {},
+    "Continue" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
+        }
+      }
+    },
     "Continue Anyway" : {
       "localizations" : {
         "fr" : {
@@ -543,6 +863,16 @@
         }
       }
     },
+    "Deep shade" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre profonde"
+          }
+        }
+      }
+    },
     "Default" : {},
     "Delete" : {},
     "Delete “%@”?" : {},
@@ -569,7 +899,16 @@
       }
     },
     "Don't Allow" : {},
-    "Done" : {},
+    "Done" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminé"
+          }
+        }
+      }
+    },
     "Downloading…" : {},
     "Downloads" : {
       "localizations" : {
@@ -598,7 +937,26 @@
     "Enable password manager" : {},
     "End Focus" : {},
     "Error: %@" : {},
-    "Essentials become favorites, pinned tabs and folders come along. Open tabs stay in Zen." : {},
+    "Essentials become favorites, pinned tabs and folders come along. Open tabs stay in Zen." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Essentials deviennent des favoris ; les onglets épinglés et les dossiers vous suivent. Les onglets ouverts restent dans Zen."
+          }
+        }
+      }
+    },
+    "Everything in Ombre, plus fingerprint hiding in every window. A few sites may act up." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que fait Ombre, plus l’empreinte numérique masquée dans toutes les fenêtres. Quelques sites risquent de mal fonctionner."
+          }
+        }
+      }
+    },
     "Extensions" : {},
     "Extensions need macOS 15.4 or later." : {},
     "Fast, secure, and beautiful browser built for macOS" : {},
@@ -643,9 +1001,28 @@
         }
       }
     },
-    "Find them in the space switcher at the bottom of the sidebar." : {},
+    "Find them in the space switcher at the bottom of the sidebar." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrouvez-les dans le sélecteur d’espaces, en bas de la barre latérale."
+          }
+        }
+      }
+    },
     "Focus" : {},
     "Focus Duration" : {},
+    "Folder" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossier"
+          }
+        }
+      }
+    },
     "Folder Name" : {},
     "Forget (asked again next time)" : {},
     "Forget this site" : {},
@@ -659,11 +1036,30 @@
         }
       }
     },
-    "Four keys to get around. The rest you'll find along the way." : {},
+    "Four keys to get around. The rest you'll find along the way." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quatre raccourcis pour vous repérer. Le reste, vous le découvrirez en chemin."
+          }
+        }
+      }
+    },
     "From" : {},
     "From %@" : {},
     "From your browsing time" : {},
     "Full license text" : {},
+    "Game" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manette"
+          }
+        }
+      }
+    },
     "github.com/the-ora/browser" : {},
     "GNU General Public License v3.0" : {},
     "Go Back" : {
@@ -688,6 +1084,16 @@
     },
     "Go to playing tab" : {},
     "Go to Playing Tab" : {},
+    "Heart" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cœur"
+          }
+        }
+      }
+    },
     "Hide Browsing Time" : {
       "localizations" : {
         "fr" : {
@@ -723,7 +1129,26 @@
       }
     },
     "History, cookies and site data of this window are deleted when you close it." : {},
-    "How much shade do you want?" : {},
+    "Home" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maison"
+          }
+        }
+      }
+    },
+    "How much shade do you want?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Combien d’ombre vous faut-il ?"
+          }
+        }
+      }
+    },
     "https://example.com/filter.txt" : {},
     "https://example.com/search?q={query}" : {},
     "Images and styles next to this file can't be shown." : {
@@ -736,9 +1161,36 @@
         }
       }
     },
-    "Import" : {},
-    "Import Data" : {},
-    "Import from Zen" : {},
+    "Import" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer"
+          }
+        }
+      }
+    },
+    "Import Data" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer des données"
+          }
+        }
+      }
+    },
+    "Import from Zen" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis Zen"
+          }
+        }
+      }
+    },
     "Import from Zen…" : {},
     "In use" : {},
     "Inspect pages from Safari's Develop menu (Safari › Settings › Advanced)." : {},
@@ -760,6 +1212,16 @@
     "Keyboard Shortcuts" : {},
     "Last checked: %@" : {},
     "Last updated %@" : {},
+    "Left" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gauche"
+          }
+        }
+      }
+    },
     "Left Side Tabs" : {
       "localizations" : {
         "fr" : {
@@ -776,6 +1238,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Moins de bruit, plus de navigation."
+          }
+        }
+      }
+    },
+    "Let's go" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est parti"
           }
         }
       }
@@ -811,14 +1283,69 @@
       }
     },
     "Links from pinned tabs to other sites" : {},
-    "Links you open from Mail, Messages and your other apps will land here." : {},
-    "Live preview of your space" : {},
-    "Live preview: every choice shows up here right away." : {},
+    "Links you open from Mail, Messages and your other apps will land here." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les liens ouverts depuis Mail, Messages et vos autres apps atterriront ici."
+          }
+        }
+      }
+    },
+    "Live preview of your space" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu en direct de votre espace"
+          }
+        }
+      }
+    },
+    "Live preview: every choice shows up here right away." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu en direct : chaque choix s’affiche ici aussitôt."
+          }
+        }
+      }
+    },
     "Loading Emojis..." : {},
     "Lock" : {},
     "Long break after:" : {},
-    "Make it yours" : {},
-    "Make Ombre your home planet?" : {},
+    "Looks good" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C’est parfait"
+          }
+        }
+      }
+    },
+    "Make it yours" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À votre image"
+          }
+        }
+      }
+    },
+    "Make Ombre your home planet?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire d’Ombre votre planète d’attache ?"
+          }
+        }
+      }
+    },
     "Manage Extension…" : {},
     "Manage Extensions…" : {},
     "Manage Passwords" : {
@@ -835,8 +1362,27 @@
     "Max recent tabs:" : {},
     "min ⌄" : {},
     "Minutes" : {},
+    "Moon" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lune"
+          }
+        }
+      }
+    },
     "More Extensions on the App Store…" : {},
-    "More spaces" : {},
+    "More spaces" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres espaces"
+          }
+        }
+      }
+    },
     "Move \"%@\" to the Trash?" : {},
     "Move Out of Folder" : {},
     "Move to Container" : {},
@@ -844,7 +1390,26 @@
     "Move to Folder" : {},
     "Move to Trash" : {},
     "Move to Trash…" : {},
-    "Name" : {},
+    "Music" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Musique"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom"
+          }
+        }
+      }
+    },
     "Name:" : {},
     "Navigation" : {
       "localizations" : {
@@ -894,6 +1459,16 @@
         }
       }
     },
+    "New tab or search" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet ou recherche"
+          }
+        }
+      }
+    },
     "New task" : {},
     "New Window" : {
       "localizations" : {
@@ -936,6 +1511,16 @@
         }
       }
     },
+    "No blocking. Pages load exactly as their sites made them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun blocage. Les pages se chargent exactement comme leurs sites les ont conçues."
+          }
+        }
+      }
+    },
     "No browsing time for this period" : {},
     "No browsing time today" : {},
     "No Downloads" : {},
@@ -961,8 +1546,28 @@
     "No spaces found" : {},
     "No task yet" : {},
     "No website set yet." : {},
+    "No Zen session in this folder. Choose a profile in Zen's Profiles folder." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune session Zen dans ce dossier. Choisissez un profil dans le dossier Profiles de Zen."
+          }
+        }
+      }
+    },
     "Not a site address." : {},
     "Not asked again until forgotten." : {},
+    "Not now" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas maintenant"
+          }
+        }
+      }
+    },
     "Not Now" : {},
     "Notes" : {},
     "Nothing blocked on this page" : {
@@ -987,8 +1592,37 @@
       }
     },
     "OK" : {},
-    "Ombre" : {},
+    "Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre"
+          }
+        }
+      }
+    },
+    "Ombre couldn't read this Zen session." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu lire cette session Zen."
+          }
+        }
+      }
+    },
     "Ombre couldn't tell which language this page is in." : {},
+    "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. Open tabs are not imported." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre importe vos espaces avec leurs Essentials (en favoris), leurs onglets épinglés et leurs dossiers. Les onglets ouverts ne sont pas importés."
+          }
+        }
+      }
+    },
     "Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0." : {},
     "Ombre's own shortcuts come first." : {},
     "On" : {
@@ -1029,7 +1663,16 @@
     },
     "OPENS" : {},
     "Options…" : {},
-    "Other Profile…" : {},
+    "Other Profile…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre profil…"
+          }
+        }
+      }
+    },
     "Other websites" : {},
     "Otherwise it is in the extensions menu (puzzle piece)." : {},
     "Page Not Found" : {
@@ -1078,6 +1721,16 @@
       }
     },
     "Paused" : {},
+    "Personal" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personnel"
+          }
+        }
+      }
+    },
     "Pin Next to the Sidebar Button" : {},
     "Pin Tab" : {
       "localizations" : {
@@ -1085,6 +1738,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler l’onglet"
+          }
+        }
+      }
+    },
+    "Pin the current tab" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler l’onglet actuel"
           }
         }
       }
@@ -1163,8 +1826,26 @@
         }
       }
     },
-    "Profile" : {},
-    "Profile: %@" : {},
+    "Profile" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        }
+      }
+    },
+    "Profile: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil : %@"
+          }
+        }
+      }
+    },
     "Prompt to save passwords" : {},
     "Protections are off for this site" : {
       "localizations" : {
@@ -1206,9 +1887,27 @@
         }
       }
     },
-    "Quit Zen first, so its latest changes are saved." : {},
+    "Quit Zen first, so its latest changes are saved." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quittez d’abord Zen pour que ses dernières modifications soient enregistrées."
+          }
+        }
+      }
+    },
     "Read" : {},
-    "Recommended" : {},
+    "Recommended" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommandé"
+          }
+        }
+      }
+    },
     "Reduces browser and device fingerprint surface for this space. This does not block cookies or other storage by itself." : {},
     "Refresh Now" : {},
     "Refused Permissions" : {},
@@ -1312,6 +2011,16 @@
     "Retry Download" : {},
     "Reveal password" : {},
     "Review…" : {},
+    "Right" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Droite"
+          }
+        }
+      }
+    },
     "Right Side Tabs" : {
       "localizations" : {
         "fr" : {
@@ -1453,6 +2162,16 @@
         }
       }
     },
+    "Show or hide the sidebar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher ou masquer la barre latérale"
+          }
+        }
+      }
+    },
     "Show Original" : {},
     "Show Subtasks" : {},
     "Show Tasks" : {
@@ -1475,9 +2194,48 @@
         }
       }
     },
+    "Sidebar" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre latérale"
+          }
+        }
+      }
+    },
     "SITES" : {},
+    "Skip" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer"
+          }
+        }
+      }
+    },
     "Skip Break" : {},
-    "Skip setup" : {},
+    "Skip setup" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer la configuration"
+          }
+        }
+      }
+    },
+    "Slip into the shadows" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se glisser dans l’ombre"
+          }
+        }
+      }
+    },
     "Something Went Wrong" : {
       "localizations" : {
         "fr" : {
@@ -1488,12 +2246,90 @@
         }
       }
     },
-    "Space" : {},
+    "Space" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espace"
+          }
+        }
+      }
+    },
     "Spaces" : {},
-    "Spaces whose name is already used get “(Zen)” after their name." : {},
+    "Spaces whose name is already used get “(Zen)” after their name." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les espaces dont le nom existe déjà sont suivis de « (Zen) »."
+          }
+        }
+      }
+    },
+    "Standard" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "Star" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étoile"
+          }
+        }
+      }
+    },
+    "Start exploring" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partir à l’exploration"
+          }
+        }
+      }
+    },
     "Start Focus" : {},
     "Starting…" : {},
     "Status" : {},
+    "Step %lld · Decorate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape %lld · Décoration"
+          }
+        }
+      }
+    },
+    "Step %lld · Moving in" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape %lld · Emménagement"
+          }
+        }
+      }
+    },
+    "Step %lld · Protection" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape %lld · Protection"
+          }
+        }
+      }
+    },
     "Step %lld of %lld" : {
       "localizations" : {
         "en" : {
@@ -1501,11 +2337,37 @@
             "state" : "new",
             "value" : "Step %1$lld of %2$lld"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape %1$lld sur %2$lld"
+          }
         }
       }
     },
     "Stop" : {},
+    "Strict" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strict"
+          }
+        }
+      }
+    },
     "Subtasks" : {},
+    "Sunny" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plein soleil"
+          }
+        }
+      }
+    },
     "Suspend inactive tabs after:" : {},
     "Switch to tab " : {},
     "Symbols" : {},
@@ -1556,7 +2418,16 @@
     },
     "The emoji is used when no symbol is chosen." : {},
     "The last space can't be deleted." : {},
-    "The more shade, the less the web sees of you." : {},
+    "The more shade, the less the web sees of you." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus il y a d’ombre, moins le web vous voit."
+          }
+        }
+      }
+    },
     "The page took too long to load. Try again or check your connection." : {
       "localizations" : {
         "fr" : {
@@ -1582,6 +2453,26 @@
     "These protections apply only to %@. Open tabs in this space are refreshed automatically." : {},
     "These sites stay closed during a focus cycle in %@. Breaks open them again." : {},
     "Third-party components" : {},
+    "This profile couldn't be read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce profil n’a pas pu être lu."
+          }
+        }
+      }
+    },
+    "This profile has no Essentials, pinned tabs or folders to import." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce profil n’a ni Essentials, ni onglets épinglés, ni dossiers à importer."
+          }
+        }
+      }
+    },
     "This version asks for more than what you allowed:" : {},
     "This webpage stopped working several times in a row, so Ombre didn't reload it again." : {
       "localizations" : {
@@ -1718,12 +2609,86 @@
       }
     },
     "When" : {},
-    "Your first space" : {},
-    "Your planet is ready" : {},
-    "Your space" : {},
-    "Your spaces become moons\naround your little planet." : {},
-    "Zen is open. Quit it to bring its latest changes." : {},
-    "Zen…" : {},
+    "Work" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Travail"
+          }
+        }
+      }
+    },
+    "Yes, make it home" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui, ce sera ma planète"
+          }
+        }
+      }
+    },
+    "Your first space" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre premier espace"
+          }
+        }
+      }
+    },
+    "Your planet is ready" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre planète est prête"
+          }
+        }
+      }
+    },
+    "Your space" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre espace"
+          }
+        }
+      }
+    },
+    "Your spaces become moons\naround your little planet." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos espaces deviennent des lunes\nautour de votre petite planète."
+          }
+        }
+      }
+    },
+    "Zen is open. Quit it to bring its latest changes." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zen est ouvert. Quittez-le pour importer ses dernières modifications."
+          }
+        }
+      }
+    },
+    "Zen…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zen…"
+          }
+        }
+      }
+    },
     "Zoom In" : {
       "localizations" : {
         "fr" : {

@@ -165,11 +165,11 @@ struct SitePermissions: Codable, Hashable {
 extension SitePermissionType {
     var title: String {
         switch self {
-        case .camera: "Camera"
-        case .microphone: "Microphone"
-        case .notifications: "Notifications"
-        case .location: "Location"
-        case .screen: "Screen Sharing"
+        case .camera: String(localized: "Camera")
+        case .microphone: String(localized: "Microphone")
+        case .notifications: String(localized: "Notifications")
+        case .location: String(localized: "Location")
+        case .screen: String(localized: "Screen Sharing")
         }
     }
 }
@@ -177,9 +177,9 @@ extension SitePermissionType {
 extension SitePermissionState {
     var title: String {
         switch self {
-        case .ask: "Ask"
-        case .allow: "Allow"
-        case .deny: "Don't Allow"
+        case .ask: String(localized: "Ask")
+        case .allow: String(localized: "Allow")
+        case .deny: String(localized: "Don't Allow")
         }
     }
 }

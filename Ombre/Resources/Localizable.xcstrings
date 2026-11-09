@@ -473,24 +473,6 @@
     },
     "%lld sites blocked during focus." : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld site bloqué pendant la concentration."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld sites bloqués pendant la concentration."
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -504,6 +486,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld sites blocked during focus."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld site bloqué pendant la concentration."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sites bloqués pendant la concentration."
                 }
               }
             }
@@ -728,6 +728,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une petite planète paisible pour tout le web."
+          }
+        }
+      }
+    },
+    "A copy of the old data was kept: %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une copie des anciennes données a été conservée : %@."
           }
         }
       }
@@ -1218,6 +1228,16 @@
         }
       }
     },
+    "Allow Ombre to open “%@”." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez Ombre à ouvrir « %@ »."
+          }
+        }
+      }
+    },
     "Allow Ombre to read “%@” so this page can show its images and styles." : {
       "localizations" : {
         "fr" : {
@@ -1278,7 +1298,16 @@
         }
       }
     },
-    "Always translate %@" : {},
+    "Always translate %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours traduire : %@"
+          }
+        }
+      }
+    },
     "An unexpected error occurred while loading this page." : {
       "localizations" : {
         "fr" : {
@@ -1891,6 +1920,16 @@
         }
       }
     },
+    "Camera" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caméra"
+          }
+        }
+      }
+    },
     "Can't Connect to the Internet" : {
       "localizations" : {
         "fr" : {
@@ -2017,6 +2056,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vérifiez votre connexion à Internet, puis réessayez."
+          }
+        }
+      }
+    },
+    "Checking for updates..." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche de mises à jour…"
           }
         }
       }
@@ -2378,7 +2427,16 @@
         }
       }
     },
-    "Content-blocking filter lists are downloaded from their authors and keep their own licenses." : {},
+    "Content-blocking filter lists are downloaded from their authors and keep their own licenses." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les listes de filtres de blocage sont téléchargées depuis leurs auteurs et gardent leurs propres licences."
+          }
+        }
+      }
+    },
     "Continue" : {
       "localizations" : {
         "fr" : {
@@ -2941,6 +2999,16 @@
         }
       }
     },
+    "Download failed: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du téléchargement : %@"
+          }
+        }
+      }
+    },
     "Downloaded" : {
       "localizations" : {
         "fr" : {
@@ -3181,7 +3249,16 @@
         }
       }
     },
-    "Error: %@" : {},
+    "Error: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur : %@"
+          }
+        }
+      }
+    },
     "Essentials become favorites, pinned tabs and folders come along. Open tabs stay in Zen." : {
       "localizations" : {
         "fr" : {
@@ -3268,6 +3345,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Échec • %@"
+          }
+        }
+      }
+    },
+    "Failed to load appcast: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger le flux des mises à jour : %@"
           }
         }
       }
@@ -3472,7 +3559,16 @@
         }
       }
     },
-    "Forget this site" : {},
+    "Forget this site" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier ce site"
+          }
+        }
+      }
+    },
     "Forward" : {
       "localizations" : {
         "fr" : {
@@ -3493,7 +3589,16 @@
         }
       }
     },
-    "From" : {},
+    "From" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De"
+          }
+        }
+      }
+    },
     "From %@" : {
       "localizations" : {
         "fr" : {
@@ -3554,7 +3659,16 @@
         }
       }
     },
-    "Full license text" : {},
+    "Full license text" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte complet de la licence"
+          }
+        }
+      }
+    },
     "Fullscreen" : {
       "localizations" : {
         "fr" : {
@@ -3586,7 +3700,16 @@
       }
     },
     "github.com/the-ora/browser" : {},
-    "GNU General Public License v3.0" : {},
+    "GNU General Public License v3.0" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GNU General Public License v3.0"
+          }
+        }
+      }
+    },
     "Go Back" : {
       "localizations" : {
         "fr" : {
@@ -4297,7 +4420,36 @@
         }
       }
     },
-    "Loading Emojis..." : {},
+    "Loading Emojis..." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement des emoji…"
+          }
+        }
+      }
+    },
+    "Location" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position"
+          }
+        }
+      }
+    },
+    "Location Services are off for Ombre. Turn them on in System Settings › Privacy & Security › Location Services." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le service de localisation est désactivé pour Ombre. Activez-le dans Réglages Système › Confidentialité et sécurité › Service de localisation."
+          }
+        }
+      }
+    },
     "Lock" : {
       "localizations" : {
         "fr" : {
@@ -4364,6 +4516,68 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "C’est parfait"
+          }
+        }
+      }
+    },
+    "macOS can't translate %@ into %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "macOS can't translate %1$@ into %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS ne peut pas traduire cette page : %1$@ → %2$@."
+          }
+        }
+      }
+    },
+    "macOS couldn't find your location. Check that Wi-Fi is on, then try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS n’a pas trouvé votre position. Vérifiez que le Wi-Fi est activé, puis réessayez."
+          }
+        }
+      }
+    },
+    "macOS couldn't tell which language this page is in." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS n’a pas pu déterminer la langue de cette page."
+          }
+        }
+      }
+    },
+    "macOS didn't answer about Location Services. Try again, or check System Settings › Privacy & Security." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS n’a pas répondu au sujet du service de localisation. Réessayez, ou vérifiez Réglages Système › Confidentialité et sécurité."
+          }
+        }
+      }
+    },
+    "macOS didn't download %@ for translation (%@). You can add it in System Settings › General › Language & Region › Translation Languages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "macOS didn't download %1$@ for translation (%2$@). You can add it in System Settings › General › Language & Region › Translation Languages."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS n’a pas téléchargé la langue « %1$@ » pour la traduction (%2$@). Vous pouvez l’ajouter dans Réglages Système › Général › Langue et région › Langues de traduction."
           }
         }
       }
@@ -4454,6 +4668,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nombre maximal d’onglets récents :"
+          }
+        }
+      }
+    },
+    "Microphone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Micro"
           }
         }
       }
@@ -4684,7 +4908,16 @@
         }
       }
     },
-    "Never translate %@" : {},
+    "Never translate %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne jamais traduire : %@"
+          }
+        }
+      }
+    },
     "New Folder" : {
       "localizations" : {
         "fr" : {
@@ -5015,7 +5248,16 @@
         }
       }
     },
-    "No site has asked for permissions in this space yet." : {},
+    "No site has asked for permissions in this space yet." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun site n’a encore demandé d’autorisation dans cet espace."
+          }
+        }
+      }
+    },
     "No spaces found" : {
       "localizations" : {
         "fr" : {
@@ -5042,6 +5284,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune tâche pour l’instant"
+          }
+        }
+      }
+    },
+    "No updates available (current: %@)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune mise à jour disponible (version actuelle : %@)"
           }
         }
       }
@@ -5176,6 +5428,16 @@
         }
       }
     },
+    "Not Secure — %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non sécurisé — %@"
+          }
+        }
+      }
+    },
     "Notes" : {
       "localizations" : {
         "fr" : {
@@ -5212,6 +5474,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rien n’est bloqué pendant la concentration dans cet espace."
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
           }
         }
       }
@@ -5358,7 +5630,16 @@
         }
       }
     },
-    "Ombre couldn't tell which language this page is in." : {},
+    "Ombre couldn't tell which language this page is in." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu déterminer la langue de cette page."
+          }
+        }
+      }
+    },
     "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. Open tabs are not imported." : {
       "localizations" : {
         "fr" : {
@@ -5369,7 +5650,16 @@
         }
       }
     },
-    "Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0." : {},
+    "Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre est dérivé d’Ora Browser (the-ora/browser), sous licence GPL-3.0."
+          }
+        }
+      }
+    },
     "Ombre Passwords" : {
       "localizations" : {
         "fr" : {
@@ -5476,6 +5766,16 @@
         }
       }
     },
+    "Open Image in New Tab" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’image dans un nouvel onglet"
+          }
+        }
+      }
+    },
     "Open in Background" : {
       "localizations" : {
         "fr" : {
@@ -5512,6 +5812,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir en vue partagée"
+          }
+        }
+      }
+    },
+    "Open Link in Background Tab" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le lien dans un onglet en arrière-plan"
+          }
+        }
+      }
+    },
+    "Open Link in New Tab" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le lien dans un nouvel onglet"
+          }
+        }
+      }
+    },
+    "Open Link in Split View" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le lien en vue partagée"
           }
         }
       }
@@ -6198,8 +6528,26 @@
         }
       }
     },
-    "Remember for this site" : {},
-    "Remember until Ombre quits" : {},
+    "Remember for this site" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mémoriser pour ce site"
+          }
+        }
+      }
+    },
+    "Remember until Ombre quits" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mémoriser jusqu’à la fermeture d’Ombre"
+          }
+        }
+      }
+    },
     "Remind me" : {
       "localizations" : {
         "fr" : {
@@ -6618,6 +6966,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mots de passe enregistrés"
+          }
+        }
+      }
+    },
+    "Screen Sharing" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partage d’écran"
           }
         }
       }
@@ -7114,12 +7472,32 @@
         }
       }
     },
+    "Site Permissions" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisations des sites"
+          }
+        }
+      }
+    },
     "SITES" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "SITES"
+          }
+        }
+      }
+    },
+    "Sites that asked to use your camera or microphone in %@. Changes apply to the next request; reload a page to stop a camera already in use." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les sites qui ont demandé à utiliser votre caméra ou votre micro dans %@. Les changements s’appliquent à la prochaine demande ; rechargez une page pour couper une caméra déjà utilisée."
           }
         }
       }
@@ -7301,7 +7679,16 @@
         }
       }
     },
-    "Starting…" : {},
+    "Starting…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrage…"
+          }
+        }
+      }
+    },
     "Status" : {
       "localizations" : {
         "fr" : {
@@ -7808,6 +8195,26 @@
         }
       }
     },
+    "The page at %@ says:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La page de %@ indique :"
+          }
+        }
+      }
+    },
+    "The page couldn't be translated: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La page n’a pas pu être traduite : %@"
+          }
+        }
+      }
+    },
     "The page took too long to load. Try again or check your connection." : {
       "localizations" : {
         "fr" : {
@@ -7868,12 +8275,32 @@
         }
       }
     },
+    "The translation failed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La traduction a échoué"
+          }
+        }
+      }
+    },
     "The translation stopped before it finished (the page was hidden or reloaded). Try again." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "La traduction s’est arrêtée avant la fin (la page a été masquée ou rechargée). Réessayez."
+          }
+        }
+      }
+    },
+    "The translation took too long and was stopped. Try again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La traduction a pris trop de temps et a été arrêtée. Réessayez."
           }
         }
       }
@@ -7945,7 +8372,16 @@
         }
       }
     },
-    "Third-party components" : {},
+    "Third-party components" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Composants tiers"
+          }
+        }
+      }
+    },
     "This connection isn't private: the password will be sent unencrypted." : {
       "localizations" : {
         "fr" : {
@@ -8016,12 +8452,32 @@
         }
       }
     },
+    "This page has no text to translate." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page n’a aucun texte à traduire."
+          }
+        }
+      }
+    },
     "This page is already in %@." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette page est déjà en %@."
+          }
+        }
+      }
+    },
+    "This page says:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page indique :"
           }
         }
       }
@@ -8092,6 +8548,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette version demande plus que ce que vous avez autorisé :"
+          }
+        }
+      }
+    },
+    "This version of macOS doesn't let Ombre give sites your location." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version de macOS ne permet pas à Ombre de donner votre position aux sites."
           }
         }
       }
@@ -8186,7 +8652,16 @@
         }
       }
     },
-    "To" : {},
+    "To" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vers"
+          }
+        }
+      }
+    },
     "Today" : {
       "localizations" : {
         "fr" : {
@@ -8253,7 +8728,16 @@
         }
       }
     },
-    "Translate" : {},
+    "Translate" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduire"
+          }
+        }
+      }
+    },
     "Translate Page…" : {
       "localizations" : {
         "fr" : {
@@ -8264,7 +8748,16 @@
         }
       }
     },
-    "Translate this page" : {},
+    "Translate this page" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduire cette page"
+          }
+        }
+      }
+    },
     "Translate to %@" : {
       "localizations" : {
         "fr" : {
@@ -8275,13 +8768,58 @@
         }
       }
     },
-    "Translated into %@ on this Mac." : {},
+    "Translated into %@ on this Mac." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduit en %@ sur ce Mac."
+          }
+        }
+      }
+    },
+    "Translated: show the original or change the language" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduite : afficher l’original ou changer de langue"
+          }
+        }
+      }
+    },
+    "Translating…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduction…"
+          }
+        }
+      }
+    },
+    "Translating… %lld%%" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduction… %lld %%"
+          }
+        }
+      }
+    },
     "Translating… %lld%% (%lld of %lld pieces of text)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "Translating… %1$lld%% (%2$lld of %3$lld pieces of text)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduction… %1$lld %% (%2$lld textes sur %3$lld)"
           }
         }
       }
@@ -8422,12 +8960,42 @@
         }
       }
     },
+    "Update available: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour disponible : %@"
+          }
+        }
+      }
+    },
     "Update available!" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mise à jour disponible !"
+          }
+        }
+      }
+    },
+    "Update check timed out" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La recherche de mises à jour a expiré"
+          }
+        }
+      }
+    },
+    "Update checking is not available" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La recherche de mises à jour n’est pas disponible"
           }
         }
       }
@@ -8622,7 +9190,86 @@
         }
       }
     },
-    "Waiting for macOS to download %@…" : {},
+    "Waiting for macOS to download %@…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du téléchargement par macOS : %@…"
+          }
+        }
+      }
+    },
+    "Waiting for the language download…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du téléchargement de la langue…"
+          }
+        }
+      }
+    },
+    "wants to know your location" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut connaître votre position"
+          }
+        }
+      }
+    },
+    "wants to send you notifications" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut vous envoyer des notifications"
+          }
+        }
+      }
+    },
+    "wants to share your screen" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut partager votre écran"
+          }
+        }
+      }
+    },
+    "wants to use your camera" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut utiliser votre caméra"
+          }
+        }
+      }
+    },
+    "wants to use your camera and microphone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut utiliser votre caméra et votre micro"
+          }
+        }
+      }
+    },
+    "wants to use your microphone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut utiliser votre micro"
+          }
+        }
+      }
+    },
     "Websites" : {
       "localizations" : {
         "fr" : {
@@ -8743,6 +9390,16 @@
         }
       }
     },
+    "Your browsing data couldn't be opened. Tabs, history and downloads from this session will be lost when Ombre quits." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos données de navigation n’ont pas pu être ouvertes. Les onglets, l’historique et les téléchargements de cette session seront perdus à la fermeture d’Ombre."
+          }
+        }
+      }
+    },
     "Your first space" : {
       "localizations" : {
         "fr" : {
@@ -8779,6 +9436,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vos espaces deviennent des lunes\nautour de votre petite planète."
+          }
+        }
+      }
+    },
+    "Your tabs couldn't be restored" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos onglets n’ont pas pu être restaurés"
+          }
+        }
+      }
+    },
+    "Your tabs won't be saved" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos onglets ne seront pas enregistrés"
           }
         }
       }

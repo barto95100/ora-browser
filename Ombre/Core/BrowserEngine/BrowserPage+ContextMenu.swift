@@ -62,19 +62,23 @@ extension BrowserPage {
 
     func adjustContextMenu(_ menu: NSMenu) {
         if let openLink = menu.items.first(where: { $0.identifier?.rawValue == Self.openLinkIdentifier }) {
-            openLink.title = "Open Link in New Tab"
+            openLink.title = String(localized: "Open Link in New Tab")
             let index = menu.index(of: openLink)
             menu.insertItem(
-                openingItem("Open Link in Background Tab", running: openLink, disposition: .background),
+                openingItem(
+                    String(localized: "Open Link in Background Tab"),
+                    running: openLink,
+                    disposition: .background
+                ),
                 at: index + 1
             )
             menu.insertItem(
-                openingItem("Open Link in Split View", running: openLink, disposition: .splitView),
+                openingItem(String(localized: "Open Link in Split View"), running: openLink, disposition: .splitView),
                 at: index + 2
             )
         }
         if let openImage = menu.items.first(where: { $0.identifier?.rawValue == Self.openImageIdentifier }) {
-            openImage.title = "Open Image in New Tab"
+            openImage.title = String(localized: "Open Image in New Tab")
         }
         if let items = delegate?.browserPageContextMenuItems(self), !items.isEmpty {
             menu.addItem(.separator())

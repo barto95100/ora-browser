@@ -16,7 +16,7 @@ struct BrowserJavaScriptDialog: Equatable {
     /// "The page at example.com says:", or "This page says:" for a page with
     /// no site (a `data:` page, a sandboxed frame).
     var title: String {
-        host.isEmpty ? "This page says:" : "The page at \(host) says:"
+        host.isEmpty ? String(localized: "This page says:") : String(localized: "The page at \(host) says:")
     }
 }
 

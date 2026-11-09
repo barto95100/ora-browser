@@ -133,6 +133,9 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 
 ## Traduction (français / anglais, selon la langue du Mac)
 
+- Toute l'app est traduite (zone `rest` = tout `Ombre/`) : un nouveau texte visible doit avoir son français, sinon la CI
+  échoue. Textes d'Info.plist : `Ombre/Resources/InfoPlist.xcstrings`. Même mot anglais, sens différent : clé propre
+  (`String(localized: "cle.contexte", defaultValue: "English")`).
 - Catalogue `Ombre/Resources/Localizable.xcstrings` ; textes en `String` → `String(localized:)`, valeur enregistrée
   affichée → propriété `title` traduite. `scripts/check-localization.sh` (aussi en CI) liste ce qui manque dans les
   zones traduites (`ZONES` de `scripts/check-localization.py`) ; `scripts/add-translations.py` ajoute une table JSON.

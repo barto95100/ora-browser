@@ -317,7 +317,7 @@ extension BrowserPage: WKNavigationDelegate {
         guard navigationAction.targetFrame?.isMainFrame == true,
               navigationAction.navigationType != .backForward,
               navigationAction.navigationType != .reload,
-              navigationAction.request.httpMethod?.uppercased() ?? "GET" == "GET",
+              navigationAction.request.httpMethod?.uppercased() ?? "GET" == "GET", // not shown
               let url = navigationAction.request.url,
               delegate?.browserPage(self, removesLinkTrackingFrom: url) == true
         else { return nil }

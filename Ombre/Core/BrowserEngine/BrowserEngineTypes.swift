@@ -177,7 +177,7 @@ enum BrowserNavigationError {
         switch error.domain {
         case NSURLErrorDomain:
             return error.code == NSURLErrorCancelled
-        case "WebKitErrorDomain":
+        case "WebKitErrorDomain": // not shown
             return [frameLoadInterruptedByPolicyChange, plugInWillHandleLoad].contains(error.code)
         default:
             return false

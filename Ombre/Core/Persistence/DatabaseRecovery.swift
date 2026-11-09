@@ -92,7 +92,7 @@ enum DatabaseRecovery {
         do {
             return try (ModelConfiguration.createMainContainer(at: storeURL), .opened)
         } catch {
-            log("Database failed to open", error)
+            log("Database failed to open", error) // not shown
         }
 
         var backup: URL?
@@ -103,7 +103,7 @@ enum DatabaseRecovery {
                 let container = try ModelConfiguration.createMainContainer(at: storeURL)
                 return (container, .recovered(backup: moved))
             } catch {
-                Self.log("Fresh database failed to open", error)
+                Self.log("Fresh database failed to open", error) // not shown
             }
         }
         return (inMemoryContainer(), .inMemory(backup: backup))
@@ -176,24 +176,26 @@ enum DatabaseRecovery {
             return
         case let .recovered(url):
             backup = url
-            alert.messageText = "Your tabs couldn't be restored"
+            alert.messageText = String(localized: "Your tabs couldn't be restored")
             alert.informativeText = """
             Your browsing data couldn't be opened, so Ombre started with fresh data. \
             A copy of the old data was kept: \(url.lastPathComponent).
             """
         case let .inMemory(url):
             backup = url
-            alert.messageText = "Your tabs won't be saved"
-            var text = "Your browsing data couldn't be opened. Tabs, history and downloads from this "
-                + "session will be lost when Ombre quits."
+            alert.messageText = String(localized: "Your tabs won't be saved")
+            var text = String(
+                // swiftlint:disable:next line_length
+                localized: "Your browsing data couldn't be opened. Tabs, history and downloads from this session will be lost when Ombre quits."
+            )
             if let url {
-                text += " A copy of the old data was kept: \(url.lastPathComponent)."
+                text += " " + String(localized: "A copy of the old data was kept: \(url.lastPathComponent).")
             }
             alert.informativeText = text
         }
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "OK"))
         if backup != nil {
-            alert.addButton(withTitle: "Show in Finder")
+            alert.addButton(withTitle: String(localized: "Show in Finder"))
         }
         alert.beginSheetModal(for: window) { response in
             guard response == .alertSecondButtonReturn, let backup else { return }

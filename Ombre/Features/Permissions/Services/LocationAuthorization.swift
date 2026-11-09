@@ -123,12 +123,17 @@ final class LocationAuthorization: NSObject {
         let message = switch outcome {
         case .authorized: ""
         case .denied:
-            "Location Services are off for Ombre. Turn them on in System Settings › "
-                + "Privacy & Security › Location Services."
+            String(
+                // swiftlint:disable:next line_length
+                localized: "Location Services are off for Ombre. Turn them on in System Settings › Privacy & Security › Location Services."
+            )
         case .noAnswer:
-            "macOS didn't answer about Location Services. Try again, or check System Settings › Privacy & Security."
+            String(
+                // swiftlint:disable:next line_length
+                localized: "macOS didn't answer about Location Services. Try again, or check System Settings › Privacy & Security."
+            )
         case .unavailable:
-            "This version of macOS doesn't let Ombre give sites your location."
+            String(localized: "This version of macOS doesn't let Ombre give sites your location.")
         }
         ToastManager.shared.show(message, type: .error, duration: 10)
     }
@@ -148,8 +153,8 @@ final class LocationAuthorization: NSObject {
         case .authorizedAlways: "authorized"
         case .denied: "denied"
         case .restricted: "restricted"
-        case .notDetermined: "not determined"
-        @unknown default: "unknown (\(status.rawValue))"
+        case .notDetermined: "not determined" // not shown
+        @unknown default: "unknown (\(status.rawValue))" // not shown
         }
     }
 }

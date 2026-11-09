@@ -83,7 +83,7 @@ enum PageTranslationRun {
                 logger.notice("Languages ready for \(languages, privacy: .public) after \(ready, privacy: .public) s")
             }
             let plan = await PageTranslationPlan(pieces: page.collectText())
-            let found = "\(plan.pieceCount) pieces, \(plan.texts.count) different"
+            let found = "\(plan.pieceCount) pieces, \(plan.texts.count) different" // not shown
             logger.notice("\(found, privacy: .public) (\(elapsed(since: start), privacy: .public) s)")
             guard !plan.texts.isEmpty else { throw PageTranslationFailure.nothingToTranslate }
             let total = plan.pieceCount
@@ -130,7 +130,7 @@ enum PageTranslationRun {
                 return
             }
             logger.error(
-                "Translation failed after \(shown) pieces: \(String(describing: error), privacy: .public)"
+                "Translation failed after \(shown) pieces: \(String(describing: error), privacy: .public)" // not shown
             )
             _ = update(.failed(pair, message: message(for: error, pair: pair), isPartial: shown > 0))
         }
@@ -147,7 +147,7 @@ enum PageTranslationRun {
         let known = await translator.remembered(plan.pieces(of: Array(plan.texts.indices)))
         guard !known.isEmpty, !Task.isCancelled else { return PageTranslationQueue(plan: plan) }
         page.showTranslations(plan.pageTranslations(known))
-        let remembered = "\(known.count) texts from memory"
+        let remembered = "\(known.count) texts from memory" // not shown
         logger.notice("\(remembered, privacy: .public) shown after \(elapsed(since: start), privacy: .public) s")
         return PageTranslationQueue(plan: plan, done: Set(known.keys.compactMap(Int.init)))
     }
@@ -165,7 +165,7 @@ enum PageTranslationRun {
             if Task.isCancelled { throw CancellationError() }
             logger.error("Language download failed: \(String(describing: error), privacy: .public)")
             throw PageTranslationFailure.downloadFailed(
-                error is AsyncTimeoutError ? "it took too long" : error.localizedDescription
+                error is AsyncTimeoutError ? "it took too long" : error.localizedDescription // not shown
             )
         }
     }
@@ -176,19 +176,21 @@ enum PageTranslationRun {
         let target = PageLanguage.name(of: pair.target)
         switch error {
         case PageTranslationFailure.nothingToTranslate, TranslationError.nothingToTranslate:
-            return "This page has no text to translate."
+            return String(localized: "This page has no text to translate.")
         case let PageTranslationFailure.downloadFailed(reason):
-            return "macOS didn't download \(source) for translation (\(reason)). "
-                + "You can add it in System Settings › General › Language & Region › Translation Languages."
+            return String(
+                // swiftlint:disable:next line_length
+                localized: "macOS didn't download \(source) for translation (\(reason)). You can add it in System Settings › General › Language & Region › Translation Languages."
+            )
         case is AsyncTimeoutError:
-            return "The translation took too long and was stopped. Try again."
+            return String(localized: "The translation took too long and was stopped. Try again.")
         case TranslationError.unsupportedLanguagePairing, TranslationError.unsupportedSourceLanguage,
              TranslationError.unsupportedTargetLanguage:
-            return "macOS can't translate \(source) into \(target)."
+            return String(localized: "macOS can't translate \(source) into \(target).")
         case TranslationError.unableToIdentifyLanguage:
-            return "macOS couldn't tell which language this page is in."
+            return String(localized: "macOS couldn't tell which language this page is in.")
         default:
-            return "The page couldn't be translated: \(error.localizedDescription)"
+            return String(localized: "The page couldn't be translated: \(error.localizedDescription)")
         }
     }
 }

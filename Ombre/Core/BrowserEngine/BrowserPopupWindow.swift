@@ -157,7 +157,7 @@ enum PopupTitle {
         guard let url else { return "" }
         let scheme = url.scheme?.lowercased() ?? ""
         if let host = url.host(), !host.isEmpty {
-            return scheme == "https" ? host : "Not Secure — \(host)"
+            return scheme == "https" ? host : String(localized: "Not Secure — \(host)")
         }
         if scheme == "blob", let inner = URL(string: String(url.absoluteString.dropFirst("blob:".count))),
            inner.host() != nil
@@ -244,8 +244,8 @@ extension BrowserPopupWindow: WKUIDelegate {
     ) {
         let alert = NSAlert()
         alert.messageText = message
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         alert.beginSheetModal(for: window) { completionHandler($0 == .alertFirstButtonReturn) }
     }
 
@@ -258,8 +258,8 @@ extension BrowserPopupWindow: WKUIDelegate {
     ) {
         let alert = NSAlert()
         alert.messageText = prompt
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         field.stringValue = defaultText ?? ""
         alert.accessoryView = field

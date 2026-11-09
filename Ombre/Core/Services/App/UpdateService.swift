@@ -38,7 +38,7 @@ class UpdateService: NSObject, ObservableObject {
             guard let value = info?[key] as? String else { return false }
             return !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
-        return hasValue("SUFeedURL") && hasValue("SUPublicEDKey")
+        return hasValue("SUFeedURL") && hasValue("SUPublicEDKey") // not shown
     }
 
     private func setupUpdater() {
@@ -65,24 +65,22 @@ class UpdateService: NSObject, ObservableObject {
     func checkForUpdates() {
         guard Self.isAvailable else { return }
         guard let updater, canCheckForUpdates else {
-            logger
-                .error(
-                    "❌ Update checking not available - updater: \(self.updater != nil), canCheck: \(self.canCheckForUpdates)"
-                )
-            lastCheckResult = "Update checking is not available"
+            let hasUpdater = updater != nil
+            logger.error("Update checking not available - updater: \(hasUpdater), canCheck: \(self.canCheckForUpdates)")
+            lastCheckResult = String(localized: "Update checking is not available")
             lastCheckDate = Date()
             isCheckingForUpdates = false
             return
         }
 
         isCheckingForUpdates = true
-        lastCheckResult = "Checking for updates..."
+        lastCheckResult = String(localized: "Checking for updates...")
         lastCheckDate = Date()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
             if self?.isCheckingForUpdates == true {
                 self?.isCheckingForUpdates = false
-                self?.lastCheckResult = "Update check timed out"
+                self?.lastCheckResult = String(localized: "Update check timed out")
                 self?.lastCheckDate = Date()
             }
         }
@@ -103,19 +101,20 @@ extension UpdateService: SPUUpdaterDelegate {
         DispatchQueue.main.async {
             self.updateAvailable = true
             self.isCheckingForUpdates = false
-            self.lastCheckResult = "Update available: \(version)"
+            self.lastCheckResult = String(localized: "Update available: \(version)")
             self.lastCheckDate = Date()
         }
     }
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: Error) {
         logger.error("❌ Error details: \(error.localizedDescription)")
-        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+        let currentVersion = Bundle.main
+            .infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown" // not shown
 
         DispatchQueue.main.async {
             self.updateAvailable = false
             self.isCheckingForUpdates = false
-            self.lastCheckResult = "No updates available (current: \(currentVersion))"
+            self.lastCheckResult = String(localized: "No updates available (current: \(currentVersion))")
             self.lastCheckDate = Date()
         }
     }
@@ -141,7 +140,7 @@ extension UpdateService: SPUUpdaterDelegate {
 
         DispatchQueue.main.async {
             self.isCheckingForUpdates = false
-            self.lastCheckResult = "Failed to load appcast: \(error.localizedDescription)"
+            self.lastCheckResult = String(localized: "Failed to load appcast: \(error.localizedDescription)")
             self.lastCheckDate = Date()
         }
     }
@@ -153,7 +152,7 @@ extension UpdateService: SPUUpdaterDelegate {
 
         DispatchQueue.main.async {
             self.isCheckingForUpdates = false
-            self.lastCheckResult = "Download failed: \(error.localizedDescription)"
+            self.lastCheckResult = String(localized: "Download failed: \(error.localizedDescription)")
             self.lastCheckDate = Date()
         }
     }

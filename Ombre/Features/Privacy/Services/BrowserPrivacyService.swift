@@ -1,4 +1,7 @@
 import Foundation
+import OSLog
+
+private let privacyLogger = Logger(category: "Privacy")
 @preconcurrency import WebKit
 
 // swiftlint:disable type_body_length function_body_length
@@ -505,7 +508,10 @@ final class BrowserPrivacyService {
                 encodedContentRuleList: encodedRuleList
             ) { [weak self] compiledRuleList, error in
                 if let error {
-                    print("Failed to compile privacy rule list \(identifier): \(error.localizedDescription)")
+                    privacyLogger.error("""
+                    Failed to compile rule list \(identifier, privacy: .public): \
+                    \(error.localizedDescription, privacy: .public)
+                    """)
                 }
                 self?.finishLoadingRuleList(identifier, ruleList: compiledRuleList)
             }

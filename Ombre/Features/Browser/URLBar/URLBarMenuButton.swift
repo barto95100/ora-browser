@@ -46,7 +46,7 @@ struct URLBarMenuButton: View {
         let menu = NSMenu()
 
         let shareItem = NSMenuItem(
-            title: "Share link",
+            title: String(localized: "Share link"),
             action: #selector(MenuActions.shareAction(_:)),
             keyEquivalent: ""
         )

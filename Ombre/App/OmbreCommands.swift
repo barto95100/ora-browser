@@ -79,7 +79,7 @@ struct OmbreCommands: Commands {
                 }
             )) {
                 ForEach(AppAppearance.allCases) { mode in
-                    Text(mode.rawValue.capitalized).tag(mode)
+                    Text(mode.title).tag(mode)
                 }
             }
 
@@ -114,7 +114,9 @@ struct OmbreCommands: Commands {
             }
             .keyboardShortcut(KeyboardShortcuts.App.toggleSidebar.keyboardShortcut)
 
-            Button(isToolbarHidden ? "Show Toolbar" : "Hide Toolbar") {
+            Button(
+                isToolbarHidden ? String(localized: "Show Toolbar") : String(localized: "Hide Toolbar")
+            ) {
                 NotificationCenter.default.post(name: .toggleToolbar, object: NSApp.keyWindow)
             }
             .keyboardShortcut(KeyboardShortcuts.App.toggleToolbar.keyboardShortcut)
@@ -122,11 +124,15 @@ struct OmbreCommands: Commands {
             Divider()
 
             // LAYOUT
-            Button(sidebarPosition == .primary ? "Right Side Tabs" : "Left Side Tabs") {
+            Button(
+                sidebarPosition == .primary ? String(localized: "Right Side Tabs") : String(localized: "Left Side Tabs")
+            ) {
                 NotificationCenter.default.post(name: .toggleSidebarPosition, object: NSApp.keyWindow)
             }
 
-            Button(showFullURL ? "Hide Full URL" : "Show Full URL") {
+            Button(
+                showFullURL ? String(localized: "Hide Full URL") : String(localized: "Show Full URL")
+            ) {
                 NotificationCenter.default.post(name: .toggleFullURL, object: NSApp.keyWindow)
             }
             Divider()

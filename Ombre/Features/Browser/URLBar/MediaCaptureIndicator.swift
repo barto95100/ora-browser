@@ -45,9 +45,11 @@ extension BrowserCaptureDevice {
     }
 
     func toggleTitle(isPaused: Bool) -> String {
-        switch self {
-        case .camera: isPaused ? "Resume Camera" : "Pause Camera"
-        case .microphone: isPaused ? "Resume Microphone" : "Pause Microphone"
+        switch (self, isPaused) {
+        case (.camera, true): String(localized: "Resume Camera")
+        case (.camera, false): String(localized: "Pause Camera")
+        case (.microphone, true): String(localized: "Resume Microphone")
+        case (.microphone, false): String(localized: "Pause Microphone")
         }
     }
 }

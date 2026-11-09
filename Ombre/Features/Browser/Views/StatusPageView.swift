@@ -62,7 +62,7 @@ struct StatusPageView: View {
 
             if errorType == .security, let continueAnyway = onContinueAnyway {
                 OmbreButton(
-                    label: "Continue Anyway",
+                    label: String(localized: "Continue Anyway"),
                     variant: .ghost,
                     size: .sm,
                     labelColorOverride: theme.mutedForeground,
@@ -98,38 +98,42 @@ struct StatusPageView: View {
     private var errorTitle: String {
         switch errorType {
         case .network:
-            return "Can't Connect to the Internet"
+            return String(localized: "Can't Connect to the Internet")
         case .notFound:
-            return "Page Not Found"
+            return String(localized: "Page Not Found")
         case .security:
-            return "Connection Not Secure"
+            return String(localized: "Connection Not Secure")
         case .timeout:
-            return "Request Timed Out"
+            return String(localized: "Request Timed Out")
         case .crashed:
-            return "A Problem Repeatedly Occurred"
+            return String(localized: "A Problem Repeatedly Occurred")
         case .restrictedPort:
-            return "Can't Open This Page"
+            return String(localized: "Can't Open This Page")
         case .unknown:
-            return "Something Went Wrong"
+            return String(localized: "Something Went Wrong")
         }
     }
 
     private var errorDescription: String {
         switch errorType {
         case .network:
-            return "Check your internet connection and try again."
+            return String(localized: "Check your internet connection and try again.")
         case .notFound:
-            return "The page you're looking for doesn't exist or has been moved."
+            return String(localized: "The page you're looking for doesn't exist or has been moved.")
         case .security:
-            return "The connection to this site is not secure."
+            return String(localized: "The connection to this site is not secure.")
         case .timeout:
-            return "The page took too long to load. Try again or check your connection."
+            return String(localized: "The page took too long to load. Try again or check your connection.")
         case .crashed:
-            return "This webpage stopped working several times in a row, so Ombre didn't reload it again."
+            return String(
+                localized: "This webpage stopped working several times in a row, so Ombre didn't reload it again."
+            )
         case .restrictedPort:
-            return "Its address uses a network port reserved for other services, which browsers don't open."
+            return String(
+                localized: "Its address uses a network port reserved for other services, which browsers don't open."
+            )
         case .unknown:
-            return "An unexpected error occurred while loading this page."
+            return String(localized: "An unexpected error occurred while loading this page.")
         }
     }
 
@@ -162,7 +166,7 @@ struct StatusPageView: View {
         }
 
         // WebKit errors
-        if nsError.domain == "WebKitErrorDomain" {
+        if nsError.domain == "WebKitErrorDomain" { // not shown
             return nsError.code == RestrictedPort.errorCode ? .restrictedPort : .notFound
         }
 

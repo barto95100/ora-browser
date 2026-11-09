@@ -104,7 +104,7 @@ struct TimeURLBarButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(appState.showTimeSummary ? "Hide Browsing Time" : "Browsing Time")
+        .help(appState.showTimeSummary ? String(localized: "Hide Browsing Time") : String(localized: "Browsing Time"))
         .accessibilityLabel(Text("Browsing Time"))
     }
 }

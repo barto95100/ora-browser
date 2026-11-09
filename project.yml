@@ -112,6 +112,11 @@ targets:
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 106
         PRODUCT_NAME: Ombre
+        # Interface in the Mac's language (English, French): the compiler
+        # lists the strings to translate in Ombre/Resources/Localizable.xcstrings
+        # (checked by scripts/check-localization.sh).
+        SWIFT_EMIT_LOC_STRINGS: YES
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -175,6 +180,9 @@ schemes:
       config: Debug
     test:
       config: Test
+      # The tests read English texts, whatever the Mac's language.
+      language: en
+      region: US
       targets:
         - OmbreTests
     profile:

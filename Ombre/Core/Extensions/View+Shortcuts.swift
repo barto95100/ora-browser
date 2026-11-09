@@ -13,13 +13,14 @@ private struct OmbreKeyboardShortcutModifier: ViewModifier {
 
 /// Attach a tooltip that includes the current shortcut display.
 private struct OmbreShortcutHelpModifier: ViewModifier {
-    let helpText: String
+    let helpText: LocalizedStringResource
     let shortcut: KeyboardShortcutDefinition
     @EnvironmentObject private var shortcutManager: CustomKeyboardShortcutManager
 
     func body(content: Content) -> some View {
+        let text = "\(String(localized: helpText)) (\(shortcut.currentChord.display))"
         content
-            .help("\(helpText) (\(shortcut.currentChord.display))")
+            .help(text)
     }
 }
 
@@ -31,7 +32,7 @@ extension View {
 
     /// Helper to keep tooltips in sync with the current shortcut mapping.
     /// Results in a tooltip like: "Copy URL (⇧⌘C)"
-    func ombreShortcutHelp(_ helpText: String, for shortcut: KeyboardShortcutDefinition) -> some View {
+    func ombreShortcutHelp(_ helpText: LocalizedStringResource, for shortcut: KeyboardShortcutDefinition) -> some View {
         modifier(OmbreShortcutHelpModifier(helpText: helpText, shortcut: shortcut))
     }
 }

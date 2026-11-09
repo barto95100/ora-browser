@@ -1460,6 +1460,16 @@
         }
       }
     },
+    "Arc…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arc…"
+          }
+        }
+      }
+    },
     "Are you sure you want to quit?" : {
       "localizations" : {
         "fr" : {
@@ -2180,6 +2190,16 @@
         }
       }
     },
+    "Choose Arc's File…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir le fichier d’Arc…"
+          }
+        }
+      }
+    },
     "Choose Export…" : {
       "localizations" : {
         "fr" : {
@@ -2196,6 +2216,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisir une image…"
+          }
+        }
+      }
+    },
+    "Choose StorableSidebar.json, in Arc's folder (Library › Application Support › Arc)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez StorableSidebar.json, dans le dossier d’Arc (Bibliothèque › Application Support › Arc)."
           }
         }
       }
@@ -4180,6 +4210,26 @@
         }
       }
     },
+    "Import from Arc" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis Arc"
+          }
+        }
+      }
+    },
+    "Import from Arc…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis Arc…"
+          }
+        }
+      }
+    },
     "Import from Safari" : {
       "localizations" : {
         "fr" : {
@@ -5780,6 +5830,16 @@
         }
       }
     },
+    "Ombre couldn't read this file. Choose StorableSidebar.json in Arc's folder." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu lire ce fichier. Choisissez StorableSidebar.json dans le dossier d’Arc."
+          }
+        }
+      }
+    },
     "Ombre couldn't read this Zen session." : {
       "localizations" : {
         "fr" : {
@@ -5816,6 +5876,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ombre n’a pas pu déterminer la langue de cette page."
+          }
+        }
+      }
+    },
+    "Ombre imports your Arc spaces with their pinned tabs and folders, and your favorites. Open tabs are not imported. Arc's file is read on this Mac, so this works even after Arc's service closes." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre importe vos espaces Arc avec leurs onglets épinglés et leurs dossiers, ainsi que vos favoris. Les onglets ouverts ne sont pas importés. Le fichier d’Arc est lu sur ce Mac : l’import fonctionne même après la fermeture du service d’Arc."
           }
         }
       }
@@ -6092,6 +6162,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autres extensions"
+          }
+        }
+      }
+    },
+    "Other File…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre fichier…"
           }
         }
       }
@@ -6544,6 +6624,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitter"
+          }
+        }
+      }
+    },
+    "Quit Arc first, so its latest changes are saved." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quittez d’abord Arc pour que ses dernières modifications soient enregistrées."
           }
         }
       }
@@ -7839,6 +7929,16 @@
         }
       }
     },
+    "Spaces whose name is already used get “(Arc)” after their name." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les espaces dont le nom existe déjà sont suivis de « (Arc) »."
+          }
+        }
+      }
+    },
     "Spaces whose name is already used get “(Safari)” after their name." : {
       "localizations" : {
         "fr" : {
@@ -8678,6 +8778,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le paquet de cette extension n’est pas signé par son développeur : il a été modifié."
+          }
+        }
+      }
+    },
+    "This file has no pinned tabs, folders or favorites to import." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier n’a ni onglets épinglés, ni dossiers, ni favoris à importer."
           }
         }
       }

@@ -58,7 +58,7 @@ private struct BrowserWindowRoot: View {
         BrowserView()
             .sheet(item: $appState.importSource) { source in
                 switch source {
-                case .zen: BrowserImportSheet()
+                case .zen, .arc: BrowserImportSheet(source: source)
                 case .safari: SafariImportSheet()
                 }
             }

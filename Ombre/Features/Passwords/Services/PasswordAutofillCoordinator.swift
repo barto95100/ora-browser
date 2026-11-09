@@ -468,15 +468,7 @@ final class PasswordAutofillCoordinator {
     /// The password wasn't saved: said, not shown as saved.
     @MainActor
     private func presentSaveFailure(_ error: Error, host: String) {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = Self.saveFailureTitle(host: host)
-        alert.informativeText = error.localizedDescription
-        if let window = presentationWindow() {
-            alert.beginSheetModal(for: window)
-        } else {
-            alert.runModal()
-        }
+        PasswordFailureAlert.present(title: Self.saveFailureTitle(host: host), error: error, in: presentationWindow())
     }
 
     nonisolated static func saveFailureTitle(host: String) -> String {

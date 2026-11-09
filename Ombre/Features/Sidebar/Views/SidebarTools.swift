@@ -87,10 +87,10 @@ enum BrowserWindows {
     }
 
     /// Asks the front normal window to import from another browser.
-    static func showImport() {
+    static func showImport(from source: ImportSource) {
         if let window = front {
             window.makeKeyAndOrderFront(nil)
-            NotificationCenter.default.post(name: .showImport, object: window)
+            NotificationCenter.default.post(name: .showImport, object: window, userInfo: ["source": source])
         }
     }
 }

@@ -3,7 +3,7 @@ import Foundation
 /// What another browser holds, read before anything is written to Ombre: spaces
 /// with their favorites (Zen's Essentials, Arc's favorites), and their pinned
 /// tabs and folders, folders inside folders included.
-struct ImportedBrowserData: Equatable {
+struct ImportedBrowserData: Equatable, Sendable {
     var spaces: [ImportedSpace]
 
     var favoriteCount: Int {
@@ -19,7 +19,7 @@ struct ImportedBrowserData: Equatable {
     }
 
     var isEmpty: Bool {
-        spaces.allSatisfy { $0.favorites.isEmpty && $0.pinned.isEmpty }
+        spaces.allSatisfy { $0.favorites.isEmpty && $0.pinned.isEmpty && $0.history.isEmpty }
     }
 
     /// The spaces at these positions, in their order; unknown positions are ignored.
@@ -28,22 +28,31 @@ struct ImportedBrowserData: Equatable {
     }
 }
 
-struct ImportedSpace: Equatable {
+struct ImportedSpace: Equatable, Sendable {
     var name: String
     /// An emoji, if the browser has one for it.
     var emoji: String?
     var favorites: [ImportedTab] = []
     /// In display order.
     var pinned: [ImportedPinnedItem] = []
+    /// Pages visited, most recent first (Safari's profiles have their own).
+    var history: [ImportedVisit] = []
 }
 
-struct ImportedTab: Equatable {
+struct ImportedVisit: Equatable, Sendable {
+    var url: URL
+    var title: String
+    var lastVisit: Date
+    var visitCount: Int
+}
+
+struct ImportedTab: Equatable, Sendable {
     var url: URL
     var title: String
     var faviconURL: URL?
 }
 
-indirect enum ImportedPinnedItem: Equatable {
+indirect enum ImportedPinnedItem: Equatable, Sendable {
     case tab(ImportedTab)
     case folder(name: String, isOpen: Bool, items: [ImportedPinnedItem])
 

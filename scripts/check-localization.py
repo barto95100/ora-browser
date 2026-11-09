@@ -93,6 +93,9 @@ NOT_SHOWN_FILES = {
     "Ombre/Core/Services/Web/FaviconService.swift",
     "Ombre/Features/Privacy/Services/BrowserPrivacyService.swift",
     "Ombre/Features/Privacy/Services/ContentBlockerArtifactStore.swift",
+    # Readers of other browsers' files: formats and names, nothing shown.
+    "Ombre/Features/Importer/Services/SafariImporter.swift",
+    "Ombre/Features/Importer/Services/ZipReader.swift",
     # JSON keys (the categories show as icons; its one error is translated).
     "Ombre/Shared/EmojiPicker/EmojiPickerModel.swift",
     # Legal texts and component names, kept in English like README.md.

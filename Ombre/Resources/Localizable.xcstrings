@@ -211,6 +211,46 @@
         }
       }
     },
+    "%lld bookmarks go to:" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld bookmark goes to:"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld bookmarks go to:"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld signet va dans :"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld signets vont dans :"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld cycles" : {
       "localizations" : {
         "en" : {
@@ -427,6 +467,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld min"
+          }
+        }
+      }
+    },
+    "%lld pages in the history" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld page in the history"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pages in the history"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld page dans l’historique"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pages dans l’historique"
+                }
+              }
+            }
           }
         }
       }
@@ -2100,12 +2180,32 @@
         }
       }
     },
+    "Choose Export…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir l’export…"
+          }
+        }
+      }
+    },
     "Choose Image…" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisir une image…"
+          }
+        }
+      }
+    },
+    "Choose the file Safari exported (a .zip), or the folder it unpacked to." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez le fichier exporté par Safari (un .zip), ou le dossier obtenu en le décompressant."
           }
         }
       }
@@ -2995,6 +3095,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Empêcher cette page d’afficher d’autres boîtes de dialogue"
+          }
+        }
+      }
+    },
+    "Don't import the bookmarks" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne pas importer les signets"
           }
         }
       }
@@ -4070,6 +4180,26 @@
         }
       }
     },
+    "Import from Safari" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis Safari"
+          }
+        }
+      }
+    },
+    "Import from Safari…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis Safari…"
+          }
+        }
+      }
+    },
     "Import from Zen" : {
       "localizations" : {
         "fr" : {
@@ -4106,6 +4236,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "dans tous les espaces"
+          }
+        }
+      }
+    },
+    "In Safari, choose File › Export Browsing Data to File, then choose the exported file here. Each Safari profile becomes a space with its history, and your bookmarks become pinned tabs." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans Safari, choisissez Fichier › Exporter les données de navigation dans un fichier, puis choisissez ici le fichier exporté. Chaque profil Safari devient un espace avec son historique, et vos signets deviennent des onglets épinglés."
           }
         }
       }
@@ -5630,6 +5770,16 @@
         }
       }
     },
+    "Ombre couldn't read this export. Choose the .zip file Safari made." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu lire cet export. Choisissez le fichier .zip créé par Safari."
+          }
+        }
+      }
+    },
     "Ombre couldn't read this Zen session." : {
       "localizations" : {
         "fr" : {
@@ -5926,6 +6076,16 @@
         }
       }
     },
+    "Other Export…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre export…"
+          }
+        }
+      }
+    },
     "Other Extensions" : {
       "localizations" : {
         "fr" : {
@@ -6052,6 +6212,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les mots de passe sont verrouillés"
+          }
+        }
+      }
+    },
+    "Passwords are not imported. The export stays where it is: Ombre only reads it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mots de passe ne sont pas importés. L’export reste où il est : Ombre ne fait que le lire."
           }
         }
       }
@@ -6434,6 +6604,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lire le presse-papiers"
+          }
+        }
+      }
+    },
+    "Reading the export…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture de l’export…"
           }
         }
       }
@@ -6906,6 +7086,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Extensions Safari de vos apps, et ce à quoi elles ont accès."
+          }
+        }
+      }
+    },
+    "Safari…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari…"
           }
         }
       }
@@ -7645,6 +7835,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Espaces"
+          }
+        }
+      }
+    },
+    "Spaces whose name is already used get “(Safari)” after their name." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les espaces dont le nom existe déjà sont suivis de « (Safari) »."
           }
         }
       }
@@ -8428,6 +8628,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette connexion n’est pas privée : le mot de passe sera envoyé sans chiffrement."
+          }
+        }
+      }
+    },
+    "This export has no history or bookmarks Ombre can import." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet export ne contient ni historique ni signets qu’Ombre puisse importer."
           }
         }
       }

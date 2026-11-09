@@ -1,13 +1,21 @@
 import SwiftUI
 
-/// File › Import Data. Arc's import is gone until it is redone with real
-/// data: it read a file the sandbox never lets the app see.
+/// The browsers Ombre imports from.
+enum ImportSource: String, Identifiable {
+    case zen
+    case safari
+
+    var id: String {
+        rawValue
+    }
+}
+
+/// File › Import Data.
 struct ImportDataButton: View {
     var body: some View {
         Menu("Import Data") {
-            Button("Zen…") {
-                BrowserWindows.showImport()
-            }
+            Button("Safari…") { BrowserWindows.showImport(from: .safari) }
+            Button("Zen…") { BrowserWindows.showImport(from: .zen) }
         }
     }
 }

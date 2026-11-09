@@ -56,7 +56,12 @@ private struct BrowserWindowRoot: View {
 
     var body: some View {
         BrowserView()
-            .sheet(isPresented: $appState.showImport) { BrowserImportSheet() }
+            .sheet(item: $appState.importSource) { source in
+                switch source {
+                case .zen: BrowserImportSheet()
+                case .safari: SafariImportSheet()
+                }
+            }
             .background(WindowReader(window: $window))
             // Browsing time: the page in front changed.
             .onChange(of: tabManager.activeTab?.id) {

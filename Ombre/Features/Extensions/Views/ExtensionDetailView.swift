@@ -158,6 +158,6 @@ struct ExtensionDetailView: View {
         case .deny: String(localized: "No website")
         }
         let count = ExtensionSiteAccess.activeRules(record.siteRules).count
-        return count == 0 ? other : String(localized: "\(other) · \(count) set")
+        return count == 0 ? other : "\(other) · " + String(localized: "\(count) sites set")
     }
 }

@@ -41,22 +41,6 @@
         }
       }
     },
-    "%@ · %lld set" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$lld set"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ · sites réglés : %2$lld"
-          }
-        }
-      }
-    },
     "%@ integration coming soon." : {
       "localizations" : {
         "fr" : {
@@ -434,6 +418,46 @@
         }
       }
     },
+    "%lld sites set" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld site réglé"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sites réglés"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld site set"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sites set"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld spaces imported." : {
       "localizations" : {
         "en" : {
@@ -582,7 +606,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Accès sur %@"
+            "value" : "Accès à %@"
           }
         }
       }
@@ -684,7 +708,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ajouter depuis un dossier ou un zip…"
+            "value" : "Ajouter depuis un dossier ou un fichier zip…"
           }
         }
       }
@@ -760,6 +784,16 @@
         }
       }
     },
+    "Additional mobile ad-network coverage for embedded and responsive mobile ads." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture supplémentaire des régies publicitaires mobiles, pour les publicités intégrées et adaptatives."
+          }
+        }
+      }
+    },
     "Address" : {
       "localizations" : {
         "fr" : {
@@ -776,6 +810,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Publicités"
+          }
+        }
+      }
+    },
+    "Aggressive Auto-Refresh" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour automatique fréquente"
           }
         }
       }
@@ -1400,6 +1444,16 @@
         }
       }
     },
+    "Broader tracker and analytics coverage from AdGuard’s privacy list." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture plus large des traqueurs et outils de mesure, issue de la liste de confidentialité d’AdGuard."
+          }
+        }
+      }
+    },
     "Browser defaults, app behavior, and software updates." : {
       "localizations" : {
         "fr" : {
@@ -1956,6 +2010,16 @@
         }
       }
     },
+    "Core AdGuard ads list for general web ad blocking." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste publicitaire principale d’AdGuard, pour le blocage des publicités sur le web."
+          }
+        }
+      }
+    },
     "Couldn't add it: %@" : {
       "localizations" : {
         "fr" : {
@@ -1997,6 +2061,16 @@
         }
       }
     },
+    "Custom Filter List" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de filtres personnalisée"
+          }
+        }
+      }
+    },
     "Custom list name" : {
       "localizations" : {
         "fr" : {
@@ -2013,6 +2087,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listes personnalisées"
+          }
+        }
+      }
+    },
+    "Custom remotely hosted filter list." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de filtres personnalisée hébergée en ligne."
           }
         }
       }
@@ -2485,7 +2569,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les extensions nécessitent macOS 15.4 ou ultérieur."
+            "value" : "Les extensions nécessitent macOS 15.4 ou une version ultérieure."
           }
         }
       }
@@ -2507,6 +2591,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les listes de filtres sont déjà à jour"
+          }
+        }
+      }
+    },
+    "Filter lists must use an https:// address." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les listes de filtres doivent utiliser une adresse https://."
           }
         }
       }
@@ -2647,7 +2741,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oublier (sera redemandé la prochaine fois)"
+            "value" : "Oublier (la question sera reposée la prochaine fois)"
           }
         }
       }
@@ -2679,7 +2773,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fournie par %@"
+            "value" : "Provenant de %@"
           }
         }
       }
@@ -2689,7 +2783,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Depuis un fichier"
+            "value" : "Provenant d’un fichier"
           }
         }
       }
@@ -2699,7 +2793,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fournie par une app"
+            "value" : "Provenant d’une app"
           }
         }
       }
@@ -2709,7 +2803,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Depuis le Chrome Web Store"
+            "value" : "Provenant du Chrome Web Store"
           }
         }
       }
@@ -3158,7 +3252,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Savoir quand vous êtes absent"
+            "value" : "Détecter votre inactivité"
           }
         }
       }
@@ -3420,6 +3514,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Gérer…"
+          }
+        }
+      }
+    },
+    "Manual Refresh Only" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour manuelle uniquement"
           }
         }
       }
@@ -3751,6 +3855,16 @@
     },
     "No browsing time for this period" : {},
     "No browsing time today" : {},
+    "No cached filter rules are available for %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle de filtrage en cache pour %@."
+          }
+        }
+      }
+    },
     "No Downloads" : {},
     "No downloads yet" : {},
     "No extension from the Chrome Web Store." : {
@@ -3840,6 +3954,16 @@
       }
     },
     "No task yet" : {},
+    "No WebKit-compatible rules were produced for %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle compatible avec WebKit n’a été produite pour %@."
+          }
+        }
+      }
+    },
     "No website" : {
       "localizations" : {
         "fr" : {
@@ -3896,7 +4020,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Plus demandé tant que le refus n’est pas oublié."
+            "value" : "Elles ne seront plus demandées, sauf si vous les oubliez."
           }
         }
       }
@@ -4060,6 +4184,16 @@
       }
     },
     "Ombre is derived from Ora Browser (the-ora/browser), licensed under GPL-3.0." : {},
+    "Ombre Passwords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots de passe Ombre"
+          }
+        }
+      }
+    },
     "Ombre's own shortcuts come first." : {
       "localizations" : {
         "fr" : {
@@ -4086,6 +4220,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sur la page d’une extension dans le Chrome Web Store, cliquez sur « Ajouter à Ombre ». Certaines extensions Chrome utilisent des fonctions que WebKit n’a pas : elles peuvent ne pas fonctionner entièrement."
+          }
+        }
+      }
+    },
+    "On Launch + Daily" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au lancement et chaque jour"
           }
         }
       }
@@ -4606,7 +4750,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lire et modifier les pages de : %@"
+            "value" : "Lire et modifier les pages sur : %@"
           }
         }
       }
@@ -4823,6 +4967,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ retirée"
+          }
+        }
+      }
+    },
+    "Removes common tracking parameters from requested URLs when WebKit rules can express them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retire les paramètres de suivi courants des adresses demandées, quand les règles WebKit le permettent."
           }
         }
       }
@@ -5127,6 +5281,23 @@
         }
       }
     },
+    "searchEngine.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        }
+      }
+    },
     "See blocked requests" : {
       "localizations" : {
         "fr" : {
@@ -5227,6 +5398,23 @@
         }
       }
     },
+    "settings.search" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche"
+          }
+        }
+      }
+    },
     "Share" : {
       "localizations" : {
         "fr" : {
@@ -5264,6 +5452,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Raccourci déjà utilisé"
+          }
+        }
+      }
+    },
+    "shortcut.category.edit" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Édition"
           }
         }
       }
@@ -5642,6 +5847,16 @@
         }
       }
     },
+    "Store encrypted credentials in Ombre and show Ombre's autofill overlay." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stocke les identifiants chiffrés dans Ombre et affiche le remplissage automatique d’Ombre."
+          }
+        }
+      }
+    },
     "Store unlimited data" : {
       "localizations" : {
         "fr" : {
@@ -5854,6 +6069,16 @@
         }
       }
     },
+    "Targets cookie notices, popups, widgets, and other page annoyances." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible les bandeaux de cookies, fenêtres surgissantes, widgets et autres nuisances des pages."
+          }
+        }
+      }
+    },
     "Task" : {},
     "Tasks" : {
       "localizations" : {
@@ -5942,6 +6167,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’extension a été envoyée depuis l’extérieur du Chrome Web Store."
+          }
+        }
+      }
+    },
+    "The filter list download failed with status %lld." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le téléchargement de la liste de filtres a échoué (code %lld)."
+          }
+        }
+      }
+    },
+    "The filter list is larger than 32 MB: Ombre doesn't download it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste de filtres dépasse 32 Mo : Ombre ne la télécharge pas."
+          }
+        }
+      }
+    },
+    "The filter list response could not be read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse de la liste de filtres n’a pas pu être lue."
           }
         }
       }
@@ -6435,7 +6690,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mises à jour : %@."
+            "value" : "Extensions mises à jour : %@."
           }
         }
       }
@@ -6445,7 +6700,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mises à jour : %@. Une mise à jour attend votre accord."
+            "value" : "Extensions mises à jour : %@. Une mise à jour attend votre accord."
           }
         }
       }
@@ -6739,237 +6994,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom arrière"
-          }
-        }
-      }
-    },
-    "On Launch + Daily" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Au lancement et chaque jour"
-          }
-        }
-      }
-    },
-    "The filter list is larger than 32 MB: Ombre doesn't download it." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La liste de filtres dépasse 32 Mo : Ombre ne la télécharge pas."
-          }
-        }
-      }
-    },
-    "shortcut.category.edit" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Edit"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Édition"
-          }
-        }
-      }
-    },
-    "Additional mobile ad-network coverage for embedded and responsive mobile ads." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couverture supplémentaire des régies publicitaires mobiles, pour les publicités intégrées et adaptatives."
-          }
-        }
-      }
-    },
-    "Custom Filter List" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liste de filtres personnalisée"
-          }
-        }
-      }
-    },
-    "Aggressive Auto-Refresh" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mise à jour automatique fréquente"
-          }
-        }
-      }
-    },
-    "Custom remotely hosted filter list." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liste de filtres personnalisée hébergée en ligne."
-          }
-        }
-      }
-    },
-    "The filter list download failed with status %lld." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le téléchargement de la liste de filtres a échoué (code %lld)."
-          }
-        }
-      }
-    },
-    "settings.search" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Search"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recherche"
-          }
-        }
-      }
-    },
-    "searchEngine.save" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enregistrer"
-          }
-        }
-      }
-    },
-    "Ombre Passwords" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mots de passe Ombre"
-          }
-        }
-      }
-    },
-    "Manual Refresh Only" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mise à jour manuelle uniquement"
-          }
-        }
-      }
-    },
-    "No cached filter rules are available for %@." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucune règle de filtrage en cache pour %@."
-          }
-        }
-      }
-    },
-    "Targets cookie notices, popups, widgets, and other page annoyances." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cible les bandeaux de cookies, fenêtres surgissantes, widgets et autres nuisances des pages."
-          }
-        }
-      }
-    },
-    "Removes common tracking parameters from requested URLs when WebKit rules can express them." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retire les paramètres de suivi courants des adresses demandées, quand les règles WebKit le permettent."
-          }
-        }
-      }
-    },
-    "Store encrypted credentials in Ombre and show Ombre's autofill overlay." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stocke les identifiants chiffrés dans Ombre et affiche le remplissage automatique d’Ombre."
-          }
-        }
-      }
-    },
-    "The filter list response could not be read." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La réponse de la liste de filtres n’a pas pu être lue."
-          }
-        }
-      }
-    },
-    "No WebKit-compatible rules were produced for %@." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucune règle compatible avec WebKit n’a été produite pour %@."
-          }
-        }
-      }
-    },
-    "Core AdGuard ads list for general web ad blocking." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Liste publicitaire principale d’AdGuard, pour le blocage des publicités sur le web."
-          }
-        }
-      }
-    },
-    "Filter lists must use an https:// address." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les listes de filtres doivent utiliser une adresse https://."
-          }
-        }
-      }
-    },
-    "Broader tracker and analytics coverage from AdGuard’s privacy list." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couverture plus large des traqueurs et outils de mesure, issue de la liste de confidentialité d’AdGuard."
           }
         }
       }

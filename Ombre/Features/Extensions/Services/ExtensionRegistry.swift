@@ -1,3 +1,4 @@
+// Never shows a text (a file name): skipped by scripts/check-localization.py.
 import Foundation
 
 /// The installed extensions, in `Application Support/Ombre/Extensions/extensions.json`.

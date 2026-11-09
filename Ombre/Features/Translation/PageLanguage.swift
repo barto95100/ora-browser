@@ -48,6 +48,21 @@ enum PageLanguage {
         return interface.localizedString(forLanguageCode: code) ?? code
     }
 
+    /// The name as the object of a sentence ("Always translate …"): French
+    /// puts the article before it (« l’allemand », « le français »).
+    static func objectName(
+        of language: Locale.Language,
+        interface: String = Bundle.main.preferredLocalizations.first ?? "en"
+    ) -> String {
+        let code = language.languageCode?.identifier ?? language.minimalIdentifier
+        let name = Locale(identifier: interface).localizedString(forLanguageCode: code) ?? code
+        guard interface == "fr", let first = name.first else { return name }
+        // A vowel, or a mute h (« l’hébreu »); not an aspirated h (« le hongrois »)
+        // nor a y (« le yiddish »).
+        let elided = "aeiouâéèêîïô".contains(first.lowercased()) || name.hasPrefix("hébreu")
+        return (elided ? "l’" : "le ") + name // no translation
+    }
+
     /// A language Apple's Translation knows (any of its pairs).
     static func canTranslate(_ language: Locale.Language) async -> Bool {
         let languages = await supportedLanguages()

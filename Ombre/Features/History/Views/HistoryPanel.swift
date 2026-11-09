@@ -42,7 +42,7 @@ struct HistoryPanel: View {
         }
         .onChange(of: query) { reload() }
         .confirmationDialog(
-            "Clear \(rangeToClear?.title ?? "")?",
+            rangeToClear?.confirmationTitle ?? "",
             isPresented: Binding(get: { rangeToClear != nil }, set: { if !$0 { rangeToClear = nil } }),
             presenting: rangeToClear
         ) { range in

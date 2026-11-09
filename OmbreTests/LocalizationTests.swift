@@ -38,4 +38,15 @@ struct LocalizationTests {
         let camera = try french().localizedString(forKey: "NSCameraUsageDescription", value: nil, table: "InfoPlist")
         #expect(camera.hasPrefix("Permet aux sites web d’utiliser la caméra"))
     }
+
+    /// Language names sit in sentences: lower case, with the article French needs.
+    @Test func languageNamesFitInSentences() {
+        let german = Locale.Language(identifier: "de")
+        #expect(PageLanguage.objectName(of: german, interface: "fr") == "l’allemand")
+        #expect(PageLanguage.objectName(of: Locale.Language(identifier: "fr"), interface: "fr") == "le français")
+        #expect(PageLanguage.objectName(of: german, interface: "en") == "German")
+        #expect(PageLanguage.objectName(of: Locale.Language(identifier: "hu"), interface: "fr") == "le hongrois")
+        #expect(PageLanguage.objectName(of: Locale.Language(identifier: "he"), interface: "fr") == "l’hébreu")
+        #expect(PageLanguage.objectName(of: Locale.Language(identifier: "yi"), interface: "fr") == "le yiddish")
+    }
 }

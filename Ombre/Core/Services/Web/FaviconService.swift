@@ -6,6 +6,9 @@ import SwiftUI
 @MainActor
 final class FaviconService: ObservableObject {
     static let shared = FaviconService()
+    /// Icons are shown at 16 to 32 points: kept at 32 (Retina), not at the
+    /// site's largest (up to 512 px, about 1 MB each).
+    static let iconSize: CGFloat = 32
     private var cache: [String: NSImage] = [:]
     private var colorCache: [String: Color] = [:]
     private var sourceURLCache: [String: URL] = [:]
@@ -120,7 +123,7 @@ final class FaviconService: ObservableObject {
 
     @MainActor
     private func completeFetch(for domain: String, favicon: NSImage?, sourceURL: URL?) {
-        if let favicon {
+        if let favicon = favicon.map({ $0.downscaled(toFit: Self.iconSize) }) {
             cache[domain] = favicon
             colorCache[domain] = Color(favicon.averageColor())
             if let sourceURL {
@@ -153,6 +156,27 @@ final class FaviconService: ObservableObject {
 }
 
 extension NSImage {
+    /// A copy at most `side` points wide and high, drawn at 2× (Retina); the
+    /// image itself when already that small.
+    func downscaled(toFit side: CGFloat) -> NSImage {
+        guard size.width > side || size.height > side, size.width > 0, size.height > 0 else { return self }
+        let scale = side / max(size.width, size.height)
+        let target = NSSize(width: (size.width * scale).rounded(), height: (size.height * scale).rounded())
+        guard let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(target.width * 2), pixelsHigh: Int(target.height * 2),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return self }
+        bitmap.size = target
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+        draw(in: NSRect(origin: .zero, size: target), from: .zero, operation: .copy, fraction: 1)
+        NSGraphicsContext.restoreGraphicsState()
+        let image = NSImage(size: target)
+        image.addRepresentation(bitmap)
+        return image
+    }
+
     func averageColor() -> NSColor {
         guard let cgImage = self.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             return NSColor.gray

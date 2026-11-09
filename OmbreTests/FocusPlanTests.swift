@@ -51,5 +51,9 @@ struct FocusPlanTests {
         #expect(FocusCard.clock(25 * 60) == "25:00")
         #expect(FocusCard.clock(59.2) == "1:00")
         #expect(FocusCard.clock(3600 + 65) == "1:01:05")
+        // In the windows behind (redrawn once a minute).
+        #expect(FocusCard.minutesLeft(12 * 60 + 30) == "13 min")
+        #expect(FocusCard.minutesLeft(60) == "1 min")
+        #expect(FocusCard.minutesLeft(3600 + 65) == "1 h 02")
     }
 }

@@ -15,6 +15,8 @@ struct FloatingTabSwitcher: View {
     @FocusState private var focusedTab: Tab.ID?
     @State private var tabSnapshots: [Tab: TabSnapshot] = [:]
     @State private var isLoadingSnapshots = false
+    /// The tabs shown: chosen once when the switcher opens.
+    @State private var recentTabs: [Tab] = []
     @State private var mouseHasMoved = false
     @State private var mouseMonitor: Any?
 
@@ -37,6 +39,7 @@ struct FloatingTabSwitcher: View {
             closeFloatingTabSwitch()
         }
         .onAppear {
+            recentTabs = currentRecentTabs()
             preloadSnapshots()
             focusFirstTab()
             startMouseMonitor()
@@ -46,6 +49,7 @@ struct FloatingTabSwitcher: View {
         }
         .onChange(of: appState.isFloatingTabSwitchVisible) { _, isVisible in
             if isVisible {
+                recentTabs = currentRecentTabs()
                 preloadSnapshots()
                 focusFirstTab()
                 startMouseMonitor()
@@ -53,7 +57,7 @@ struct FloatingTabSwitcher: View {
                 stopMouseMonitor()
             }
         }
-        .onChange(of: keyModifierListener.modifierFlags) { _, newFlags in
+        .onReceive(keyModifierListener.modifierFlagsChanged) { newFlags in
             handleModifierChange(newFlags)
         }
     }
@@ -217,15 +221,13 @@ struct FloatingTabSwitcher: View {
 
     // MARK: - Computed Properties
 
-    private var recentTabs: [Tab] {
+    private func currentRecentTabs() -> [Tab] {
         guard let activeContainer = tabManager.activeContainer else { return [] }
-        return activeContainer.tabs
-            .filter(\.isWebViewReady)
-            .sorted { (lhs: Tab, rhs: Tab) in
-                (lhs.lastAccessedAt ?? Date()) > (rhs.lastAccessedAt ?? Date())
-            }
-            .prefix(Constants.maxTabsToShow)
-            .map { $0 }
+        return TabSwitcherStart.mostRecent(
+            activeContainer.tabs.filter(\.isWebViewReady),
+            accessedAt: \.lastAccessedAt,
+            limit: Constants.maxTabsToShow
+        )
     }
 
     // MARK: - Methods
@@ -314,26 +316,15 @@ struct FloatingTabSwitcher: View {
     }
 
     private func takeSnapshot(for tab: Tab, url: String, group: DispatchGroup) {
-        let config = createSnapshotConfiguration(for: tab)
-        DispatchQueue.main.async {
-            tab.takeSnapshot(configuration: config) { image, _ in
-                defer { group.leave() }
-
-                guard let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                    return
-                }
-
-                // Preserve the original aspect ratio of the snapshot
-                let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
-                let nsImage = NSImage(cgImage: cgImage, size: originalSize)
-
-                self.tabSnapshots[tab] = TabSnapshot(image: nsImage, url: url)
-            }
+        // The preview's size, not the page's (a full Retina page is ~20 MB).
+        let config = BrowserSnapshotConfiguration(
+            rect: nil, afterScreenUpdates: false, width: Constants.previewWidth
+        )
+        tab.takeSnapshot(configuration: config) { image, _ in
+            defer { group.leave() }
+            guard let image else { return }
+            self.tabSnapshots[tab] = TabSnapshot(image: image, url: url)
         }
-    }
-
-    private func createSnapshotConfiguration(for tab: Tab) -> BrowserSnapshotConfiguration {
-        BrowserSnapshotConfiguration(rect: nil, afterScreenUpdates: false)
     }
 
     private func startMouseMonitor() {
@@ -362,6 +353,17 @@ struct FloatingTabSwitcher: View {
 
 /// Where the tab switcher starts in its list (most recent first).
 enum TabSwitcherStart {
+    /// The most recently used first; never used ones last (they used to
+    /// count as used just now).
+    static func mostRecent<T>(_ items: [T], accessedAt: (T) -> Date?, limit: Int) -> [T] {
+        Array(
+            items.map { (item: $0, date: accessedAt($0) ?? .distantPast) }
+                .sorted { $0.date > $1.date }
+                .prefix(limit)
+                .map(\.item)
+        )
+    }
+
     static func index(count: Int, backward: Bool) -> Int {
         guard count > 1 else { return 0 }
         return backward ? count - 1 : 1

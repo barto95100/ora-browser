@@ -156,6 +156,8 @@ struct BrowserNavigationEvent {
 struct BrowserSnapshotConfiguration {
     let rect: CGRect?
     let afterScreenUpdates: Bool
+    /// The image's width in points (its height follows); nil: the page's.
+    var width: CGFloat?
 
     static let full = BrowserSnapshotConfiguration(rect: nil, afterScreenUpdates: false)
 }

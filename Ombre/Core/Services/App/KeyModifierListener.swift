@@ -1,9 +1,10 @@
+import Combine
 import SwiftUI
 
 /*
  * KeyModifierListener is an ObservableObject that monitors keyboard modifier key changes and global key down events.
  *
- * It publishes the current modifier flags via the `modifierFlags` property, which updates whenever modifier keys are pressed or released.
+ * It sends each change of the modifier keys held through `modifierFlagsChanged` (not published: no view redraws for them).
  *
  * Additionally, it allows registering custom handlers for key down events using `registerKeyDownHandler`.
  * Handlers only receive the key down events of the listener's `window`.
@@ -55,7 +56,12 @@ struct SystemEventMonitoring: EventMonitoring {
 }
 
 final class KeyModifierListener: ObservableObject {
-    @Published var modifierFlags = NSEvent.ModifierFlags([])
+    /// The modifier keys held. Not published: the window's root view
+    /// observes this object, and was redrawn at each ⌘, ⇧, ⌥ or ⌃.
+    private(set) var modifierFlags = NSEvent.ModifierFlags([])
+    /// Each change of the keys held, for the one view that needs it (the tab
+    /// switcher, waiting for ⌃ to be released).
+    let modifierFlagsChanged = PassthroughSubject<NSEvent.ModifierFlags, Never>()
 
     /// The browser window that owns this listener. Key down handlers only see
     /// the events typed in it (see `EventWindowScope`); none until it is known.
@@ -68,7 +74,7 @@ final class KeyModifierListener: ObservableObject {
     init(monitoring: EventMonitoring = SystemEventMonitoring()) {
         self.monitoring = monitoring
         let flagsMonitor = monitoring.addLocalMonitor(matching: .flagsChanged) { [weak self] event in
-            self?.modifierFlags = event.modifierFlags
+            self?.flagsChanged(to: event.modifierFlags)
             return event
         }
 
@@ -86,6 +92,14 @@ final class KeyModifierListener: ObservableObject {
         for monitor in monitors {
             monitoring.removeMonitor(monitor)
         }
+    }
+
+    /// Only the keys (not the device bits), and only on a change.
+    func flagsChanged(to flags: NSEvent.ModifierFlags) {
+        let keys = flags.intersection(.deviceIndependentFlagsMask)
+        guard keys != modifierFlags else { return }
+        modifierFlags = keys
+        modifierFlagsChanged.send(keys)
     }
 
     typealias KeyDownHandler = (NSEvent) -> Bool

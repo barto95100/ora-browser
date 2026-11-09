@@ -116,6 +116,8 @@ private struct NoteImageView: View {
     let openPage: ((URL) -> Void)?
     @Environment(\.theme) private var theme
     @Environment(\.openURL) private var openURL
+    /// Read off the main thread, once per file (not at each redraw).
+    @State private var loaded: (url: URL, image: NSImage?)?
 
     private func open(_ page: URL) {
         if let openPage { openPage(page) } else { openURL(page) }
@@ -127,7 +129,21 @@ private struct NoteImageView: View {
     }
 
     var body: some View {
-        if let image = NSImage(contentsOf: url) {
+        content
+            .task(id: url) {
+                let url = url
+                let image = await Task.detached(priority: .userInitiated) { NSImage(contentsOf: url) }.value
+                // Another file asked meanwhile: its own read answers.
+                guard !Task.isCancelled else { return }
+                loaded = (url, image)
+            }
+    }
+
+    @ViewBuilder private var content: some View {
+        if loaded?.url != url {
+            // Being read: nothing yet, rather than "missing" for a moment.
+            Color.clear.frame(height: 1)
+        } else if let image = loaded?.image {
             Image(nsImage: image)
                 .resizable()
                 .scaledToFit()

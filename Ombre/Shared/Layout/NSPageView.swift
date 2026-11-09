@@ -206,7 +206,7 @@ import SwiftUI
 
         func updateDataSource() {
             self.arrangedObjects = pageObjects
-            logger.log("NSPageView updateDataSource \(self.arrangedObjects.count)")
+            logger.debug("NSPageView updateDataSource \(self.arrangedObjects.count)")
         }
 
         func request(pageObjects pages: [T], index: Int, animated: Bool) {
@@ -232,7 +232,11 @@ import SwiftUI
                 isAnimating: isAnimating,
                 isOnScreen: view.window != nil && view.bounds.width > 0
             )
-            logger.log("NSPageView \(String(describing: plan)), \(requested.pages.count) pages")
+            // Nothing to do, or waiting for a transition, is the common case
+            // (every SwiftUI update): not logged.
+            if plan != .none, plan != .wait {
+                logger.debug("NSPageView \(String(describing: plan)), \(requested.pages.count) pages")
+            }
             switch plan {
             case .wait:
                 return

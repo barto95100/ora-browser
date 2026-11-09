@@ -325,7 +325,10 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
     /// Once the site may download (see `DownloadPermission`), to the
     /// window's downloads. A tab only opened for the file then goes.
     func browserPage(_ page: BrowserPage, didStartDownload download: BrowserDownloadTask) {
-        guard let tab else { return }
+        guard let tab else {
+            download.cancel()
+            return
+        }
         // Read now: the page's download state changes once WebKit goes on.
         let closesTab = Self.closesTab(
             afterDownloadNavigation: page.isDownloadNavigation,
@@ -339,9 +342,15 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             isPrivate: tab.isPrivate,
             present: { request in
                 // A tab out of sight (opened in the background for the file):
-                // asked in the tab in front.
-                let isShown = tab.tabManager?.isShown(tab) ?? false
-                let target = isShown ? tab : (tab.tabManager?.activeTab ?? tab)
+                // asked in the tab in front, if it is of the same space (the
+                // choice is kept there) and asks nothing else.
+                var target = tab
+                if !(tab.tabManager?.isShown(tab) ?? false), let front = tab.tabManager?.activeTab,
+                   front.container.id == tab.container.id, front.isPrivate == tab.isPrivate,
+                   front.permissionRequest == nil
+                {
+                    target = front
+                }
                 target.presentPermissionRequest(request)
             },
             start: { downloadManager?.handleDownload(download) },

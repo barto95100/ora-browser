@@ -50,25 +50,47 @@ enum DownloadPermission {
             download.onDestinationRequest = { response, filename, completion in
                 heldQuestion = (response, filename, completion)
             }
+            let decide: (Bool) -> Void = { granted in
+                if granted {
+                    start()
+                    if let (response, filename, completion) = heldQuestion {
+                        if let ask = download.onDestinationRequest {
+                            ask(response, filename, completion)
+                        } else {
+                            completion(nil)
+                        }
+                    }
+                } else {
+                    heldQuestion?.2(nil)
+                    // A question WebKit asks later gets "no" at once.
+                    download.onDestinationRequest = nil
+                    download.cancel()
+                }
+                heldQuestion = nil
+                done()
+            }
+            // The site asks again while asked (two files): one question for both.
+            let key = PendingKey(origin: origin, spaceID: spaceID, isPrivate: isPrivate)
+            if pending[key] != nil {
+                pending[key]?.append(decide)
+                return
+            }
+            pending[key] = [decide]
             present(SitePermissionRequest(origin: origin, types: [.downloads]) { granted in
                 MainActor.assumeIsolated {
-                    if granted {
-                        start()
-                        if let (response, filename, completion) = heldQuestion {
-                            if let ask = download.onDestinationRequest {
-                                ask(response, filename, completion)
-                            } else {
-                                completion(nil)
-                            }
-                        }
-                    } else {
-                        heldQuestion?.2(nil)
-                        download.cancel()
-                    }
-                    heldQuestion = nil
-                    done()
+                    let waiting = pending.removeValue(forKey: key) ?? []
+                    waiting.forEach { $0(granted) }
                 }
             })
         }
     }
+
+    private struct PendingKey: Hashable {
+        let origin: SiteOrigin
+        let spaceID: UUID
+        let isPrivate: Bool
+    }
+
+    /// The downloads waiting for the question asked for their site.
+    private static var pending: [PendingKey: [(Bool) -> Void]] = [:]
 }

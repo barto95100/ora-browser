@@ -104,6 +104,21 @@ struct DownloadPermissionTests {
         #expect(saved == destination)
     }
 
+    /// Two files from the site while it is asked: one question, both wait.
+    @Test func secondDownloadWaitsForTheSameQuestion() throws {
+        defer { SitePermissionStore.shared.removeAll(in: space) }
+        let first = FakeDownload()
+        let second = FakeDownload()
+        let firstRun = check(first)
+        let secondRun = check(second)
+        #expect(firstRun.request != nil)
+        #expect(secondRun.request == nil)
+
+        try #require(firstRun.request).resolve(granted: true)
+
+        #expect(firstRun.started && secondRun.started && !first.isCancelled && !second.isCancelled)
+    }
+
     @Test func refusalCancelsAndAnswersTheHeldQuestion() throws {
         defer { SitePermissionStore.shared.removeAll(in: space) }
         let download = FakeDownload()
@@ -114,6 +129,8 @@ struct DownloadPermissionTests {
         try #require(run.request).resolve(granted: false)
 
         #expect(answered && download.isCancelled && !run.started && run.done)
+        // A later question from WebKit is no longer held.
+        #expect(download.onDestinationRequest == nil)
     }
 
     /// "Download Linked File" from the menu, or a page with no site (a local

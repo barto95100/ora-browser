@@ -71,9 +71,31 @@ struct FilterListDownloadTests {
             _ = try await service().fetchLatest(for: record("https://example.com/list.txt"))
             Issue.record("A list over the cap was read")
         } catch let error as AdBlockServiceError {
-            if case .filterListTooLarge = error {} else { Issue.record("Unexpected error: \(error)") }
+            if case let .filterListTooLarge(bytes) = error {
+                // The error carries the announced size, or where the download stopped.
+                #expect(bytes > Int64(FilterListUpdateService.maxListSize))
+            } else {
+                Issue.record("Unexpected error: \(error)")
+            }
         } catch {
             Issue.record("Unexpected error: \(error)")
         }
+    }
+
+    /// The log says why, not just "failed": the status, the size, the network error.
+    @Test func aFailureSaysWhy() {
+        #expect(AdBlockServiceError.logReason(for: AdBlockServiceError.downloadFailed(statusCode: 403)) == "HTTP 403")
+        let tooLarge = AdBlockServiceError.logReason(for: AdBlockServiceError.filterListTooLarge(bytes: 40_000_000))
+        let limit = FilterListUpdateService.maxListSize
+        #expect(tooLarge == "larger than \(limit) bytes (40000000 bytes announced or received)")
+        #expect(AdBlockServiceError.logReason(for: URLError(.notConnectedToInternet)) == "network error -1009")
+        // Never a name the user gave, nor a file's path.
+        #expect(AdBlockServiceError.logReason(for: AdBlockServiceError.emptyFilterList("My list")) == "emptyFilterList")
+        let fileError = NSError(
+            domain: NSCocoaErrorDomain,
+            code: 513,
+            userInfo: [NSFilePathErrorKey: "/Users/someone/x"]
+        )
+        #expect(AdBlockServiceError.logReason(for: fileError) == "NSCocoaErrorDomain 513")
     }
 }

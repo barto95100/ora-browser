@@ -1,4 +1,8 @@
 import Foundation
+import os
+
+/// Why a list couldn't be updated: its id, the HTTP status, the size.
+private let logger = Logger(category: "AdBlock")
 
 actor AdBlockService {
     enum RefreshReason {
@@ -262,6 +266,9 @@ actor AdBlockService {
 
             return hadActiveRevision != revision
         } catch {
+            let reason = AdBlockServiceError.logReason(for: error)
+            // Download, compilation or storage: the reason says which.
+            logger.error("\(record.id, privacy: .public): refresh failed, \(reason, privacy: .public)")
             await MainActor.run {
                 if let current = SettingsStore.shared.adBlockFilterList(id: record.id) {
                     SettingsStore.shared.upsertAdBlockFilterList(Self.failedRecord(current, error: error))
@@ -284,6 +291,10 @@ actor AdBlockService {
                 return try await updateService.fetchLatest(for: record)
             } catch {
                 guard artifactStore.rawListText(for: record.id) != nil else { throw error }
+                let reason = AdBlockServiceError.logReason(for: error)
+                logger.error(
+                    "\(record.id, privacy: .public): update failed, \(reason, privacy: .public); keeps its last copy"
+                )
                 var fallbackRecord = record
                 fallbackRecord.lastErrorMessage = error.localizedDescription
                 return FilterListFetchResult(record: fallbackRecord, rawText: nil)

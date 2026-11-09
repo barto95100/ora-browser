@@ -1,9 +1,12 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// Imports spaces from another browser (Zen for now): choose its profile, see
-/// what it holds, pick the spaces, import.
+/// Imports spaces from Zen (its profile) or Arc (its sidebar file): choose it,
+/// see what it holds, pick the spaces, import.
 struct BrowserImportSheet: View {
+    /// `.zen` or `.arc` (Safari has its own sheet).
+    let source: ImportSource
     @EnvironmentObject private var tabManager: TabManager
     @Environment(\.dismiss) private var dismiss
 
@@ -15,7 +18,7 @@ struct BrowserImportSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Import from Zen")
+            Text(isArc ? "Import from Arc" : "Import from Zen")
                 .font(.title2.weight(.semibold))
 
             if let importedCount {
@@ -34,13 +37,22 @@ struct BrowserImportSheet: View {
 
     private var start: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(
-                // swiftlint:disable:next line_length
-                "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. Open tabs are not imported."
-            )
-            .fixedSize(horizontal: false, vertical: true)
+            if isArc {
+                Text(
+                    // swiftlint:disable:next line_length
+                    "Ombre imports your Arc spaces with their pinned tabs and folders, and your favorites. Open tabs are not imported. Arc's file is read on this Mac, so this works even after Arc's service closes."
+                )
+                .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text(
+                    // swiftlint:disable:next line_length
+                    "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. Open tabs are not imported."
+                )
+                .fixedSize(horizontal: false, vertical: true)
+            }
 
-            Text("Quit Zen first, so its latest changes are saved.")
+            Text(isArc ? "Quit Arc first, so its latest changes are saved." :
+                "Quit Zen first, so its latest changes are saved.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -54,7 +66,7 @@ struct BrowserImportSheet: View {
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Choose Zen Profile…") { chooseProfile() }
+                Button(isArc ? "Choose Arc's File…" : "Choose Zen Profile…") { choose() }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -62,7 +74,7 @@ struct BrowserImportSheet: View {
 
     private func preview(_ data: ImportedBrowserData) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            if let profile {
+            if !isArc, let profile {
                 Text("Profile: \(ZenImporter.profileName(profile))")
                     .foregroundStyle(.secondary)
             }
@@ -84,12 +96,16 @@ struct BrowserImportSheet: View {
                 }
             }
 
-            Text("Spaces whose name is already used get “(Zen)” after their name.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(
+                isArc
+                    ? "Spaces whose name is already used get “(Arc)” after their name."
+                    : "Spaces whose name is already used get “(Zen)” after their name."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
 
             HStack {
-                Button("Other Profile…") { chooseProfile() }
+                Button(isArc ? "Other File…" : "Other Profile…") { choose() }
                 Spacer()
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -126,6 +142,54 @@ struct BrowserImportSheet: View {
                 if isOn { selected.insert(index) } else { selected.remove(index) }
             }
         )
+    }
+
+    private var isArc: Bool {
+        source == .arc
+    }
+
+    private func choose() {
+        if isArc { chooseArcFile() } else { chooseProfile() }
+    }
+
+    private func chooseArcFile() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.allowedContentTypes = [.json]
+        panel.directoryURL = ArcImporter.supportFolder
+        panel
+            .message =
+            String(localized: "Choose StorableSidebar.json, in Arc's folder (Library › Application Support › Arc).")
+        panel.prompt = String(localized: "Choose")
+        guard panel.runModal() == .OK, let file = panel.url else { return }
+        loadArc(file)
+    }
+
+    /// Read off the main thread (a heavy sidebar is several megabytes).
+    private func loadArc(_ file: URL) {
+        Task {
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<ImportedBrowserData, Error> in
+                let accessing = file.startAccessingSecurityScopedResource()
+                defer { if accessing { file.stopAccessingSecurityScopedResource() } }
+                return Result { try ArcImporter.read(file: file) }
+            }.value
+            switch result {
+            case let .success(read):
+                failure = nil
+                data = read
+                selected = Set(read.spaces.indices)
+            case .failure(ArcImporter.Failure.nothingToImport):
+                failure = String(localized: "This file has no pinned tabs, folders or favorites to import.")
+                data = nil
+            case .failure:
+                failure =
+                    String(localized: "Ombre couldn't read this file. Choose StorableSidebar.json in Arc's folder.")
+                data = nil
+            }
+        }
     }
 
     private func chooseProfile() {
@@ -170,7 +234,8 @@ struct BrowserImportSheet: View {
 
     private func runImport(_ data: ImportedBrowserData) {
         let spaces = data.spaces.enumerated().filter { selected.contains($0.offset) }.map(\.element)
-        tabManager.importSpaces(ImportedBrowserData(spaces: spaces), from: "Zen") // no translation: the browser's name
+        tabManager
+            .importSpaces(ImportedBrowserData(spaces: spaces), from: isArc ? "Arc" : "Zen") // no translation: names
         importedCount = spaces.count
     }
 

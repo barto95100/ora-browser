@@ -63,6 +63,14 @@ struct SpacesSettingsView: View {
                 .buttonStyle(.borderless)
                 .padding(10)
                 Button {
+                    BrowserWindows.showImport(from: .arc)
+                } label: {
+                    Label("Import from Arc…", systemImage: "square.and.arrow.down")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+                .padding(10)
+                Button {
                     BrowserWindows.showImport(from: .zen)
                 } label: {
                     Label("Import from Zen…", systemImage: "square.and.arrow.down")

@@ -65,6 +65,16 @@ indirect enum ImportedPinnedItem: Equatable, Sendable {
         }
     }
 
+    /// Every tab, folders' included, in order.
+    static func tabs(in items: [ImportedPinnedItem]) -> [ImportedTab] {
+        items.flatMap { item -> [ImportedTab] in
+            switch item {
+            case let .tab(tab): [tab]
+            case let .folder(_, _, items): tabs(in: items)
+            }
+        }
+    }
+
     static func folderCount(in items: [ImportedPinnedItem]) -> Int {
         items.reduce(0) { count, item in
             switch item {

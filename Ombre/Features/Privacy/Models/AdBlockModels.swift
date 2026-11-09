@@ -172,7 +172,8 @@ enum AdBlockServiceError: LocalizedError {
     case downloadFailed(statusCode: Int)
     case missingCachedList(String)
     case emptyFilterList(String)
-    case filterListTooLarge
+    /// The bytes announced or received when the download stopped.
+    case filterListTooLarge(bytes: Int64)
 
     var errorDescription: String? {
         switch self {
@@ -188,6 +189,27 @@ enum AdBlockServiceError: LocalizedError {
             "No WebKit-compatible rules were produced for \(name)."
         case .filterListTooLarge:
             "The filter list is larger than 32 MB: Ombre doesn't download it."
+        }
+    }
+
+    /// Why a list's update failed, for the log: the HTTP status, the size,
+    /// the network error's code (never the list's content).
+    static func logReason(for error: Error) -> String {
+        switch error {
+        case let AdBlockServiceError.downloadFailed(statusCode):
+            return "HTTP \(statusCode)"
+        case let AdBlockServiceError.filterListTooLarge(bytes):
+            let limit = FilterListUpdateService.maxListSize
+            return "larger than \(limit) bytes (\(bytes) bytes announced or received)"
+        case let error as URLError:
+            return "network error \(error.code.rawValue)"
+        case let error as AdBlockServiceError:
+            // The case only: a custom list's name is the user's.
+            return "\(error)".components(separatedBy: "(").first ?? "AdBlockServiceError"
+        default:
+            // Domain and code only: a file error's text holds its path.
+            let error = error as NSError
+            return "\(error.domain) \(error.code)"
         }
     }
 }

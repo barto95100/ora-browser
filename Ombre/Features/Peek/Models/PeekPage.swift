@@ -1,4 +1,5 @@
 import AppKit
+@preconcurrency import WebKit
 import Foundation
 
 /// A link previewed over the current page (Peek, like Arc): its own page, in
@@ -121,6 +122,26 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         }
         openTab(url, inFront: navigationAction.modifierFlags.contains(.shift))
         return .cancel
+    }
+
+    /// A popup from Peek: in the space of the tab Peek comes from.
+    func browserPage(
+        _ page: BrowserPage,
+        openPopupWith configuration: WKWebViewConfiguration,
+        windowFeatures: WKWindowFeatures,
+        openerOrigin: URL?
+    ) -> WKWebView? {
+        guard let opener else { return nil }
+        return MainActor.assumeIsolated {
+            BrowserPopupWindow.open(
+                configuration: configuration,
+                windowFeatures: windowFeatures,
+                openerWindow: page.window,
+                opener: page,
+                openerOrigin: openerOrigin,
+                context: PopupContext(tab: opener)
+            )
+        }
     }
 
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {

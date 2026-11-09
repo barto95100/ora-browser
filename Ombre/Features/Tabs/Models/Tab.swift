@@ -235,17 +235,36 @@ class Tab: ObservableObject, Identifiable {
         configuration webKitConfiguration: WKWebViewConfiguration,
         opener: BrowserPage?
     ) -> BrowserPage {
-        let privacySettings = SettingsStore.shared.privacySettings(for: container.id)
+        Self.makeLinkedBrowserPage(
+            configuration: webKitConfiguration,
+            opener: opener,
+            spaceID: container.id,
+            isPrivate: isPrivate,
+            privateSession: tabManager?.privateSessionID
+        )
+    }
+
+    /// A page for a window `opener` opens, in the space `spaceID` (also for
+    /// a popup, which may outlive its tab).
+    @MainActor
+    static func makeLinkedBrowserPage(
+        configuration webKitConfiguration: WKWebViewConfiguration,
+        opener: BrowserPage?,
+        spaceID: UUID,
+        isPrivate: Bool,
+        privateSession: UUID?
+    ) -> BrowserPage {
+        let privacySettings = SettingsStore.shared.privacySettings(for: spaceID)
         let userScripts = OmbreBrowserScripts.userScripts() + BrowserPrivacyService.privacyScripts(
             for: privacySettings,
-            spaceID: container.id,
+            spaceID: spaceID,
             isPrivate: isPrivate
         )
         return BrowserPage(
             profile: BrowserEngine.shared.makeProfile(
-                identifier: container.id,
+                identifier: spaceID,
                 isPrivate: isPrivate,
-                privateSession: tabManager?.privateSessionID
+                privateSession: privateSession
             ),
             configuration: BrowserPageConfiguration.ombreDefault(
                 userScripts: userScripts,

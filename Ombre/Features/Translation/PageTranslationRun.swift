@@ -165,7 +165,7 @@ enum PageTranslationRun {
             if Task.isCancelled { throw CancellationError() }
             logger.error("Language download failed: \(String(describing: error), privacy: .public)")
             throw PageTranslationFailure.downloadFailed(
-                error is AsyncTimeoutError ? "it took too long" : error.localizedDescription // not shown
+                error is AsyncTimeoutError ? String(localized: "it took too long") : error.localizedDescription
             )
         }
     }

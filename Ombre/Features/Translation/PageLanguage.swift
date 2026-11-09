@@ -43,7 +43,9 @@ enum PageLanguage {
     /// The language's name in the Mac's language ("German").
     static func name(of language: Locale.Language) -> String {
         let code = language.languageCode?.identifier ?? language.minimalIdentifier
-        return Locale.current.localizedString(forLanguageCode: code) ?? code
+        // In the interface's language (an app's own language can differ from the Mac's).
+        let interface = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        return interface.localizedString(forLanguageCode: code) ?? code
     }
 
     /// A language Apple's Translation knows (any of its pairs).

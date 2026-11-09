@@ -4140,6 +4140,16 @@
         }
       }
     },
+    "it took too long" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "délai dépassé"
+          }
+        }
+      }
+    },
     "It will be able to read and change every page you visit." : {
       "localizations" : {
         "fr" : {
@@ -7492,12 +7502,12 @@
         }
       }
     },
-    "Sites that asked to use your camera or microphone in %@. Changes apply to the next request; reload a page to stop a camera already in use." : {
+    "Sites that asked for a permission in %@. Changes apply to the next request; reload a page to stop a camera already in use." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les sites qui ont demandé à utiliser votre caméra ou votre micro dans %@. Les changements s’appliquent à la prochaine demande ; rechargez une page pour couper une caméra déjà utilisée."
+            "value" : "Les sites qui ont demandé une autorisation dans %@. Les changements s’appliquent à la prochaine demande ; rechargez une page pour couper une caméra déjà utilisée."
           }
         }
       }
@@ -8111,6 +8121,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L’emoji est utilisé quand aucun symbole n’est choisi."
+          }
+        }
+      }
+    },
+    "The emoji list is missing." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste des emoji est introuvable."
           }
         }
       }
@@ -9195,7 +9215,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En attente du téléchargement par macOS : %@…"
+            "value" : "macOS télécharge la langue « %@ »…"
           }
         }
       }
@@ -9386,6 +9406,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hier"
+          }
+        }
+      }
+    },
+    "Your browsing data couldn't be opened, so Ombre started with fresh data." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos données de navigation n’ont pas pu être ouvertes : Ombre a démarré avec des données neuves."
           }
         }
       }

@@ -21,7 +21,7 @@ struct SitePermissionsSettingsCard: View {
             header: String(localized: "Site Permissions"),
             description: String(
                 // swiftlint:disable:next line_length
-                localized: "Sites that asked to use your camera or microphone in \(container.name). Changes apply to the next request; reload a page to stop a camera already in use."
+                localized: "Sites that asked for a permission in \(container.name). Changes apply to the next request; reload a page to stop a camera already in use."
             )
         ) {
             if entries.isEmpty {

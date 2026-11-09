@@ -177,10 +177,10 @@ enum DatabaseRecovery {
         case let .recovered(url):
             backup = url
             alert.messageText = String(localized: "Your tabs couldn't be restored")
-            alert.informativeText = """
-            Your browsing data couldn't be opened, so Ombre started with fresh data. \
-            A copy of the old data was kept: \(url.lastPathComponent).
-            """
+            alert
+                .informativeText =
+                String(localized: "Your browsing data couldn't be opened, so Ombre started with fresh data.")
+                    + " " + String(localized: "A copy of the old data was kept: \(url.lastPathComponent).")
         case let .inMemory(url):
             backup = url
             alert.messageText = String(localized: "Your tabs won't be saved")

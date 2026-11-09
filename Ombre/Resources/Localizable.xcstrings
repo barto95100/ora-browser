@@ -520,14 +520,23 @@
         }
       }
     },
-    "%lld%%" : {},
+    "%lld%%" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
+          }
+        }
+      }
+    },
     "•" : {},
     "⌘-click opens in the background" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "⌘-clic ouvre en arrière-plan"
+            "value" : "⌘ + clic : ouvrir en arrière-plan"
           }
         }
       }
@@ -1793,7 +1802,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Effacer %@ ?"
+            "value" : "Effacer l’historique : %@ ?"
           }
         }
       }
@@ -2174,7 +2183,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copier le chemin"
+            "value" : "Copier le chemin d’accès"
           }
         }
       }
@@ -2581,7 +2590,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Téléchargé : %@"
+            "value" : "Téléchargement terminé : %@"
           }
         }
       }
@@ -3497,6 +3506,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installées"
+          }
+        }
+      }
+    },
+    "Interrupted" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompu"
           }
         }
       }
@@ -4599,7 +4618,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Plus ancien"
+            "value" : "Plus anciens"
           }
         }
       }

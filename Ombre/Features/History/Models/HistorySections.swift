@@ -45,10 +45,10 @@ enum HistorySections {
         }
         let style = Date.FormatStyle(calendar: calendar, timeZone: calendar.timeZone)
             .weekday(.wide).day().month(.wide)
-        if calendar.component(.year, from: day) == calendar.component(.year, from: now) {
-            return day.formatted(style)
-        }
-        return day.formatted(style.year())
+        let date = calendar.component(.year, from: day) == calendar.component(.year, from: now)
+            ? day.formatted(style) : day.formatted(style.year())
+        // A heading: capitalized like "Today" (French dates are lower case).
+        return date.prefix(1).capitalized + date.dropFirst()
     }
 }
 

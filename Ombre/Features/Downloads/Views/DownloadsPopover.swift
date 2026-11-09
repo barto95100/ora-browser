@@ -108,6 +108,8 @@ private struct DownloadsPopoverRow: View {
         case .completed:
             return download.formattedFileSize
         case .failed:
+            // The saved error is a code for an interruption, WebKit's text otherwise.
+            if download.error == Download.interruptedError { return String(localized: "Interrupted") }
             return download.error ?? String(localized: "Failed")
         case .cancelled:
             return String(localized: "Cancelled")

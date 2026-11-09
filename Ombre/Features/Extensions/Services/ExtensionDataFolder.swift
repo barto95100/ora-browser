@@ -61,10 +61,9 @@ enum ExtensionDataFolder {
                 let name = store == "WebExtensions" ? "store \(folder.lastPathComponent)" : folder.lastPathComponent
                 removed.append((name, bytes))
             } catch {
+                let reason = error.localizedDescription
                 logger
-                    .error(
-                        "Removing \(folder.lastPathComponent, privacy: .public) failed: \(error.localizedDescription)"
-                    )
+                    .error("Removing \(folder.lastPathComponent, privacy: .public) failed: \(reason, privacy: .public)")
             }
         }
         StaleData.logRemovals(removed, of: "extension data")

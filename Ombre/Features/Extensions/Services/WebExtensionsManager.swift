@@ -149,11 +149,12 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         guard !isStarted else { return }
         isStarted = true
         BrowserEngine.shared.webExtensionController = controller
-        installed = registry.load().map { Installed(record: $0) }
-        // Only with a registry read as it is: an unreadable one is set
-        // aside, and nothing is known installed.
-        if FileManager.default.fileExists(atPath: registry.fileURL.path) {
-            let installedIDs = Set(installed.map(\.id)).union(pendingUpdates.keys)
+        let records = registry.read()
+        installed = (records ?? registry.load()).map { Installed(record: $0) }
+        // Only with a registry read as it is: else nothing is known
+        // installed, and every extension's data would look orphaned.
+        if let records, !TestHost.isActive {
+            let installedIDs = Set(records.map(\.id))
             let store = Self.storeIdentifier
             Task.detached(priority: .utility) {
                 ExtensionDataFolder.removeOrphans(keeping: installedIDs, currentStore: store)

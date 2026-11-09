@@ -31,6 +31,21 @@ struct StaleDataTests {
         #expect(!store.isStale(ruleList: "com.apple.WebPrivacy.ResourceMonitorURLsRuleList"))
         #expect(!store.isStale(ruleList: AppIdentity.identifier("privacy.trackers.v1")))
         #expect(!store.isStale(ruleList: "com.example.other"))
+        // The revision in use, even while its files are written again.
+        #expect(!store.isStale(ruleList: older, activeRevisions: ["adguard-base": "bbb"]))
+    }
+
+    /// An extensions registry that can't be read gives no list: nothing is
+    /// then removed as orphaned.
+    @Test func anUnreadableRegistryKnowsNothingInstalled() throws {
+        let folder = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let registry = ExtensionRegistry(fileURL: folder.appendingPathComponent("extensions.json"))
+        #expect(registry.read() == nil)
+        try Data("not json".utf8).write(to: registry.fileURL)
+        #expect(registry.read() == nil)
+        registry.save([])
+        #expect(registry.read()?.isEmpty == true)
     }
 
     @Test func onlyFoldersOfExtensionsMissingFromTheRegistryAreOrphans() throws {

@@ -322,7 +322,12 @@ final class BrowserPrivacyService {
         }
         let folder = StaleData.library?.appendingPathComponent("WebKit/ContentRuleLists", isDirectory: true)
         var removed: [(name: String, bytes: Int64)] = []
-        for identifier in identifiers where artifactStore.isStale(ruleList: identifier) {
+        var activeRevisions: [String: String] = [:]
+        for record in SettingsStore.shared.adBlockFilterLists {
+            activeRevisions[record.id] = record.activeRevision
+        }
+        let stale = identifiers.filter { artifactStore.isStale(ruleList: $0, activeRevisions: activeRevisions) }
+        for identifier in stale {
             // WebKit's file, for the log only.
             let bytes = folder
                 .map { StaleData.size(of: $0.appendingPathComponent("ContentRuleList-\(identifier)")) } ?? 0

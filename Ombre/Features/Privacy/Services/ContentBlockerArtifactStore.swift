@@ -139,9 +139,13 @@ final class ContentBlockerArtifactStore: @unchecked Sendable {
     /// app's, or one of its filter lists whose compiled revision is gone (an
     /// older version: only the current one's files are kept). Never one it
     /// can't name (Apple's, the privacy lists, another app's).
-    func isStale(ruleList identifier: String) -> Bool {
+    /// `activeRevisions` (list ID → revision in use) are never stale, even
+    /// while their files are being written again.
+    func isStale(ruleList identifier: String, activeRevisions: [String: String] = [:]) -> Bool {
         if Self.legacyRuleListPrefixes.contains(where: identifier.hasPrefix) { return true }
-        guard let descriptor = parse(identifier: identifier) else { return false }
+        guard let descriptor = parse(identifier: identifier),
+              activeRevisions[descriptor.listID] != descriptor.revision
+        else { return false }
         let revisionURL = compiledRevisionURL(for: descriptor.listID, revision: descriptor.revision)
         return !fileManager.fileExists(atPath: revisionURL.path)
     }

@@ -14,16 +14,13 @@ extension Tab {
     func answerPermissionRequest(granted: Bool, remember: Bool) {
         guard let request = permissionRequest else { return }
         permissionRequest = nil
-        if remember {
-            SitePermissionStore.shared.setState(
-                granted ? .allow : .deny,
-                for: request.types,
-                origin: request.origin,
-                in: container.id,
-                isPrivate: isPrivate
-            )
-        }
-        request.resolve(granted: granted)
+        SitePermissionGate.answer(
+            request,
+            granted: granted,
+            remember: remember,
+            spaceID: container.id,
+            isPrivate: isPrivate
+        )
     }
 
     /// Denies and hides the visible prompt, if any.

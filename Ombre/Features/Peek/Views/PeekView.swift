@@ -26,6 +26,19 @@ struct PeekView: View {
                         Color.clear
                     } else {
                         BrowserPageView(page: peek.page, onEscape: onClose)
+                            .overlay(alignment: .top) {
+                                if let request = peek.permissionRequest {
+                                    SitePermissionPromptView(
+                                        request: request,
+                                        isPrivate: peek.isPrivate
+                                    ) { granted, remember in
+                                        peek.answerPermissionRequest(granted: granted, remember: remember)
+                                    }
+                                    .padding(.top, 12)
+                                    .transition(.opacity)
+                                }
+                            }
+                            .animation(.easeOut(duration: 0.2), value: peek.permissionRequest)
                     }
                 }
                 .frame(width: proxy.size.width * 0.9, height: proxy.size.height * 0.92)

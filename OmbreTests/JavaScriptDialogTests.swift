@@ -90,13 +90,13 @@ extension TabManagerTests {
                 let tab = try await window.openLoaded("navigating")
                 let page = try #require(tab.browserPage)
                 let delegate = try #require(tab.pageDelegate)
-                delegate.dialogPolicy.stopDialogs()
+                delegate.sheets.dialogPolicy.stopDialogs()
 
                 delegate.browserPage(page, didUpdateNavigation: BrowserNavigationEvent(
                     phase: .committed, url: tab.url, title: nil, progress: 0.5, isLoading: true
                 ))
 
-                #expect(!delegate.dialogPolicy.isStopped)
+                #expect(!delegate.sheets.dialogPolicy.isStopped)
             }
         }
     }

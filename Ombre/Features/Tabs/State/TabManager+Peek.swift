@@ -4,6 +4,7 @@ extension TabManager {
     func closePeek() {
         guard let peek else { return }
         self.peek = nil
+        peek.close()
         peek.page.teardown()
     }
 
@@ -43,6 +44,8 @@ extension TabManager {
             downloadManager: downloadManager
         )
         tab.adopt(peek.page, historyManager: historyManager, downloadManager: downloadManager, tabManager: self)
+        // What the page blocked so far shows in the tab's shield.
+        tab.blockedContent = peek.blockedContent
         if inSplitView {
             // Beside the tab Peek was opened from.
             if let opener = container.tabs.first(where: { $0.id == peek.openerTabID }), activeTab?.id != opener.id {

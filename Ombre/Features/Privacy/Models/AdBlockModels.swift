@@ -172,11 +172,12 @@ enum AdBlockServiceError: LocalizedError {
     case downloadFailed(statusCode: Int)
     case missingCachedList(String)
     case emptyFilterList(String)
+    case filterListTooLarge
 
     var errorDescription: String? {
         switch self {
         case .invalidCustomListURL:
-            "Only http and https filter list URLs are supported."
+            "Filter lists must use an https:// address."
         case .invalidFilterResponse:
             "The filter list response could not be read."
         case let .downloadFailed(statusCode):
@@ -185,6 +186,8 @@ enum AdBlockServiceError: LocalizedError {
             "No cached filter rules are available for \(name)."
         case let .emptyFilterList(name):
             "No WebKit-compatible rules were produced for \(name)."
+        case .filterListTooLarge:
+            "The filter list is larger than 32 MB: Ombre doesn't download it."
         }
     }
 }

@@ -13,20 +13,39 @@ final class FilterListUpdateService: Sendable {
         self.session = session
     }
 
+    /// The largest list downloaded: the biggest public lists are a few
+    /// megabytes; past this, the download stops.
+    static let maxListSize = 32 * 1024 * 1024
+
     func isValidCustomListURL(_ rawValue: String) -> Bool {
-        guard let url = normalizedURL(from: rawValue) else { return false }
-        guard let scheme = url.scheme?.lowercased() else { return false }
-        return scheme == "http" || scheme == "https"
+        normalizedURL(from: rawValue) != nil
     }
 
+    /// HTTPS only: the app's own requests in clear are blocked anyway (App
+    /// Transport Security), and a list read in clear could be changed on the way.
     func normalizedURL(from rawValue: String) -> URL? {
-        guard let url = URL(string: rawValue.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            return nil
-        }
-        guard let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else {
+        guard let url = URL(string: rawValue.trimmingCharacters(in: .whitespacesAndNewlines)),
+              url.scheme?.lowercased() == "https", url.host?.isEmpty == false
+        else {
             return nil
         }
         return url
+    }
+
+    /// The response's body, stopped past `limit` bytes.
+    static func body(
+        of bytes: URLSession.AsyncBytes,
+        expectedLength: Int64,
+        limit: Int = maxListSize
+    ) async throws -> Data {
+        if expectedLength > Int64(limit) { throw AdBlockServiceError.filterListTooLarge }
+        var data = Data()
+        if expectedLength > 0 { data.reserveCapacity(Int(expectedLength)) }
+        for try await byte in bytes {
+            data.append(byte)
+            if data.count > limit { throw AdBlockServiceError.filterListTooLarge }
+        }
+        return data
     }
 
     func fetchLatest(for record: FilterListRecord) async throws -> FilterListFetchResult {
@@ -42,13 +61,14 @@ final class FilterListUpdateService: Sendable {
             request.setValue(lastModified, forHTTPHeaderField: "If-Modified-Since")
         }
 
-        let (data, response) = try await session.data(for: request)
+        let (bytes, response) = try await session.bytes(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AdBlockServiceError.invalidFilterResponse
         }
 
         switch httpResponse.statusCode {
         case 200 ..< 300:
+            let data = try await Self.body(of: bytes, expectedLength: response.expectedContentLength)
             guard let rawText = String(data: data, encoding: .utf8) else {
                 throw AdBlockServiceError.invalidFilterResponse
             }

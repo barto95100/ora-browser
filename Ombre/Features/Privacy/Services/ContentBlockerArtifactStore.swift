@@ -132,6 +132,20 @@ final class ContentBlockerArtifactStore: @unchecked Sendable {
         }
     }
 
+    /// Rule lists of the app Ombre comes from, left in WebKit's store.
+    static let legacyRuleListPrefixes = ["com.orabrowser."]
+
+    /// A rule list in WebKit's store Ombre will never load again: the old
+    /// app's, or one of its filter lists whose compiled revision is gone (an
+    /// older version: only the current one's files are kept). Never one it
+    /// can't name (Apple's, the privacy lists, another app's).
+    func isStale(ruleList identifier: String) -> Bool {
+        if Self.legacyRuleListPrefixes.contains(where: identifier.hasPrefix) { return true }
+        guard let descriptor = parse(identifier: identifier) else { return false }
+        let revisionURL = compiledRevisionURL(for: descriptor.listID, revision: descriptor.revision)
+        return !fileManager.fileExists(atPath: revisionURL.path)
+    }
+
     private func parse(identifier: String) -> (listID: String, revision: String, shardIndex: Int)? {
         let prefix = "\(identifierPrefix)."
         guard identifier.hasPrefix(prefix) else { return nil }

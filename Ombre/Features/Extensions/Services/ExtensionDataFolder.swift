@@ -19,7 +19,55 @@ enum ExtensionDataFolder {
     }
 
     static var library: URL? {
-        FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first
+        StaleData.library
+    }
+
+    /// The folders of extensions no longer in the registry: removed before
+    /// Ombre deleted their folder, or kept by an earlier store (a whole
+    /// store goes when none of its extensions is installed). Only folders
+    /// named by a UUID; an extension in the registry is always kept.
+    static func orphans(in root: URL, keeping installedIDs: Set<String>, currentStore: UUID) -> [URL] {
+        let kept = Set(installedIDs.map { $0.uppercased() })
+        return uuidFolders(in: root).flatMap { store -> [URL] in
+            let extensions = uuidFolders(in: store)
+            let orphans = extensions.filter { !kept.contains($0.lastPathComponent.uppercased()) }
+            let isCurrent = store.lastPathComponent.uppercased() == currentStore.uuidString.uppercased()
+            if !isCurrent, orphans.count == extensions.count { return [store] }
+            return orphans
+        }
+    }
+
+    private static func uuidFolders(in folder: URL) -> [URL] {
+        let contents = (try? FileManager.default.contentsOfDirectory(
+            at: folder, includingPropertiesForKeys: [.isDirectoryKey]
+        )) ?? []
+        return contents.filter { url in
+            UUID(uuidString: url.lastPathComponent) != nil
+                && (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+        }
+        .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    /// Removes `orphans`, at launch; logged with the space freed.
+    static func removeOrphans(keeping installedIDs: Set<String>, currentStore: UUID) {
+        guard let library else { return }
+        let root = library.appendingPathComponent("WebKit/WebExtensions", isDirectory: true)
+        var removed: [(name: String, bytes: Int64)] = []
+        for folder in orphans(in: root, keeping: installedIDs, currentStore: currentStore) {
+            let bytes = StaleData.size(of: folder)
+            do {
+                try FileManager.default.removeItem(at: folder)
+                let store = folder.deletingLastPathComponent().lastPathComponent
+                let name = store == "WebExtensions" ? "store \(folder.lastPathComponent)" : folder.lastPathComponent
+                removed.append((name, bytes))
+            } catch {
+                logger
+                    .error(
+                        "Removing \(folder.lastPathComponent, privacy: .public) failed: \(error.localizedDescription)"
+                    )
+            }
+        }
+        StaleData.logRemovals(removed, of: "extension data")
     }
 
     /// All the data of an extension already unloaded: its storage through

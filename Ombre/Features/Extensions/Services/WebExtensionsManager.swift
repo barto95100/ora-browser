@@ -150,6 +150,15 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         isStarted = true
         BrowserEngine.shared.webExtensionController = controller
         installed = registry.load().map { Installed(record: $0) }
+        // Only with a registry read as it is: an unreadable one is set
+        // aside, and nothing is known installed.
+        if FileManager.default.fileExists(atPath: registry.fileURL.path) {
+            let installedIDs = Set(installed.map(\.id)).union(pendingUpdates.keys)
+            let store = Self.storeIdentifier
+            Task.detached(priority: .utility) {
+                ExtensionDataFolder.removeOrphans(keeping: installedIDs, currentStore: store)
+            }
+        }
         for item in installed where item.record.isEnabled {
             Task { await load(id: item.id) }
         }

@@ -181,7 +181,8 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
     // MARK: - Messages to the extension's app
 
     // Only Safari can reach the app part of a Safari extension: refused, and
-    // logged once per command (never the content) to see what is asked.
+    // logged once per command and per launch (never the content) to see what
+    // is asked. A connection is closed rather than refused (`NativeAppPort`).
     // Exception: Bitwarden's "sleep", which its app answers after 10 s to
     // keep the background alive; refused at once, it was asked again at once,
     // endlessly. Answered the same way, like its app does.
@@ -215,9 +216,9 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         completionHandler: @escaping ((any Error)?) -> Void
     ) {
         if loggedNativeCommands.insert("\(extensionContext.uniqueIdentifier):connect").inserted {
-            logger.notice("\(self.name(of: extensionContext), privacy: .public) native connection refused")
+            logger.notice("\(self.name(of: extensionContext), privacy: .public) native connection closed")
         }
-        completionHandler(Failure.nativeMessagingUnsupported)
+        NativeAppPort.decline(port, completionHandler: completionHandler)
     }
 
     private func name(of context: WKWebExtensionContext) -> String {

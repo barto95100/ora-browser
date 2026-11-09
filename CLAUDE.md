@@ -142,7 +142,8 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - WebKit content rules : pas de `|` dans les regex.
 - Extensions (`WKWebExtension*`, macOS 15.4+, façade `WebExtensionsHub`) : les pages des extensions doivent
   s'annoncer comme Safari (user-agent), toutes les pages chargées doivent appartenir à un onglet annoncé,
-  Bitwarden Safari envoie `sleep` en boucle (répondre après 10 s).
+  Bitwarden Safari envoie `sleep` en boucle (répondre après 10 s) et rappelle `connectNative` toutes les 10 s quelle
+  que soit la réponse (port accepté puis fermé sans erreur, `NativeAppPort` : un refus est une erreur à chaque essai).
 - Sur un `@Model` SwiftData, une propriété `@Transient` n'est suivie par l'interface (Observation) que si elle est
   aussi `@Published`. L'état de page d'un onglet vit dans `TabRuntime` (`@Observable`, un par onglet et par fenêtre),
   lu à travers les propriétés de transition de `Tab+Runtime.swift` ; ne jamais créer un runtime dans le `body` d'une vue.

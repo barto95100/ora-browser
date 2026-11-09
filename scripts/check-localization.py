@@ -55,6 +55,9 @@ ZONES = {
     "extensions": [
         "Ombre/Features/Extensions/",
     ],
+    "passwords": [
+        "Ombre/Features/Passwords/",
+    ],
 }
 
 # Files that never show a text (paths, keys, logs): not read for literals.

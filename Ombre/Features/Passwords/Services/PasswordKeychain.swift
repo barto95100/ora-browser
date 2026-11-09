@@ -18,8 +18,8 @@ enum PasswordKeychain {
     /// that saved it. The tests use their own, never the user's passwords;
     /// a Debug build its own, never the installed app's.
     static func service(isTesting: Bool, isDebug: Bool) -> String {
-        if isTesting { return "Ombre Passwords (tests)" }
-        return isDebug ? "Ombre Passwords (dev)" : "Ombre Passwords"
+        if isTesting { return "Ombre Passwords (tests)" } // not shown
+        return isDebug ? "Ombre Passwords (dev)" : "Ombre Passwords" // not shown
     }
 
     #if DEBUG

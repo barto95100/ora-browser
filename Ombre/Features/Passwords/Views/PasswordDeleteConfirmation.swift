@@ -48,7 +48,7 @@ struct PasswordDeleteConfirmation: ViewModifier {
     }
 
     nonisolated static func deleteFailureTitle(username: String, host: String) -> String {
-        "Ombre couldn't delete the password for \(username) on \(host)"
+        String(localized: "Ombre couldn't delete the password for \(username) on \(host)")
     }
 }
 

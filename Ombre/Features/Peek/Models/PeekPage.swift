@@ -132,16 +132,14 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         openerOrigin: URL?
     ) -> WKWebView? {
         guard let opener else { return nil }
-        return MainActor.assumeIsolated {
-            BrowserPopupWindow.open(
-                configuration: configuration,
-                windowFeatures: windowFeatures,
-                openerWindow: page.window,
-                opener: page,
-                openerOrigin: openerOrigin,
-                context: PopupContext(tab: opener)
-            )
-        }
+        return BrowserPopupWindow.open(
+            configuration: configuration,
+            windowFeatures: windowFeatures,
+            openerWindow: page.window,
+            opener: page,
+            openerOrigin: openerOrigin,
+            context: PopupContext(tab: opener)
+        )
     }
 
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
@@ -215,6 +213,8 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         origin: URL?
     ) -> BrowserPermissionDecision {
         guard let peek else { return .prompt }
+        // Refused when asked (see above): never "granted".
+        if permission == .notifications { return .deny }
         return SitePermissionGate.query(permission, origin: origin, spaceID: peek.spaceID, isPrivate: peek.isPrivate)
     }
 

@@ -11,12 +11,22 @@ struct PopupContext {
     let isPrivate: Bool
     let privateSession: UUID?
     let downloadManager: DownloadManager?
+    /// The tab whose page opened it (directly or through Peek or a popup),
+    /// while it is open: the popup's links to new windows open beside it.
+    private(set) weak var openerTab: Tab?
 
-    init(spaceID: UUID, isPrivate: Bool, privateSession: UUID?, downloadManager: DownloadManager?) {
+    init(
+        spaceID: UUID,
+        isPrivate: Bool,
+        privateSession: UUID?,
+        downloadManager: DownloadManager?,
+        openerTab: Tab? = nil
+    ) {
         self.spaceID = spaceID
         self.isPrivate = isPrivate
         self.privateSession = privateSession
         self.downloadManager = downloadManager
+        self.openerTab = openerTab
     }
 
     init(tab: Tab) {
@@ -24,7 +34,8 @@ struct PopupContext {
             spaceID: tab.container.id,
             isPrivate: tab.isPrivate,
             privateSession: tab.tabManager?.privateSessionID,
-            downloadManager: tab.downloadManager ?? tab.tabManager?.downloadManager
+            downloadManager: tab.downloadManager ?? tab.tabManager?.downloadManager,
+            openerTab: tab
         )
     }
 }
@@ -144,14 +155,25 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     }
 
     /// Any other window the popup opens (`target="_blank"`, `window.open`
-    /// without a size): another popup window, as before.
+    /// without a size, "Open Link in New Tab"): a tab linked to it beside its
+    /// tab, as the context menu says; another popup window once that tab is
+    /// closed.
     func browserPage(
         _ page: BrowserPage,
         linkedPageWith configuration: WKWebViewConfiguration,
         for url: URL?,
         disposition: BrowserNewTabDisposition
     ) -> WKWebView? {
-        browserPage(page, openPopupWith: configuration, windowFeatures: WKWindowFeatures(), openerOrigin: nil)
+        // A closed tab (or one being closed) has no place for a tab beside it.
+        if let tab = popup?.context.openerTab, !tab.isClosing, tab.parentContainer != nil,
+           let tabManager = tab.tabManager,
+           let webView = tabManager.openLinkedTab(
+               url: url, from: tab, configuration: configuration, disposition: disposition
+           )
+        {
+            return webView
+        }
+        return browserPage(page, openPopupWith: configuration, windowFeatures: WKWindowFeatures(), openerOrigin: nil)
     }
 
     /// `window.close()` from the popup.
@@ -187,6 +209,8 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         origin: URL?
     ) -> BrowserPermissionDecision {
         guard let popup else { return .prompt }
+        // Refused when asked (see above): never "granted".
+        if permission == .notifications { return .deny }
         return SitePermissionGate.query(
             permission,
             origin: origin,

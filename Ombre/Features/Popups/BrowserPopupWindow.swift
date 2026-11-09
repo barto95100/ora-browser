@@ -14,7 +14,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     private static var openPopups: Set<BrowserPopupWindow> = []
 
     private let window: NSWindow
-    let popup: PopupPage
+    let popupPage: PopupPage
     /// The window of the page that opened it: the popup closes with it.
     private weak var openerWindow: NSWindow?
     /// The origin of the frame that opened it (perhaps a third-party frame):
@@ -45,7 +45,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
 
     /// The open popup showing `webView`, if any.
     static func popup(showing webView: WKWebView) -> BrowserPopupWindow? {
-        openPopups.first { $0.popup.page.webView === webView }
+        openPopups.first { $0.popupPage.page.webView === webView }
     }
 
     /// Whether WebKit's window features ask for a popup window rather than a tab.
@@ -80,7 +80,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     }
 
     private init(popup: PopupPage, frame: NSRect) {
-        self.popup = popup
+        popupPage = popup
         window = NSWindow(
             contentRect: frame,
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -133,7 +133,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     /// The site the page comes from as the title; the page's own title only
     /// under it, never alone.
     private func updateTitle() {
-        let page = popup.page
+        let page = popupPage.page
         let site = PopupTitle.title(for: page.currentURL, openerURL: openerOrigin)
         window.title = site
         window.subtitle = site.isEmpty ? "" : (page.title ?? "")
@@ -146,9 +146,9 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         guard let request, let content = window.contentView else { return }
         let prompt = NSHostingView(rootView: SitePermissionPromptView(
             request: request,
-            isPrivate: popup.context.isPrivate
-        ) { [weak popup] granted, remember in
-            popup?.answerPermissionRequest(granted: granted, remember: remember)
+            isPrivate: popupPage.context.isPrivate
+        ) { [weak popupPage] granted, remember in
+            popupPage?.answerPermissionRequest(granted: granted, remember: remember)
         })
         prompt.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(prompt)
@@ -161,9 +161,9 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         promptObservation = nil
-        popup.pageDidChange = nil
-        popup.closeWindow = nil
-        popup.close()
+        popupPage.pageDidChange = nil
+        popupPage.closeWindow = nil
+        popupPage.close()
         Self.openPopups.remove(self)
         Self.closePopups(openedFrom: window)
     }

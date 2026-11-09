@@ -17,15 +17,15 @@ extension TabManagerTests {
         @Test func popupIsAPageOfTheTabsSpace() async throws {
             try await TabManagerTestWindow.run { window in
                 let (tab, popup) = try await openPopup(in: window)
-                defer { popup.popup.closeWindow?() }
+                defer { popup.popupPage.closeWindow?() }
 
-                #expect(popup.popup.context.spaceID == tab.container.id)
-                #expect(popup.popup.context.isPrivate == tab.isPrivate)
-                #expect(popup.popup.page.delegate != nil)
-                #expect(popup.popup.page !== tab.browserPage)
+                #expect(popup.popupPage.context.spaceID == tab.container.id)
+                #expect(popup.popupPage.context.isPrivate == tab.isPrivate)
+                #expect(popup.popupPage.page.delegate != nil)
+                #expect(popup.popupPage.page !== tab.browserPage)
                 // Its own content controller, not the opener's.
                 #expect(
-                    popup.popup.page.webView.configuration.userContentController
+                    popup.popupPage.page.webView.configuration.userContentController
                         !== tab.browserPage?.webView.configuration.userContentController
                 )
             }
@@ -34,21 +34,22 @@ extension TabManagerTests {
         @Test func permissionIsAskedInThePopupAndRemembered() async throws {
             try await TabManagerTestWindow.run { window in
                 let (_, popup) = try await openPopup(in: window)
-                let page = popup.popup.page
+                let page = popup.popupPage.page
                 defer {
-                    popup.popup.closeWindow?()
-                    SitePermissionStore.shared.removeAll(in: popup.popup.context.spaceID)
+                    popup.popupPage.closeWindow?()
+                    SitePermissionStore.shared.removeAll(in: popup.popupPage.context.spaceID)
                 }
                 let delegate = try #require(page.delegate)
 
                 var notifications: BrowserPermissionDecision?
                 delegate.browserPage(page, requestPermission: .notifications, origin: site) { notifications = $0 }
                 #expect(notifications == .deny)
+                #expect(delegate.browserPage(page, queryPermission: .notifications, origin: site) == .deny)
 
                 var camera: BrowserPermissionDecision?
                 delegate.browserPage(page, requestPermission: .camera, origin: site) { camera = $0 }
-                #expect(popup.popup.permissionRequest != nil)
-                popup.popup.answerPermissionRequest(granted: true, remember: true)
+                #expect(popup.popupPage.permissionRequest != nil)
+                popup.popupPage.answerPermissionRequest(granted: true, remember: true)
 
                 #expect(camera == .grant)
                 #expect(delegate.browserPage(page, queryPermission: .camera, origin: site) == .grant)
@@ -58,7 +59,7 @@ extension TabManagerTests {
         @Test func closingThePopupRefusesItsPrompt() async throws {
             try await TabManagerTestWindow.run { window in
                 let (_, popup) = try await openPopup(in: window)
-                let page = popup.popup.page
+                let page = popup.popupPage.page
                 let delegate = try #require(page.delegate)
                 var camera: BrowserPermissionDecision?
                 delegate.browserPage(page, requestPermission: .camera, origin: site) { camera = $0 }
@@ -70,23 +71,31 @@ extension TabManagerTests {
             }
         }
 
-        /// A `target="_blank"` link in a popup opens another popup window,
-        /// in the same space.
-        @Test func linkToANewWindowOpensAnotherPopup() async throws {
+        /// A link to a new window (`target="_blank"`, "Open Link in New Tab")
+        /// opens a tab linked to the popup, beside its tab; once that tab is
+        /// closed, another popup window in the same space.
+        @Test func linkToANewWindowOpensATabThenAPopup() async throws {
             try await TabManagerTestWindow.run { window in
-                let (_, popup) = try await openPopup(in: window)
-                defer { popup.popup.closeWindow?() }
-                let page = popup.popup.page
+                let (tab, popup) = try await openPopup(in: window)
+                defer { popup.popupPage.closeWindow?() }
+                let page = popup.popupPage.page
                 let delegate = try #require(page.delegate)
-                let configuration = try #require(page.webView.configuration.copy() as? WKWebViewConfiguration)
 
-                let webView = try #require(delegate.browserPage(
-                    page, linkedPageWith: configuration, for: site, disposition: .foreground
+                let first = try #require(page.webView.configuration.copy() as? WKWebViewConfiguration)
+                let tabView = try #require(delegate.browserPage(
+                    page, linkedPageWith: first, for: site, disposition: .foreground
                 ))
-                let second = try #require(BrowserPopupWindow.popup(showing: webView))
-                defer { second.popup.closeWindow?() }
+                #expect(window.tabManager.activeTab?.browserPage?.webView === tabView)
+                #expect(BrowserPopupWindow.popup(showing: tabView) == nil)
 
-                #expect(second.popup.context.spaceID == popup.popup.context.spaceID)
+                window.tabManager.closeTab(tab: tab)
+                let second = try #require(page.webView.configuration.copy() as? WKWebViewConfiguration)
+                let popupView = try #require(delegate.browserPage(
+                    page, linkedPageWith: second, for: site, disposition: .foreground
+                ))
+                let other = try #require(BrowserPopupWindow.popup(showing: popupView))
+                defer { other.popupPage.closeWindow?() }
+                #expect(other.popupPage.context.spaceID == popup.popupPage.context.spaceID)
             }
         }
 
@@ -94,12 +103,12 @@ extension TabManagerTests {
         @Test func downloadsOutliveTheOpenerTab() async throws {
             try await TabManagerTestWindow.run { window in
                 let (tab, popup) = try await openPopup(in: window)
-                defer { popup.popup.closeWindow?() }
+                defer { popup.popupPage.closeWindow?() }
                 let downloads = tab.downloadManager ?? window.tabManager.downloadManager
 
                 window.tabManager.closeTab(tab: tab)
 
-                #expect(popup.popup.context.downloadManager === downloads)
+                #expect(popup.popupPage.context.downloadManager === downloads)
             }
         }
 

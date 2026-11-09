@@ -213,24 +213,6 @@
     },
     "%lld bookmarks go to:" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld signet va dans :"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld signets vont dans :"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -244,6 +226,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld bookmarks go to:"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld signet va dans :"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld signets vont dans :"
                 }
               }
             }
@@ -473,24 +473,6 @@
     },
     "%lld pages in the history" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld page dans l’historique"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld pages dans l’historique"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -504,6 +486,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld pages in the history"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld page dans l’historique"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pages dans l’historique"
                 }
               }
             }
@@ -6604,6 +6604,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lire le presse-papiers"
+          }
+        }
+      }
+    },
+    "Reading the export…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture de l’export…"
           }
         }
       }

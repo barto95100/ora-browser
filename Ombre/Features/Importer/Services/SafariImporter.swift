@@ -12,12 +12,12 @@ enum SafariImporter {
     }
 
     /// The history of one Safari profile; `name` is nil for the default one.
-    struct Profile: Equatable {
+    struct Profile: Equatable, Sendable {
         var name: String?
         var history: [ImportedVisit]
     }
 
-    struct Export: Equatable {
+    struct Export: Equatable, Sendable {
         var profiles: [Profile]
         /// The Favorites bar (Safari's first folder) and the other bookmarks.
         var favoritesBar: [ImportedPinnedItem]
@@ -49,18 +49,32 @@ enum SafariImporter {
     static func read(archive: Data) throws -> Export {
         let entries: [ZipReader.Entry]
         do {
-            entries = try ZipReader.entries(of: archive)
+            entries = try ZipReader.entries(of: archive, shouldRead: isReadable)
         } catch {
             throw Failure.unreadable
         }
         return try read(files: entries.map { ($0.path, $0.data) })
     }
 
+    /// Only the bookmarks (.html) and histories (.json) are ever read: never
+    /// the passwords' file, nor anything else.
+    static func isReadable(_ path: String) -> Bool {
+        let name = path.lowercased()
+        return name.hasSuffix(".html") || name.hasSuffix(".json")
+    }
+
+    static let maxFileSize = 32 * 1024 * 1024
+
     /// The files of an unpacked export folder (not its sub-folders).
     static func read(folder: URL) throws -> Export {
-        let urls = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        let keys: [URLResourceKey] = [.fileSizeKey, .isRegularFileKey]
+        let urls = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys)) ?? []
         let files = urls.compactMap { url -> (String, Data)? in
-            guard let data = try? Data(contentsOf: url) else { return nil }
+            let values = try? url.resourceValues(forKeys: Set(keys))
+            guard isReadable(url.lastPathComponent), values?.isRegularFile == true,
+                  (values?.fileSize ?? .max) <= maxFileSize,
+                  let data = try? Data(contentsOf: url)
+            else { return nil }
             return (url.lastPathComponent, data)
         }
         return try read(files: files)
@@ -71,7 +85,8 @@ enum SafariImporter {
         for (path, data) in files {
             let name = (path as NSString).lastPathComponent
             if name.lowercased().hasSuffix(".html"), let html = String(data: data, encoding: .utf8),
-               html.hasPrefix("<!DOCTYPE NETSCAPE-Bookmark-file-1>")
+               html.trimmingCharacters(in: .whitespacesAndNewlines.union(["\u{FEFF}"]))
+                   .lowercased().hasPrefix("<!doctype netscape-bookmark-file-1>")
             {
                 let top = SafariBookmarks.parse(html)
                 // Safari writes the Favorites bar first, as a folder.
@@ -100,7 +115,9 @@ enum SafariImporter {
     static func profileName(fromFile name: String) -> String? {
         let base = (name as NSString).deletingPathExtension
         guard let range = base.range(of: " - ") else { return nil }
+        // A zip made on macOS may keep names decomposed ("é" as "e" + accent).
         let profile = base[range.upperBound...].trimmingCharacters(in: .whitespaces)
+            .precomposedStringWithCanonicalMapping
         return profile.isEmpty ? nil : profile
     }
 
@@ -124,7 +141,22 @@ enum SafariImporter {
                 visitCount: max(1, (item["visit_count"] as? NSNumber)?.intValue ?? 1)
             )
         }
-        return Array(visits.sorted { $0.lastVisit > $1.lastVisit }.prefix(maxVisitsPerProfile))
+        // One entry per address, like Ombre's history: the latest visit, all the visits counted.
+        var byAddress: [String: ImportedVisit] = [:]
+        for visit in visits {
+            let key = visit.url.absoluteString
+            guard var known = byAddress[key] else {
+                byAddress[key] = visit
+                continue
+            }
+            known.visitCount += visit.visitCount
+            if visit.lastVisit > known.lastVisit {
+                known.lastVisit = visit.lastVisit
+                known.title = visit.title
+            }
+            byAddress[key] = known
+        }
+        return Array(byAddress.values.sorted { $0.lastVisit > $1.lastVisit }.prefix(maxVisitsPerProfile))
     }
 }
 
@@ -175,12 +207,30 @@ enum SafariBookmarks {
 
     static func decode(_ text: String) -> String {
         var result = text
+        // Numeric entities (&#233; &#x2019;), then the named ones.
+        if let numeric = try? NSRegularExpression(pattern: "&#(x?)([0-9a-fA-F]+);") {
+            let source = result as NSString
+            var decoded = ""
+            var last = 0
+            for match in numeric.matches(in: result, range: NSRange(location: 0, length: source.length)) {
+                decoded += source.substring(with: NSRange(location: last, length: match.range.location - last))
+                let isHex = match.range(at: 1).length > 0
+                let digits = source.substring(with: match.range(at: 2))
+                if let value = UInt32(digits, radix: isHex ? 16 : 10), let scalar = Unicode.Scalar(value) {
+                    decoded += String(Character(scalar))
+                } else {
+                    decoded += source.substring(with: match.range)
+                }
+                last = match.range.location + match.range.length
+            }
+            result = decoded + source.substring(from: last)
+        }
         for (entity, character) in [
             ("&lt;", "<"),
             ("&gt;", ">"),
             ("&quot;", "\""),
-            ("&#39;", "'"),
-            ("&#x27;", "'"),
+            ("&apos;", "'"),
+            ("&nbsp;", " "),
             ("&amp;", "&")
         ] {
             result = result.replacingOccurrences(of: entity, with: character)

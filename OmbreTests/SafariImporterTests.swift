@@ -124,7 +124,49 @@ struct SafariImporterTests {
         #expect(export.profiles == [SafariImporter.Profile(name: nil, history: [])])
     }
 
+    /// A damaged or forged archive is refused, never read past its end.
+    @Test func aBrokenZipIsRefused() {
+        let good = ZipBuilder.archive([("a.json", Data("{}".utf8))])
+        // Cut: the end record is gone.
+        #expect(throws: ZipReader.Failure.notAZip) { try ZipReader.entries(of: good.prefix(20)) }
+        // The file's data claims to start past the archive's end.
+        var forged = good
+        let central = forged.count - 22 - 46 - 6
+        forged[central + 42] = 0xFF
+        forged[central + 43] = 0xFF
+        #expect(throws: ZipReader.Failure.damaged) { try ZipReader.entries(of: forged) }
+        // A stored file whose sizes disagree.
+        var mismatch = good
+        mismatch[central + 24] = 9
+        #expect(throws: ZipReader.Failure.damaged) { try ZipReader.entries(of: mismatch) }
+        // Too large once unpacked.
+        var huge = good
+        huge[central + 27] = 0x7F
+        #expect(throws: ZipReader.Failure.tooLarge) { try ZipReader.entries(of: huge) }
+    }
+
+    @Test func onlyBookmarksAndHistoriesAreUnpacked() throws {
+        let archive = ZipBuilder.archive([
+            ("Export/Passwords.csv", Data("site,user,password".utf8)),
+            ("Export/History.json", Self.history([("https://a.example.com/", 1_700_000_000_000_000, 1)]))
+        ])
+        let entries = try ZipReader.entries(of: archive, shouldRead: SafariImporter.isReadable)
+        #expect(entries.map(\.path) == ["Export/History.json"])
+    }
+
+    @Test func anAddressSeenTwiceIsOneEntry() {
+        let data = Self.history([
+            ("https://a.example.com/", 1_600_000_000_000_000, 2),
+            ("https://a.example.com/", 1_700_000_000_000_000, 3)
+        ])
+        let visits = SafariImporter.history(from: data) ?? []
+        #expect(visits.count == 1)
+        #expect(visits.first?.visitCount == 5)
+        #expect(visits.first?.lastVisit == Date(timeIntervalSince1970: 1_700_000_000))
+    }
+
     @Test func profileNamesComeFromTheFileName() {
+        #expect(SafariImporter.profileName(fromFile: "History - A - B.json") == "A - B")
         #expect(SafariImporter.profileName(fromFile: "History - Personal stuff.json") == "Personal stuff")
         #expect(SafariImporter.profileName(fromFile: "Historique.json") == nil)
     }

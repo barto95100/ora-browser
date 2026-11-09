@@ -3,7 +3,7 @@ import Foundation
 /// What another browser holds, read before anything is written to Ombre: spaces
 /// with their favorites (Zen's Essentials, Arc's favorites), and their pinned
 /// tabs and folders, folders inside folders included.
-struct ImportedBrowserData: Equatable {
+struct ImportedBrowserData: Equatable, Sendable {
     var spaces: [ImportedSpace]
 
     var favoriteCount: Int {
@@ -28,7 +28,7 @@ struct ImportedBrowserData: Equatable {
     }
 }
 
-struct ImportedSpace: Equatable {
+struct ImportedSpace: Equatable, Sendable {
     var name: String
     /// An emoji, if the browser has one for it.
     var emoji: String?
@@ -39,20 +39,20 @@ struct ImportedSpace: Equatable {
     var history: [ImportedVisit] = []
 }
 
-struct ImportedVisit: Equatable {
+struct ImportedVisit: Equatable, Sendable {
     var url: URL
     var title: String
     var lastVisit: Date
     var visitCount: Int
 }
 
-struct ImportedTab: Equatable {
+struct ImportedTab: Equatable, Sendable {
     var url: URL
     var title: String
     var faviconURL: URL?
 }
 
-indirect enum ImportedPinnedItem: Equatable {
+indirect enum ImportedPinnedItem: Equatable, Sendable {
     case tab(ImportedTab)
     case folder(name: String, isOpen: Bool, items: [ImportedPinnedItem])
 

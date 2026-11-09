@@ -19,11 +19,12 @@ enum ZipReader {
 
     /// One file at most, and all of them: an export is a few megabytes.
     static let maxFileSize = 64 * 1024 * 1024
-    static let maxTotalSize = 256 * 1024 * 1024
+    static let maxTotalSize = 128 * 1024 * 1024
     static let maxEntries = 2000
 
-    /// The archive's files, folders and macOS's `__MACOSX` copies left out.
-    static func entries(of archive: Data) throws -> [Entry] {
+    /// The archive's files, folders and macOS's `__MACOSX` copies left out;
+    /// only those `shouldRead` accepts are unpacked (the others never are).
+    static func entries(of archive: Data, shouldRead: (String) -> Bool = { _ in true }) throws -> [Entry] {
         let bytes = [UInt8](archive)
         let end = try endOfCentralDirectory(in: bytes)
         let count = Int(bytes.uint16(at: end + 10))
@@ -46,7 +47,7 @@ enum ZipReader {
             let path = String(decoding: bytes[offset + 46 ..< offset + 46 + nameLength], as: UTF8.self)
             offset += 46 + nameLength + extraLength + commentLength
 
-            if path.hasSuffix("/") || path.hasPrefix("__MACOSX/") { continue }
+            if path.hasSuffix("/") || path.hasPrefix("__MACOSX/") || !shouldRead(path) { continue }
             // Encrypted, or sizes kept for ZIP64.
             guard flags & 1 == 0, size != 0xFFFFFFFF, compressedSize != 0xFFFFFFFF else {
                 throw Failure.unsupported
@@ -100,6 +101,7 @@ enum ZipReader {
     /// Raw deflate (what zip stores), to exactly `size` bytes.
     private static func inflate(_ input: [UInt8], size: Int) throws -> Data {
         guard size > 0 else { return Data() }
+        guard !input.isEmpty else { throw Failure.damaged }
         var output = [UInt8](repeating: 0, count: size)
         let written = input.withUnsafeBufferPointer { source in
             output.withUnsafeMutableBufferPointer { destination in

@@ -12,8 +12,11 @@ struct SafariImportSheet: View {
     @State private var selected: Set<Int> = []
     /// The profile whose space gets the bookmarks; nil: none.
     @State private var bookmarksIn: Int?
+    /// "Don't import the bookmarks" was chosen (not just no profile left).
+    @State private var bookmarksDeclined = false
     @State private var failure: String?
     @State private var importedCount: Int?
+    @State private var isReading = false
 
     /// The default profile's space.
     private static let defaultSpaceName = "Safari" // no translation: the browser's name
@@ -27,6 +30,11 @@ struct SafariImportSheet: View {
                 done(importedCount)
             } else if let export {
                 preview(export)
+            } else if isReading {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Reading the export…")
+                }
             } else {
                 start
             }
@@ -82,7 +90,12 @@ struct SafariImportSheet: View {
             }
 
             if export.bookmarkCount > 0 {
-                Picker(String(localized: "\(export.bookmarkCount) bookmarks go to:"), selection: $bookmarksIn) {
+                Picker(String(localized: "\(export.bookmarkCount) bookmarks go to:"), selection: Binding(
+                    get: { bookmarksIn },
+                    set: { bookmarksIn = $0
+                        bookmarksDeclined = $0 == nil
+                    }
+                )) {
                     ForEach(selected.sorted(), id: \.self) { index in
                         Text(export.profiles[index].name ?? Self.defaultSpaceName).tag(Int?.some(index))
                     }
@@ -128,6 +141,8 @@ struct SafariImportSheet: View {
             set: { isOn in
                 if isOn {
                     selected.insert(index)
+                    // The bookmarks had lost their space with the last profile unchecked.
+                    if bookmarksIn == nil, !bookmarksDeclined { bookmarksIn = index }
                 } else {
                     selected.remove(index)
                     // The bookmarks follow a space that is still imported.
@@ -149,24 +164,35 @@ struct SafariImportSheet: View {
         load(url)
     }
 
+    /// Read off the main thread (a large export takes a moment); the file's
+    /// access stays open until the reading is done.
     private func load(_ url: URL) {
-        let accessing = url.startAccessingSecurityScopedResource()
-        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
-        do {
-            let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
-            let read = isFolder
-                ? try SafariImporter.read(folder: url)
-                : try SafariImporter.read(archive: Data(contentsOf: url, options: .mappedIfSafe))
-            failure = nil
-            export = read
-            selected = Set(read.profiles.indices)
-            bookmarksIn = read.profiles.isEmpty ? nil : 0
-        } catch SafariImporter.Failure.nothingToImport {
-            failure = String(localized: "This export has no history or bookmarks Ombre can import.")
-            export = nil
-        } catch {
-            failure = String(localized: "Ombre couldn't read this export. Choose the .zip file Safari made.")
-            export = nil
+        isReading = true
+        failure = nil
+        export = nil
+        Task {
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<SafariImporter.Export, Error> in
+                let accessing = url.startAccessingSecurityScopedResource()
+                defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+                return Result {
+                    let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+                    return isFolder
+                        ? try SafariImporter.read(folder: url)
+                        : try SafariImporter.read(archive: Data(contentsOf: url, options: .mappedIfSafe))
+                }
+            }.value
+            isReading = false
+            switch result {
+            case let .success(read):
+                export = read
+                selected = Set(read.profiles.indices)
+                bookmarksIn = read.profiles.isEmpty ? nil : 0
+                bookmarksDeclined = false
+            case .failure(SafariImporter.Failure.nothingToImport):
+                failure = String(localized: "This export has no history or bookmarks Ombre can import.")
+            case .failure:
+                failure = String(localized: "Ombre couldn't read this export. Choose the .zip file Safari made.")
+            }
         }
     }
 

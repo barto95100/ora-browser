@@ -13,6 +13,21 @@ enum PasswordKeychain {
         return error.code == LAError.Code.passcodeNotSet.rawValue
     }
 
+    /// The Keychain items' service, one per copy of the app: they share the
+    /// user's keychain, and an item opens without asking only for the copy
+    /// that saved it. The tests use their own, never the user's passwords;
+    /// a Debug build its own, never the installed app's.
+    static func service(isTesting: Bool, isDebug: Bool) -> String {
+        if isTesting { return "Ombre Passwords (tests)" }
+        return isDebug ? "Ombre Passwords (dev)" : "Ombre Passwords"
+    }
+
+    #if DEBUG
+        static let isDebugBuild = true
+    #else
+        static let isDebugBuild = false
+    #endif
+
     /// Deletes every item, going on after a failure: the first failure, if any.
     static func deleteAll(_ references: [Data], delete: (Data) -> OSStatus) -> OSStatus? {
         var failure: OSStatus?

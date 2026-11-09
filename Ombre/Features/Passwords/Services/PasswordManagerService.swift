@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import LocalAuthentication
+import os
 import Security
 import SwiftData
 
@@ -76,8 +77,8 @@ final class PasswordManagerService: ObservableObject {
 
     /// The Keychain items' service. Ombre started with fresh data: the
     /// passwords saved before the rename, under another service, are not read.
-    /// The tests use their own, never the user's passwords.
-    let serviceName = TestHost.isActive ? "Ombre Passwords (tests)" : "Ombre Passwords"
+    let serviceName = PasswordKeychain.service(isTesting: TestHost.isActive, isDebug: PasswordKeychain.isDebugBuild)
+    private let logger = Logger(category: "Passwords")
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
@@ -163,11 +164,7 @@ final class PasswordManagerService: ObservableObject {
         ]
 
         var result: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess else {
-            throw PasswordManagerError.keychainStatus(status)
-        }
+        try check(SecItemCopyMatching(query as CFDictionary, &result), "read")
 
         guard let data = result as? Data,
               let password = String(data: data, encoding: .utf8)
@@ -219,10 +216,7 @@ final class PasswordManagerService: ObservableObject {
                 kSecValuePersistentRef as String: existing.persistentReference
             ]
 
-            let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-            guard status == errSecSuccess else {
-                throw PasswordManagerError.keychainStatus(status)
-            }
+            try check(SecItemUpdate(query as CFDictionary, attributes as CFDictionary), "update")
         } else {
             let metadata = SavedPasswordMetadata(
                 id: UUID().uuidString,
@@ -235,22 +229,21 @@ final class PasswordManagerService: ObservableObject {
                 containerID: containerID
             )
 
+            // In this Mac's keychain, locked with the user's session; never
+            // synced with iCloud. The iCloud keychain (and the one that tells
+            // "when unlocked" from "after first unlock") needs an entitlement
+            // only a paid developer account gives: a save there fails (-34018).
             let item: [String: Any] = try [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: serviceName,
                 kSecAttrAccount as String: metadata.id,
-                kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
-                kSecAttrSynchronizable as String: kCFBooleanTrue as Any,
                 kSecAttrGeneric as String: encode(metadata: metadata),
                 kSecAttrLabel as String: normalizedHost,
                 kSecAttrComment as String: trimmedUsername,
                 kSecValueData as String: Data(password.utf8)
             ]
 
-            let status = SecItemAdd(item as CFDictionary, nil)
-            guard status == errSecSuccess else {
-                throw PasswordManagerError.keychainStatus(status)
-            }
+            try check(SecItemAdd(item as CFDictionary, nil), "save")
         }
 
         refresh()
@@ -277,10 +270,7 @@ final class PasswordManagerService: ObservableObject {
                 kSecValuePersistentRef as String: entry.persistentReference
             ]
 
-            let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-            guard status == errSecSuccess else {
-                throw PasswordManagerError.keychainStatus(status)
-            }
+            try check(SecItemUpdate(query as CFDictionary, attributes as CFDictionary), "mark used")
 
             refresh()
         } catch {
@@ -295,9 +285,7 @@ final class PasswordManagerService: ObservableObject {
         ]
 
         let status = SecItemDelete(query as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw PasswordManagerError.keychainStatus(status)
-        }
+        if status != errSecItemNotFound { try check(status, "delete") }
 
         refresh()
     }
@@ -316,6 +304,7 @@ final class PasswordManagerService: ObservableObject {
         // Refreshed first: refreshing clears the message.
         refresh()
         if let failure {
+            logger.error("Keychain delete failed: OSStatus \(failure, privacy: .public)")
             let error = PasswordManagerError.keychainStatus(failure)
             lastErrorMessage = error.localizedDescription
             throw error
@@ -480,9 +469,7 @@ final class PasswordManagerService: ObservableObject {
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw PasswordManagerError.keychainStatus(status)
-        }
+        if status != errSecItemNotFound { try check(status, "list") }
 
         guard let records = result as? [[String: Any]] else {
             return []
@@ -523,6 +510,14 @@ final class PasswordManagerService: ObservableObject {
             }
             return $0.displayUsername.localizedCaseInsensitiveCompare($1.displayUsername) == .orderedAscending
         }
+    }
+
+    /// A Keychain call that failed is logged with its status, and thrown:
+    /// never a silent failure.
+    private func check(_ status: OSStatus, _ operation: String) throws {
+        guard status != errSecSuccess else { return }
+        logger.error("Keychain \(operation, privacy: .public) failed: OSStatus \(status, privacy: .public)")
+        throw PasswordManagerError.keychainStatus(status)
     }
 
     private func encode(metadata: SavedPasswordMetadata) throws -> Data {
@@ -591,7 +586,8 @@ enum PasswordManagerError: LocalizedError {
             return "Ombre can only save passwords for web origins."
         case let .keychainStatus(status):
             if let message = SecCopyErrorMessageString(status, nil) as String? {
-                return message
+                // With the status, to find it in the logs.
+                return "\(message) (\(status))"
             }
             return "Keychain error \(status)."
         }

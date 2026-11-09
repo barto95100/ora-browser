@@ -134,24 +134,7 @@ private struct PasswordsWindowView: View {
         .onDisappear {
             lockVault()
         }
-        .alert("Delete saved password?", isPresented: Binding(
-            get: { pendingDelete != nil },
-            set: { if !$0 { pendingDelete = nil } }
-        )) {
-            Button("Delete", role: .destructive) {
-                if let pendingDelete {
-                    try? passwordManager.delete(pendingDelete)
-                }
-                pendingDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                pendingDelete = nil
-            }
-        } message: {
-            if let pendingDelete {
-                Text("Remove the saved credential for \(pendingDelete.displayUsername) on \(pendingDelete.host)?")
-            }
-        }
+        .passwordDeleteConfirmation($pendingDelete) { try passwordManager.delete($0) }
     }
 
     private var header: some View {

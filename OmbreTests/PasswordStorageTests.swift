@@ -57,6 +57,50 @@ struct PasswordStorageTests {
         #expect(PasswordAutofillCoordinator.saveFailureTitle(host: "example.com").contains("example.com"))
     }
 
+    /// A delete that fails is said, with the Keychain's status; never silent.
+    @Test func aFailedDeleteIsSaid() throws {
+        let entry = SavedPasswordSummary(
+            metadata: SavedPasswordMetadata(
+                id: "id", origin: "https://example.com", host: "example.com", username: "ludo",
+                createdAt: .now, updatedAt: .now, lastUsedAt: nil, containerID: nil
+            ),
+            persistentReference: Data()
+        )
+        var failures: [(title: String, message: String)] = []
+        PasswordDeleteConfirmation.perform(
+            { _ in throw PasswordManagerError.keychainStatus(errSecInteractionNotAllowed) },
+            on: entry,
+            onFailure: { title, error in failures.append((title, error.localizedDescription)) }
+        )
+        let failure = try #require(failures.first)
+        #expect(failures.count == 1)
+        #expect(failure.title.contains("ludo") && failure.title.contains("example.com"))
+        #expect(failure.message.contains("\(errSecInteractionNotAllowed)"))
+
+        // A delete that works says nothing.
+        var deleted = false
+        PasswordDeleteConfirmation.perform(
+            { _ in deleted = true },
+            on: entry,
+            onFailure: { _, _ in Issue.record("A delete that worked was reported as failed") }
+        )
+        #expect(deleted)
+    }
+
+    /// A password really deleted is gone from the list.
+    @Test func aDeletedPasswordIsGone() throws {
+        let url = try #require(URL(string: "https://delete-test-\(UUID().uuidString.lowercased()).example"))
+        defer { try? removeSaved(on: url) }
+        try service.upsertCredential(for: url, username: "ludo", password: "s3cret", containerID: nil)
+        let entry = try #require(service.matchingEntries(for: url).first)
+        PasswordDeleteConfirmation.perform(
+            { try service.delete($0) },
+            on: entry,
+            onFailure: { _, error in Issue.record("Delete failed: \(error.localizedDescription)") }
+        )
+        #expect(service.matchingEntries(for: url).isEmpty)
+    }
+
     /// The tests, a Debug build and the installed app each keep their own.
     @Test func eachCopyOfTheAppHasItsOwnPasswords() {
         let services = [

@@ -251,7 +251,7 @@ struct OmbreTests {
         let service = FilterListUpdateService()
 
         #expect(service.isValidCustomListURL("https://example.com/filter.txt"))
-        #expect(service.isValidCustomListURL("http://example.com/filter.txt"))
+        #expect(service.isValidCustomListURL("http://example.com/filter.txt") == false)
         #expect(service.isValidCustomListURL("ftp://example.com/filter.txt") == false)
         #expect(service.isValidCustomListURL("file:///tmp/filter.txt") == false)
     }

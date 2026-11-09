@@ -100,7 +100,7 @@ private struct PrivacyShieldPanel: View {
                 HStack {
                     Text("Cookies")
                     Spacer()
-                    Text(settings.cookiesPolicy.rawValue).foregroundStyle(.secondary)
+                    Text(settings.cookiesPolicy.title).foregroundStyle(.secondary)
                 }
                 Text("Change them in Settings › Spaces.")
                     .foregroundStyle(.secondary)
@@ -114,20 +114,22 @@ private struct PrivacyShieldPanel: View {
 
     private var summary: String {
         if !BrowserPrivacyService.hasContentBlocking(settings) {
-            return "No blocking is set up in this space"
+            return String(localized: "No blocking is set up in this space")
         }
         if !tab.areProtectionsEnabled {
-            return "Protections are off for this site"
+            return String(localized: "Protections are off for this site")
         }
         let count = tab.blockedContentCount
-        return count == 0 ? "Nothing blocked on this page" : "\(count) blocked on this page"
+        return count == 0
+            ? String(localized: "Nothing blocked on this page")
+            : String(localized: "\(count) blocked on this page")
     }
 
-    private func statusLine(_ title: String, isOn: Bool) -> some View {
+    private func statusLine(_ title: LocalizedStringKey, isOn: Bool) -> some View {
         HStack {
             Text(title)
             Spacer()
-            Text(isOn ? "On" : "Off").foregroundStyle(.secondary)
+            Text(isOn ? String(localized: "On") : String(localized: "Off")).foregroundStyle(.secondary)
         }
     }
 }

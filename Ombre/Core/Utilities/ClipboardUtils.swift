@@ -37,7 +37,11 @@ enum ClipboardUtils {
     }
 
     /// Copies text and shows a toast notification
-    static func copyWithToast(_ text: String, message: String = "Link copied", toastManager: ToastManager?) {
+    static func copyWithToast(
+        _ text: String,
+        message: String = String(localized: "Link copied"),
+        toastManager: ToastManager?
+    ) {
         copyToClipboard(text)
         toastManager?.show(message, icon: .ombre(.copy))
     }

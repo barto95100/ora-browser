@@ -120,7 +120,7 @@ private struct BrowserWindowRoot: View {
                 keyModifierListener.window = newWindow
                 // Private windows are named so in the Window menu and Mission Control.
                 if privacyMode.isPrivate, let newWindow {
-                    newWindow.title = "Private Browsing"
+                    newWindow.title = String(localized: "Private Browsing")
                 }
                 if let newWindow {
                     // ⌘Q asks for confirmation in a browser window, normal or private.

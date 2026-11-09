@@ -63,7 +63,7 @@ struct URLBar: View {
 
     private func shareCurrentPage(tab: Tab, sourceView: NSView, sourceRect: NSRect) {
         let url = tab.url
-        let title = tab.title.isEmpty ? "Shared from Ombre" : tab.title
+        let title = tab.title.isEmpty ? String(localized: "Shared from Ombre") : tab.title
         let items: [Any] = [title, url]
         let picker = NSSharingServicePicker(items: items)
         picker.delegate = nil
@@ -352,7 +352,7 @@ struct URLBar: View {
                         .font(.system(size: 14))
                         .foregroundColor(buttonForegroundColor)
                     if let title = parts.title {
-                        Text(" / \(title)")
+                        Text(verbatim: " / \(title)")
                             .font(.system(size: 14))
                             .foregroundColor(tabManager.activeTab.map { foreground($0).secondary } ?? .gray)
                     }
@@ -459,7 +459,7 @@ struct URLBar: View {
                 },
                 cursorColor: foreground(tab).primary,
                 textColor: foreground(tab).primary,
-                placeholder: "Search the web or enter URL...",
+                placeholder: String(localized: "Search the web or enter URL..."),
                 placeholderColor: foreground(tab).secondary
             )
             .textFieldStyle(PlainTextFieldStyle())

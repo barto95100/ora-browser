@@ -9,7 +9,8 @@ struct PrivateBrowsingBadge: View {
         HStack(spacing: 4) {
             Image(systemName: "hand.raised.fill")
                 .font(.system(size: 10, weight: .semibold))
-            Text("Private")
+            // Short: the badge sits next to the address field.
+            Text(String(localized: "badge.private", defaultValue: "Private"))
                 .font(.system(size: 11, weight: .semibold))
         }
         .foregroundColor(foregroundColor)

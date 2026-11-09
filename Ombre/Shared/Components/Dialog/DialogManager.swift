@@ -38,7 +38,7 @@ final class DialogManager: ObservableObject {
         message: String? = nil,
         icon: OmbreIconType? = nil,
         iconImage: Image? = nil,
-        confirmLabel: String = "Confirm",
+        confirmLabel: String = String(localized: "Confirm"),
         variant: OmbreButtonVariant = .default,
         onConfirm: @escaping () -> Void,
         onCancel: (() -> Void)? = nil

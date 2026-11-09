@@ -8,7 +8,7 @@ struct ConfirmDialogView: View {
     var icon: OmbreIconType?
     var iconColor: Color?
     var iconImage: Image?
-    var confirmLabel: String = "Confirm"
+    var confirmLabel = String(localized: "Confirm")
     var confirmVariant: OmbreButtonVariant = .default
     let onConfirm: () -> Void
     let onCancel: () -> Void
@@ -51,7 +51,12 @@ struct ConfirmDialogView: View {
                 Spacer()
 
                 HStack {
-                    OmbreButton(label: "Cancel", variant: .secondary, keyboardShortcut: "esc", action: onCancel)
+                    OmbreButton(
+                        label: String(localized: "Cancel"),
+                        variant: .secondary,
+                        keyboardShortcut: "esc",
+                        action: onCancel
+                    )
                     Spacer()
                     OmbreButton(label: confirmLabel, variant: confirmVariant, keyboardShortcut: "return") {
                         onConfirm()

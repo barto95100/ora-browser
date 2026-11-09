@@ -55,10 +55,10 @@ private struct WindowAppCommands: ViewModifier {
                     return
                 }
                 dialogManager.confirm(
-                    title: "Quit Ombre?",
-                    message: "Are you sure you want to quit?",
+                    title: String(localized: "Quit Ombre?"),
+                    message: String(localized: "Are you sure you want to quit?"),
                     iconImage: Image(nsImage: NSApp.applicationIconImage),
-                    confirmLabel: "Quit",
+                    confirmLabel: String(localized: "Quit"),
                     variant: .destructive,
                     onConfirm: { NSApp.reply(toApplicationShouldTerminate: true) },
                     onCancel: { NSApp.reply(toApplicationShouldTerminate: false) }
@@ -338,7 +338,7 @@ private struct WindowPageCommands: ViewModifier {
                         print("[Simulate crash] No web content process found")
                         return
                     }
-                    let command = "kill -9 " + pids.sorted().map(String.init).joined(separator: " ")
+                    let command = "kill -9 " + pids.sorted().map(String.init).joined(separator: " ") // not shown
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(command, forType: .string)
                     print("[Simulate crash] Copied to the clipboard, run it in Terminal: \(command)")
@@ -385,14 +385,14 @@ private struct WindowPageCommands: ViewModifier {
             PrivacyService.clearCacheForHost(for: host, tab: activeTab) { [weak toastManager] in
                 DispatchQueue.main.async {
                     activeTab.reload()
-                    toastManager?.show("Cache cleared for \(domain)", icon: .system("trash"))
+                    toastManager?.show(String(localized: "Cache cleared for \(domain)"), icon: .system("trash"))
                 }
             }
         case .cookies:
             PrivacyService.clearCookiesForHost(for: host, tab: activeTab) { [weak toastManager] in
                 DispatchQueue.main.async {
                     activeTab.reload()
-                    toastManager?.show("Cookies cleared for \(domain)", icon: .system("trash"))
+                    toastManager?.show(String(localized: "Cookies cleared for \(domain)"), icon: .system("trash"))
                 }
             }
         }

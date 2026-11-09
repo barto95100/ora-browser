@@ -139,7 +139,7 @@ struct FindView: View {
                 }
             } else {
                 // Invisible placeholder to maintain layout
-                Text("")
+                Text(verbatim: "")
                     .font(.system(size: 12, weight: .bold))
                     .opacity(0)
                     .padding(.horizontal, 8)
@@ -151,14 +151,14 @@ struct FindView: View {
 
     private var matchCounterBadge: some View {
         HStack(spacing: 3) {
-            Text("\(currentMatch)")
+            Text(verbatim: "\(currentMatch)")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(theme.foreground)
                 .monospacedDigit()  // Prevents width changes when numbers change
-            Text("/")
+            Text(verbatim: "/")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(theme.foreground.opacity(0.8))
-            Text("\(matchCount)")
+            Text(verbatim: "\(matchCount)")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(theme.foreground.opacity(0.9))
                 .monospacedDigit()  // Prevents width changes when numbers change

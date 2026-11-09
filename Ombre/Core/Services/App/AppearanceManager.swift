@@ -8,6 +8,15 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     var id: String {
         rawValue
     }
+
+    /// Shown in the interface (the raw value is what is saved).
+    var title: String {
+        switch self {
+        case .system: String(localized: "System")
+        case .light: String(localized: "Light")
+        case .dark: String(localized: "Dark")
+        }
+    }
 }
 
 @MainActor

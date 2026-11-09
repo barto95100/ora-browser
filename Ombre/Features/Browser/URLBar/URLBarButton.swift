@@ -46,11 +46,11 @@ extension URLBarButton {
     /// Nil for another symbol: SwiftUI names it.
     static func label(for systemName: String) -> String? {
         switch systemName {
-        case "chevron.left": "Back"
-        case "chevron.right": "Forward"
-        case "arrow.clockwise": "Reload"
-        case "sidebar.left", "sidebar.right": "Toggle Sidebar"
-        case "square.and.arrow.up": "Share"
+        case "chevron.left": String(localized: "Back")
+        case "chevron.right": String(localized: "Forward")
+        case "arrow.clockwise": String(localized: "Reload")
+        case "sidebar.left", "sidebar.right": String(localized: "Toggle Sidebar")
+        case "square.and.arrow.up": String(localized: "Share")
         default: nil
         }
     }

@@ -7,6 +7,15 @@ enum CookiesPolicy: String, CaseIterable, Identifiable, Codable {
     var id: String {
         rawValue
     }
+
+    /// Shown in the interface (the raw value is what is saved).
+    var title: String {
+        switch self {
+        case .allowAll: String(localized: "Allow all")
+        case .blockThirdParty: String(localized: "Block third-party")
+        case .blockAll: String(localized: "Block all")
+        }
+    }
 }
 
 @MainActor

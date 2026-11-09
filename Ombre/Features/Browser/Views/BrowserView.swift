@@ -26,7 +26,7 @@ struct BrowserView: View {
 
     /// Changes when the space's look changes, to fade the background.
     private var backgroundKey: String {
-        "\(spaceTheme.spaceTheme?.rawValue ?? "")-\(spaceTheme.spaceColor?.rawValue ?? "")"
+        "\(spaceTheme.spaceTheme?.rawValue ?? "")-\(spaceTheme.spaceColor?.rawValue ?? "")" // not shown
     }
 
     @State private var isMouseOverURLBar = false

@@ -5,8 +5,8 @@ struct LinkPreview: View {
     @Environment(\.theme) private var theme
 
     private func getAppVersion() -> String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-        return "Ombre \(version)"
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?" // not shown
+        return "Ombre \(version)" // no translation: name and version
     }
 
     var body: some View {

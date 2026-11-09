@@ -124,7 +124,7 @@ private struct NoteImageView: View {
     }
 
     private var helpText: String {
-        if let page { return "Open \(page.host() ?? page.absoluteString)" }
+        if let page { return String(localized: "Open \(page.host() ?? page.absoluteString)") }
         return alt.isEmpty ? url.lastPathComponent : alt
     }
 

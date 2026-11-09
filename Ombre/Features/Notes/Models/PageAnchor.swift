@@ -8,8 +8,8 @@ enum PageAnchor {
     /// The words of the page at `point` (CSS pixels of the viewport; its
     /// center when nil), as a JSON-free string, or "" when none.
     static func wordsScript(at point: CGPoint?) -> String {
-        let left = point.map { "\($0.x)" } ?? "innerWidth / 2"
-        let top = point.map { "\($0.y)" } ?? "innerHeight / 2"
+        let left = point.map { "\($0.x)" } ?? "innerWidth / 2" // not shown
+        let top = point.map { "\($0.y)" } ?? "innerHeight / 2" // not shown
         return """
         (() => {
             window.__captureShield?.remove(); window.__captureShield = null;

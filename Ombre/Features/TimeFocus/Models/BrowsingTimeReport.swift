@@ -9,6 +9,14 @@ enum ReportPeriod: String, CaseIterable, Identifiable {
         rawValue
     }
 
+    /// Shown in the interface (the raw value is what is saved).
+    var title: String {
+        switch self {
+        case .day: String(localized: "Day")
+        case .week: String(localized: "Week")
+        }
+    }
+
     /// The bars of the chart: hours of a day, days of a week.
     var bucketComponent: Calendar.Component {
         self == .day ? .hour : .day

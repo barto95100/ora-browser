@@ -102,7 +102,7 @@ enum NoteMarkdown {
 
     /// The line of an image of the note's folder, linked to its page if any.
     static func imageLine(alt: String, path: String, link: URL? = nil) -> String {
-        let image = "![\(alt.replacingOccurrences(of: "]", with: ""))](\(path))"
+        let image = "![\(alt.replacingOccurrences(of: "]", with: ""))](\(path))" // not shown
         return link.map { "[\(image)](\($0.absoluteString))" } ?? image
     }
 

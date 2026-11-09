@@ -18,7 +18,7 @@ struct FocusCard: View {
             HStack(alignment: .center, spacing: 16) {
                 ring(now: context.date)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(session.phase?.title ?? "Focus")
+                    Text(session.phase?.title ?? String(localized: "Focus"))
                         .font(.system(size: 14, weight: .semibold))
                     Text(subtitle(now: context.date))
                         .font(.system(size: 11))
@@ -90,20 +90,20 @@ struct FocusCard: View {
         var lines: [String] = []
         if let end = session.phaseEnd, session.isRunning {
             let cycle = session.completedCycles + (session.isFocusing ? 1 : 0)
-            let ends = "Ends at \(end.formatted(date: .omitted, time: .shortened))"
-            lines.append(settings.repeats ? "\(ends) · cycle \(cycle)" : ends)
+            let ends = String(localized: "Ends at \(end.formatted(date: .omitted, time: .shortened))")
+            lines.append(settings.repeats ? String(localized: "\(ends) · cycle \(cycle)") : ends)
         }
         if session.phase != .shortBreak, session.phase != .longBreak {
             lines.append(
-                blockedCount == 0 ? "Nothing is blocked during focus in this space."
-                    : "\(blockedCount) site\(blockedCount == 1 ? "" : "s") blocked during focus."
+                blockedCount == 0 ? String(localized: "Nothing is blocked during focus in this space.")
+                    : String(localized: "\(blockedCount) sites blocked during focus.")
             )
         } else {
-            lines.append("Blocked sites are open during the break.")
+            lines.append(String(localized: "Blocked sites are open during the break."))
         }
         if settings.dailyGoalMinutes > 0 {
             let done = Int(settings.focusSeconds() / 60)
-            lines.append("Today: \(done) / \(settings.dailyGoalMinutes) min")
+            lines.append(String(localized: "Today: \(done) / \(settings.dailyGoalMinutes) min"))
         }
         return lines.joined(separator: "\n")
     }
@@ -139,7 +139,8 @@ struct FocusCard: View {
     /// The minutes left, rounded up: "13 min" for 12:30.
     static func minutesLeft(_ seconds: TimeInterval) -> String {
         let minutes = Int((max(seconds, 0) / 60).rounded(.up))
-        return minutes >= 60 ? String(format: "%d h %02d", minutes / 60, minutes % 60) : "\(minutes) min"
+        return minutes >= 60 ? String(format: "%d h %02d", minutes / 60, minutes % 60) :
+            String(localized: "\(minutes) min")
     }
 }
 

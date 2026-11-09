@@ -1,3 +1,4 @@
+// Never shows a text (file names and logs): skipped by scripts/check-localization.py.
 import Foundation
 import os
 import SwiftData

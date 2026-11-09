@@ -24,7 +24,7 @@ enum TaskReminders {
         WebNotificationCenter.shared.requestAuthorizationIfNeeded()
 
         let content = UNMutableNotificationContent()
-        content.title = task.title.isEmpty ? "Task" : task.title
+        content.title = task.title.isEmpty ? String(localized: "Task") : task.title
         if let parent = task.parent {
             content.subtitle = parent.title
         } else if let space = task.space {

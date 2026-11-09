@@ -33,12 +33,12 @@ final class NotesStore {
     }
 
     var rootFolder: URL {
-        OmbreDataFolder.applicationSupport.appendingPathComponent("Notes", isDirectory: true)
+        OmbreDataFolder.applicationSupport.appendingPathComponent("Notes", isDirectory: true) // not shown
     }
 
     /// The space's folder, created if needed, renamed if the space was.
     func folder(for spaceID: UUID, named spaceName: String) -> URL {
-        let wanted = Self.fileName(from: spaceName, fallback: "Space")
+        let wanted = Self.fileName(from: spaceName, fallback: String(localized: "Space"))
         var current = folderNames[spaceID.uuidString]
         if current.map({ !Self.isFolderName($0, for: wanted) }) ?? true {
             let target = uniqueURL(in: rootFolder, base: wanted, pathExtension: nil)
@@ -71,8 +71,12 @@ final class NotesStore {
             .sorted { $0.modifiedAt > $1.modifiedAt }
     }
 
-    func create(in folder: URL, title: String = "Untitled") -> Note? {
-        let url = uniqueURL(in: folder, base: Self.fileName(from: title, fallback: "Untitled"), pathExtension: "md")
+    func create(in folder: URL, title: String = String(localized: "Untitled")) -> Note? {
+        let url = uniqueURL(
+            in: folder,
+            base: Self.fileName(from: title, fallback: String(localized: "Untitled")),
+            pathExtension: "md"
+        )
         guard fileManager.createFile(atPath: url.path, contents: Data()) else { return nil }
         return Note(url: url, modifiedAt: Date())
     }
@@ -118,7 +122,7 @@ final class NotesStore {
     /// A new note for the tab, named after its page, starting with its link.
     func createTabNote(for tabID: UUID, title: String, pageURL: URL, in folder: URL) -> Note? {
         guard let note = create(in: folder, title: title) else { return nil }
-        let link = "[\(title.replacingOccurrences(of: "]", with: ""))](\(pageURL.absoluteString))"
+        let link = "[\(title.replacingOccurrences(of: "]", with: ""))](\(pageURL.absoluteString))" // not shown
         write(link + "\n\n", to: note)
         var names = tabNoteNames(in: folder)
         names[tabID.uuidString] = note.url.lastPathComponent

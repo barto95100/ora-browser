@@ -261,16 +261,28 @@ class SearchEngineService: ObservableObject {
     }
 
     nonisolated static func firstSearchURL(for query: String, engines: [SearchEngine?]) -> URL? {
+        engines.lazy.compactMap { $0.flatMap { searchURL(template: $0.searchURL, query: query) } }.first
+    }
+
+    /// `query` in an engine's template; nil unless it makes a web address
+    /// (never a `file:` or `javascript:` one, even through an alias).
+    nonisolated static func searchURL(template: String, query: String) -> URL? {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        for engine in engines.compactMap(\.self) {
-            let address = engine.searchURL.replacingOccurrences(of: "{query}", with: encodedQuery)
-            if let url = URL(string: address), let scheme = url.scheme?.lowercased(),
-               ["http", "https"].contains(scheme), url.host?.isEmpty == false
-            {
-                return url
-            }
-        }
-        return nil
+        return webURL(template.replacingOccurrences(of: "{query}", with: encodedQuery))
+    }
+
+    /// A template the settings accept: one Ombre will search with
+    /// (`{query}`, then a web address with a host).
+    nonisolated static func isValidTemplate(_ template: String) -> Bool {
+        template.contains("{query}") && webURL(template.replacingOccurrences(of: "{query}", with: "test")) != nil
+    }
+
+    /// `address` as an http(s) address with a host; nil otherwise.
+    private nonisolated static func webURL(_ address: String) -> URL? {
+        guard let url = URL(string: address), let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme), url.host?.isEmpty == false
+        else { return nil }
+        return url
     }
 
     func getDefaultAIChat(for containerId: UUID? = nil) -> SearchEngine? {
@@ -306,17 +318,11 @@ class SearchEngineService: ObservableObject {
     }
 
     func createSearchURL(for engine: SearchEngine, query: String) -> URL? {
-        let encodedQuery =
-            query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let urlString = engine.searchURL.replacingOccurrences(of: "{query}", with: encodedQuery)
-        return URL(string: urlString)
+        Self.searchURL(template: engine.searchURL, query: query)
     }
 
     func createSearchURL(for match: LauncherMatch, query: String) -> URL? {
-        let encodedQuery =
-            query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let urlString = match.searchURL.replacingOccurrences(of: "{query}", with: encodedQuery)
-        return URL(string: urlString)
+        Self.searchURL(template: match.searchURL, query: query)
     }
 
     func createSuggestionsURL(urlString: String, query: String) -> URL? {

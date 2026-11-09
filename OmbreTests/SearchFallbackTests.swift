@@ -34,6 +34,28 @@ struct SearchFallbackTests {
         ]) == nil)
     }
 
+    /// The settings refuse a template Ombre would never search with; they
+    /// used to accept any address, `file:` and `javascript:` included.
+    @Test func theSettingsOnlyAcceptWebTemplates() {
+        #expect(SearchEngineService.isValidTemplate("https://duckduckgo.com/?q={query}"))
+        #expect(SearchEngineService.isValidTemplate("HTTP://intranet.example/search?q={query}"))
+        for template in [
+            "file:///tmp/{query}", "javascript:alert('{query}')", "ombre://search?q={query}",
+            "https:///?q={query}", "https://example.com/search", "example.com/?q={query}", ""
+        ] {
+            #expect(!SearchEngineService.isValidTemplate(template), "\(template)")
+        }
+    }
+
+    /// An engine saved before the settings checked it: its alias doesn't
+    /// open a `file:` or `javascript:` address either.
+    @Test func anAliasOnlyOpensWebAddresses() {
+        #expect(SearchEngineService.searchURL(template: "https://example.com/?q={query}", query: "a b")?
+            .absoluteString == "https://example.com/?q=a%20b")
+        #expect(SearchEngineService.searchURL(template: "file:///tmp/{query}", query: "ombre") == nil)
+        #expect(SearchEngineService.searchURL(template: "javascript:alert('{query}')", query: "ombre") == nil)
+    }
+
     private struct Item {
         let name: String
         let title: String

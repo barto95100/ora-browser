@@ -22,8 +22,8 @@ enum TaskSchedule {
     /// "Today", "Tomorrow", or the day ("3 Nov").
     static func label(for dueDate: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
         switch due(dueDate, now: now, calendar: calendar) {
-        case .today: return "Today"
-        case .tomorrow: return "Tomorrow"
+        case .today: return String(localized: "Today")
+        case .tomorrow: return String(localized: "Tomorrow")
         case .overdue, .later:
             var style = Date.FormatStyle.dateTime.day().month(.abbreviated)
             style.calendar = calendar

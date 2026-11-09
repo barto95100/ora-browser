@@ -133,15 +133,15 @@ final class FocusSession: ObservableObject {
         let content = UNMutableNotificationContent()
         switch phase {
         case .focus:
-            content.title = "Focus done"
+            content.title = String(localized: "Focus done")
             if let next = plan.phase(after: .focus, completedCycles: completedCycles + 1) {
-                content.body = "Time for a \(Int(plan.duration(of: next) / 60)) min break."
+                content.body = String(localized: "Time for a \(Int(plan.duration(of: next) / 60)) min break.")
             } else {
-                content.body = "Well done. Blocked sites are open again."
+                content.body = String(localized: "Well done. Blocked sites are open again.")
             }
         case .shortBreak, .longBreak:
-            content.title = "Break over"
-            content.body = "Back to focus for \(plan.focusMinutes) min."
+            content.title = String(localized: "Break over")
+            content.body = String(localized: "Back to focus for \(plan.focusMinutes) min.")
         }
         content.sound = .default
         content.threadIdentifier = "ombre-focus"

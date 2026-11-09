@@ -32,6 +32,10 @@ struct NotesPanel: View {
         return notes.filter { $0.title.localizedCaseInsensitiveContains(query) }
     }
 
+    private var noteToDeleteTitle: String {
+        noteToDelete?.title ?? ""
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             Color.black.opacity(0.3)
@@ -89,7 +93,7 @@ struct NotesPanel: View {
             return .handled
         })
         .confirmationDialog(
-            "Move \"\(noteToDelete?.title ?? "")\" to the Trash?",
+            String(localized: "Move “\(noteToDeleteTitle)” to the Trash?"),
             isPresented: Binding(get: { noteToDelete != nil }, set: { if !$0 { noteToDelete = nil } }),
             presenting: noteToDelete
         ) { note in
@@ -208,7 +212,7 @@ struct NotesPanel: View {
             VStack(spacing: 12) {
                 Text("No note yet")
                     .foregroundColor(theme.mutedForeground)
-                OmbreButton(label: "New Note", action: newNote)
+                OmbreButton(label: String(localized: "New Note"), action: newNote)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

@@ -83,7 +83,7 @@ struct TaskRow: View {
                 .onExitCommand { isTitleFocused = false }
                 .onAppear { isTitleFocused = true }
         } else {
-            Text(task.title.isEmpty ? "Task" : task.title)
+            Text(task.title.isEmpty ? String(localized: "Task") : task.title)
                 .font(font)
                 .strikethrough(task.isDone)
                 .foregroundColor(
@@ -125,7 +125,7 @@ struct TaskRow: View {
                     Button {
                         tab.openPeek(page)
                     } label: {
-                        Label(page.host() ?? "Page", systemImage: "link")
+                        Label(page.host() ?? String(localized: "Page"), systemImage: "link")
                             .lineLimit(1)
                     }
                     .buttonStyle(.plain)

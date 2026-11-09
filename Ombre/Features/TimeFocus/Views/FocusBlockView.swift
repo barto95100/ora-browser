@@ -78,7 +78,7 @@ struct FocusIndicator: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(session.phase?.title ?? "Focus")
+                .help(session.phase?.title ?? String(localized: "Focus"))
             }
         }
     }

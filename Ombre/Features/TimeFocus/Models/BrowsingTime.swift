@@ -43,7 +43,7 @@ enum BrowsingTime {
     static func format(_ seconds: Double) -> String {
         if seconds < 60 { return "\(Int(seconds)) s" }
         let minutes = Int(seconds / 60)
-        if minutes < 60 { return "\(minutes) min" }
+        if minutes < 60 { return String(localized: "\(minutes) min") }
         return String(format: "%d h %02d", minutes / 60, minutes % 60)
     }
 }

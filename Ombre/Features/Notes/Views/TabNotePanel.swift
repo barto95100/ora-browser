@@ -94,7 +94,7 @@ struct TabNotePanel: View {
     private var header: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 1) {
-                Text(note?.title ?? "Tab Note")
+                Text(note?.title ?? String(localized: "Tab Note"))
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
                 Text(tab.title)
@@ -154,7 +154,7 @@ struct TabNotePanel: View {
             Text("Drop or paste a screenshot to start one")
                 .font(.system(size: 11))
                 .foregroundColor(theme.mutedForeground.opacity(0.8))
-            OmbreButton(label: "New Note", action: createNote)
+            OmbreButton(label: String(localized: "New Note"), action: createNote)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

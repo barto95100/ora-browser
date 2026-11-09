@@ -8,9 +8,9 @@ enum FocusPhase: String, Codable {
 
     var title: String {
         switch self {
-        case .focus: return "Focus"
-        case .shortBreak: return "Break"
-        case .longBreak: return "Long Break"
+        case .focus: return String(localized: "Focus")
+        case .shortBreak: return String(localized: "Break")
+        case .longBreak: return String(localized: "Long Break")
         }
     }
 }

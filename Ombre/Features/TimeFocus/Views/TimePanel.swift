@@ -92,7 +92,7 @@ struct TimePanel: View {
     private var toolbar: some View {
         HStack(spacing: 12) {
             Picker("", selection: $period) {
-                ForEach(ReportPeriod.allCases) { Text($0.rawValue).tag($0) }
+                ForEach(ReportPeriod.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -115,7 +115,7 @@ struct TimePanel: View {
             Spacer()
             Picker("", selection: $isAllSpaces) {
                 Text("All Spaces").tag(true)
-                Text(tabManager.activeContainer?.name ?? "This Space").tag(false)
+                Text(tabManager.activeContainer?.name ?? String(localized: "This Space")).tag(false)
             }
             .labelsHidden()
             .frame(width: 150)
@@ -161,13 +161,17 @@ struct TimePanel: View {
 
     /// "on the web · 4 min in Work".
     private var subtitle: String {
-        guard selectedDomain == nil else { return isAllSpaces ? "in all spaces" : "in \(spaceName)" }
+        guard selectedDomain == nil else {
+            return isAllSpaces ? String(localized: "in all spaces") : String(localized: "in \(spaceName)")
+        }
         let inSpace = report(allSpaces: false).total
-        return isAllSpaces ? "on the web · \(Self.compact(inSpace)) in \(spaceName)" : "on the web in \(spaceName)"
+        return isAllSpaces
+            ? String(localized: "on the web · \(Self.compact(inSpace)) in \(spaceName)")
+            : String(localized: "on the web in \(spaceName)")
     }
 
     private var spaceName: String {
-        tabManager.activeContainer?.name ?? "this space"
+        tabManager.activeContainer?.name ?? String(localized: "this space")
     }
 
     // MARK: - Sites
@@ -308,11 +312,11 @@ struct TimePanel: View {
         let calendar = Calendar.current
         switch period {
         case .day:
-            if calendar.isDateInToday(interval.start) { return "Today" }
-            if calendar.isDateInYesterday(interval.start) { return "Yesterday" }
+            if calendar.isDateInToday(interval.start) { return String(localized: "Today") }
+            if calendar.isDateInYesterday(interval.start) { return String(localized: "Yesterday") }
             return interval.start.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
         case .week:
-            if interval.contains(now) { return "This Week" }
+            if interval.contains(now) { return String(localized: "This Week") }
             let last = interval.end.addingTimeInterval(-1)
             let style = Date.FormatStyle.dateTime.day().month(.abbreviated)
             return "\(interval.start.formatted(style)) – \(last.formatted(style))"

@@ -63,6 +63,11 @@ ZONES = {
         "Ombre/Features/Downloads/",
         "Ombre/Features/History/",
     ],
+    "notes": [
+        "Ombre/Features/Notes/",
+        "Ombre/Features/Tasks/",
+        "Ombre/Features/TimeFocus/",
+    ],
 }
 
 # Files that never show a text (paths, keys, logs): not read for literals.
@@ -70,6 +75,7 @@ NOT_SHOWN_FILES = {
     "Ombre/Features/Extensions/Services/ExtensionDataFolder.swift",
     "Ombre/Features/Extensions/Services/ExtensionRegistry.swift",
     "Ombre/Features/Extensions/Services/SafariExtensionScanner.swift",
+    "Ombre/Features/TimeFocus/Services/BrowsingTimeStore.swift",
 }
 
 ROOT = Path(__file__).resolve().parent.parent

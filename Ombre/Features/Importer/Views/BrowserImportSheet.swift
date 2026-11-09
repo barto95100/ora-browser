@@ -35,8 +35,8 @@ struct BrowserImportSheet: View {
     private var start: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(
-                "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. "
-                    + "Open tabs are not imported."
+                // swiftlint:disable:next line_length
+                "Ombre imports your spaces with their Essentials (as favorites), pinned tabs and folders. Open tabs are not imported."
             )
             .fixedSize(horizontal: false, vertical: true)
 
@@ -63,7 +63,7 @@ struct BrowserImportSheet: View {
     private func preview(_ data: ImportedBrowserData) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             if let profile {
-                Text("Profile: \(profile.lastPathComponent)")
+                Text("Profile: \(ZenImporter.profileName(profile))")
                     .foregroundStyle(.secondary)
             }
 
@@ -103,7 +103,7 @@ struct BrowserImportSheet: View {
     private func done(_ count: Int) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Label(
-                count == 1 ? "1 space imported." : "\(count) spaces imported.",
+                String(localized: "\(count) spaces imported."),
                 systemImage: "checkmark.circle.fill"
             )
             .foregroundStyle(.green)
@@ -135,8 +135,10 @@ struct BrowserImportSheet: View {
         panel.allowsMultipleSelection = false
         panel.showsHiddenFiles = true
         panel.directoryURL = ZenImporter.profilesFolder
-        panel.message = "Choose your Zen profile folder, or the Profiles folder to use the latest profile."
-        panel.prompt = "Choose"
+        panel.message = String(
+            localized: "Choose your Zen profile folder, or the Profiles folder to use the latest profile."
+        )
+        panel.prompt = String(localized: "Choose")
         guard panel.runModal() == .OK, let folder = panel.url else { return }
         load(folder)
     }
@@ -146,13 +148,13 @@ struct BrowserImportSheet: View {
         defer { if accessing { folder.stopAccessingSecurityScopedResource() } }
 
         guard let profile = ZenImporter.profile(in: folder) else {
-            failure = "No Zen session in this folder. Choose a profile in Zen's Profiles folder."
+            failure = String(localized: "No Zen session in this folder. Choose a profile in Zen's Profiles folder.")
             return
         }
         do {
             let read = try ZenImporter.read(profile: profile)
             guard !read.isEmpty else {
-                failure = "This profile has no Essentials, pinned tabs or folders to import."
+                failure = String(localized: "This profile has no Essentials, pinned tabs or folders to import.")
                 data = nil
                 return
             }
@@ -161,14 +163,14 @@ struct BrowserImportSheet: View {
             data = read
             selected = Set(read.spaces.indices)
         } catch {
-            failure = "Ombre couldn't read this Zen session."
+            failure = String(localized: "Ombre couldn't read this Zen session.")
             data = nil
         }
     }
 
     private func runImport(_ data: ImportedBrowserData) {
         let spaces = data.spaces.enumerated().filter { selected.contains($0.offset) }.map(\.element)
-        tabManager.importSpaces(ImportedBrowserData(spaces: spaces), from: "Zen")
+        tabManager.importSpaces(ImportedBrowserData(spaces: spaces), from: "Zen") // no translation: the browser's name
         importedCount = spaces.count
     }
 
@@ -176,9 +178,9 @@ struct BrowserImportSheet: View {
         let tabs = ImportedPinnedItem.tabCount(in: space.pinned)
         let folders = ImportedPinnedItem.folderCount(in: space.pinned)
         return [
-            space.favorites.count == 1 ? "1 favorite" : "\(space.favorites.count) favorites",
-            tabs == 1 ? "1 pinned tab" : "\(tabs) pinned tabs",
-            folders == 1 ? "1 folder" : "\(folders) folders"
+            String(localized: "\(space.favorites.count) favorites"),
+            String(localized: "\(tabs) pinned tabs"),
+            String(localized: "\(folders) folders")
         ].joined(separator: " · ")
     }
 }

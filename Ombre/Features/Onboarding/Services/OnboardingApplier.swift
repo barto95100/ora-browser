@@ -29,7 +29,7 @@ enum OnboardingApplier {
             tabManager.addSpace(look: look)
         }
         if let zenSpaces = result.zenSpaces, !zenSpaces.spaces.isEmpty {
-            tabManager.importSpaces(zenSpaces, from: "Zen")
+            tabManager.importSpaces(zenSpaces, from: "Zen") // no translation: the browser's name
         }
 
         // The chosen level for every space, those that were there included.

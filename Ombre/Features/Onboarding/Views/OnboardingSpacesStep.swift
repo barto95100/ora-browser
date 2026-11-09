@@ -12,8 +12,14 @@ struct OnboardingSpacesStep: View {
     ]
     /// What VoiceOver says for each symbol.
     static let symbolNames = [
-        "house": "Home", "briefcase": "Briefcase", "chevron.left.forwardslash.chevron.right": "Code",
-        "music.note": "Music", "gamecontroller": "Game", "moon": "Moon", "heart": "Heart", "star": "Star"
+        "house": String(localized: "Home"),
+        "briefcase": String(localized: "Briefcase"),
+        "chevron.left.forwardslash.chevron.right": String(localized: "Code"),
+        "music.note": String(localized: "Music"),
+        "gamecontroller": String(localized: "Game"),
+        "moon": String(localized: "Moon"),
+        "heart": String(localized: "Heart"),
+        "star": String(localized: "Star")
     ]
     /// A row holds 8 tiles in the form's width.
     static let rowLength = 8
@@ -54,7 +60,7 @@ struct OnboardingSpacesStep: View {
 
     private var form: some View {
         VStack(alignment: .leading, spacing: 13) {
-            OnboardingEyebrow(text: "Step \(model.flow.index + 1) · Decorate")
+            OnboardingEyebrow(text: String(localized: "Step \(model.flow.index + 1) · Decorate"))
             Text("Make it yours")
                 .font(.system(size: 38, weight: .black))
                 .tracking(-0.5)
@@ -106,14 +112,21 @@ struct OnboardingSpacesStep: View {
             .frame(height: 36)
             HStack(spacing: 14) {
                 segmented(
-                    [("Left", SidebarPosition.primary), ("Right", SidebarPosition.secondary)],
+                    [
+                        (String(localized: "Left"), SidebarPosition.primary),
+                        (String(localized: "Right"), SidebarPosition.secondary)
+                    ],
                     selection: $model.choices.sidebarPosition,
-                    label: "Sidebar"
+                    label: String(localized: "Sidebar")
                 )
                 segmented(
-                    [("Auto", AppAppearance.system), ("Light", .light), ("Dark", .dark)],
+                    [
+                        (String(localized: "Auto"), AppAppearance.system),
+                        (String(localized: "Light"), .light),
+                        (String(localized: "Dark"), .dark)
+                    ],
                     selection: $model.choices.appearance,
-                    label: "Appearance"
+                    label: String(localized: "Appearance")
                 )
             }
         }

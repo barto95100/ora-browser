@@ -129,7 +129,7 @@ final class OnboardingModel: ObservableObject {
             choices.importedSpaces = Set(spaces.spaces.indices)
         } catch {
             zenSpaces = nil
-            zenFailure = "This profile couldn't be read."
+            zenFailure = String(localized: "This profile couldn't be read.")
             choices.importedSpaces = []
         }
     }
@@ -137,7 +137,7 @@ final class OnboardingModel: ObservableObject {
     static func profileTitle(_ profile: URL) -> String {
         let name = ZenImporter.profileName(profile)
         guard let date = ZenImporter.lastUsed(profile) else { return name }
-        return "\(name) — last used \(date.formatted(.relative(presentation: .named)))"
+        return String(localized: "\(name) — last used \(date.formatted(.relative(presentation: .named)))")
     }
 
     // MARK: - Spaces

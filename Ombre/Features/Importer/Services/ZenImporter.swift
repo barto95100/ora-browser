@@ -12,7 +12,7 @@ enum ZenImporter {
 
     /// Zen's profiles folder in the real home, not the app's container.
     static var profilesFolder: URL {
-        RealHome.url.appendingPathComponent("Library/Application Support/zen/Profiles", isDirectory: true)
+        RealHome.url.appendingPathComponent("Library/Application Support/zen/Profiles", isDirectory: true) // not shown
     }
 
     /// The session file in a profile folder, or nil if it has none.
@@ -26,7 +26,7 @@ enum ZenImporter {
     static func profile(in folder: URL) -> URL? {
         if sessionFile(inProfile: folder) != nil { return folder }
         if let profile = profiles(in: folder).first { return profile }
-        return profiles(in: folder.appendingPathComponent("Profiles", isDirectory: true)).first
+        return profiles(in: folder.appendingPathComponent("Profiles", isDirectory: true)).first // not shown
     }
 
     /// Profiles that have a session, most recently used first.
@@ -122,7 +122,7 @@ private struct ZenSession {
     init(_ root: [String: Any]) {
         spaces = (root["spaces"] as? [[String: Any]] ?? []).compactMap { space in
             guard let id = space["uuid"] as? String else { return nil }
-            let name = (space["name"] as? String).flatMap(\.nonBlank) ?? "Space"
+            let name = (space["name"] as? String).flatMap(\.nonBlank) ?? String(localized: "Space")
             let icon = (space["icon"] as? String).flatMap(\.nonBlank)
             return Space(
                 id: id, name: name,
@@ -137,7 +137,7 @@ private struct ZenSession {
             guard let id = folder["id"] as? String, folderIDs.insert(id).inserted else { return nil }
             return Folder(
                 id: id,
-                name: (folder["name"] as? String).flatMap(\.nonBlank) ?? "Folder",
+                name: (folder["name"] as? String).flatMap(\.nonBlank) ?? String(localized: "Folder"),
                 parentID: folder["parentId"] as? String,
                 spaceID: folder["workspaceId"] as? String,
                 isOpen: !(folder["collapsed"] as? Bool ?? false),

@@ -22,4 +22,14 @@ struct LocalizationTests {
         #expect(String(format: format, locale: french, 1) == "1 élément bloqué sur cette page")
         #expect(String(format: format, locale: french, 3) == "3 éléments bloqués sur cette page")
     }
+
+    /// The assistant counts in French too (and the English text says "1 space").
+    @Test func theAssistantCountsInBothLanguages() throws {
+        let format = try french().localizedString(forKey: "Bring %lld spaces", value: nil, table: nil)
+        let french = Locale(identifier: "fr_FR")
+        #expect(String(format: format, locale: french, 1) == "Importer 1 espace")
+        #expect(String(format: format, locale: french, 2) == "Importer 2 espaces")
+        #expect(BrowserImportSheet.summary(of: ImportedSpace(name: "Test", favorites: [], pinned: []))
+            == "0 favorites · 0 pinned tabs · 0 folders")
+    }
 }

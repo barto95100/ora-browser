@@ -32,6 +32,10 @@ ZONES = {
         "Ombre/Shared/Components/Dialog/",
         "Ombre/Core/Utilities/ClipboardUtils.swift",
     ],
+    "onboarding": [
+        "Ombre/Features/Onboarding/",
+        "Ombre/Features/Importer/",
+    ],
 }
 
 ROOT = Path(__file__).resolve().parent.parent

@@ -145,24 +145,24 @@ struct OnboardingView: View {
     private var buttons: some View {
         switch step {
         case .welcome:
-            primary("Let's go") { model.goOn() }
+            primary(String(localized: "Let's go")) { model.goOn() }
         case .importZen:
-            secondary("Skip") { model.skip() }
+            secondary(String(localized: "Skip")) { model.skip() }
             primary(importLabel) { model.goOn() }
         case .spaces:
-            secondary("Skip") { model.skip() }
-            primary("Looks good") { model.goOn() }
+            secondary(String(localized: "Skip")) { model.skip() }
+            primary(String(localized: "Looks good")) { model.goOn() }
         case .protection:
-            secondary("Skip") { model.skip() }
-            primary("Continue") { model.goOn() }
+            secondary(String(localized: "Skip")) { model.skip() }
+            primary(String(localized: "Continue")) { model.goOn() }
         case .defaultBrowser:
-            secondary("Not now") { model.skip() }
-            primary("Yes, make it home") {
+            secondary(String(localized: "Not now")) { model.skip() }
+            primary(String(localized: "Yes, make it home")) {
                 DefaultBrowserManager.shared.requestSetAsDefault()
                 model.goOn()
             }
         case .ready:
-            primary("Start exploring", isLarge: true) { finish(asConfirmed: true) }
+            primary(String(localized: "Start exploring"), isLarge: true) { finish(asConfirmed: true) }
         }
     }
 
@@ -186,11 +186,7 @@ struct OnboardingView: View {
     }
 
     static func importLabel(count: Int) -> String {
-        switch count {
-        case 0: "Continue"
-        case 1: "Bring 1 space"
-        case let count: "Bring \(count) spaces"
-        }
+        count == 0 ? String(localized: "Continue") : String(localized: "Bring \(count) spaces")
     }
 
     // MARK: - Finish

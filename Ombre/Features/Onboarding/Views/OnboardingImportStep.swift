@@ -72,7 +72,7 @@ struct OnboardingImportStep: View {
     private var column: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 16) {
-                OnboardingEyebrow(text: "Step \(model.flow.index + 1) · Moving in")
+                OnboardingEyebrow(text: String(localized: "Step \(model.flow.index + 1) · Moving in"))
                 Text("Bring your spaces from Zen")
                     .font(.system(size: 38, weight: .black))
                     .tracking(-0.5)

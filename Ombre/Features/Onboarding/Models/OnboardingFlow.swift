@@ -59,8 +59,8 @@ enum SpaceTemplate: String, CaseIterable, Identifiable {
 
     var look: SpaceLook {
         switch self {
-        case .personal: SpaceLook(name: "Personal", iconSymbol: "house", color: .green)
-        case .work: SpaceLook(name: "Work", iconSymbol: "briefcase", color: .blue)
+        case .personal: SpaceLook(name: String(localized: "Personal"), iconSymbol: "house", color: .green)
+        case .work: SpaceLook(name: String(localized: "Work"), iconSymbol: "briefcase", color: .blue)
         }
     }
 

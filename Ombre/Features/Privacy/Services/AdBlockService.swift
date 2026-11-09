@@ -95,8 +95,9 @@ actor AdBlockService {
         let defaultName = suggestedName?.trimmingCharacters(in: .whitespacesAndNewlines)
         let record = FilterListRecord(
             id: "custom-\(UUID().uuidString.lowercased())",
-            name: (defaultName?.isEmpty == false ? defaultName : normalizedURL.host) ?? "Custom Filter List",
-            summary: "Custom remotely hosted filter list.",
+            name: (defaultName?.isEmpty == false ? defaultName : normalizedURL.host) ??
+                String(localized: "Custom Filter List"),
+            summary: String(localized: "Custom remotely hosted filter list."),
             sourceKind: .custom,
             sourceURL: normalizedURL.absoluteString,
             isRecommended: false,

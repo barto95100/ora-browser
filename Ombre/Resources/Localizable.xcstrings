@@ -1028,7 +1028,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App"
+            "value" : "Application"
           }
         }
       }
@@ -1295,7 +1295,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bloqués pendant la concentration · %@"
+            "value" : "Sites bloqués pendant la concentration · %@"
           }
         }
       }
@@ -1325,7 +1325,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Né pour votre Mac. Faites d’Ombre votre navigateur par défaut."
+            "value" : "Conçu pour votre Mac. Faites d’Ombre votre navigateur par défaut."
           }
         }
       }
@@ -2104,7 +2104,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Par défaut"
+            "value" : "Réglages par défaut"
           }
         }
       }
@@ -3178,7 +3178,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dernière mise à jour %@"
+            "value" : "Dernière mise à jour : %@"
           }
         }
       }
@@ -3429,7 +3429,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Onglets récents au maximum :"
+            "value" : "Nombre maximal d’onglets récents :"
           }
         }
       }
@@ -4402,7 +4402,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fondé sur les listes de filtres AdGuard intégrées, compilées pour WebKit dans cet espace."
+            "value" : "Utilise les listes de filtres AdGuard intégrées, compilées pour WebKit, dans cet espace."
           }
         }
       }
@@ -4412,7 +4412,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Préférences"
+            "value" : "Réglages"
           }
         }
       }
@@ -4970,7 +4970,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Règles : %1$lld converties, %2$lld ignorées"
+            "value" : "Règles converties : %1$lld · ignorées : %2$lld"
           }
         }
       }
@@ -5051,7 +5051,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Recherche"
+            "value" : "Rechercher"
           }
         }
       }
@@ -6425,7 +6425,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mise à jour"
+            "value" : "Mise à jour des listes"
           }
         }
       }
@@ -6739,6 +6739,237 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom arrière"
+          }
+        }
+      }
+    },
+    "On Launch + Daily" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au lancement et chaque jour"
+          }
+        }
+      }
+    },
+    "The filter list is larger than 32 MB: Ombre doesn't download it." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste de filtres dépasse 32 Mo : Ombre ne la télécharge pas."
+          }
+        }
+      }
+    },
+    "shortcut.category.edit" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Édition"
+          }
+        }
+      }
+    },
+    "Additional mobile ad-network coverage for embedded and responsive mobile ads." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture supplémentaire des régies publicitaires mobiles, pour les publicités intégrées et adaptatives."
+          }
+        }
+      }
+    },
+    "Custom Filter List" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de filtres personnalisée"
+          }
+        }
+      }
+    },
+    "Aggressive Auto-Refresh" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour automatique fréquente"
+          }
+        }
+      }
+    },
+    "Custom remotely hosted filter list." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste de filtres personnalisée hébergée en ligne."
+          }
+        }
+      }
+    },
+    "The filter list download failed with status %lld." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le téléchargement de la liste de filtres a échoué (code %lld)."
+          }
+        }
+      }
+    },
+    "settings.search" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche"
+          }
+        }
+      }
+    },
+    "searchEngine.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Update"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        }
+      }
+    },
+    "Ombre Passwords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots de passe Ombre"
+          }
+        }
+      }
+    },
+    "Manual Refresh Only" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour manuelle uniquement"
+          }
+        }
+      }
+    },
+    "No cached filter rules are available for %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle de filtrage en cache pour %@."
+          }
+        }
+      }
+    },
+    "Targets cookie notices, popups, widgets, and other page annoyances." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible les bandeaux de cookies, fenêtres surgissantes, widgets et autres nuisances des pages."
+          }
+        }
+      }
+    },
+    "Removes common tracking parameters from requested URLs when WebKit rules can express them." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retire les paramètres de suivi courants des adresses demandées, quand les règles WebKit le permettent."
+          }
+        }
+      }
+    },
+    "Store encrypted credentials in Ombre and show Ombre's autofill overlay." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stocke les identifiants chiffrés dans Ombre et affiche le remplissage automatique d’Ombre."
+          }
+        }
+      }
+    },
+    "The filter list response could not be read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse de la liste de filtres n’a pas pu être lue."
+          }
+        }
+      }
+    },
+    "No WebKit-compatible rules were produced for %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle compatible avec WebKit n’a été produite pour %@."
+          }
+        }
+      }
+    },
+    "Core AdGuard ads list for general web ad blocking." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste publicitaire principale d’AdGuard, pour le blocage des publicités sur le web."
+          }
+        }
+      }
+    },
+    "Filter lists must use an https:// address." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les listes de filtres doivent utiliser une adresse https://."
+          }
+        }
+      }
+    },
+    "Broader tracker and analytics coverage from AdGuard’s privacy list." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture plus large des traqueurs et outils de mesure, issue de la liste de confidentialité d’AdGuard."
           }
         }
       }

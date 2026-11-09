@@ -338,7 +338,7 @@ struct CustomSearchEngineRow: View {
                             Button("Cancel") {
                                 cancelEdit()
                             }
-                            Button("Update") {
+                            Button(String(localized: "searchEngine.save", defaultValue: "Update")) {
                                 saveEdit()
                             }
                             .disabled(editName.isEmpty || !isValidEditURL)

@@ -455,7 +455,7 @@ struct SpacesSettingsView: View {
                             Text(record.name)
                                 .font(.body.weight(.medium))
                         }
-                        Text(record.summary)
+                        Text(FilterListCatalogService.shared.summary(of: record))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(filterListStatusText(for: record))

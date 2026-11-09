@@ -216,19 +216,19 @@ enum KeyboardShortcuts {
         static let find = KeyboardShortcutDefinition(
             id: "edit.find",
             name: String(localized: "Find"),
-            category: String(localized: "Edit"),
+            category: String(localized: "shortcut.category.edit", defaultValue: "Edit"),
             defaultChord: KeyChord(keyEquivalent: .init("f"), modifiers: [.command])
         )
         static let findNext = KeyboardShortcutDefinition(
             id: "edit.findNext",
             name: String(localized: "Find Next"),
-            category: String(localized: "Edit"),
+            category: String(localized: "shortcut.category.edit", defaultValue: "Edit"),
             defaultChord: KeyChord(keyEquivalent: .init("g"), modifiers: [.command])
         )
         static let findPrevious = KeyboardShortcutDefinition(
             id: "edit.findPrevious",
             name: String(localized: "Find Previous"),
-            category: String(localized: "Edit"),
+            category: String(localized: "shortcut.category.edit", defaultValue: "Edit"),
             defaultChord: KeyChord(keyEquivalent: .init("g"), modifiers: [.command, .shift])
         )
     }
@@ -374,6 +374,6 @@ enum KeyboardShortcuts {
     static var itemsByCategory: [(category: String, items: [KeyboardShortcutDefinition])] {
         Dictionary(grouping: allShortcuts, by: \.category)
             .map { (category: $0.key, items: $0.value) }
-            .sorted { $0.category.caseInsensitiveCompare($1.category) == .orderedAscending }
+            .sorted { $0.category.localizedStandardCompare($1.category) == .orderedAscending }
     }
 }

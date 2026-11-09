@@ -18,7 +18,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
         case .extensions: return String(localized: "Extensions")
         case .timeFocus: return String(localized: "Time & Focus")
         case .shortcuts: return String(localized: "Shortcuts")
-        case .searchEngines: return String(localized: "Search")
+        case .searchEngines: return String(localized: "settings.search", defaultValue: "Search")
         }
     }
 

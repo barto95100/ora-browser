@@ -61,12 +61,16 @@ final class WebExtensionsManager: NSObject, ObservableObject {
 
         var errorDescription: String? {
             switch self {
-            case .appRemoved: "The app that brings this extension isn't installed anymore."
-            case .appChanged: "The app that brings this extension has changed: remove the extension, "
-                + "then install it again."
-            case .notSigned: "This extension isn't signed by its developer: Ombre doesn't install it."
-            case .nativeMessagingUnsupported: "Ombre can't talk to the extension's app."
-            case .noAnchor: "No window to show the popup in."
+            case .appRemoved: String(localized: "The app that brings this extension isn't installed anymore.")
+            case .appChanged:
+                String(
+                    localized: "The app that brings this extension has changed: remove the extension, then install it again."
+                )
+            case .notSigned: String(
+                    localized: "This extension isn't signed by its developer: Ombre doesn't install it."
+                )
+            case .nativeMessagingUnsupported: String(localized: "Ombre can't talk to the extension's app.")
+            case .noAnchor: String(localized: "No window to show the popup in.")
             }
         }
     }

@@ -52,6 +52,16 @@ ZONES = {
         "Ombre/Features/Privacy/Services/FilterListCatalogService.swift",
         "Ombre/Features/Passwords/Services/PasswordManagerProviderRegistry.swift",
     ],
+    "extensions": [
+        "Ombre/Features/Extensions/",
+    ],
+}
+
+# Files that never show a text (paths, keys, logs): not read for literals.
+NOT_SHOWN_FILES = {
+    "Ombre/Features/Extensions/Services/ExtensionDataFolder.swift",
+    "Ombre/Features/Extensions/Services/ExtensionRegistry.swift",
+    "Ombre/Features/Extensions/Services/SafariExtensionScanner.swift",
 }
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -180,7 +190,7 @@ def check_sources(extracted, every):
     problems = []
     for source in sorted((ROOT / "Ombre").rglob("*.swift")):
         path = str(source.relative_to(ROOT))
-        if not in_zone(path, every):
+        if not in_zone(path, every) or path in NOT_SHOWN_FILES:
             continue
         known = extracted.get(path, {})
         # A text chosen in an expression is found at the expression's place.

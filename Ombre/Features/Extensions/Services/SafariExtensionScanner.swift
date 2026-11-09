@@ -1,3 +1,4 @@
+// Never shows a text (paths and Info.plist keys): skipped by scripts/check-localization.py.
 import Foundation
 
 /// Finds the Safari extensions brought by installed apps (from the App Store,

@@ -131,9 +131,10 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     /// Where it comes from, under its name.
     var originText: String {
         switch source {
-        case .safariApp: "From \(appName ?? "an app")"
-        case .chromeWebStore: "From the Chrome Web Store"
-        case .file: "From a file"
+        case .safariApp:
+            if let appName { String(localized: "From \(appName)") } else { String(localized: "From an app") }
+        case .chromeWebStore: String(localized: "From the Chrome Web Store")
+        case .file: String(localized: "From a file")
         }
     }
 }
@@ -244,29 +245,29 @@ enum ExtensionPermissionText {
     /// Sites asked for, in words: all websites, or the list.
     static func describeSites(_ patterns: [String]) -> [String] {
         let allSites: Set = ["<all_urls>", "*://*/*", "http://*/*", "https://*/*"]
-        if patterns.contains(where: allSites.contains) { return ["All websites"] }
+        if patterns.contains(where: allSites.contains) { return [String(localized: "All websites")] }
         return patterns.sorted()
     }
 
     private static let descriptions: [String: String] = [
-        "activeTab": "The tab you use it on",
-        "alarms": "Run tasks on a schedule",
-        "clipboardRead": "Read the clipboard",
-        "clipboardWrite": "Write to the clipboard",
-        "contextMenus": "Add items to context menus",
-        "cookies": "Read and change cookies",
-        "declarativeNetRequest": "Block or change web requests",
-        "declarativeNetRequestFeedback": "See blocked requests",
-        "declarativeNetRequestWithHostAccess": "Block or change web requests on allowed sites",
-        "idle": "Know when you're away",
-        "menus": "Add items to context menus",
-        "nativeMessaging": "Talk to its app",
-        "notifications": "Show notifications",
-        "scripting": "Run scripts in pages",
-        "storage": "Store data",
-        "tabs": "See your tabs' addresses and titles",
-        "unlimitedStorage": "Store unlimited data",
-        "webNavigation": "Follow navigation in tabs",
-        "webRequest": "See web requests"
+        "activeTab": String(localized: "The tab you use it on"),
+        "alarms": String(localized: "Run tasks on a schedule"),
+        "clipboardRead": String(localized: "Read the clipboard"),
+        "clipboardWrite": String(localized: "Write to the clipboard"),
+        "contextMenus": String(localized: "Add items to context menus"),
+        "cookies": String(localized: "Read and change cookies"),
+        "declarativeNetRequest": String(localized: "Block or change web requests"),
+        "declarativeNetRequestFeedback": String(localized: "See blocked requests"),
+        "declarativeNetRequestWithHostAccess": String(localized: "Block or change web requests on allowed sites"),
+        "idle": String(localized: "Know when you're away"),
+        "menus": String(localized: "Add items to context menus"),
+        "nativeMessaging": String(localized: "Talk to its app"),
+        "notifications": String(localized: "Show notifications"),
+        "scripting": String(localized: "Run scripts in pages"),
+        "storage": String(localized: "Store data"),
+        "tabs": String(localized: "See your tabs' addresses and titles"),
+        "unlimitedStorage": String(localized: "Store unlimited data"),
+        "webNavigation": String(localized: "Follow navigation in tabs"),
+        "webRequest": String(localized: "See web requests")
     ]
 }

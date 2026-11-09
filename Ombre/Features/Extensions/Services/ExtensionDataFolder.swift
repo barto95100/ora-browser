@@ -1,3 +1,4 @@
+// Never shows a text (paths and logs): skipped by scripts/check-localization.py.
 import Foundation
 import OSLog
 import WebKit

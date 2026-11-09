@@ -113,9 +113,9 @@ extension WebExtensionsManager {
     func confirmRemove(id: String) {
         guard let record = installed.first(where: { $0.id == id })?.record else { return }
         ask(
-            title: "Remove “\(record.name)”?",
-            message: "Its data in Ombre is deleted. The app that brings it stays installed.",
-            buttons: ["Remove", "Cancel"]
+            title: String(localized: "Remove “\(record.name)”?"),
+            message: String(localized: "Its data in Ombre is deleted. The app that brings it stays installed."),
+            buttons: [String(localized: "Remove"), String(localized: "Cancel")]
         ) { choice in
             if choice == 0 { self.remove(id: id) }
         }
@@ -170,9 +170,9 @@ extension WebExtensionsManager {
         guard !names.isEmpty else { return completion(granted) }
         let lines = names.map { "• " + ExtensionPermissionText.describe($0) }.joined(separator: "\n")
         ask(
-            title: "“\(record.name)” would like to:",
+            title: String(localized: "“\(record.name)” would like to:"),
             message: lines,
-            buttons: ["Allow", "Don't Allow"]
+            buttons: [String(localized: "Allow"), String(localized: "Don't Allow")]
         ) { choice in
             let allowed = choice == 0
             self.updateRecord(id: record.id) { record in
@@ -204,9 +204,9 @@ extension WebExtensionsManager {
 
         if allSites {
             ask(
-                title: "Allow “\(record.name)” on all websites?",
-                message: "It will be able to read and change every page you visit.",
-                buttons: ["Allow on All Websites", "Don't Allow"]
+                title: String(localized: "Allow “\(record.name)” on all websites?"),
+                message: String(localized: "It will be able to read and change every page you visit."),
+                buttons: [String(localized: "Allow on All Websites"), String(localized: "Don't Allow")]
             ) { choice in
                 if choice == 0 {
                     if isPrivate {
@@ -226,9 +226,13 @@ extension WebExtensionsManager {
         }
 
         ask(
-            title: "Allow “\(record.name)” on \(undecided.joined(separator: ", "))?",
-            message: "It will be able to read and change these pages.",
-            buttons: ["Allow for One Day", "Always Allow", "Don't Allow"]
+            title: String(localized: "Allow “\(record.name)” on \(undecided.formatted(.list(type: .and)))?"),
+            message: String(localized: "It will be able to read and change these pages."),
+            buttons: [
+                String(localized: "Allow for One Day"),
+                String(localized: "Always Allow"),
+                String(localized: "Don't Allow")
+            ]
         ) { choice in
             let decision: SiteDecision = choice == 2 ? .deny : .allow
             for host in undecided {

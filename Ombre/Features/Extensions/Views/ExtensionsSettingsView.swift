@@ -8,7 +8,7 @@ struct ExtensionsSettingsView: View {
         if #available(macOS 15.4, *) {
             ExtensionsSettingsContent()
         } else {
-            SettingsCard(header: "Extensions") {
+            SettingsCard(header: String(localized: "Extensions")) {
                 Text("Extensions need macOS 15.4 or later.")
                     .foregroundStyle(.secondary)
             }
@@ -29,7 +29,7 @@ private struct ExtensionsSettingsContent: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                SettingsCard(header: "Installed") {
+                SettingsCard(header: String(localized: "Installed")) {
                     if manager.installed.isEmpty {
                         Text("No extensions yet. Add one from your apps below.")
                             .foregroundStyle(.secondary)
@@ -43,8 +43,10 @@ private struct ExtensionsSettingsContent: View {
                 }
 
                 SettingsCard(
-                    header: "From Your Apps",
-                    description: "Apps from the App Store can bring Safari extensions. Ombre runs them like Safari."
+                    header: String(localized: "From Your Apps"),
+                    description: String(
+                        localized: "Apps from the App Store can bring Safari extensions. Ombre runs them like Safari."
+                    )
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(manager.candidates) { candidate in
@@ -80,9 +82,11 @@ private struct ExtensionsSettingsContent: View {
                 }
 
                 SettingsCard(
-                    header: "Other Extensions",
-                    description: "On an extension's page in the Chrome Web Store, click “Add to Ombre”. "
-                        + "Some Chrome extensions use features WebKit doesn't have: they may not work fully."
+                    header: String(localized: "Other Extensions"),
+                    description: String(
+                        // swiftlint:disable:next line_length
+                        localized: "On an extension's page in the Chrome Web Store, click “Add to Ombre”. Some Chrome extensions use features WebKit doesn't have: they may not work fully."
+                    )
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
@@ -144,7 +148,8 @@ private struct ExtensionsSettingsContent: View {
             do {
                 review = try await manager.reviewFile(at: url)
             } catch {
-                fileError = "Ombre couldn't read \(url.lastPathComponent): \(error.localizedDescription)"
+                fileError =
+                    String(localized: "Ombre couldn't read \(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
     }
@@ -155,7 +160,7 @@ private struct ExtensionsSettingsContent: View {
             do {
                 review = try await manager.review(candidate)
             } catch {
-                reviewError = "Ombre couldn't read \(candidate.name): \(error.localizedDescription)"
+                reviewError = String(localized: "Ombre couldn't read \(candidate.name): \(error.localizedDescription)")
             }
         }
     }
@@ -264,7 +269,7 @@ struct ExtensionReviewSheet: View {
                     Text("Add “\(review.name)”?")
                         .font(.title3.weight(.semibold))
                     Text([
-                        review.webExtension.displayVersion.map { "Version \($0)" },
+                        review.webExtension.displayVersion.map { String(localized: "Version \($0)") },
                         review.originText
                     ]
                     .compactMap(\.self).joined(separator: " · "))
@@ -282,8 +287,9 @@ struct ExtensionReviewSheet: View {
                     Label(ExtensionPermissionText.describe(permission), systemImage: "checkmark")
                 }
                 Label(
-                    "Read and change pages on: "
-                        + ExtensionPermissionText.describeSites(review.sites).joined(separator: ", "),
+                    String(
+                        localized: "Read and change pages on: \(ExtensionPermissionText.describeSites(review.sites).formatted(.list(type: .and)))"
+                    ),
                     systemImage: "globe"
                 )
             }
@@ -338,8 +344,9 @@ private struct ExtensionUpdateSheet: View {
                 }
                 if !update.newSites.isEmpty {
                     Label(
-                        "Read and change pages on: "
-                            + ExtensionPermissionText.describeSites(update.newSites).joined(separator: ", "),
+                        String(
+                            localized: "Read and change pages on: \(ExtensionPermissionText.describeSites(update.newSites).formatted(.list(type: .and)))"
+                        ),
                         systemImage: "globe"
                     )
                 }

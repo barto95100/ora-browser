@@ -22,9 +22,13 @@ enum CRXVerifier {
 
         var errorDescription: String? {
             switch self {
-            case .notCRX3, .malformed: "This extension package is damaged."
-            case .wrongExtension: "The Chrome Web Store sent a different extension from the one requested."
-            case .badSignature: "This extension package isn't signed by its developer: it was changed."
+            case .notCRX3, .malformed: String(localized: "This extension package is damaged.")
+            case .wrongExtension: String(
+                    localized: "The Chrome Web Store sent a different extension from the one requested."
+                )
+            case .badSignature: String(
+                    localized: "This extension package isn't signed by its developer: it was changed."
+                )
             }
         }
     }
@@ -32,7 +36,7 @@ enum CRXVerifier {
     /// The `.zip` of a package of the extension `extensionID`, once checked.
     static func verifiedZip(from data: Data, extensionID: String) throws -> Data {
         let data = Data(data)
-        guard data.count > 12, data.prefix(4) == Data("Cr24".utf8), uint32(data, at: 4) == 3 else {
+        guard data.count > 12, data.prefix(4) == Data("Cr24".utf8), uint32(data, at: 4) == 3 else { // not shown
             throw Failure.notCRX3
         }
         let headerSize = Int(uint32(data, at: 8))
@@ -46,7 +50,7 @@ enum CRXVerifier {
         }
         guard Self.extensionID(of: crxID) == extensionID else { throw Failure.wrongExtension }
 
-        var message = Data("CRX3 SignedData".utf8) + Data([0])
+        var message = Data("CRX3 SignedData".utf8) + Data([0]) // not shown
         var size = UInt32(header.signedData.count).littleEndian
         message.append(Data(bytes: &size, count: 4))
         message.append(header.signedData)

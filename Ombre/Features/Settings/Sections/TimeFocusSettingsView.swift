@@ -12,9 +12,11 @@ struct TimeFocusSettingsView: View {
     var body: some View {
         SettingsSection {
             SettingsCard(
-                header: "Browsing Time",
-                description: "Time on each site, counted while its tab is in front and you are using the Mac "
-                    + "(or it plays media). Private windows are never counted. Stays on this Mac."
+                header: String(localized: "Browsing Time"),
+                description: String(
+                    // swiftlint:disable:next line_length
+                    localized: "Time on each site, counted while its tab is in front and you are using the Mac (or it plays media). Private windows are never counted. Stays on this Mac."
+                )
             ) {
                 Toggle("Count browsing time", isOn: $settings.isEnabled)
                 HStack {
@@ -22,7 +24,8 @@ struct TimeFocusSettingsView: View {
                     Spacer()
                     Picker("", selection: $settings.retentionDays) {
                         ForEach(TimeTrackingSettings.retentionChoices, id: \.self) { days in
-                            Text(days == 365 ? "1 year" : "\(days) days").tag(days)
+                            Text(days == 365 ? String(localized: "1 year") : String(localized: "\(days) days"))
+                                .tag(days)
                         }
                     }
                     .labelsHidden()
@@ -38,15 +41,25 @@ struct TimeFocusSettingsView: View {
             }
 
             SettingsCard(
-                header: "Focus",
-                description: "Start focus from the browsing time (⌛ in the sidebar or ⌥⌘Y). "
-                    + "During focus, the sites blocked in a space are covered; breaks open them again."
+                header: String(localized: "Focus"),
+                description: String(
+                    // swiftlint:disable:next line_length
+                    localized: "Start focus from the browsing time (⌛ in the sidebar or ⌥⌘Y). During focus, the sites blocked in a space are covered; breaks open them again."
+                )
             ) {
-                minutesPicker("Focus duration:", selection: $focus.focusMinutes, choices: FocusSettings.durationChoices)
+                minutesPicker(
+                    String(localized: "Focus duration:"),
+                    selection: $focus.focusMinutes,
+                    choices: FocusSettings.durationChoices
+                )
                 Toggle("Repeat focus with breaks", isOn: $focus.repeats)
                 if focus.repeats {
-                    minutesPicker("Break:", selection: $focus.breakMinutes, choices: [3, 5, 10, 15])
-                    minutesPicker("Long break:", selection: $focus.longBreakMinutes, choices: [10, 15, 20, 30])
+                    minutesPicker(String(localized: "Break:"), selection: $focus.breakMinutes, choices: [3, 5, 10, 15])
+                    minutesPicker(
+                        String(localized: "Long break:"),
+                        selection: $focus.longBreakMinutes,
+                        choices: [10, 15, 20, 30]
+                    )
                     HStack {
                         Text("Long break after:")
                         Spacer()
@@ -71,7 +84,7 @@ struct TimeFocusSettingsView: View {
             }
 
             ForEach(spaces) { space in
-                SettingsCard(header: "Blocked During Focus · \(space.name)") {
+                SettingsCard(header: String(localized: "Blocked During Focus · \(space.name)")) {
                     FocusBlockedSitesView(spaceID: space.id)
                 }
             }
@@ -84,8 +97,8 @@ struct TimeFocusSettingsView: View {
     }
 
     private static func goalLabel(_ minutes: Int) -> String {
-        if minutes == 0 { return "None" }
-        return minutes < 60 ? "\(minutes) min" : "\(minutes / 60) h"
+        if minutes == 0 { return String(localized: "None") }
+        return minutes < 60 ? String(localized: "\(minutes) min") : String(localized: "\(minutes / 60) h")
     }
 
     private func minutesPicker(_ title: String, selection: Binding<Int>, choices: [Int]) -> some View {

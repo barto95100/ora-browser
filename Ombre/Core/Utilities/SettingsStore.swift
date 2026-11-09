@@ -11,6 +11,16 @@ enum AutoClearTabsAfter: String, CaseIterable, Identifiable, Codable {
         rawValue
     }
 
+    /// Shown in the interface (the raw value is what is saved).
+    var title: String {
+        switch self {
+        case .never: String(localized: "Never")
+        case .oneHour: String(localized: "1 hour")
+        case .oneDay: String(localized: "1 day")
+        case .oneWeek: String(localized: "1 week")
+        }
+    }
+
     var seconds: TimeInterval? {
         switch self {
         case .never: return nil

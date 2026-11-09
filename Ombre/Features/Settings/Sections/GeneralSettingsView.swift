@@ -36,7 +36,7 @@ struct GeneralSettingsView: View {
 
             AppearanceSelector(selection: $appearanceManager.appearance)
 
-            SettingsCard(header: "Tab Management") {
+            SettingsCard(header: String(localized: "Tab Management")) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Suspend inactive tabs after:")
@@ -87,7 +87,7 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            SettingsCard(header: "Developer") {
+            SettingsCard(header: String(localized: "Developer")) {
                 Toggle("Allow Web Inspector", isOn: $settings.developerToolsEnabled)
                 Text("Inspect pages from Safari's Develop menu (Safari › Settings › Advanced).")
                     .font(.caption)
@@ -95,7 +95,7 @@ struct GeneralSettingsView: View {
             }
 
             if UpdateService.isAvailable {
-                SettingsCard(header: "Updates") {
+                SettingsCard(header: String(localized: "Updates")) {
                     Toggle("Auto-check for updates", isOn: $settings.autoUpdateEnabled)
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -136,8 +136,8 @@ struct GeneralSettingsView: View {
     }
 
     private func getAppVersion() -> String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown" // not shown
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown" // not shown
         return "v\(version) (\(build))"
     }
 }

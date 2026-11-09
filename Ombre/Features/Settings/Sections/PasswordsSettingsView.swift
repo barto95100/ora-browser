@@ -111,10 +111,11 @@ struct PasswordsSettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(selectedProvider.usesBuiltInVault ? "Saved Credentials" : selectedProvider.title)
+                        Text(selectedProvider
+                            .usesBuiltInVault ? String(localized: "Saved Credentials") : selectedProvider.title)
                             .font(.headline)
                         if selectedProvider.usesBuiltInVault, isUnlocked {
-                            Text("\(visibleEntries.count) item\(visibleEntries.count == 1 ? "" : "s")")
+                            Text("\(visibleEntries.count) items")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -130,9 +131,9 @@ struct PasswordsSettingsView: View {
                 }
 
                 if !selectedProvider.usesBuiltInVault {
-                    emptyState(message: "\(selectedProvider.title) integration coming soon.")
+                    emptyState(message: String(localized: "\(selectedProvider.title) integration coming soon."))
                 } else if containers.isEmpty {
-                    emptyState(message: "Create a space to start storing passwords.")
+                    emptyState(message: String(localized: "Create a space to start storing passwords."))
                 } else if isUnlocked {
                     spacePickerRow
 
@@ -141,7 +142,8 @@ struct PasswordsSettingsView: View {
 
                     if filteredEntries.isEmpty {
                         emptyState(message: searchText
-                            .isEmpty ? "No saved passwords yet." : "No saved passwords match that search.")
+                            .isEmpty ? String(localized: "No saved passwords yet.") :
+                            String(localized: "No saved passwords match that search."))
                     } else {
                         passwordsTable
                     }
@@ -201,7 +203,7 @@ struct PasswordsSettingsView: View {
             }
 
             OmbreButton(
-                label: isAuthenticating ? "Unlocking..." : "Unlock Passwords",
+                label: isAuthenticating ? String(localized: "Unlocking...") : String(localized: "Unlock Passwords"),
                 variant: .outline,
                 isDisabled: isAuthenticating,
                 leadingIcon: passwordManager.canUseBiometricAuthentication() ? "touchid" : "lock.open"
@@ -264,10 +266,10 @@ struct PasswordsSettingsView: View {
 
     private func passwordTableHeader(actionsColumnWidth: CGFloat) -> some View {
         HStack(spacing: 12) {
-            tableHeaderCell("Site", width: 260, alignment: .leading)
-            tableHeaderCell("Username", width: 220, alignment: .leading)
-            tableHeaderCell("Password", width: 240, alignment: .leading)
-            tableHeaderCell("Actions", width: actionsColumnWidth, alignment: .leading)
+            tableHeaderCell(String(localized: "Site"), width: 260, alignment: .leading)
+            tableHeaderCell(String(localized: "Username"), width: 220, alignment: .leading)
+            tableHeaderCell(String(localized: "Password"), width: 240, alignment: .leading)
+            tableHeaderCell(String(localized: "Actions"), width: actionsColumnWidth, alignment: .leading)
         }
         .padding(.leading, tableLeadingInset)
         .padding(.trailing, tableTrailingInset)
@@ -300,7 +302,7 @@ struct PasswordsSettingsView: View {
                     .foregroundStyle(entry.username.isEmpty ? .secondary : .primary)
                     .lineLimit(1)
 
-                copyActionButton(help: "Copy username") {
+                copyActionButton(help: String(localized: "Copy username")) {
                     passwordManager.copyToPasteboard(entry.username)
                 }
             }
@@ -321,7 +323,7 @@ struct PasswordsSettingsView: View {
                 .buttonStyle(.plain)
                 .help(revealedPasswordIDs[entry.id] == nil ? "Reveal password" : "Hide password")
 
-                copyActionButton(help: "Copy password") {
+                copyActionButton(help: String(localized: "Copy password")) {
                     copyPassword(entry)
                 }
             }
@@ -379,7 +381,8 @@ struct PasswordsSettingsView: View {
     private func unlockVault() {
         isAuthenticating = true
         Task {
-            let authenticated = await passwordManager.authenticate(reason: "Unlock your saved passwords in Ombre")
+            let authenticated = await passwordManager
+                .authenticate(reason: String(localized: "Unlock your saved passwords in Ombre"))
             await MainActor.run {
                 isUnlocked = authenticated
                 isAuthenticating = false

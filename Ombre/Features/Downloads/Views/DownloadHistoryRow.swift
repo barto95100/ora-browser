@@ -220,17 +220,19 @@ struct DownloadHistoryRow: View {
         case .downloading:
             if download.displayFileSize > 0 {
                 let pct = Int(download.displayProgress * 100)
-                return "\(download.formattedDownloadedSize) of \(download.formattedFileSize) \u{00B7} \(pct)%"
+                return String(
+                    localized: "\(download.formattedDownloadedSize) of \(download.formattedFileSize) · \(pct)%"
+                )
             }
             return download.formattedDownloadedSize
         case .completed:
             return timeAgo(from: download.completedAt ?? download.createdAt)
         case .failed:
-            return "Failed"
+            return String(localized: "Failed")
         case .cancelled:
-            return "Cancelled"
+            return String(localized: "Cancelled")
         default:
-            return "Pending"
+            return String(localized: "Pending")
         }
     }
 

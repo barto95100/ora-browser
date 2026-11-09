@@ -82,7 +82,7 @@ private struct DownloadsPopoverRow: View {
         .onTapGesture {
             if isDone { downloadManager.openFile(download) }
         }
-        .help(isDone ? "Open \(download.fileName)" : download.fileName)
+        .help(isDone ? String(localized: "Open \(download.fileName)") : download.fileName)
     }
 
     @ViewBuilder
@@ -102,14 +102,15 @@ private struct DownloadsPopoverRow: View {
     private var statusText: String {
         switch download.status {
         case .downloading, .pending:
-            let total = download.displayFileSize > 0 ? " of \(Download.formattedSize(download.displayFileSize))" : ""
-            return "\(Download.formattedSize(download.displayDownloadedBytes))\(total)"
+            let downloaded = Download.formattedSize(download.displayDownloadedBytes)
+            guard download.displayFileSize > 0 else { return downloaded }
+            return String(localized: "\(downloaded) of \(Download.formattedSize(download.displayFileSize))")
         case .completed:
             return download.formattedFileSize
         case .failed:
-            return download.error ?? "Failed"
+            return download.error ?? String(localized: "Failed")
         case .cancelled:
-            return "Cancelled"
+            return String(localized: "Cancelled")
         }
     }
 

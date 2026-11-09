@@ -33,7 +33,7 @@ struct SearchEngineSettingsView: View {
             }
 
             if showingAddForm {
-                SettingsCard(header: "Add New Search Engine") {
+                SettingsCard(header: String(localized: "Add New Search Engine")) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Name:")
@@ -80,7 +80,7 @@ struct SearchEngineSettingsView: View {
                 }
             }
 
-            SettingsCard(header: "Default Engines") {
+            SettingsCard(header: String(localized: "Default Engines")) {
                 // Conventional Search Engines
                 let conventionalEngines = searchEngineService.builtInSearchEngines.filter {
                     !$0.isAIChat
@@ -98,10 +98,10 @@ struct SearchEngineSettingsView: View {
                                 == engine
                                 .name
                                 || (settings.globalDefaultSearchEngine == nil
-                                    && engine.name == "Google"
+                                    && engine.name == "Google" // no translation
                                 ),
                             onSetAsDefault: {
-                                if engine.name == "Google" {
+                                if engine.name == "Google" { // no translation
                                     settings.globalDefaultSearchEngine = nil
                                 } else {
                                     settings.globalDefaultSearchEngine = engine.name
@@ -338,7 +338,7 @@ struct CustomSearchEngineRow: View {
                             Button("Cancel") {
                                 cancelEdit()
                             }
-                            Button("Update") {
+                            Button(String(localized: "searchEngine.save", defaultValue: "Update")) {
                                 saveEdit()
                             }
                             .disabled(editName.isEmpty || !isValidEditURL)

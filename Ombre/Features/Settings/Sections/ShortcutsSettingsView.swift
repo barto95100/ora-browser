@@ -77,7 +77,7 @@ struct ShortcutsSettingsView: View {
     }
 
     private static func conflictText(_ chord: KeyChord, _ other: KeyboardShortcutDefinition) -> String {
-        "\(chord.display) is already the shortcut for “\(other.name)”. Change that one first."
+        String(localized: "\(chord.display) is already the shortcut for “\(other.name)”. Change that one first.")
     }
 
     private func cancelEditing() {

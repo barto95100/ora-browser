@@ -77,7 +77,7 @@ struct SpacesSettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if let container = selectedContainer {
-                        SettingsCard(header: "Defaults") {
+                        SettingsCard(header: String(localized: "Defaults")) {
                             Grid(alignment: .leading, verticalSpacing: 12) {
                                 GridRow {
                                     Text("Search Engine")
@@ -142,7 +142,7 @@ struct SpacesSettingsView: View {
                                         )
                                     ) {
                                         ForEach(AutoClearTabsAfter.allCases) { value in
-                                            Text(value.rawValue).tag(value)
+                                            Text(value.title).tag(value)
                                         }
                                     }
                                     .pickerStyle(.menu)
@@ -156,19 +156,22 @@ struct SpacesSettingsView: View {
                         SitePermissionsSettingsCard(container: container)
                         adBlockingSettingsCard(for: container)
 
-                        SettingsCard(header: "Clear Data") {
+                        SettingsCard(header: String(localized: "Clear Data")) {
                             VStack(spacing: 8) {
                                 Button(
                                     clearDataButtonTitle(
                                         for: .cache(container.id),
-                                        defaultTitle: "Clear Cache",
-                                        completedTitle: "Cache Cleared"
+                                        defaultTitle: String(localized: "Clear Cache"),
+                                        completedTitle: String(localized: "Cache Cleared")
                                     )
                                 ) {
                                     PrivacyService.clearCache(container) {
                                         DispatchQueue.main.async {
                                             completedClearActions.insert(.cache(container.id))
-                                            toastManager.show("Cache cleared", icon: .system("trash"))
+                                            toastManager.show(
+                                                String(localized: "Cache cleared"),
+                                                icon: .system("trash")
+                                            )
                                         }
                                     }
                                 }
@@ -178,14 +181,17 @@ struct SpacesSettingsView: View {
                                 Button(
                                     clearDataButtonTitle(
                                         for: .cookies(container.id),
-                                        defaultTitle: "Clear Cookies",
-                                        completedTitle: "Cookies Cleared"
+                                        defaultTitle: String(localized: "Clear Cookies"),
+                                        completedTitle: String(localized: "Cookies Cleared")
                                     )
                                 ) {
                                     PrivacyService.clearCookies(container) {
                                         DispatchQueue.main.async {
                                             completedClearActions.insert(.cookies(container.id))
-                                            toastManager.show("Cookies cleared", icon: .system("trash"))
+                                            toastManager.show(
+                                                String(localized: "Cookies cleared"),
+                                                icon: .system("trash")
+                                            )
                                         }
                                     }
                                 }
@@ -195,13 +201,13 @@ struct SpacesSettingsView: View {
                                 Button(
                                     clearDataButtonTitle(
                                         for: .history(container.id),
-                                        defaultTitle: "Clear History",
-                                        completedTitle: "History Cleared"
+                                        defaultTitle: String(localized: "Clear History"),
+                                        completedTitle: String(localized: "History Cleared")
                                     )
                                 ) {
                                     if clearHistory(for: container) {
                                         completedClearActions.insert(.history(container.id))
-                                        toastManager.show("History cleared", icon: .system("trash"))
+                                        toastManager.show(String(localized: "History cleared"), icon: .system("trash"))
                                     }
                                 }
                                 .disabled(completedClearActions.contains(.history(container.id)))
@@ -247,7 +253,7 @@ struct SpacesSettingsView: View {
     }
 
     private func deleteSpaceCard(for container: TabContainer) -> some View {
-        SettingsCard(header: "Delete Space") {
+        SettingsCard(header: String(localized: "Delete Space")) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(
                     containers.count <= 1
@@ -286,7 +292,7 @@ struct SpacesSettingsView: View {
     }
 
     private func privacySettingsCard(for container: TabContainer) -> some View {
-        SettingsCard(header: "Privacy") {
+        SettingsCard(header: String(localized: "Privacy")) {
             Text(
                 "These protections apply only to \(container.name). Open tabs in this space are refreshed automatically."
             )
@@ -315,7 +321,7 @@ struct SpacesSettingsView: View {
                 selection: privacyBinding(for: container, keyPath: \.cookiesPolicy)
             ) {
                 ForEach(CookiesPolicy.allCases) { policy in
-                    Text(policy.rawValue).tag(policy)
+                    Text(policy.title).tag(policy)
                 }
             }
             .pickerStyle(.radioGroup)
@@ -331,8 +337,10 @@ struct SpacesSettingsView: View {
         let summary = adBlockSummary(for: container)
 
         SettingsCard(
-            header: "Ad Blocking",
-            description: "Powered by embedded AdGuard filter lists compiled for WebKit in this space."
+            header: String(localized: "Ad Blocking"),
+            description: String(
+                localized: "Powered by embedded AdGuard filter lists compiled for WebKit in this space."
+            )
         ) {
             Toggle("Enable Ad Blocking", isOn: adBlockEnabledBinding(for: container))
 
@@ -354,8 +362,8 @@ struct SpacesSettingsView: View {
                         )
                         _ = await MainActor.run {
                             toastManager.show(
-                                changed ? "Filter lists updated for \(container.name)" :
-                                    "Filter lists are already current",
+                                changed ? String(localized: "Filter lists updated for \(container.name)") :
+                                    String(localized: "Filter lists are already current"),
                                 type: .info,
                                 icon: .system("arrow.clockwise.circle")
                             )
@@ -447,7 +455,7 @@ struct SpacesSettingsView: View {
                             Text(record.name)
                                 .font(.body.weight(.medium))
                         }
-                        Text(record.summary)
+                        Text(FilterListCatalogService.shared.summary(of: record))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text(filterListStatusText(for: record))
@@ -462,7 +470,11 @@ struct SpacesSettingsView: View {
                         Task {
                             await AdBlockService.shared.removeCustomList(id: record.id)
                             _ = await MainActor.run {
-                                toastManager.show("Removed \(record.name)", type: .info, icon: .system("trash"))
+                                toastManager.show(
+                                    String(localized: "Removed \(record.name)"),
+                                    type: .info,
+                                    icon: .system("trash")
+                                )
                             }
                         }
                     }
@@ -552,7 +564,7 @@ struct SpacesSettingsView: View {
                 await AdBlockService.shared.spaceSettingsDidChange(containerId: container.id)
                 _ = await MainActor.run {
                     newCustomFilterListURL = ""
-                    toastManager.show("Added \(record.name)", icon: .system("checkmark.circle"))
+                    toastManager.show(String(localized: "Added \(record.name)"), icon: .system("checkmark.circle"))
                 }
             } catch {
                 _ = await MainActor.run {
@@ -582,17 +594,19 @@ struct SpacesSettingsView: View {
     private func filterListStatusText(for record: FilterListRecord) -> String {
         switch record.status {
         case .idle:
-            return "Not downloaded yet"
+            return String(localized: "Not downloaded yet")
         case .updating:
-            return "Updating list and compiling WebKit rules"
+            return String(localized: "Updating list and compiling WebKit rules")
         case .ready:
             return if let coverage = record.coverage {
-                "\(coverage.convertedRuleCount) converted, \(coverage.skippedRuleCount) skipped"
+                String(
+                    localized: "Rules: \(coverage.convertedRuleCount) converted, \(coverage.skippedRuleCount) skipped"
+                )
             } else {
-                "Compiled and ready"
+                String(localized: "Compiled and ready")
             }
         case .failed:
-            return record.lastErrorMessage ?? "The list could not be refreshed"
+            return record.lastErrorMessage ?? String(localized: "The list could not be refreshed")
         }
     }
 
@@ -605,12 +619,18 @@ struct SpacesSettingsView: View {
     ) {
         let privacySettings = settings.privacySettings(for: container.id)
         guard privacySettings.adBlock.enabled else {
-            return ("Ad blocking is off for this space.", nil, nil, false, false)
+            return (String(localized: "Ad blocking is off for this space."), nil, nil, false, false)
         }
 
         let enabledRecords = enabledAdBlockRecords(for: container)
         guard !enabledRecords.isEmpty else {
-            return ("Select at least one filter list to block ads in this space.", nil, nil, false, false)
+            return (
+                String(localized: "Select at least one filter list to block ads in this space."),
+                nil,
+                nil,
+                false,
+                false
+            )
         }
 
         let isUpdating = enabledRecords.contains { $0.status == .updating }
@@ -620,17 +640,17 @@ struct SpacesSettingsView: View {
         let totalSkipped = enabledRecords.compactMap(\.coverage).reduce(0) { $0 + $1.skippedRuleCount }
 
         let statusText = if isUpdating {
-            "Updating filter lists and recompiling WebKit rule sets."
+            String(localized: "Updating filter lists and recompiling WebKit rule sets.")
         } else if let failedRecord = failedRecords.first {
-            "\(failedRecord.name) needs attention."
+            String(localized: "\(failedRecord.name) needs attention.")
         } else {
-            "Ready in \(enabledRecords.count) enabled list\(enabledRecords.count == 1 ? "" : "s")."
+            String(localized: "Ready in \(enabledRecords.count) enabled lists.")
         }
 
         let lastUpdatedText = lastUpdated?.formatted(date: .abbreviated, time: .shortened)
         let coverageText = totalConverted == 0 && totalSkipped == 0
             ? nil
-            : "\(totalConverted) converted rules, \(totalSkipped) skipped"
+            : String(localized: "Rules: \(totalConverted) converted, \(totalSkipped) skipped")
 
         return (statusText, lastUpdatedText, coverageText, isUpdating, !failedRecords.isEmpty)
     }

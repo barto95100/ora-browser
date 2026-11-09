@@ -12,13 +12,13 @@ enum SettingsTab: String, Hashable, CaseIterable {
 
     var title: String {
         switch self {
-        case .general: return "General"
-        case .spaces: return "Spaces"
-        case .passwords: return "Passwords"
-        case .extensions: return "Extensions"
-        case .timeFocus: return "Time & Focus"
-        case .shortcuts: return "Shortcuts"
-        case .searchEngines: return "Search"
+        case .general: return String(localized: "General")
+        case .spaces: return String(localized: "Spaces")
+        case .passwords: return String(localized: "Passwords")
+        case .extensions: return String(localized: "Extensions")
+        case .timeFocus: return String(localized: "Time & Focus")
+        case .shortcuts: return String(localized: "Shortcuts")
+        case .searchEngines: return String(localized: "settings.search", defaultValue: "Search")
         }
     }
 
@@ -37,19 +37,19 @@ enum SettingsTab: String, Hashable, CaseIterable {
     var subtitle: String {
         switch self {
         case .general:
-            return "Browser defaults, app behavior, and software updates."
+            return String(localized: "Browser defaults, app behavior, and software updates.")
         case .spaces:
-            return "Space-specific defaults and per-space data controls."
+            return String(localized: "Space-specific defaults and per-space data controls.")
         case .passwords:
-            return "Password manager integration, vault access, and autofill behavior."
+            return String(localized: "Password manager integration, vault access, and autofill behavior.")
         case .extensions:
-            return "Safari extensions from your apps, and what they can access."
+            return String(localized: "Safari extensions from your apps, and what they can access.")
         case .timeFocus:
-            return "Browsing time per site, and focus sessions."
+            return String(localized: "Browsing time per site, and focus sessions.")
         case .shortcuts:
-            return "Keyboard shortcuts and command mappings."
+            return String(localized: "Keyboard shortcuts and command mappings.")
         case .searchEngines:
-            return "Default search providers, AI engines, and custom shortcuts."
+            return String(localized: "Default search providers, AI engines, and custom shortcuts.")
         }
     }
 }

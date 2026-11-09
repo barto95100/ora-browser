@@ -44,6 +44,14 @@ ZONES = {
         "Ombre/Features/Search/",
         "Ombre/Features/Player/",
     ],
+    "settings": [
+        "Ombre/Features/Settings/",
+        "Ombre/Core/Constants/KeyboardShortcuts.swift",
+        "Ombre/Core/Utilities/SettingsStore.swift",
+        "Ombre/Features/Privacy/Models/AdBlockModels.swift",
+        "Ombre/Features/Privacy/Services/FilterListCatalogService.swift",
+        "Ombre/Features/Passwords/Services/PasswordManagerProviderRegistry.swift",
+    ],
 }
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -81,6 +89,21 @@ def bare(text: str) -> str:
 def blank(match) -> str:
     """Spaces in place of a skipped text: the other texts keep their column."""
     return " " * len(match.group(0))
+
+
+def code_part(line: str) -> str:
+    """The line without its trailing comment (a // outside a string)."""
+    in_string = escaped = False
+    for index, char in enumerate(line):
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == '"':
+            in_string = not in_string
+        elif not in_string and line.startswith("//", index):
+            return line[:index]
+    return line
 
 
 def placeholders(text: str) -> list:
@@ -172,9 +195,9 @@ def check_sources(extracted, every):
                 continue
             if in_block or line.lstrip().startswith("//") or NOT_SHOWN.search(line):
                 continue
-            if RAW_VALUE.search(line):
+            if RAW_VALUE.search(code_part(line)):
                 problems.append(f"{path}:{number}: raw value shown (give it a translated title): {line.strip()}")
-            for match in LITERAL.finditer(NOT_SHOWN_ARGUMENT.sub(blank, line)):
+            for match in LITERAL.finditer(NOT_SHOWN_ARGUMENT.sub(blank, code_part(line))):
                 text = match.group(1)
                 if not PROSE.search(re.sub(r"\\\(.*?\)", "", text)):
                     continue

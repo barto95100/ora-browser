@@ -12,9 +12,9 @@ struct AppearanceSelector: View {
 
     private var options: [Option] {
         [
-            .init(appearance: .light, imageName: "appearance-light", title: "Light"),
-            .init(appearance: .dark, imageName: "appearance-dark", title: "Dark"),
-            .init(appearance: .system, imageName: "appearance-system", title: "Auto")
+            .init(appearance: .light, imageName: "appearance-light", title: String(localized: "Light")),
+            .init(appearance: .dark, imageName: "appearance-dark", title: String(localized: "Dark")),
+            .init(appearance: .system, imageName: "appearance-system", title: String(localized: "Auto"))
         ]
     }
 

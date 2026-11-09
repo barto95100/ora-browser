@@ -25,8 +25,8 @@ struct FilterListCatalogService {
     let builtinRecords: [FilterListRecord] = [
         FilterListRecord(
             id: FilterListCatalogService.adGuardBaseID,
-            name: "AdGuard Base",
-            summary: "Core AdGuard ads list for general web ad blocking.",
+            name: "AdGuard Base", // no translation
+            summary: String(localized: "Core AdGuard ads list for general web ad blocking."),
             sourceKind: .builtin,
             sourceURL: "https://filters.adtidy.org/extension/chromium/filters/2.txt",
             isRecommended: true,
@@ -35,8 +35,8 @@ struct FilterListCatalogService {
         ),
         FilterListRecord(
             id: FilterListCatalogService.adGuardMobileAdsID,
-            name: "AdGuard Mobile Ads",
-            summary: "Additional mobile ad-network coverage for embedded and responsive mobile ads.",
+            name: "AdGuard Mobile Ads", // no translation
+            summary: String(localized: "Additional mobile ad-network coverage for embedded and responsive mobile ads."),
             sourceKind: .builtin,
             sourceURL: "https://filters.adtidy.org/extension/chromium/filters/11.txt",
             isRecommended: true,
@@ -45,8 +45,8 @@ struct FilterListCatalogService {
         ),
         FilterListRecord(
             id: FilterListCatalogService.adGuardTrackingProtectionID,
-            name: "AdGuard Tracking Protection",
-            summary: "Broader tracker and analytics coverage from AdGuard’s privacy list.",
+            name: "AdGuard Tracking Protection", // no translation
+            summary: String(localized: "Broader tracker and analytics coverage from AdGuard’s privacy list."),
             sourceKind: .builtin,
             sourceURL: "https://filters.adtidy.org/extension/chromium/filters/3.txt",
             isRecommended: false,
@@ -55,8 +55,10 @@ struct FilterListCatalogService {
         ),
         FilterListRecord(
             id: FilterListCatalogService.adGuardURLTrackingID,
-            name: "AdGuard URL Tracking",
-            summary: "Removes common tracking parameters from requested URLs when WebKit rules can express them.",
+            name: "AdGuard URL Tracking", // no translation
+            summary: String(
+                localized: "Removes common tracking parameters from requested URLs when WebKit rules can express them."
+            ),
             sourceKind: .builtin,
             sourceURL: "https://filters.adtidy.org/windows/filters/17.txt",
             isRecommended: false,
@@ -65,8 +67,8 @@ struct FilterListCatalogService {
         ),
         FilterListRecord(
             id: FilterListCatalogService.adGuardAnnoyancesID,
-            name: "AdGuard Annoyances",
-            summary: "Targets cookie notices, popups, widgets, and other page annoyances.",
+            name: "AdGuard Annoyances", // no translation
+            summary: String(localized: "Targets cookie notices, popups, widgets, and other page annoyances."),
             sourceKind: .builtin,
             sourceURL: "https://filters.adtidy.org/extension/chromium/filters/14.txt",
             isRecommended: false,
@@ -74,6 +76,12 @@ struct FilterListCatalogService {
             status: .idle
         )
     ]
+
+    /// A built-in list's summary in the Mac's language (a stored record keeps
+    /// the language it was saved in).
+    func summary(of record: FilterListRecord) -> String {
+        builtinRecords.first { $0.id == record.id }?.summary ?? record.summary
+    }
 
     func normalizedRecords(from stored: [FilterListRecord]) -> [FilterListRecord] {
         let builtinByID = Dictionary(uniqueKeysWithValues: builtinRecords.map { ($0.id, $0) })

@@ -8,100 +8,100 @@ enum KeyboardShortcuts {
     enum Tabs {
         static let new = KeyboardShortcutDefinition(
             id: "tabs.new",
-            name: "New Tab",
-            category: "Tabs",
+            name: String(localized: "New Tab"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("t"), modifiers: [.command])
         )
         static let close = KeyboardShortcutDefinition(
             id: "tabs.close",
-            name: "Close Tab",
-            category: "Tabs",
+            name: String(localized: "Close Tab"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("w"), modifiers: [.command])
         )
         static let restore = KeyboardShortcutDefinition(
             id: "tabs.restore",
-            name: "Reopen Closed Tab",
-            category: "Tabs",
+            name: String(localized: "Reopen Closed Tab"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("t"), modifiers: [.command, .shift])
         )
         static let next = KeyboardShortcutDefinition(
             id: "tabs.next",
-            name: "Next Tab",
-            category: "Tabs",
+            name: String(localized: "Next Tab"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .tab, modifiers: [.control])
         )
         static let previous = KeyboardShortcutDefinition(
             id: "tabs.previous",
-            name: "Previous Tab",
-            category: "Tabs",
+            name: String(localized: "Previous Tab"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .tab, modifiers: [.control, .shift])
         )
         static let pin = KeyboardShortcutDefinition(
             id: "tabs.pin",
-            name: "Pin Tab",
-            category: "Tabs",
+            name: String(localized: "Pin Tab"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("d"), modifiers: [.command])
         )
         /// Close to Arc's ⌃⇧=, without Shift: "=" with Shift types a
         /// different character depending on the keyboard layout.
         static let newSplit = KeyboardShortcutDefinition(
             id: "tabs.newSplit",
-            name: "New Split View",
-            category: "Tabs",
+            name: String(localized: "New Split View"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("="), modifiers: [.control, .command])
         )
         static let tab1 = KeyboardShortcutDefinition(
             id: "tabs.tab1",
-            name: "Tab 1",
-            category: "Tabs",
+            name: String(localized: "Tab 1"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("1"), modifiers: [.command])
         )
         static let tab2 = KeyboardShortcutDefinition(
             id: "tabs.tab2",
-            name: "Tab 2",
-            category: "Tabs",
+            name: String(localized: "Tab 2"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("2"), modifiers: [.command])
         )
         static let tab3 = KeyboardShortcutDefinition(
             id: "tabs.tab3",
-            name: "Tab 3",
-            category: "Tabs",
+            name: String(localized: "Tab 3"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("3"), modifiers: [.command])
         )
         static let tab4 = KeyboardShortcutDefinition(
             id: "tabs.tab4",
-            name: "Tab 4",
-            category: "Tabs",
+            name: String(localized: "Tab 4"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("4"), modifiers: [.command])
         )
         static let tab5 = KeyboardShortcutDefinition(
             id: "tabs.tab5",
-            name: "Tab 5",
-            category: "Tabs",
+            name: String(localized: "Tab 5"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("5"), modifiers: [.command])
         )
         static let tab6 = KeyboardShortcutDefinition(
             id: "tabs.tab6",
-            name: "Tab 6",
-            category: "Tabs",
+            name: String(localized: "Tab 6"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("6"), modifiers: [.command])
         )
         static let tab7 = KeyboardShortcutDefinition(
             id: "tabs.tab7",
-            name: "Tab 7",
-            category: "Tabs",
+            name: String(localized: "Tab 7"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("7"), modifiers: [.command])
         )
         static let tab8 = KeyboardShortcutDefinition(
             id: "tabs.tab8",
-            name: "Tab 8",
-            category: "Tabs",
+            name: String(localized: "Tab 8"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("8"), modifiers: [.command])
         )
         static let tab9 = KeyboardShortcutDefinition(
             id: "tabs.tab9",
-            name: "Tab 9",
-            category: "Tabs",
+            name: String(localized: "Tab 9"),
+            category: String(localized: "Tabs"),
             defaultChord: KeyChord(keyEquivalent: .init("9"), modifiers: [.command])
         )
 
@@ -127,39 +127,39 @@ enum KeyboardShortcuts {
     enum Navigation {
         static let back = KeyboardShortcutDefinition(
             id: "navigation.back",
-            name: "Back",
-            category: "Navigation",
+            name: String(localized: "Back"),
+            category: String(localized: "Navigation"),
             defaultChord: KeyChord(keyEquivalent: .init("["), modifiers: [.command])
         )
         static let forward = KeyboardShortcutDefinition(
             id: "navigation.forward",
-            name: "Forward",
-            category: "Navigation",
+            name: String(localized: "Forward"),
+            category: String(localized: "Navigation"),
             defaultChord: KeyChord(keyEquivalent: .init("]"), modifiers: [.command])
         )
         static let reload = KeyboardShortcutDefinition(
             id: "navigation.reload",
-            name: "Reload",
-            category: "Navigation",
+            name: String(localized: "Reload"),
+            category: String(localized: "Navigation"),
             defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command])
         )
         /// Reloads the page from the network, its cached files cleared.
         static let hardReload = KeyboardShortcutDefinition(
             id: "navigation.hardReload",
-            name: "Clear Cache & Reload",
-            category: "Navigation",
+            name: String(localized: "Clear Cache & Reload"),
+            category: String(localized: "Navigation"),
             defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .shift])
         )
         static let clearCookiesAndReload = KeyboardShortcutDefinition(
             id: "navigation.clearCookiesAndReload",
-            name: "Clear Cookies & Reload",
-            category: "Navigation",
+            name: String(localized: "Clear Cookies & Reload"),
+            category: String(localized: "Navigation"),
             defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .option, .shift])
         )
         static let openPeekInNewTab = KeyboardShortcutDefinition(
             id: "navigation.openPeekInNewTab",
-            name: "Open Peek in New Tab",
-            category: "Navigation",
+            name: String(localized: "Open Peek in New Tab"),
+            category: String(localized: "Navigation"),
             defaultChord: KeyChord(keyEquivalent: .init("o"), modifiers: [.command])
         )
     }
@@ -169,26 +169,26 @@ enum KeyboardShortcuts {
     enum Window {
         static let new = KeyboardShortcutDefinition(
             id: "window.new",
-            name: "New Window",
-            category: "Window",
+            name: String(localized: "New Window"),
+            category: String(localized: "Window"),
             defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command])
         )
         static let newPrivate = KeyboardShortcutDefinition(
             id: "window.newPrivate",
-            name: "New Private Window",
-            category: "Window",
+            name: String(localized: "New Private Window"),
+            category: String(localized: "Window"),
             defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command, .shift])
         )
         static let close = KeyboardShortcutDefinition(
             id: "window.close",
-            name: "Close Window",
-            category: "Window",
+            name: String(localized: "Close Window"),
+            category: String(localized: "Window"),
             defaultChord: KeyChord(keyEquivalent: .init("w"), modifiers: [.command, .shift])
         )
         static let fullscreen = KeyboardShortcutDefinition(
             id: "window.fullscreen",
-            name: "Fullscreen",
-            category: "Window",
+            name: String(localized: "Fullscreen"),
+            category: String(localized: "Window"),
             defaultChord: KeyChord(keyEquivalent: .init("f"), modifiers: [.command, .control])
         )
     }
@@ -198,14 +198,14 @@ enum KeyboardShortcuts {
     enum Address {
         static let copyURL = KeyboardShortcutDefinition(
             id: "address.copyURL",
-            name: "Copy URL",
-            category: "Address",
+            name: String(localized: "Copy URL"),
+            category: String(localized: "Address"),
             defaultChord: KeyChord(keyEquivalent: .init("c"), modifiers: [.command, .shift])
         )
         static let focus = KeyboardShortcutDefinition(
             id: "address.focus",
-            name: "Focus Address Bar",
-            category: "Address",
+            name: String(localized: "Focus Address Bar"),
+            category: String(localized: "Address"),
             defaultChord: KeyChord(keyEquivalent: .init("l"), modifiers: [.command])
         )
     }
@@ -215,20 +215,20 @@ enum KeyboardShortcuts {
     enum Edit {
         static let find = KeyboardShortcutDefinition(
             id: "edit.find",
-            name: "Find",
-            category: "Edit",
+            name: String(localized: "Find"),
+            category: String(localized: "shortcut.category.edit", defaultValue: "Edit"),
             defaultChord: KeyChord(keyEquivalent: .init("f"), modifiers: [.command])
         )
         static let findNext = KeyboardShortcutDefinition(
             id: "edit.findNext",
-            name: "Find Next",
-            category: "Edit",
+            name: String(localized: "Find Next"),
+            category: String(localized: "shortcut.category.edit", defaultValue: "Edit"),
             defaultChord: KeyChord(keyEquivalent: .init("g"), modifiers: [.command])
         )
         static let findPrevious = KeyboardShortcutDefinition(
             id: "edit.findPrevious",
-            name: "Find Previous",
-            category: "Edit",
+            name: String(localized: "Find Previous"),
+            category: String(localized: "shortcut.category.edit", defaultValue: "Edit"),
             defaultChord: KeyChord(keyEquivalent: .init("g"), modifiers: [.command, .shift])
         )
     }
@@ -238,14 +238,14 @@ enum KeyboardShortcuts {
     enum History {
         static let show = KeyboardShortcutDefinition(
             id: "history.show",
-            name: "Show History",
-            category: "History",
+            name: String(localized: "Show History"),
+            category: String(localized: "History"),
             defaultChord: KeyChord(keyEquivalent: .init("y"), modifiers: [.command])
         )
         static let time = KeyboardShortcutDefinition(
             id: "history.time",
-            name: "Show Browsing Time",
-            category: "History",
+            name: String(localized: "Show Browsing Time"),
+            category: String(localized: "History"),
             defaultChord: KeyChord(keyEquivalent: .init("y"), modifiers: [.command, .option])
         )
     }
@@ -255,14 +255,14 @@ enum KeyboardShortcuts {
     enum Notes {
         static let show = KeyboardShortcutDefinition(
             id: "notes.show",
-            name: "Show Notes",
-            category: "Notes",
+            name: String(localized: "Show Notes"),
+            category: String(localized: "Notes"),
             defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command, .option])
         )
         static let tasks = KeyboardShortcutDefinition(
             id: "notes.tasks",
-            name: "Show Tasks",
-            category: "Notes",
+            name: String(localized: "Show Tasks"),
+            category: String(localized: "Notes"),
             defaultChord: KeyChord(keyEquivalent: .init("t"), modifiers: [.command, .option])
         )
     }
@@ -272,20 +272,20 @@ enum KeyboardShortcuts {
     enum Zoom {
         static let zoomIn = KeyboardShortcutDefinition(
             id: "zoom.zoomIn",
-            name: "Zoom In",
-            category: "Zoom",
+            name: String(localized: "Zoom In"),
+            category: String(localized: "Zoom"),
             defaultChord: KeyChord(keyEquivalent: .init("+"), modifiers: [.command])
         )
         static let zoomOut = KeyboardShortcutDefinition(
             id: "zoom.zoomOut",
-            name: "Zoom Out",
-            category: "Zoom",
+            name: String(localized: "Zoom Out"),
+            category: String(localized: "Zoom"),
             defaultChord: KeyChord(keyEquivalent: .init("-"), modifiers: [.command])
         )
         static let reset = KeyboardShortcutDefinition(
             id: "zoom.reset",
-            name: "Actual Size",
-            category: "Zoom",
+            name: String(localized: "Actual Size"),
+            category: String(localized: "Zoom"),
             defaultChord: KeyChord(keyEquivalent: .init("0"), modifiers: [.command])
         )
     }
@@ -295,32 +295,32 @@ enum KeyboardShortcuts {
     enum App {
         static let quit = KeyboardShortcutDefinition(
             id: "app.quit",
-            name: "Quit",
-            category: "App",
+            name: String(localized: "Quit"),
+            category: String(localized: "App"),
             defaultChord: KeyChord(keyEquivalent: .init("q"), modifiers: [.command])
         )
         static let hide = KeyboardShortcutDefinition(
             id: "app.hide",
-            name: "Hide",
-            category: "App",
+            name: String(localized: "Hide"),
+            category: String(localized: "App"),
             defaultChord: KeyChord(keyEquivalent: .init("h"), modifiers: [.command])
         )
         static let preferences = KeyboardShortcutDefinition(
             id: "app.preferences",
-            name: "Preferences",
-            category: "App",
+            name: String(localized: "Preferences"),
+            category: String(localized: "App"),
             defaultChord: KeyChord(keyEquivalent: .init(","), modifiers: [.command])
         )
         static let toggleSidebar = KeyboardShortcutDefinition(
             id: "app.toggleSidebar",
-            name: "Toggle Sidebar",
-            category: "App",
+            name: String(localized: "Toggle Sidebar"),
+            category: String(localized: "App"),
             defaultChord: KeyChord(keyEquivalent: .init("s"), modifiers: [.command])
         )
         static let toggleToolbar = KeyboardShortcutDefinition(
             id: "app.toggleToolbar",
-            name: "Toggle Toolbar",
-            category: "App",
+            name: String(localized: "Toggle Toolbar"),
+            category: String(localized: "App"),
             defaultChord: KeyChord(keyEquivalent: .init("d"), modifiers: [.command, .shift])
         )
     }
@@ -374,6 +374,6 @@ enum KeyboardShortcuts {
     static var itemsByCategory: [(category: String, items: [KeyboardShortcutDefinition])] {
         Dictionary(grouping: allShortcuts, by: \.category)
             .map { (category: $0.key, items: $0.value) }
-            .sorted { $0.category.caseInsensitiveCompare($1.category) == .orderedAscending }
+            .sorted { $0.category.localizedStandardCompare($1.category) == .orderedAscending }
     }
 }

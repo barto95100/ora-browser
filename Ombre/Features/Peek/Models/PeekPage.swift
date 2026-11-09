@@ -43,6 +43,7 @@ final class PeekPage: ObservableObject, Identifiable {
 
     func moveToTab() {
         cancelPermissionRequest()
+        sheets.dismiss()
         isMovedToTab = true
     }
 
@@ -171,7 +172,9 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         origin: URL?,
         decisionHandler: @escaping (BrowserPermissionDecision) -> Void
     ) {
-        guard let peek, isShown else {
+        // No notifications from a preview: it goes once closed, and a click
+        // would lead to the tab it was opened from.
+        guard let peek, isShown, permission != .notifications else {
             decisionHandler(.deny)
             return
         }

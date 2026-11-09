@@ -67,6 +67,30 @@ extension TabManagerTests {
             }
         }
 
+        /// Peek opened as a tab: its waiting prompt is refused (the tab asks
+        /// again if the page does), and a preview never gets notifications.
+        @Test func promptGoesWhenPeekBecomesATabAndNotificationsAreRefused() async throws {
+            try await TabManagerTestWindow.run { window in
+                let peek = try await openPeek(in: window)
+                defer { SitePermissionStore.shared.removeAll(in: peek.spaceID) }
+                let delegate = try #require(peek.page.delegate)
+                var notifications: BrowserPermissionDecision?
+                delegate.browserPage(peek.page, requestPermission: .notifications, origin: site) { notifications = $0 }
+                #expect(notifications == .deny)
+                #expect(peek.permissionRequest == nil)
+
+                var camera: BrowserPermissionDecision?
+                delegate.browserPage(peek.page, requestPermission: .camera, origin: site) { camera = $0 }
+                window.tabManager.openPeekInTab()
+
+                #expect(camera == .deny)
+                #expect(peek.permissionRequest == nil)
+                for _ in 0 ..< 50 where window.tabManager.peek != nil {
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+            }
+        }
+
         /// A page in no window (as in the tests) gets no dialog, and a new
         /// document may show dialogs again, like a tab.
         @Test func dialogsFollowTheTabsPolicy() async throws {

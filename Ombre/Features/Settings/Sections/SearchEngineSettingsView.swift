@@ -12,9 +12,7 @@ struct SearchEngineSettingsView: View {
     @State private var newEngineIsAI = false
 
     private var isValidURL: Bool {
-        newEngineURL
-            .contains("{query}")
-            && URL(string: newEngineURL.replacingOccurrences(of: "{query}", with: "test")) != nil
+        SearchEngineService.isValidTemplate(newEngineURL)
     }
 
     var body: some View {
@@ -52,7 +50,7 @@ struct SearchEngineSettingsView: View {
                                     text: $newEngineURL
                                 )
                                 if !newEngineURL.isEmpty, !isValidURL {
-                                    Text("URL must contain {query} and be a valid URL")
+                                    Text("URL must contain {query} and start with https:// or http://")
                                         .foregroundColor(.red)
                                         .font(.caption)
                                 }
@@ -274,8 +272,7 @@ struct CustomSearchEngineRow: View {
     @State private var editIsAI = false
 
     private var isValidEditURL: Bool {
-        editURL.contains("{query}")
-            && URL(string: editURL.replacingOccurrences(of: "{query}", with: "test")) != nil
+        SearchEngineService.isValidTemplate(editURL)
     }
 
     var body: some View {
@@ -317,7 +314,7 @@ struct CustomSearchEngineRow: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("https://example.com/search?q={query}", text: $editURL)
                                 if !editURL.isEmpty, !isValidEditURL {
-                                    Text("URL must contain {query} and be a valid URL")
+                                    Text("URL must contain {query} and start with https:// or http://")
                                         .foregroundColor(.red)
                                         .font(.caption)
                                 }

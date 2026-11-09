@@ -277,12 +277,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             ExtensionPackages.remove(path: pending.package.path)
         }
         if record.bundleIdentifier == nil { ExtensionPackages.remove(path: record.path) }
-        let types = WKWebExtensionController.allExtensionDataTypes
-        controller.fetchDataRecords(ofTypes: types) { [controller] records in
-            let own = records.filter { $0.uniqueIdentifier == id }
-            guard !own.isEmpty else { return }
-            controller.removeData(ofTypes: types, from: own) {}
-        }
+        Task { await ExtensionDataFolder.removeAll(of: id, from: controller) }
         // Its app's extension can be offered again, if the settings show it.
         if candidateViewers > 0 { refreshCandidates() }
     }

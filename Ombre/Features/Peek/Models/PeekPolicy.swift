@@ -14,9 +14,9 @@ enum PinnedLinkBehavior: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .peek: "Peek"
-        case .newTab: "New Tab"
-        case .sameTab: "Same Tab"
+        case .peek: String(localized: "Peek")
+        case .newTab: String(localized: "New Tab")
+        case .sameTab: String(localized: "Same Tab")
         }
     }
 }

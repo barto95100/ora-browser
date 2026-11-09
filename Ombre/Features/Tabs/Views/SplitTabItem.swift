@@ -140,11 +140,18 @@ struct SplitTabItem: View {
         // Each side, a tab of its own for VoiceOver (the row's tap picks a
         // side by where it lands).
         .tabAccessibility(tab: tab, isSelected: isFocused, activate: { onSelect(tab) }, actions: [
-            (name: "Close Tab", action: { onClose(tab) }),
-            (name: tab.type == .pinned ? "Unpin Tab" : "Pin Tab", action: { onPinToggle(tab) }),
-            (name: tab.type == .fav ? "Remove from Favorites" : "Add to Favorites", action: { onFavoriteToggle(tab) }),
-            (name: "Separate Tabs", action: { tabManager.separateSplit(containing: left) }),
-            (name: "Close Both Tabs", action: {
+            (name: String(localized: "Close Tab"), action: { onClose(tab) }),
+            (
+                name: tab.type == .pinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab"),
+                action: { onPinToggle(tab) }
+            ),
+            (
+                name: tab
+                    .type == .fav ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites"),
+                action: { onFavoriteToggle(tab) }
+            ),
+            (name: String(localized: "Separate Tabs"), action: { tabManager.separateSplit(containing: left) }),
+            (name: String(localized: "Close Both Tabs"), action: {
                 onClose(right)
                 onClose(left)
             })

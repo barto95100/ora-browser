@@ -26,8 +26,8 @@ actor FaviconStore {
 
     /// Safari's full user agent (WebKit's prefix + `SafariUserAgent.current`).
     static let userAgent =
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) "
-            + SafariUserAgent.current
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) " // no translation
+        + SafariUserAgent.current
 
     /// Larger files are not icons.
     static let maximumSize = 1_000_000
@@ -39,11 +39,11 @@ actor FaviconStore {
         configuration.httpCookieAcceptPolicy = .never
         configuration.urlCache = nil
         configuration.timeoutIntervalForRequest = 15
-        configuration.httpAdditionalHeaders = ["User-Agent": Self.userAgent]
+        configuration.httpAdditionalHeaders = ["User-Agent": Self.userAgent] // no translation
         session = URLSession(configuration: configuration)
         // Where earlier versions wrote private icons.
         try? FileManager.default.removeItem(
-            at: FileManager.default.temporaryDirectory.appendingPathComponent("OmbrePrivateFavicons")
+            at: FileManager.default.temporaryDirectory.appendingPathComponent("OmbrePrivateFavicons") // no translation
         )
     }
 

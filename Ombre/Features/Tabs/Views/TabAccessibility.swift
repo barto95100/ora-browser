@@ -11,8 +11,8 @@ enum TabAccessibility {
     static func value(isLoaded: Bool, isPlayingMedia: Bool) -> String {
         // Shown: the selected trait says it.
         var parts: [String] = []
-        if !isLoaded { parts.append("Not loaded") }
-        if isPlayingMedia { parts.append("Playing audio") }
+        if !isLoaded { parts.append(String(localized: "Not loaded")) }
+        if isPlayingMedia { parts.append(String(localized: "Playing audio")) }
         return parts.joined(separator: ", ")
     }
 }

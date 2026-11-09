@@ -97,10 +97,10 @@ struct ContainerSwitcher: View {
             }
             Button("Delete Space") {
                 dialogManager.confirm(
-                    title: "Delete \"\(container.name)\"?",
-                    message: "All tabs in this space will be permanently removed.",
+                    title: String(localized: "Delete \"\(container.name)\"?"),
+                    message: String(localized: "All tabs in this space will be permanently removed."),
                     icon: .spaceCards,
-                    confirmLabel: "Delete",
+                    confirmLabel: String(localized: "Delete"),
                     variant: .destructive
                 ) {
                     tabManager.deleteContainer(container)

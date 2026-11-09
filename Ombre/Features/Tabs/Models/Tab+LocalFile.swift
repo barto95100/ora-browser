@@ -94,9 +94,12 @@ extension Tab {
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "Allow Access"
+        panel.prompt = String(localized: "Allow Access")
         panel.message =
-            "Allow Ombre to read “\(folder.lastPathComponent)” so this page can show its images and styles."
+            String(
+                // swiftlint:disable:next line_length
+                localized: "Allow Ombre to read “\(folder.lastPathComponent)” so this page can show its images and styles."
+            )
 
         let completion: (NSApplication.ModalResponse) -> Void = { [weak self] response in
             guard let self, response == .OK, let selected = panel.url else { return }

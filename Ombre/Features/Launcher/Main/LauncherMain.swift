@@ -97,15 +97,16 @@ struct LauncherMain: View {
 
     private func getPlaceholder(match: LauncherMatch?) -> String {
         guard let match else {
-            return "Search the web or enter url..."
+            return String(localized: "Search the web or enter URL...")
         }
 
         if let engine = viewModel.searchEngineService.getSearchEngine(byName: match.text) {
-            let prefix = engine.isAIChat ? "Ask" : "Search on"
-            return "\(prefix) \(engine.name)"
+            return engine.isAIChat
+                ? String(localized: "Ask \(engine.name)")
+                : String(localized: "Search on \(engine.name)")
         }
 
-        return "Search on \(match.text)"
+        return String(localized: "Search on \(match.text)")
     }
 
     private func getIconName(match: LauncherMatch?, text: String) -> String {

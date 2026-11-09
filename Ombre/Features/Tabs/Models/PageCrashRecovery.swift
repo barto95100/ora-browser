@@ -4,7 +4,7 @@ import Foundation
 /// memory) and Ombre stopped reloading it automatically.
 struct PageCrashError: LocalizedError {
     var errorDescription: String? {
-        "The webpage stopped working because a problem occurred."
+        String(localized: "The webpage stopped working because a problem occurred.")
     }
 }
 

@@ -27,8 +27,12 @@ struct SpaceEditorView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(theme.foreground)
 
-            OmbreInput(text: $look.name, placeholder: "Name (work, streaming, finance...)", onSubmit: save)
-                .focused($isNameFocused)
+            OmbreInput(
+                text: $look.name,
+                placeholder: String(localized: "Name (work, streaming, finance...)"),
+                onSubmit: save
+            )
+            .focused($isNameFocused)
 
             SpaceLookFields(look: $look)
 
@@ -39,8 +43,18 @@ struct SpaceEditorView: View {
                         .foregroundColor(theme.destructive)
                 }
                 Spacer()
-                OmbreButton(label: "Cancel", variant: .secondary, keyboardShortcut: "esc", action: cancel)
-                OmbreButton(label: "OK", isDisabled: trimmedName.isEmpty, keyboardShortcut: "return", action: save)
+                OmbreButton(
+                    label: String(localized: "Cancel"),
+                    variant: .secondary,
+                    keyboardShortcut: "esc",
+                    action: cancel
+                )
+                OmbreButton(
+                    label: String(localized: "OK"),
+                    isDisabled: trimmedName.isEmpty,
+                    keyboardShortcut: "return",
+                    action: save
+                )
             }
         }
         .padding(18)
@@ -101,10 +115,10 @@ struct SpaceEditorView: View {
         guard let container else { return }
         cancel()
         dialogManager.confirm(
-            title: "Delete \"\(container.name)\"?",
-            message: "All tabs in this space will be permanently removed.",
+            title: String(localized: "Delete \"\(container.name)\"?"),
+            message: String(localized: "All tabs in this space will be permanently removed."),
             icon: .spaceCards,
-            confirmLabel: "Delete",
+            confirmLabel: String(localized: "Delete"),
             variant: .destructive
         ) {
             tabManager.deleteContainer(container)

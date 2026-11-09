@@ -59,6 +59,21 @@ struct ExtensionHardeningTests {
         #expect(team == nil || team == "Q76T6LDBBZ")
     }
 
+    /// An extension from the Mac App Store: Apple re-signs it for its
+    /// developer, whose team it keeps (uBlock Origin Lite: WY4R6PNRF6, not
+    /// Apple's). Only on a Mac where it is installed (not GitHub's runners).
+    static let appStoreExtension = URL(
+        fileURLWithPath: "/Applications/uBlock Origin Lite.app/Contents/PlugIns/uBlock Origin Lite Extension.appex"
+    )
+
+    @Test(.enabled(if: FileManager.default.fileExists(atPath: Self.appStoreExtension.path)))
+    func anAppStoreExtensionKeepsItsDevelopersTeam() {
+        let team = SafariExtensionIdentity.signingTeam(of: Self.appStoreExtension)
+        #expect(team == "WY4R6PNRF6")
+        #expect(SafariExtensionIdentity.accepts(team: team, recorded: nil))
+        #expect(SafariExtensionIdentity.accepts(team: team, recorded: "WY4R6PNRF6"))
+    }
+
     @Test func anUnsignedBundleHasNoTeam() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let bundle = folder.appendingPathComponent("Fake.appex/Contents", isDirectory: true)

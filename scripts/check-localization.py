@@ -55,6 +55,10 @@ ZONES = {
     "extensions": [
         "Ombre/Features/Extensions/",
     ],
+    "passwords": [
+        "Ombre/Features/Passwords/",
+        "Ombre/Core/BrowserEngine/HTTPAuthentication.swift",
+    ],
 }
 
 # Files that never show a text (paths, keys, logs): not read for literals.

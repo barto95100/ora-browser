@@ -205,7 +205,7 @@ final class PasswordAutofillCoordinator {
             guard let self else { return }
 
             let authenticated = await self.passwordManager.authenticate(
-                reason: "Autofill the saved password for \(entry.displayUsername) on \(entry.host)"
+                reason: String(localized: "autofill the saved password for \(entry.displayUsername) on \(entry.host)")
             )
             guard authenticated,
                   let password = try? self.passwordManager.revealPassword(for: entry)
@@ -451,7 +451,7 @@ final class PasswordAutofillCoordinator {
         alert.messageText = prompt.title
         alert.informativeText = prompt.message
         alert.addButton(withTitle: prompt.confirmButtonTitle)
-        alert.addButton(withTitle: "Not Now")
+        alert.addButton(withTitle: String(localized: "Not Now"))
         alert.addButton(withTitle: prompt.neverButtonTitle)
         alert.beginSheetModal(for: window) { response in
             switch response {
@@ -472,7 +472,7 @@ final class PasswordAutofillCoordinator {
     }
 
     nonisolated static func saveFailureTitle(host: String) -> String {
-        "Ombre couldn't save the password for \(host)"
+        String(localized: "Ombre couldn't save the password for \(host)")
     }
 
     @MainActor
@@ -620,28 +620,40 @@ final class PasswordAutofillCoordinator {
         let isInsecurePage = pageURL.scheme?.localizedCaseInsensitiveCompare("http") == .orderedSame
 
         if isInsecurePage {
-            let actionTitle = isUpdate ? "Update Password on Insecure Page" : "Save Password on Insecure Page"
-            let buttonTitle = isUpdate ? "Update Anyway" : "Save Anyway"
-            let actionVerb = isUpdate ? "update" : "save"
+            let actionTitle = isUpdate
+                ? String(localized: "Update Password on Insecure Page")
+                : String(localized: "Save Password on Insecure Page")
+            let buttonTitle = isUpdate ? String(localized: "Update Anyway") : String(localized: "Save Anyway")
+            // swiftlint:disable line_length
+            let message = isUpdate
+                ?
+                String(
+                    localized: "This page uses an insecure connection (http://), so other people on the network may be able to read the password. Do you still want to update the password for \(accountLabel)?"
+                )
+                :
+                String(
+                    localized: "This page uses an insecure connection (http://), so other people on the network may be able to read the password. Do you still want to save the password for \(accountLabel)?"
+                )
+            // swiftlint:enable line_length
             return PasswordSavePromptDetails(
                 title: actionTitle,
-                message: "This page uses an insecure connection (http://), so other people on the network may be able to read the password. Do you still want to \(actionVerb) the password for \(accountLabel)?",
+                message: message,
                 confirmButtonTitle: buttonTitle,
-                neverButtonTitle: "Never on This Site",
+                neverButtonTitle: String(localized: "Never on This Site"),
                 showsSecurityWarning: true
             )
         }
 
-        let title = isUpdate ? "Update Password" : "Save Password"
+        let title = isUpdate ? String(localized: "Update Password") : String(localized: "Save Password")
         let message = isUpdate
-            ? "Update the saved password for \(accountLabel)?"
-            : "Save the password for \(accountLabel)?"
+            ? String(localized: "Update the saved password for \(accountLabel)?")
+            : String(localized: "Save the password for \(accountLabel)?")
 
         return PasswordSavePromptDetails(
             title: title,
             message: message,
             confirmButtonTitle: title,
-            neverButtonTitle: "Never on This Site",
+            neverButtonTitle: String(localized: "Never on This Site"),
             showsSecurityWarning: false
         )
     }

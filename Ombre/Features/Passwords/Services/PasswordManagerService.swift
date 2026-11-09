@@ -53,7 +53,7 @@ struct SavedPasswordSummary: Identifiable, Hashable {
     }
 
     var displayUsername: String {
-        username.isEmpty ? "No username" : username
+        username.isEmpty ? String(localized: "No username") : username
     }
 }
 
@@ -270,7 +270,7 @@ final class PasswordManagerService: ObservableObject {
                 kSecValuePersistentRef as String: entry.persistentReference
             ]
 
-            try check(SecItemUpdate(query as CFDictionary, attributes as CFDictionary), "mark used")
+            try check(SecItemUpdate(query as CFDictionary, attributes as CFDictionary), "mark used") // not shown
 
             refresh()
         } catch {
@@ -322,7 +322,7 @@ final class PasswordManagerService: ObservableObject {
             return generated
         }
 
-        let uppercase = Array("ABCDEFGHJKLMNPQRSTUVWXYZ")
+        let uppercase = Array("ABCDEFGHJKLMNPQRSTUVWXYZ") // not shown
         let lowercase = Array("abcdefghijkmnopqrstuvwxyz")
         let digits = Array("3456789")
         let symbols = Array("!@#$%^&*")
@@ -346,7 +346,7 @@ final class PasswordManagerService: ObservableObject {
 
     func authenticate(reason: String) async -> Bool {
         let context = LAContext()
-        context.localizedCancelTitle = "Cancel"
+        context.localizedCancelTitle = String(localized: "Cancel")
 
         var error: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
@@ -581,15 +581,15 @@ enum PasswordManagerError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidStoredPassword:
-            return "Ombre couldn't decode the stored password."
+            return String(localized: "Ombre couldn't decode the stored password.")
         case .invalidCredentialOrigin:
-            return "Ombre can only save passwords for web origins."
+            return String(localized: "Ombre can only save passwords for web origins.")
         case let .keychainStatus(status):
             if let message = SecCopyErrorMessageString(status, nil) as String? {
                 // With the status, to find it in the logs.
                 return "\(message) (\(status))"
             }
-            return "Keychain error \(status)."
+            return String(localized: "Keychain error \(status).")
         }
     }
 }

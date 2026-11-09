@@ -318,16 +318,6 @@
         }
       }
     },
-    "%lld item%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld item%2$@"
-          }
-        }
-      }
-    },
     "%lld items" : {
       "localizations" : {
         "en" : {
@@ -420,24 +410,6 @@
     },
     "%lld sites set" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld site réglé"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld sites réglés"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -451,6 +423,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld sites set"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld site réglé"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sites réglés"
                 }
               }
             }
@@ -1241,6 +1231,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remplir automatiquement les formulaires de connexion"
+          }
+        }
+      }
+    },
+    "autofill the saved password for %@ on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "autofill the saved password for %1$@ on %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "remplir le mot de passe enregistré de %1$@ sur %2$@"
           }
         }
       }
@@ -2245,7 +2251,16 @@
         }
       }
     },
-    "Delete saved password?" : {},
+    "Delete saved password?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le mot de passe enregistré ?"
+          }
+        }
+      }
+    },
     "Delete Space" : {
       "localizations" : {
         "fr" : {
@@ -3247,6 +3262,16 @@
         }
       }
     },
+    "Keychain error %d." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur du trousseau (%d)."
+          }
+        }
+      }
+    },
     "Know when you're away" : {
       "localizations" : {
         "fr" : {
@@ -3414,6 +3439,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Se connecter"
+          }
+        }
+      }
+    },
+    "Log in to %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter à %@"
           }
         }
       }
@@ -3709,6 +3744,16 @@
         }
       }
     },
+    "Never on This Site" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jamais pour ce site web"
+          }
+        }
+      }
+    },
     "Never translate %@" : {},
     "New Folder" : {
       "localizations" : {
@@ -3954,6 +3999,16 @@
       }
     },
     "No task yet" : {},
+    "No username" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun nom d’utilisateur"
+          }
+        }
+      }
+    },
     "No WebKit-compatible rules were produced for %@." : {
       "localizations" : {
         "fr" : {
@@ -4126,12 +4181,48 @@
         }
       }
     },
+    "Ombre can only save passwords for web origins." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre ne peut enregistrer des mots de passe que pour des sites web."
+          }
+        }
+      }
+    },
     "Ombre can't talk to the extension's app." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ombre ne peut pas communiquer avec l’app de l’extension."
+          }
+        }
+      }
+    },
+    "Ombre couldn't decode the stored password." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu décoder le mot de passe stocké."
+          }
+        }
+      }
+    },
+    "Ombre couldn't delete the password for %@ on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ombre couldn't delete the password for %1$@ on %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu supprimer le mot de passe de %1$@ sur %2$@"
           }
         }
       }
@@ -4158,6 +4249,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ombre n’a pas pu lire cette session Zen."
+          }
+        }
+      }
+    },
+    "Ombre couldn't save the password for %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre n’a pas pu enregistrer le mot de passe de %@"
           }
         }
       }
@@ -4948,6 +5049,12 @@
             "state" : "new",
             "value" : "Remove the saved credential for %1$@ on %2$@?"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’identifiant enregistré de %1$@ sur %2$@ ?"
+          }
         }
       }
     },
@@ -5189,17 +5296,66 @@
         }
       }
     },
+    "Save Anyway" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer quand même"
+          }
+        }
+      }
+    },
+    "Save Password" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le mot de passe"
+          }
+        }
+      }
+    },
+    "Save Password on Insecure Page" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le mot de passe sur une page non sécurisée"
+          }
+        }
+      }
+    },
+    "Save the password for %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le mot de passe de %@ ?"
+          }
+        }
+      }
+    },
     "Saved Credentials" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Identifiants enregistrés"
+            "value" : "Mots de passe enregistrés"
           }
         }
       }
     },
-    "Saved Passwords" : {},
+    "Saved Passwords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots de passe enregistrés"
+          }
+        }
+      }
+    },
     "Search" : {
       "localizations" : {
         "fr" : {
@@ -6231,6 +6387,16 @@
         }
       }
     },
+    "The name or password was not accepted." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nom ou le mot de passe n’a pas été accepté."
+          }
+        }
+      }
+    },
     "The page took too long to load. Try again or check your connection." : {
       "localizations" : {
         "fr" : {
@@ -6257,6 +6423,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le moteur de recherche choisi dans Réglages › Recherche a une adresse non valide."
+          }
+        }
+      }
+    },
+    "The site says: “%@”" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le site indique : « %@ »"
           }
         }
       }
@@ -6350,6 +6526,16 @@
     },
     "These sites stay closed during a focus cycle in %@. Breaks open them again." : {},
     "Third-party components" : {},
+    "This connection isn't private: the password will be sent unencrypted." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette connexion n’est pas privée : le mot de passe sera envoyé sans chiffrement."
+          }
+        }
+      }
+    },
     "This extension is too large." : {
       "localizations" : {
         "fr" : {
@@ -6416,6 +6602,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette page est déjà en %@."
+          }
+        }
+      }
+    },
+    "This page uses an insecure connection (http://), so other people on the network may be able to read the password. Do you still want to save the password for %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page utilise une connexion non sécurisée (http://) : d’autres personnes sur le réseau pourraient lire le mot de passe. Voulez-vous quand même enregistrer le mot de passe de %@ ?"
+          }
+        }
+      }
+    },
+    "This page uses an insecure connection (http://), so other people on the network may be able to read the password. Do you still want to update the password for %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page utilise une connexion non sécurisée (http://) : d’autres personnes sur le réseau pourraient lire le mot de passe. Voulez-vous quand même mettre à jour le mot de passe de %@ ?"
           }
         }
       }
@@ -6589,12 +6795,12 @@
         }
       }
     },
-    "Unlock your saved passwords in Ombre" : {
+    "unlock your saved passwords" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Déverrouiller vos mots de passe enregistrés dans Ombre"
+            "value" : "déverrouiller vos mots de passe enregistrés"
           }
         }
       }
@@ -6665,6 +6871,16 @@
         }
       }
     },
+    "Update Anyway" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour quand même"
+          }
+        }
+      }
+    },
     "Update available!" : {
       "localizations" : {
         "fr" : {
@@ -6675,12 +6891,42 @@
         }
       }
     },
+    "Update Password" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour le mot de passe"
+          }
+        }
+      }
+    },
+    "Update Password on Insecure Page" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour le mot de passe sur une page non sécurisée"
+          }
+        }
+      }
+    },
     "Update Policy" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mise à jour des listes"
+          }
+        }
+      }
+    },
+    "Update the saved password for %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre à jour le mot de passe enregistré de %@ ?"
           }
         }
       }
@@ -6795,7 +7041,16 @@
         }
       }
     },
-    "Use Touch ID or your Mac password to unlock your saved passwords." : {},
+    "Use Touch ID or your Mac password to unlock your saved passwords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez Touch ID ou le mot de passe de votre Mac pour déverrouiller vos mots de passe enregistrés."
+          }
+        }
+      }
+    },
     "Username" : {
       "localizations" : {
         "fr" : {

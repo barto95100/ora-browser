@@ -294,7 +294,9 @@ extension BrowserPage: WKNavigationDelegate {
     @objc(_webView:contextMenuDidCreateDownload:)
     func webView(_ webView: WKWebView, contextMenuDidCreate download: WKDownload) {
         guard let downloadURL = download.originalRequest?.url else { return }
-        delegate?.browserPage(self, didStartDownload: BrowserDownloadTask(download: download, originalURL: downloadURL))
+        let task = BrowserDownloadTask(download: download, originalURL: downloadURL)
+        task.isRequestedByUser = true
+        delegate?.browserPage(self, didStartDownload: task)
     }
 
     @available(macOS 11.3, *)

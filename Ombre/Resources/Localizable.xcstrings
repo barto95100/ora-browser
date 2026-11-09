@@ -9587,6 +9587,16 @@
         }
       }
     },
+    "wants to download files" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "veut télécharger des fichiers"
+          }
+        }
+      }
+    },
     "wants to know your location" : {
       "localizations" : {
         "fr" : {

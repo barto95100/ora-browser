@@ -55,7 +55,15 @@ struct SpacesSettingsView: View {
                 .padding(.horizontal, 10)
                 .padding(.top, 10)
                 Button {
-                    BrowserWindows.showImport()
+                    BrowserWindows.showImport(from: .safari)
+                } label: {
+                    Label("Import from Safari…", systemImage: "square.and.arrow.down")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+                .padding(10)
+                Button {
+                    BrowserWindows.showImport(from: .zen)
                 } label: {
                     Label("Import from Zen…", systemImage: "square.and.arrow.down")
                         .frame(maxWidth: .infinity, alignment: .leading)

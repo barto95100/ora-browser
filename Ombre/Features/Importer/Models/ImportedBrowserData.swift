@@ -19,7 +19,7 @@ struct ImportedBrowserData: Equatable {
     }
 
     var isEmpty: Bool {
-        spaces.allSatisfy { $0.favorites.isEmpty && $0.pinned.isEmpty }
+        spaces.allSatisfy { $0.favorites.isEmpty && $0.pinned.isEmpty && $0.history.isEmpty }
     }
 
     /// The spaces at these positions, in their order; unknown positions are ignored.
@@ -35,6 +35,15 @@ struct ImportedSpace: Equatable {
     var favorites: [ImportedTab] = []
     /// In display order.
     var pinned: [ImportedPinnedItem] = []
+    /// Pages visited, most recent first (Safari's profiles have their own).
+    var history: [ImportedVisit] = []
+}
+
+struct ImportedVisit: Equatable {
+    var url: URL
+    var title: String
+    var lastVisit: Date
+    var visitCount: Int
 }
 
 struct ImportedTab: Equatable {

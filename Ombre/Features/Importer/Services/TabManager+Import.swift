@@ -24,6 +24,7 @@ extension TabManager {
                 addImportedTab(favorite, type: .fav, order: space.favorites.count - index, to: container)
             }
             addImportedItems(space.pinned, in: nil, to: container)
+            addImportedHistory(space.history, to: container)
             return container
         }
         modelContext.saveOrLog("import spaces") // not shown
@@ -56,6 +57,22 @@ extension TabManager {
                 container.folders.append(child)
                 addImportedItems(children, in: child, to: container)
             }
+        }
+    }
+
+    /// The visits keep their date and count, in the space's own history.
+    private func addImportedHistory(_ visits: [ImportedVisit], to container: TabContainer) {
+        for visit in visits {
+            let favicon = FaviconService.shared.faviconURL(for: visit.url.host ?? "") ?? visit.url
+            modelContext.insert(History(
+                url: visit.url,
+                title: visit.title,
+                faviconURL: favicon,
+                createdAt: visit.lastVisit,
+                lastAccessedAt: visit.lastVisit,
+                visitCount: visit.visitCount,
+                container: container
+            ))
         }
     }
 

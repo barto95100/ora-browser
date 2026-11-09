@@ -99,7 +99,7 @@ private struct WindowAppCommands: ViewModifier {
             .onNotification(.showImport) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window, !privacyMode.isPrivate else { return }
-                    appState.showImport = true
+                    appState.importSource = note.userInfo?["source"] as? ImportSource ?? .zen
                 }
             }
             .onNotification(.showSettings) { note in

@@ -108,7 +108,7 @@ struct SpaceLookFields: View {
             HStack {
                 sectionTitle(String(localized: "Color"))
                 Spacer()
-                Text(look.color?.title ?? String(localized: "None"))
+                Text(look.color?.title ?? String(localized: "color.none", defaultValue: "None"))
                     .font(.system(size: 12))
                     .foregroundColor(theme.mutedForeground)
             }
@@ -139,7 +139,7 @@ struct SpaceLookFields: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(choice?.title ?? String(localized: "None"))
+        .help(choice?.title ?? String(localized: "color.none", defaultValue: "None"))
     }
 
     // MARK: - Theme
@@ -149,7 +149,7 @@ struct SpaceLookFields: View {
             HStack {
                 sectionTitle(String(localized: "Theme"))
                 Spacer()
-                Text(look.theme?.title ?? String(localized: "None"))
+                Text(look.theme?.title ?? String(localized: "theme.none", defaultValue: "None"))
                     .font(.system(size: 12))
                     .foregroundColor(theme.mutedForeground)
             }
@@ -194,7 +194,7 @@ struct SpaceLookFields: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .help(choice?.title ?? String(localized: "None"))
+        .help(choice?.title ?? String(localized: "theme.none", defaultValue: "None"))
     }
 
     private func sectionTitle(_ title: String) -> some View {

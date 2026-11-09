@@ -157,7 +157,7 @@ class SearchEngineService: ObservableObject {
                 isAIChat: true
             ),
             SearchEngine(
-                name: "X",
+                name: "X", // no translation
                 color: theme?.foreground ?? .white,
                 icon: "x-capsule-logo",
                 aliases: ["x", "x.com", "twitter", "tw", "twtr", "twit", "twitt", "twitte"],

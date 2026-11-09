@@ -1897,7 +1897,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Téléchargements (%lld %%)"
+            "value" : "Téléchargements (%lld %%)"
           }
         }
       }
@@ -1928,7 +1928,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Déposez ici pour épingler un onglet"
+            "value" : "Déposez un onglet ici pour l’épingler"
           }
         }
       }
@@ -3001,7 +3001,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nouveau dossier à l’intérieur"
+            "value" : "Nouveau sous-dossier"
           }
         }
       }
@@ -4721,7 +4721,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aller à l’onglet "
+            "value" : "Passer à l’onglet "
           }
         }
       }
@@ -5506,6 +5506,94 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom arrière"
+          }
+        }
+      }
+    },
+    "auth.username" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom d’utilisateur"
+          }
+        }
+      }
+    },
+    "Collapsed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit"
+          }
+        }
+      }
+    },
+    "color.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune"
+          }
+        }
+      }
+    },
+    "Expanded" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développé"
+          }
+        }
+      }
+    },
+    "space.default" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Principal"
+          }
+        }
+      }
+    },
+    "theme.none" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun"
           }
         }
       }

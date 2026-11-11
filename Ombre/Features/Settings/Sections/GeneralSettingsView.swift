@@ -87,6 +87,16 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            SettingsCard(header: String(localized: "Downloads")) {
+                Picker("Downloads from websites", selection: $settings.allowsDownloadsByDefault) {
+                    Text("Ask").tag(false)
+                    Text("Allow").tag(true)
+                }
+                Text("For sites set to Default in each space's site permissions.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             SettingsCard(header: String(localized: "Developer")) {
                 Toggle("Allow Web Inspector", isOn: $settings.developerToolsEnabled)
                 Text("Inspect pages from Safari's Develop menu (Safari › Settings › Advanced).")

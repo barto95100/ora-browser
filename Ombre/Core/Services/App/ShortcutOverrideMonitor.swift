@@ -61,6 +61,8 @@ final class ShortcutOverrideMonitor {
         }
 
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            // ⌘ and the key of a digit on AZERTY: that digit (see `ShortcutKeyRemap`).
+            let event = ShortcutKeyRemap.remapped(event) ?? event
             let forwardedToApp = MainActor.assumeIsolated {
                 self?.forwardsToApp(event) ?? false
             }

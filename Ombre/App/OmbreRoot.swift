@@ -78,6 +78,8 @@ private struct BrowserWindowRoot: View {
                 )
             )
             .environment(\.window, window)
+            // "Open Peek in New Tab" is only on while Peek shows.
+            .focusedSceneValue(\.isPeekOpen, tabManager.peek != nil)
             .environmentObject(appState)
             .environmentObject(tabManager)
             .environmentObject(historyManager)

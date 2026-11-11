@@ -8,6 +8,7 @@ struct OmbreCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     /// Customized shortcuts show in the menus at once.
     @ObservedObject private var shortcuts = CustomKeyboardShortcutManager.shared
+    @FocusedValue(\.isPeekOpen) private var isPeekOpen
 
     var body: some Commands {
         // The system's File › Close (⌘W too) goes: ⌘W is "Close Tab" only,
@@ -208,6 +209,7 @@ struct OmbreCommands: Commands {
                 NotificationCenter.default.post(name: .openPeekInTab, object: NSApp.keyWindow)
             }
             .keyboardShortcut(KeyboardShortcuts.Navigation.openPeekInNewTab.keyboardShortcut)
+            .disabled(isPeekOpen != true)
 
             Button("New Split View") {
                 NotificationCenter.default.post(name: .newSplitView, object: NSApp.keyWindow)

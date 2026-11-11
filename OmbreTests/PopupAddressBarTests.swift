@@ -33,6 +33,13 @@ struct PopupAddressBarTests {
 
         let blank = try #require(URL(string: "about:blank"))
         #expect(PopupDisplayAddress(blank).site == "about:blank")
+
+        // A path that looks like another site stays shown.
+        let doubleSlash = try #require(URL(string: "https://evil.example//accounts.example.com/signin"))
+        #expect(PopupDisplayAddress(doubleSlash).rest == "//accounts.example.com/signin")
+
+        let ipv6 = try #require(URL(string: "http://[::1]:8080/x"))
+        #expect(PopupDisplayAddress(ipv6).site == "[::1]:8080")
     }
 }
 

@@ -7094,6 +7094,16 @@
         }
       }
     },
+    "Rest of the address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reste de l’adresse"
+          }
+        }
+      }
+    },
     "Resume Camera" : {
       "localizations" : {
         "fr" : {

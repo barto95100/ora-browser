@@ -38,21 +38,21 @@ struct PopupDisplayAddress: Equatable {
             rest = ""
             return
         }
-        site = url.port.map { "\(host):\($0)" } ?? host
-        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        components?.scheme = nil
-        components?.user = nil
-        components?.password = nil
-        components?.host = nil
-        components?.port = nil
-        let rest = components?.string ?? ""
+        // An IPv6 address keeps its brackets (`[::1]:8080`).
+        let shownHost = host.contains(":") ? "[\(host)]" : host
+        site = url.port.map { "\(shownHost):\($0)" } ?? shownHost
+        // Read piece by piece: a path starting with `//` has no string of
+        // its own in `URLComponents`.
+        var rest = url.path(percentEncoded: true)
+        if let query = url.query(percentEncoded: true) { rest += "?\(query)" }
+        if let fragment = url.fragment(percentEncoded: true) { rest += "#\(fragment)" }
         self.rest = rest == "/" ? "" : rest
     }
 }
 
 /// A popup's address, like Safari's: read only, the site in full then the
-/// rest of the address, selectable and copyable (the whole address with the
-/// button, and in its help tag), with the lock (or "Not Secure") before it,
+/// rest of the address, each selectable (⌘C), the whole address with the
+/// copy button and in its help tag, with the lock (or "Not Secure") before it,
 /// so a popup can't pass for another site.
 struct PopupAddressBar: View {
     @ObservedObject var popup: PopupPage
@@ -128,9 +128,12 @@ private struct SelectableAddressField: NSViewRepresentable {
         field.lineBreakMode = isSite ? .byTruncatingHead : .byTruncatingTail
         field.font = isSite ? .systemFont(ofSize: 12, weight: .medium) : .systemFont(ofSize: 12)
         field.textColor = isSite ? .labelColor : .secondaryLabelColor
-        field.setContentCompressionResistancePriority(isSite ? .defaultHigh : .defaultLow, for: .horizontal)
+        // The site gives way after the rest, before the security label and
+        // the buttons (which must always show).
+        let resistance = NSLayoutConstraint.Priority.defaultLow
+        field.setContentCompressionResistancePriority(isSite ? resistance + 1 : resistance, for: .horizontal)
         field.toolTip = help
-        field.setAccessibilityLabel(String(localized: "Address"))
+        field.setAccessibilityLabel(isSite ? String(localized: "Site") : String(localized: "Rest of the address"))
         return field
     }
 

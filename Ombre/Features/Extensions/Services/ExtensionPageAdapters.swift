@@ -162,27 +162,6 @@ extension WebExtensionsManager {
         controller.didChangeTabProperties(properties, for: tab)
     }
 
-    /// The extensions' items of the page's context menu (Bitwarden's
-    /// "Autofill", …), for the tab, Peek or popup showing it.
-    func contextMenuItems(for page: BrowserPage) -> [NSMenuItem] {
-        let extensionTab: (any WKWebExtensionTab)?
-        let isPrivate: Bool
-        if let pageTab = pageTabs[ObjectIdentifier(page)] {
-            extensionTab = pageTab
-            isPrivate = pageTab.isPrivatePage
-        } else {
-            let tab = tabAdapter(showing: page)
-            extensionTab = tab
-            isPrivate = tab?.tab?.isPrivate ?? false
-        }
-        guard let extensionTab else { return [] }
-        // In a private window, only the extensions allowed there.
-        return controller.extensionContexts
-            .filter { !isPrivate || $0.hasAccessToPrivateData }
-            .sorted { $0.webExtension.displayName ?? "" < $1.webExtension.displayName ?? "" }
-            .flatMap { $0.menuItems(for: extensionTab) }
-    }
-
     /// Peek open in `window`: the tab in front there, for the extensions.
     func peekTab(in window: ExtensionWindow) -> ExtensionPageTab? {
         pageTabs.values.first { $0.page != nil && $0.extensionWindow === window }

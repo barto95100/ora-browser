@@ -175,10 +175,6 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         WebExtensionsHub.pageChanged(page, title: true)
     }
 
-    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
-        WebExtensionsHub.contextMenuItems(for: page)
-    }
-
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {
         peek?.update(isLoading: event.isLoading)
         if event.phase != .committed { WebExtensionsHub.pageChanged(page, loading: true) }

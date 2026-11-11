@@ -78,14 +78,6 @@ enum WebExtensionsHub {
         }
     }
 
-    /// The extensions' items for the page's context menu.
-    static func contextMenuItems(for page: BrowserPage) -> [NSMenuItem] {
-        if #available(macOS 15.4, *) {
-            return WebExtensionsManager.shared.contextMenuItems(for: page)
-        }
-        return []
-    }
-
     static func tabChanged(_ tab: Tab, url: Bool = false, title: Bool = false, loading: Bool = false) {
         if #available(macOS 15.4, *) {
             WebExtensionsManager.shared.tabChanged(tab, url: url, title: title, loading: loading)

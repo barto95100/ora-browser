@@ -180,13 +180,11 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         }
     }
 
-    /// Translation, then the extensions' items (Bitwarden's "Autofill"…).
+    /// Translation. WebKit adds the extensions' items itself (Bitwarden's
+    /// "Autofill"…) to the pages of the tabs they know.
     @MainActor func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
         guard let tab else { return [] }
-        let translation = tab.translationMenuItems()
-        let extensions = WebExtensionsHub.contextMenuItems(for: page)
-        guard !translation.isEmpty, !extensions.isEmpty else { return translation + extensions }
-        return translation + [.separator()] + extensions
+        return tab.translationMenuItems()
     }
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {

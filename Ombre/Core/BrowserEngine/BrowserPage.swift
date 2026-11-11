@@ -7,6 +7,9 @@ import Foundation
 /// `BrowserPage+UIDelegate.swift` and `BrowserPage+MediaCapture.swift`.
 final class BrowserPage: NSObject, WKScriptMessageHandler {
     weak var delegate: BrowserPageDelegate?
+    /// Made with an extension's configuration, for its own pages: WebKit
+    /// loads nothing else in it (a website it leads to opens in a tab).
+    var isExtensionPage = false
 
     /// Engine-internal: used by the delegate extensions. Outside the browser
     /// engine, go through the page API (`contentView`, `load`, …).

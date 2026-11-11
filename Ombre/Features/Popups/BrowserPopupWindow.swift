@@ -20,6 +20,8 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     /// The origin of the frame that opened it (perhaps a third-party frame):
     /// the site a page it wrote into a blank popup comes from.
     private var openerOrigin: URL?
+    /// The window's title, instead of the site's (an extension's page).
+    private let fixedTitle: String?
     /// The permission prompt over the page, while one waits.
     private var promptView: NSView?
     private var promptObservation: AnyCancellable?
@@ -77,23 +79,55 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         page.openerURL = openerURL ?? opener?.lastCommittedURL ?? openerOrigin
         let popup = BrowserPopupWindow(
             popup: page,
-            frame: frame(for: windowFeatures, openerWindow: openerWindow)
+            frame: frame(for: windowFeatures, openerWindow: openerWindow),
+            fixedTitle: nil
         )
         popup.openerWindow = openerWindow
         popup.openerOrigin = openerOrigin
-        popup.updateTitle()
-        openPopups.insert(popup)
-        // A window with one tab for the extensions, before its scripts run.
-        WebExtensionsHub.popupOpened(page.page, window: popup.window, isPrivate: context.isPrivate) { [weak popup] in
-            popup?.window.close()
-        }
-        popup.window.makeKeyAndOrderFront(nil)
-        popup.window.makeFirstResponder(page.page.webView)
+        popup.show()
         return page.page.webView
     }
 
-    private init(popup: PopupPage, frame: NSRect) {
+    /// An extension's own page in a small window of its own (`windows.create`,
+    /// such as Bitwarden's unlock window), like Safari: the extension's name
+    /// as title and no address bar (the page can only be the extension's).
+    /// `frame`: the window's content, in screen coordinates. Returns its window.
+    @discardableResult
+    static func openExtensionPage(
+        _ url: URL,
+        page: BrowserPage,
+        title: String,
+        frame: NSRect,
+        context: PopupContext
+    ) -> NSWindow {
+        let popupPage = PopupPage(page: page, context: context)
+        let popup = BrowserPopupWindow(popup: popupPage, frame: frame, fixedTitle: title)
+        popup.show()
+        page.load(URLRequest(url: url))
+        return popup.window
+    }
+
+    /// Kept open, told to the extensions (a window with one tab, before its
+    /// scripts run), in front.
+    private func show() {
+        updateTitle()
+        Self.openPopups.insert(self)
+        WebExtensionsHub.popupOpened(
+            popupPage.page,
+            window: window,
+            isPrivate: popupPage.context.isPrivate
+        ) { [weak self] in
+            self?.window.close()
+        }
+        window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(popupPage.page.webView)
+    }
+
+    /// `fixedTitle`: the window's title instead of the site's, and no
+    /// address bar (an extension's page).
+    private init(popup: PopupPage, frame: NSRect, fixedTitle: String?) {
         popupPage = popup
+        self.fixedTitle = fixedTitle
         window = NSWindow(
             contentRect: frame,
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -104,22 +138,24 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
 
         // The address bar on top (MOT-10), the page below it.
         let content = NSView(frame: NSRect(origin: .zero, size: frame.size))
-        let barHeight = PopupAddressBar.height
-        let addressBar = NSHostingView(rootView: PopupAddressBar(popup: popup))
-        addressBar.frame = NSRect(
-            x: 0,
-            y: content.bounds.height - barHeight,
-            width: content.bounds.width,
-            height: barHeight
-        )
-        addressBar.autoresizingMask = [.width, .minYMargin]
-        // Its frame follows the window, never the other way round.
-        addressBar.sizingOptions = []
+        let barHeight = fixedTitle == nil ? PopupAddressBar.height : 0
         let pageView = popup.page.contentView
         pageView.frame = NSRect(x: 0, y: 0, width: content.bounds.width, height: content.bounds.height - barHeight)
         pageView.autoresizingMask = [.width, .height]
         content.addSubview(pageView)
-        content.addSubview(addressBar)
+        if fixedTitle == nil {
+            let addressBar = NSHostingView(rootView: PopupAddressBar(popup: popup))
+            addressBar.frame = NSRect(
+                x: 0,
+                y: content.bounds.height - barHeight,
+                width: content.bounds.width,
+                height: barHeight
+            )
+            addressBar.autoresizingMask = [.width, .minYMargin]
+            // Its frame follows the window, never the other way round.
+            addressBar.sizingOptions = []
+            content.addSubview(addressBar)
+        }
         window.contentView = content
         // Typing goes to the page right away (fields the page focuses itself).
         window.initialFirstResponder = popup.page.webView
@@ -160,6 +196,10 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     /// The site the page comes from as the title; the page's own title only
     /// under it, never alone.
     private func updateTitle() {
+        if let fixedTitle {
+            window.title = fixedTitle
+            return
+        }
         let page = popupPage.page
         let site = PopupTitle.title(for: page.currentURL, openerURL: openerOrigin)
         window.title = site
@@ -180,7 +220,10 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         prompt.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(prompt)
         NSLayoutConstraint.activate([
-            prompt.topAnchor.constraint(equalTo: content.topAnchor, constant: PopupAddressBar.height + 12),
+            prompt.topAnchor.constraint(
+                equalTo: content.topAnchor,
+                constant: (fixedTitle == nil ? PopupAddressBar.height : 0) + 12
+            ),
             prompt.centerXAnchor.constraint(equalTo: content.centerXAnchor)
         ])
         promptView = prompt

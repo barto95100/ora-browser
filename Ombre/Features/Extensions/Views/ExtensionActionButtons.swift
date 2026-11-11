@@ -317,8 +317,8 @@ private final class AnchorView {
     weak var view: NSView?
 }
 
-/// Reads the button's view; an extension's button is also kept for its
-/// keyboard shortcuts (their popup shows under it).
+/// Reads the button's view; also kept for the popups not opened by a click
+/// (shortcuts, the extension itself), which show under it.
 @available(macOS 15.4, *)
 private struct AnchorReader: NSViewRepresentable {
     let anchor: AnchorView
@@ -332,8 +332,9 @@ private struct AnchorReader: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {
         anchor.view = nsView
-        if let extensionID {
-            WebExtensionsManager.shared.buttonAnchors.setObject(nsView, forKey: extensionID as NSString)
-        }
+        WebExtensionsManager.shared.registerPopupAnchor(
+            nsView,
+            extensionID: extensionID ?? WebExtensionsManager.menuAnchorKey
+        )
     }
 }

@@ -14,7 +14,8 @@ extension WebExtensionsManager {
         for item in loadedContexts where !window.isPrivateWindow || item.record.allowsPrivateBrowsing {
             guard let command = item.context.command(for: event) else { continue }
             // "Open the popup" shows it under the extension's button.
-            popupAnchor = buttonAnchors.object(forKey: item.record.id as NSString)
+            popupAnchor = popupAnchor(for: item.record.id, in: window.window)
+            popupWindow = window.window
             item.context.performCommand(command)
             return true
         }

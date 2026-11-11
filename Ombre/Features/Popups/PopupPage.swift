@@ -72,15 +72,24 @@ final class PopupPage: ObservableObject {
 
     /// Made with WebKit's `configuration` (required: it shares its opener's
     /// process and data), linked to `opener`.
-    init(configuration: WKWebViewConfiguration, opener: BrowserPage?, context: PopupContext) {
-        self.context = context
-        page = Tab.makeLinkedBrowserPage(
-            configuration: configuration,
-            opener: opener,
-            spaceID: context.spaceID,
-            isPrivate: context.isPrivate,
-            privateSession: context.privateSession
+    convenience init(configuration: WKWebViewConfiguration, opener: BrowserPage?, context: PopupContext) {
+        self.init(
+            page: Tab.makeLinkedBrowserPage(
+                configuration: configuration,
+                opener: opener,
+                spaceID: context.spaceID,
+                isPrivate: context.isPrivate,
+                privateSession: context.privateSession
+            ),
+            context: context
         )
+    }
+
+    /// With a page made elsewhere (an extension's page, see
+    /// `BrowserPopupWindow.openExtensionPage`).
+    init(page: BrowserPage, context: PopupContext) {
+        self.context = context
+        self.page = page
         pageDelegate = PopupPageDelegate()
         pageDelegate.popup = self
         page.delegate = pageDelegate

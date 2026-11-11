@@ -206,8 +206,13 @@ class Tab: ObservableObject, Identifiable {
 
     /// A page in this tab's space and privacy mode, with Ombre's scripts and the
     /// space's privacy settings.
+    /// An extension's own page (`url`: its options page, a tab it opens) is
+    /// made with that extension's configuration, or WebKit cancels it.
     @MainActor
-    func makeBrowserPage(isPrivate: Bool) -> BrowserPage {
+    func makeBrowserPage(isPrivate: Bool, for url: URL? = nil) -> BrowserPage {
+        if let url, let page = WebExtensionsHub.extensionPage(for: url, spaceID: container.id) {
+            return page
+        }
         let engine = BrowserEngine.shared
         let profile = engine.makeProfile(
             identifier: container.id,
@@ -296,7 +301,8 @@ class Tab: ObservableObject, Identifiable {
         if passwordCoordinator == nil {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }
-        let page = makeBrowserPage(isPrivate: isPrivate)
+        let pageURL = if type != .normal { savedURL ?? url } else { url }
+        let page = makeBrowserPage(isPrivate: isPrivate, for: pageURL)
         browserPage = page
 
         self.historyManager = historyManager

@@ -95,6 +95,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     let logger = Logger(category: "Extensions")
     /// The button the next popup shows under (see `ExtensionActionButtons`).
     weak var popupAnchor: NSView?
+    /// The window the next popup the extension asks for shows in.
+    weak var popupWindow: NSWindow?
 
     private let registry = ExtensionRegistry.standard
     private var windows: [ObjectIdentifier: ExtensionWindow] = [:]
@@ -107,8 +109,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     var popupWindows: [ObjectIdentifier: ExtensionPopupWindow] = [:]
     /// Messages to an extension's app already logged (`id:command`).
     var loggedNativeCommands: Set<String> = []
-    /// The extensions' buttons, by extension: a shortcut's popup shows under it.
-    let buttonAnchors = NSMapTable<NSString, NSView>.strongToWeakObjects()
+    /// The extensions' buttons (their id) and menus (`menuAnchorKey`) in
+    /// every window: a popup not opened by a click shows under one.
+    let popupAnchors = NSMapTable<NSView, NSString>.weakToStrongObjects()
     private var keyMonitor: Any?
     private var activeTabIDs: [ObjectIdentifier: UUID] = [:]
     private var isStarted = false
@@ -302,8 +305,10 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     }
 
     /// Clicks the extension's button: its popup under `anchor`, or its action.
-    func performAction(_ context: WKWebExtensionContext, for tab: Tab?, anchor: NSView?) {
+    /// `window`: where a popup without anchor shows (else the front window).
+    func performAction(_ context: WKWebExtensionContext, for tab: Tab?, anchor: NSView?, window: NSWindow? = nil) {
         popupAnchor = anchor
+        popupWindow = window
         context.performAction(for: tab.map { adapter(for: $0) })
     }
 
@@ -506,8 +511,13 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     func registerWindow(_ window: NSWindow, tabManager: TabManager, isPrivate: Bool) {
         let key = ObjectIdentifier(window)
         if let existing = windows[key] {
-            existing.tabManager = tabManager
-            return
+            if existing.window === window {
+                existing.tabManager = tabManager
+                return
+            }
+            // A window gone without being told (its address is reused).
+            activeTabIDs[key] = nil
+            controller.didCloseWindow(existing)
         }
         let adapter = ExtensionWindow(window: window, tabManager: tabManager, isPrivate: isPrivate, manager: self)
         windows[key] = adapter

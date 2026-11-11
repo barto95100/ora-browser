@@ -72,6 +72,16 @@ enum WebExtensionsHub {
         }
     }
 
+    /// A page for one of the extensions' own URLs (made with its
+    /// configuration, see `WebExtensionsManager.pageConfiguration`); nil
+    /// for any other URL, or an extension not loaded.
+    static func extensionPage(for url: URL, spaceID: UUID) -> BrowserPage? {
+        guard #available(macOS 15.4, *), url.scheme == ExtensionBaseURL.scheme,
+              let configuration = WebExtensionsManager.shared.pageConfiguration(for: url)
+        else { return nil }
+        return WebExtensionsManager.makeExtensionPage(configuration: configuration, spaceID: spaceID)
+    }
+
     static func pageChanged(_ page: BrowserPage, url: Bool = false, title: Bool = false, loading: Bool = false) {
         if #available(macOS 15.4, *) {
             WebExtensionsManager.shared.pageChanged(page, url: url, title: title, loading: loading)

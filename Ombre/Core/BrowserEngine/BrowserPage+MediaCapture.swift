@@ -29,6 +29,12 @@ extension BrowserPage {
         }
     }
 
+    /// Pauses the device if the page is using it, resumes it if it is paused.
+    func toggleCapture(_ device: BrowserCaptureDevice) {
+        guard let muted = mediaCaptureState.mutedAfterToggling(device) else { return }
+        setCaptureMuted(muted, for: device)
+    }
+
     /// Called by the capture state observers set up in `init`.
     nonisolated func mediaCaptureStateDidChange() {
         notifyOnMain { $0.delegate?.browserPage($0, didChangeMediaCaptureState: $0.mediaCaptureState) }

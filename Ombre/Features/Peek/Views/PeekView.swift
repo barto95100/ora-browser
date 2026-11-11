@@ -74,6 +74,13 @@ struct PeekView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 12)
+            // Camera and microphone in use, as in a tab's address bar.
+            MediaCaptureIndicator(
+                state: peek.mediaCaptureState,
+                foregroundColor: theme.mutedForeground
+            ) { device in
+                peek.page.toggleCapture(device)
+            }
             toolbarButton(
                 "rectangle.split.2x1",
                 help: String(localized: "Open in Split View"),

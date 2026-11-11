@@ -49,6 +49,8 @@ final class PopupPage: ObservableObject {
     let context: PopupContext
     /// A site permission the page waits for, asked in the popup.
     @Published private(set) var permissionRequest: SitePermissionRequest?
+    /// The camera and microphone the page uses (shown in the address bar).
+    @Published fileprivate(set) var mediaCaptureState = BrowserMediaCaptureState()
     /// The page's address and how safe its connection is (the address bar).
     @Published private(set) var address: URL?
     @Published private(set) var security: PageSecurity = .local
@@ -141,6 +143,10 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
         popup?.updateAddress()
         popup?.pageDidChange?()
+    }
+
+    func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {
+        if popup?.mediaCaptureState != state { popup?.mediaCaptureState = state }
     }
 
     func browserPageDidChangeSecurity(_ page: BrowserPage) {

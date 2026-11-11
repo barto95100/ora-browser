@@ -21,6 +21,8 @@ final class PeekPage: ObservableObject, Identifiable {
     /// The page went to a tab: Peek must no longer show it (its view, still
     /// fading out, would take the page back from the tab).
     @Published private(set) var isMovedToTab = false
+    /// The camera and microphone the page uses (shown in Peek's bar).
+    @Published private(set) var mediaCaptureState = BrowserMediaCaptureState()
     /// A site permission the page waits for, asked in Peek.
     @Published private(set) var permissionRequest: SitePermissionRequest?
     /// Loads kept from the page (ads, trackers), by host: the tab gets them
@@ -94,6 +96,10 @@ final class PeekPage: ObservableObject, Identifiable {
 
     fileprivate func update(isLoading: Bool) {
         if isLoading != self.isLoading { self.isLoading = isLoading }
+    }
+
+    fileprivate func update(mediaCaptureState: BrowserMediaCaptureState) {
+        if mediaCaptureState != self.mediaCaptureState { self.mediaCaptureState = mediaCaptureState }
     }
 
     fileprivate func recordBlockedContent(from url: URL) {
@@ -200,6 +206,10 @@ private final class PeekPageDelegate: BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, allowsContentBlockingFor url: URL) -> Bool {
         guard let opener else { return true }
         return opener.areProtectionsEnabled(for: url)
+    }
+
+    func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {
+        peek?.update(mediaCaptureState: state)
     }
 
     func browserPage(_ page: BrowserPage, didBlockContentFrom url: URL) {

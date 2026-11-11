@@ -49,6 +49,9 @@ final class PopupPage: ObservableObject {
     let context: PopupContext
     /// A site permission the page waits for, asked in the popup.
     @Published private(set) var permissionRequest: SitePermissionRequest?
+    /// The page's address and how safe its connection is (the address bar).
+    @Published private(set) var address: URL?
+    @Published private(set) var security: PageSecurity = .local
     /// The page's dialogs and login sheets.
     let sheets = PageSheetPresenter()
     /// Closes the popup's window (`window.close()`, a popup only opened for a
@@ -79,6 +82,14 @@ final class PopupPage: ObservableObject {
         pageDelegate = PopupPageDelegate()
         pageDelegate.popup = self
         page.delegate = pageDelegate
+    }
+
+    /// Reads the page's address and security again.
+    func updateAddress() {
+        let url = page.currentURL
+        if address != url { address = url }
+        let security = PageSecurity.of(url, hasOnlySecureContent: page.hasOnlySecureContent)
+        if self.security != security { self.security = security }
     }
 
     /// The popup closes: what the page waits for is refused.
@@ -128,7 +139,12 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     }
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
+        popup?.updateAddress()
         popup?.pageDidChange?()
+    }
+
+    func browserPageDidChangeSecurity(_ page: BrowserPage) {
+        popup?.updateAddress()
     }
 
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {
@@ -138,7 +154,9 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {
         switch event.phase {
         case .started: popup?.cancelPermissionRequest()
-        case .committed: popup?.sheets.dialogPolicy.pageDidCommitNewDocument()
+        case .committed:
+            popup?.sheets.dialogPolicy.pageDidCommitNewDocument()
+            popup?.updateAddress()
         case .finished: break
         }
     }

@@ -78,6 +78,8 @@ protocol BrowserPageDelegate: AnyObject {
     /// The page closed one of its notifications (`notification.close()`).
     func browserPage(_ page: BrowserPage, closeNotification id: String)
     func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState)
+    /// Whether the page loaded only secure content changed.
+    func browserPageDidChangeSecurity(_ page: BrowserPage)
     /// The process rendering the page ended (crash, or macOS reclaiming memory).
     /// The page is blank until it is reloaded.
     func browserPageWebContentProcessDidTerminate(_ page: BrowserPage)
@@ -199,6 +201,8 @@ extension BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, closeNotification id: String) {}
 
     func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {}
+
+    func browserPageDidChangeSecurity(_ page: BrowserPage) {}
 
     func browserPageWebContentProcessDidTerminate(_ page: BrowserPage) {}
 }

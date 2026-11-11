@@ -83,6 +83,10 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         popup.openerOrigin = openerOrigin
         popup.updateTitle()
         openPopups.insert(popup)
+        // A window with one tab for the extensions, before its scripts run.
+        WebExtensionsHub.popupOpened(page.page, window: popup.window, isPrivate: context.isPrivate) { [weak popup] in
+            popup?.window.close()
+        }
         popup.window.makeKeyAndOrderFront(nil)
         popup.window.makeFirstResponder(page.page.webView)
         return page.page.webView
@@ -183,6 +187,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
+        WebExtensionsHub.pageClosed(popupPage.page)
         promptObservation = nil
         popupPage.pageDidChange = nil
         popupPage.closeWindow = nil

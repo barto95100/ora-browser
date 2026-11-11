@@ -9,7 +9,7 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         _ controller: WKWebExtensionController,
         openWindowsFor extensionContext: WKWebExtensionContext
     ) -> [any WKWebExtensionWindow] {
-        orderedWindows
+        orderedAllWindows
     }
 
     func webExtensionController(
@@ -161,6 +161,7 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
     /// while a private window is in front).
     func isPrivate(_ tab: (any WKWebExtensionTab)?) -> Bool {
         if let tab = (tab as? ExtensionTab)?.tab { return tab.isPrivate }
+        if let page = tab as? ExtensionPageTab { return page.isPrivatePage }
         return focusedWindow?.isPrivateWindow ?? false
     }
 

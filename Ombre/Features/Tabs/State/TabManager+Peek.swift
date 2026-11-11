@@ -43,6 +43,8 @@ extension TabManager {
             historyManager: historyManager,
             downloadManager: downloadManager
         )
+        // For the extensions: no longer Peek, the tab (told by `adopt`).
+        WebExtensionsHub.pageClosed(peek.page)
         tab.adopt(peek.page, historyManager: historyManager, downloadManager: downloadManager, tabManager: self)
         tab.updateMediaCaptureState(peek.page.mediaCaptureState)
         tab.openerURL = peek.openerURL

@@ -143,6 +143,11 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
         popup?.updateAddress()
         popup?.pageDidChange?()
+        WebExtensionsHub.pageChanged(page, url: true)
+    }
+
+    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
+        WebExtensionsHub.contextMenuItems(for: page)
     }
 
     func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {
@@ -155,9 +160,11 @@ private final class PopupPageDelegate: BrowserPageDelegate {
 
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {
         popup?.pageDidChange?()
+        WebExtensionsHub.pageChanged(page, title: true)
     }
 
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {
+        if event.phase != .committed { WebExtensionsHub.pageChanged(page, loading: true) }
         switch event.phase {
         case .started: popup?.cancelPermissionRequest()
         case .committed:

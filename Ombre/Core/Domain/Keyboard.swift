@@ -10,8 +10,14 @@ struct KeyChord: Equatable, Codable {
     let keyEquivalent: KeyEquivalent
     let modifiers: SwiftUI.EventModifiers
 
+    /// A digit shows as it is (⌘1, not ⌘& on a French keyboard), like
+    /// Safari; `ShortcutKeyRemap` makes the key of the digit work.
     var keyboardShortcut: KeyboardShortcut {
-        KeyboardShortcut(keyEquivalent, modifiers: modifiers)
+        KeyboardShortcut(
+            keyEquivalent,
+            modifiers: modifiers,
+            localization: keyEquivalent.character.isNumber ? .custom : .automatic
+        )
     }
 
     // MARK: - String-based storage for Codable support

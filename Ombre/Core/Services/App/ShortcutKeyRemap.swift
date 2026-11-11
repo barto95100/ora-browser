@@ -1,41 +1,40 @@
 import AppKit
+import Carbon.HIToolbox
 
 /// Shortcuts with digits work and show as in Safari on every keyboard layout.
 ///
 /// The menus show ⌘1…⌘9 and ⌘0 as they are (macOS would otherwise rename them
-/// after the key in the same place, ⌘& ⌘é… on a French keyboard). On a layout
-/// where digits need ⇧ (AZERTY), ⌘ and the key of a digit then means that
-/// digit, like in Safari; ⌘= means ⌘+ (zoom in), as on a US keyboard.
+/// after the key in the same place, ⌘& ⌘é… on a French keyboard). ⌘ and a key
+/// of the digit row that doesn't type its digit (AZERTY: & é " …) then stands
+/// for that digit, as macOS does for the shortcuts it renames.
 enum ShortcutKeyRemap {
-    /// The character a ⌘ press stands for, or nil to leave it as is.
-    /// `unshifted` / `shifted`: what the key types without and with ⇧.
-    static func character(
-        modifiers: NSEvent.ModifierFlags,
-        unshifted: String?,
-        shifted: String?
-    ) -> String? {
-        // ⌘ alone: ⌃⌘= (Split View) and ⌘⇧… keep their own keys.
+    /// The digit of each key of the digit row (US positions).
+    private static let digitRow: [UInt16: String] = [
+        UInt16(kVK_ANSI_1): "1", UInt16(kVK_ANSI_2): "2", UInt16(kVK_ANSI_3): "3",
+        UInt16(kVK_ANSI_4): "4", UInt16(kVK_ANSI_5): "5", UInt16(kVK_ANSI_6): "6",
+        UInt16(kVK_ANSI_7): "7", UInt16(kVK_ANSI_8): "8", UInt16(kVK_ANSI_9): "9",
+        UInt16(kVK_ANSI_0): "0"
+    ]
+
+    /// The digit a press stands for, or nil to leave it as is.
+    /// `typed`: what the key types without ⇧.
+    static func character(modifiers: NSEvent.ModifierFlags, keyCode: UInt16, typed: String?) -> String? {
+        // ⌘ alone: ⌘⇧, ⌃⌘… keep their own keys.
         guard modifiers.intersection([.command, .option, .control, .shift]) == .command,
-              let unshifted, let shifted, unshifted != shifted
+              !modifiers.contains(.numericPad),
+              let digit = digitRow[keyCode],
+              typed?.first?.isNumber != true
         else { return nil }
-        if shifted.count == 1, shifted.first?.isASCII == true, shifted.first?.isNumber == true,
-           unshifted.first?.isNumber != true
-        {
-            return shifted
-        }
-        if unshifted == "=", shifted == "+" {
-            return "+"
-        }
-        return nil
+        return digit
     }
 
-    /// `event` with the character it stands for, or nil if none.
+    /// `event` with the digit it stands for, or nil if none.
     static func remapped(_ event: NSEvent) -> NSEvent? {
         guard event.type == .keyDown,
               let character = character(
                   modifiers: event.modifierFlags,
-                  unshifted: event.characters(byApplyingModifiers: []),
-                  shifted: event.characters(byApplyingModifiers: .shift)
+                  keyCode: event.keyCode,
+                  typed: event.characters(byApplyingModifiers: [])
               ),
               event.charactersIgnoringModifiers != character
         else { return nil }

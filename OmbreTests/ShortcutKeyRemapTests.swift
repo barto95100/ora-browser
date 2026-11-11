@@ -1,60 +1,58 @@
 import AppKit
+import Carbon.HIToolbox
 @testable import Ombre
 import SwiftUI
 import Testing
 
-/// ⌘1…⌘9 and the zoom shortcuts on AZERTY and QWERTY keyboards.
+/// ⌘1…⌘9 and ⌘0 on AZERTY, QWERTY and other keyboards.
 struct ShortcutKeyRemapTests {
-    private func remap(_ modifiers: NSEvent.ModifierFlags, _ unshifted: String, _ shifted: String) -> String? {
-        ShortcutKeyRemap.character(modifiers: modifiers, unshifted: unshifted, shifted: shifted)
+    private let one = UInt16(kVK_ANSI_1)
+
+    private func remap(_ modifiers: NSEvent.ModifierFlags, _ keyCode: UInt16, _ typed: String) -> String? {
+        ShortcutKeyRemap.character(modifiers: modifiers, keyCode: keyCode, typed: typed)
     }
 
-    @Test func azertyDigitKeysStandForTheirDigit() {
+    @Test func azertyDigitRowStandsForItsDigits() {
         // French AZERTY: & é " ' ( § è ! ç à, digits with ⇧.
-        let row = [
-            ("&", "1"),
-            ("é", "2"),
-            ("\"", "3"),
-            ("'", "4"),
-            ("(", "5"),
-            ("§", "6"),
-            ("è", "7"),
-            ("!", "8"),
-            ("ç", "9"),
-            ("à", "0")
+        let row: [(Int, String, String)] = [
+            (kVK_ANSI_1, "&", "1"), (kVK_ANSI_2, "é", "2"), (kVK_ANSI_3, "\"", "3"), (kVK_ANSI_4, "'", "4"),
+            (kVK_ANSI_5, "(", "5"), (kVK_ANSI_6, "§", "6"), (kVK_ANSI_7, "è", "7"), (kVK_ANSI_8, "!", "8"),
+            (kVK_ANSI_9, "ç", "9"), (kVK_ANSI_0, "à", "0")
         ]
-        for (unshifted, digit) in row {
-            #expect(remap(.command, unshifted, digit) == digit)
+        for (keyCode, typed, digit) in row {
+            #expect(remap(.command, UInt16(keyCode), typed) == digit)
         }
     }
 
-    @Test func qwertyKeysAreLeftAsTheyAre() {
-        #expect(remap(.command, "1", "!") == nil)
-        #expect(remap(.command, "0", ")") == nil)
-        #expect(remap(.command, "-", "_") == nil)
-        #expect(remap(.command, "t", "T") == nil)
+    /// Czech QWERTZ: the 1 key types "+", as macOS's own renaming does.
+    @Test func otherLayoutsWithShiftedDigitsToo() {
+        #expect(remap(.command, one, "+") == "1")
     }
 
-    /// ⌘= zooms in, as ⌘+ (AZERTY and QWERTY both have "=" under "+").
-    @Test func equalsStandsForPlus() {
-        #expect(remap(.command, "=", "+") == "+")
+    @Test func keysThatTypeTheirDigitAreLeftAsTheyAre() {
+        #expect(remap(.command, one, "1") == nil)
+        #expect(remap(.command, UInt16(kVK_ANSI_0), "0") == nil)
+        #expect(remap(.command, UInt16(kVK_ANSI_T), "t") == nil)
+        #expect(remap(.command, UInt16(kVK_ANSI_Equal), "=") == nil)
+        #expect(remap([.command, .numericPad], UInt16(kVK_ANSI_Keypad1), "1") == nil)
     }
 
-    /// Other modifiers keep their own keys: ⌃⌘= is Split View, ⌘⇧& types 1.
+    /// Other modifiers keep their own keys: ⌘⇧& types 1, ⌃⌘& is not ⌘1.
     @Test func onlyCommandAloneIsRemapped() {
-        #expect(remap([.control, .command], "=", "+") == nil)
-        #expect(remap([.command, .shift], "&", "1") == nil)
-        #expect(remap([.command, .option], "&", "1") == nil)
-        #expect(remap([], "&", "1") == nil)
+        #expect(remap([.command, .shift], one, "&") == nil)
+        #expect(remap([.command, .option], one, "&") == nil)
+        #expect(remap([.control, .command], one, "&") == nil)
+        #expect(remap([], one, "&") == nil)
     }
 
-    /// The menus show the digit itself (no remapping by macOS).
+    /// The menus show the digit itself (no renaming by macOS).
     @Test @MainActor func digitShortcutsAreNotLocalized() {
-        let tab1 = KeyboardShortcuts.Tabs.tab1.defaultChord.keyboardShortcut
-        #expect(String(describing: tab1.localization) == String(describing: KeyboardShortcut.Localization.custom))
-        let zoomReset = KeyboardShortcuts.Zoom.reset.defaultChord.keyboardShortcut
-        #expect(String(describing: zoomReset.localization) == String(describing: KeyboardShortcut.Localization.custom))
-        let newTab = KeyboardShortcuts.Tabs.new.defaultChord.keyboardShortcut
-        #expect(String(describing: newTab.localization) == String(describing: KeyboardShortcut.Localization.automatic))
+        func localization(_ definition: KeyboardShortcutDefinition) -> String {
+            String(describing: definition.defaultChord.keyboardShortcut.localization)
+        }
+        let custom = String(describing: KeyboardShortcut.Localization.custom)
+        #expect(localization(KeyboardShortcuts.Tabs.tab1) == custom)
+        #expect(localization(KeyboardShortcuts.Zoom.reset) == custom)
+        #expect(localization(KeyboardShortcuts.Tabs.new) == String(describing: KeyboardShortcut.Localization.automatic))
     }
 }

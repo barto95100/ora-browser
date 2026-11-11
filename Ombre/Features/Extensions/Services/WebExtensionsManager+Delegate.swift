@@ -49,6 +49,15 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
 
     func webExtensionController(
         _ controller: WKWebExtensionController,
+        openNewWindowUsing configuration: WKWebExtension.WindowConfiguration,
+        for extensionContext: WKWebExtensionContext,
+        completionHandler: @escaping ((any WKWebExtensionWindow)?, (any Error)?) -> Void
+    ) {
+        completionHandler(openWindow(configuration, for: extensionContext), nil)
+    }
+
+    func webExtensionController(
+        _ controller: WKWebExtensionController,
         openOptionsPageFor extensionContext: WKWebExtensionContext,
         completionHandler: @escaping ((any Error)?) -> Void
     ) {
@@ -71,18 +80,9 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
             // inspector, to debug the popup); a click in the window closes it.
             popover.behavior = .semitransient
         #endif
-        if let anchor = popupAnchor, anchor.window != nil {
-            popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .minY)
-        } else if let content = focusedWindow?.window?.contentView {
-            // Opened by the extension itself: at the top right of the window.
-            let corner = NSRect(x: content.bounds.maxX - 60, y: content.bounds.maxY - 40, width: 1, height: 1)
-            popover.show(relativeTo: corner, of: content, preferredEdge: .minY)
-        } else {
-            completionHandler(Failure.noAnchor)
-            return
-        }
-        popupAnchor = nil
-        completionHandler(nil)
+        // Under the button clicked; asked by the extension itself (Bitwarden's
+        // "Unlock your account"): see `present(_:for:)`.
+        completionHandler(present(popover, for: context) ? nil : Failure.noAnchor)
     }
 
     func webExtensionController(
@@ -184,7 +184,7 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
     // Only Safari can reach the app part of a Safari extension: refused, and
     // logged once per command and per launch (never the content) to see what
     // is asked. A connection is closed rather than refused (`NativeAppPort`).
-    // Exception: Bitwarden's "sleep", which its app answers after 10 s to
+    // Exceptions: Bitwarden's "showPopover" (shows its popup), and its "sleep", which its app answers after 10 s to
     // keep the background alive; refused at once, it was asked again at once,
     // endlessly. Answered the same way, like its app does.
 
@@ -196,6 +196,13 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         replyHandler: @escaping (Any?, (any Error)?) -> Void
     ) {
         let command = ((message as? [String: Any])?["command"] as? String) ?? "?"
+        // Bitwarden's "Open popup" (shortcut, notification) on Safari: its
+        // app shows the popup.
+        if command == "showPopover" {
+            showPopup(of: extensionContext)
+            replyHandler(nil, nil)
+            return
+        }
         if command == "sleep" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                 replyHandler(message, nil)

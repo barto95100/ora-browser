@@ -24,6 +24,17 @@ extension BrowserPage: WKNavigationDelegate {
             return
         }
 
+        // A website from an extension's page (a link on its options page):
+        // in a tab of its own, with the space's data and protections.
+        if isExtensionPage, navigationAction.targetFrame?.isMainFrame ?? true,
+           let url = navigationAction.request.url, url.scheme != webView.url?.scheme,
+           ["http", "https"].contains(url.scheme?.lowercased() ?? "")
+        {
+            decisionHandler(.cancel)
+            delegate?.browserPage(self, didRequestOpenInNewTab: url, disposition: .foreground)
+            return
+        }
+
         let action = BrowserNavigationAction(
             request: navigationAction.request,
             modifierFlags: navigationAction.modifierFlags,

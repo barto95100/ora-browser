@@ -88,6 +88,15 @@ enum DownloadPermission {
         }
     }
 
+    /// The site a download is asked for: the page shown, else the page
+    /// whose link opened the tab, Peek or popup only for the file (the user
+    /// clicked there; the file's server is often a file host), else the file.
+    /// Only addresses of a site count: a blank or local page (`about:blank`
+    /// written by a script, a file) never lets a download through unasked.
+    nonisolated static func site(shown: URL?, opener: URL?, file: URL?) -> URL? {
+        [shown, opener].lazy.compactMap { $0 }.first { SiteOrigin(url: $0) != nil } ?? file
+    }
+
     private struct PendingKey: Hashable {
         let origin: SiteOrigin
         let spaceID: UUID

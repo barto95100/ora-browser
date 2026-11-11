@@ -30,12 +30,17 @@ final class PeekPage: ObservableObject, Identifiable {
     let sheets = PageSheetPresenter()
     private let pageDelegate: PeekPageDelegate
 
+    /// The page whose link opened Peek, when it was opened: the site a
+    /// download Peek only opened for is asked for.
+    let openerURL: URL
+
     init(page: BrowserPage, url: URL, opener: Tab) {
         self.page = page
         self.url = url
         isPrivate = opener.isPrivate
         openerTabID = opener.id
         spaceID = opener.container.id
+        openerURL = opener.shownURL
         pageDelegate = PeekPageDelegate(opener: opener)
         pageDelegate.peek = self
         page.delegate = pageDelegate
@@ -138,6 +143,7 @@ private final class PeekPageDelegate: BrowserPageDelegate {
             openerWindow: page.window,
             opener: page,
             openerOrigin: openerOrigin,
+            openerURL: page.lastCommittedURL ?? peek?.openerURL,
             context: PopupContext(tab: opener)
         )
     }
@@ -177,7 +183,11 @@ private final class PeekPageDelegate: BrowserPageDelegate {
         let downloadManager = opener.downloadManager
         DownloadPermission.check(
             download,
-            site: page.lastCommittedURL ?? download.originalURL,
+            site: DownloadPermission.site(
+                shown: page.lastCommittedURL,
+                opener: peek.openerURL,
+                file: download.originalURL
+            ),
             spaceID: peek.spaceID,
             isPrivate: peek.isPrivate,
             present: { peek.presentPermissionRequest($0) },
@@ -283,7 +293,7 @@ private final class PeekPageDelegate: BrowserPageDelegate {
     private func openTab(_ url: URL, inFront: Bool) {
         guard let opener, let tabManager = opener.tabManager else { return }
         MainActor.assumeIsolated {
-            _ = tabManager.openTab(
+            let tab = tabManager.openTab(
                 url: url,
                 historyManager: opener.historyManager ?? tabManager.historyManager,
                 downloadManager: opener.downloadManager,
@@ -291,6 +301,7 @@ private final class PeekPageDelegate: BrowserPageDelegate {
                 isPrivate: opener.isPrivate,
                 loadSilently: !inFront
             )
+            tab?.openerURL = peek?.page.lastCommittedURL ?? peek?.openerURL
         }
     }
 }

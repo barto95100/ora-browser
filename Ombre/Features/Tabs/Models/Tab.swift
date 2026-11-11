@@ -55,6 +55,9 @@ class Tab: ObservableObject, Identifiable {
     @Transient @Published var pageRuntime: TabRuntime?
     @Transient var maybeIsActive = false
     @Transient var isPrivate: Bool = false
+    /// The page whose link opened this tab: the site a download it only
+    /// opened for is asked for.
+    @Transient var openerURL: URL?
 
     /// The space, optional in the database so deleting a space never leaves a
     /// tab pointing at nothing. Nil only once the tab or its space is deleted:
@@ -361,6 +364,8 @@ class Tab: ObservableObject, Identifiable {
 
     @MainActor
     func loadURL(_ urlString: String) {
+        // The user goes elsewhere: no longer the page of the link's doing.
+        openerURL = nil
         lastAccessedAt = Date()
         let input = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
 

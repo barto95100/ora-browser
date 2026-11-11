@@ -44,6 +44,7 @@ extension TabManager {
             downloadManager: downloadManager
         )
         tab.adopt(peek.page, historyManager: historyManager, downloadManager: downloadManager, tabManager: self)
+        tab.openerURL = peek.openerURL
         // What the page blocked so far shows in the tab's shield.
         tab.blockedContent = peek.blockedContent
         if inSplitView {

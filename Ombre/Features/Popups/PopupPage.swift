@@ -146,10 +146,6 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         WebExtensionsHub.pageChanged(page, url: true)
     }
 
-    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
-        WebExtensionsHub.contextMenuItems(for: page)
-    }
-
     func browserPage(_ page: BrowserPage, didChangeMediaCaptureState state: BrowserMediaCaptureState) {
         if popup?.mediaCaptureState != state { popup?.mediaCaptureState = state }
     }

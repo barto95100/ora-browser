@@ -123,6 +123,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     private(set) var scansStarted = 0
 
     override private init() {
+        ExtensionBaseURL.registerScheme()
         let configuration = WKWebExtensionController.Configuration(identifier: Self.storeIdentifier)
         // The extension's own pages (popup, background) say they are Safari,
         // like Ombre's pages: extensions tell browsers apart by the user agent
@@ -347,6 +348,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
         let context = WKWebExtensionContext(for: webExtension)
         context.uniqueIdentifier = id
+        ExtensionBaseURL.apply(to: context, id: id)
         #if DEBUG
             context.isInspectable = true
         #endif
@@ -472,13 +474,6 @@ final class WebExtensionsManager: NSObject, ObservableObject {
                 if rank(lhs.type) != rank(rhs.type) { return rank(lhs.type) < rank(rhs.type) }
                 return lhs.order > rhs.order
             }
-    }
-
-    /// The adapter of the told tab showing `page`, if any.
-    func tabAdapter(showing page: BrowserPage) -> ExtensionTab? {
-        tabs.values.first { adapter in
-            adapter.tab.map { openTabIDs.contains($0.id) && $0.browserPage === page } ?? false
-        }
     }
 
     func window(for tabManager: TabManager) -> ExtensionWindow? {

@@ -30,7 +30,13 @@ extension TabManagerTests {
               sendResponse({ tab: sender.tab ? sender.tab.id : null });
             });
             """
+            // Bitwarden's check before showing its menu under login fields:
+            // a Safari, Chrome or Firefox extension URL of its own origin.
             let content = """
+            const own = new URL(browser.runtime.getURL("page.html"));
+            const schemes = ["chrome-extension:", "moz-extension:", "safari-web-extension:"];
+            document.documentElement.dataset.base = schemes.includes(own.protocol)
+              && own.origin === browser.runtime.getURL("").slice(0, -1) ? "accepted" : "refused " + own.href;
             browser.runtime.sendMessage("ping")
               .then(r => { document.documentElement.dataset.probe = r && r.tab != null ? "tab" : "no-tab"; })
               .catch(e => { document.documentElement.dataset.probe = "error: " + e.message; });
@@ -47,6 +53,11 @@ extension TabManagerTests {
             defer { try? FileManager.default.removeItem(at: folder) }
             let webExtension = try await WKWebExtension(resourceBaseURL: folder)
             let context = WKWebExtensionContext(for: webExtension)
+            // As the manager loads them (`run`), with an id in capitals.
+            let id = UUID().uuidString
+            context.uniqueIdentifier = id
+            ExtensionBaseURL.registerScheme()
+            ExtensionBaseURL.apply(to: context, id: id)
             context.hasAccessToPrivateData = true
             context.setPermissionStatus(.grantedExplicitly, for: WKWebExtension.MatchPattern.allURLs())
             context.setPermissionStatus(.grantedExplicitly, for: .contextMenus)
@@ -106,9 +117,27 @@ extension TabManagerTests {
             }
         }
 
-        /// The extensions' items show in a tab's context menu (Bitwarden's
-        /// "Autofill"); Peek and popups get them the same way.
-        @Test func extensionItemsShowInTheContextMenu() async throws {
+        /// Extensions see Safari's URLs for their own files: Bitwarden's menu
+        /// under login fields refuses WebKit's `webkit-extension:` ones (it
+        /// stayed a dark line under the field).
+        @Test func extensionURLsAreSafaris() async throws {
+            guard #available(macOS 15.4, *) else { return }
+            try await TabManagerTestWindow.run { window in
+                try await Self.withProbe {
+                    let nsWindow = Self.register(window)
+                    defer { nsWindow.close() }
+                    let tab = try await window.openLoaded("tab")
+                    let webView = try #require(tab.browserPage?.webView)
+                    _ = try await Self.probe(webView)
+                    let base = try? await webView.evaluateJavaScript("document.documentElement.dataset.base ?? null")
+                    #expect(base as? String == "accepted", "\(String(describing: base))")
+                }
+            }
+        }
+
+        /// WebKit adds the extensions' items to the context menu itself:
+        /// Ombre adds none (Bitwarden's showed twice).
+        @Test func ombreAddsNoExtensionItemsToTheContextMenu() async throws {
             guard #available(macOS 15.4, *) else { return }
             try await TabManagerTestWindow.run { window in
                 try await Self.withProbe {
@@ -121,7 +150,7 @@ extension TabManagerTests {
                     let titles = delegate.browserPageContextMenuItems(page).flatMap { item in
                         [item.title] + (item.submenu?.items.map(\.title) ?? [])
                     }
-                    #expect(titles.contains("Probe item"), "\(titles)")
+                    #expect(!titles.contains("Probe item"), "\(titles)")
                 }
             }
         }

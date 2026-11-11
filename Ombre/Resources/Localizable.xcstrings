@@ -2677,6 +2677,16 @@
         }
       }
     },
+    "Copy Address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l’adresse"
+          }
+        }
+      }
+    },
     "Copy Link" : {
       "localizations" : {
         "fr" : {
@@ -5668,6 +5678,16 @@
         }
       }
     },
+    "Not Secure" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non sécurisé"
+          }
+        }
+      }
+    },
     "Not Secure — %@" : {
       "localizations" : {
         "fr" : {
@@ -7074,6 +7094,16 @@
         }
       }
     },
+    "Rest of the address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reste de l’adresse"
+          }
+        }
+      }
+    },
     "Resume Camera" : {
       "localizations" : {
         "fr" : {
@@ -7423,6 +7453,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer"
+          }
+        }
+      }
+    },
+    "Secure connection" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion sécurisée"
           }
         }
       }

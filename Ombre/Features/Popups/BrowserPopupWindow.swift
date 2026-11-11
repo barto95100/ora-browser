@@ -98,11 +98,24 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         )
         super.init()
 
+        // The address bar on top (MOT-10), the page below it.
         let content = NSView(frame: NSRect(origin: .zero, size: frame.size))
+        let barHeight = PopupAddressBar.height
+        let addressBar = NSHostingView(rootView: PopupAddressBar(popup: popup))
+        addressBar.frame = NSRect(
+            x: 0,
+            y: content.bounds.height - barHeight,
+            width: content.bounds.width,
+            height: barHeight
+        )
+        addressBar.autoresizingMask = [.width, .minYMargin]
+        // Its frame follows the window, never the other way round.
+        addressBar.sizingOptions = []
         let pageView = popup.page.contentView
-        pageView.frame = content.bounds
+        pageView.frame = NSRect(x: 0, y: 0, width: content.bounds.width, height: content.bounds.height - barHeight)
         pageView.autoresizingMask = [.width, .height]
         content.addSubview(pageView)
+        content.addSubview(addressBar)
         window.contentView = content
         // Typing goes to the page right away (fields the page focuses itself).
         window.initialFirstResponder = popup.page.webView
@@ -119,13 +132,14 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         }
     }
 
-    /// The size the page asked for, placed where it asked (screen coordinates
+    /// The size the page asked for (plus the address bar), placed where it asked (screen coordinates
     /// from the top-left, like the web) or centered over the opener's window.
     private static func frame(for features: WKWindowFeatures, openerWindow: NSWindow?) -> NSRect {
         let screen = openerWindow?.screen ?? NSScreen.main
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let width = min(CGFloat(features.width?.doubleValue ?? 500), visible.width)
-        let height = min(CGFloat(features.height?.doubleValue ?? 600), visible.height)
+        // The page gets the height it asked for, under the address bar.
+        let height = min(CGFloat(features.height?.doubleValue ?? 600) + PopupAddressBar.height, visible.height)
 
         var origin: NSPoint
         if let left = features.x?.doubleValue, let top = features.y?.doubleValue, let screenFrame = screen?.frame {
@@ -162,7 +176,7 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         prompt.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(prompt)
         NSLayoutConstraint.activate([
-            prompt.topAnchor.constraint(equalTo: content.topAnchor, constant: 12),
+            prompt.topAnchor.constraint(equalTo: content.topAnchor, constant: PopupAddressBar.height + 12),
             prompt.centerXAnchor.constraint(equalTo: content.centerXAnchor)
         ])
         promptView = prompt

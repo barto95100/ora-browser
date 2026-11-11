@@ -150,6 +150,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             },
             webView.observe(\.microphoneCaptureState) { [weak self] _, _ in
                 self?.mediaCaptureStateDidChange()
+            },
+            // Insecure content loaded by a secure page (the lock goes).
+            webView.observe(\.hasOnlySecureContent) { [weak self] _, _ in
+                self?.notifyOnMain { $0.delegate?.browserPageDidChangeSecurity($0) }
             }
         ]
 
@@ -243,6 +247,11 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
     var title: String? {
         webView.title
+    }
+
+    /// Whether everything the page loaded came over a secure connection.
+    var hasOnlySecureContent: Bool {
+        webView.hasOnlySecureContent
     }
 
     var canGoBack: Bool {

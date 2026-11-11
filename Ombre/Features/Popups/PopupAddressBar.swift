@@ -68,6 +68,10 @@ struct PopupAddressBar: View {
                 .layoutPriority(1)
             SelectableAddressField(text: display.rest, help: full, isSite: false)
                 .frame(maxWidth: .infinity)
+            // Camera and microphone in use, as in a tab's address bar.
+            MediaCaptureIndicator(state: popup.mediaCaptureState, foregroundColor: .secondary) { device in
+                popup.page.toggleCapture(device)
+            }
             Button {
                 guard let address = popup.address else { return }
                 NSPasteboard.general.clearContents()

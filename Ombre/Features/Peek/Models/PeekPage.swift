@@ -46,6 +46,12 @@ final class PeekPage: ObservableObject, Identifiable {
         pageDelegate = PeekPageDelegate(opener: opener)
         pageDelegate.peek = self
         page.delegate = pageDelegate
+        // A tab for the extensions before its scripts run (Bitwarden's menu).
+        if let tabManager = opener.tabManager {
+            WebExtensionsHub.peekOpened(page, in: tabManager, isPrivate: opener.isPrivate) { [weak tabManager] in
+                tabManager?.closePeek()
+            }
+        }
         page.load(URLRequest(url: url))
     }
 
@@ -57,6 +63,7 @@ final class PeekPage: ObservableObject, Identifiable {
 
     /// Peek closes: what the page waits for is refused.
     func close() {
+        WebExtensionsHub.pageClosed(page)
         cancelPermissionRequest()
         sheets.dismiss()
     }
@@ -160,14 +167,21 @@ private final class PeekPageDelegate: BrowserPageDelegate {
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
         peek?.update(url: url)
+        WebExtensionsHub.pageChanged(page, url: true)
     }
 
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {
         peek?.update(title: title)
+        WebExtensionsHub.pageChanged(page, title: true)
+    }
+
+    func browserPageContextMenuItems(_ page: BrowserPage) -> [NSMenuItem] {
+        WebExtensionsHub.contextMenuItems(for: page)
     }
 
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {
         peek?.update(isLoading: event.isLoading)
+        if event.phase != .committed { WebExtensionsHub.pageChanged(page, loading: true) }
         switch event.phase {
         case .started: peek?.navigationDidStart()
         case .committed: peek?.sheets.dialogPolicy.pageDidCommitNewDocument()

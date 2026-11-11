@@ -24,13 +24,18 @@ final class ExtensionWindow: NSObject, WKWebExtensionWindow {
         return manager.loadedTabs(of: tabManager)
     }
 
+    /// Its loaded tabs, then Peek while it shows.
     func tabs(for context: WKWebExtensionContext) -> [any WKWebExtensionTab] {
         guard let manager else { return [] }
-        return loadedTabs.map { manager.adapter(for: $0) }
+        let tabs: [any WKWebExtensionTab] = loadedTabs.map { manager.adapter(for: $0) }
+        return tabs + (manager.peekTab(in: self).map { [$0] } ?? [])
     }
 
+    /// Peek while it shows (it covers the tab), else the active tab.
     func activeTab(for context: WKWebExtensionContext) -> (any WKWebExtensionTab)? {
-        guard let manager, let tab = tabManager?.activeTab, loadedTabs.contains(where: { $0.id == tab.id }) else {
+        guard let manager else { return nil }
+        if let peek = manager.peekTab(in: self) { return peek }
+        guard let tab = tabManager?.activeTab, loadedTabs.contains(where: { $0.id == tab.id }) else {
             return nil
         }
         return manager.adapter(for: tab)

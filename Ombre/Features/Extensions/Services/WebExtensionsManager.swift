@@ -101,6 +101,10 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     private var tabs: [UUID: ExtensionTab] = [:]
     /// Tabs the extensions were told about (`didOpenTab`).
     private var openTabIDs: Set<UUID> = []
+    /// Peek and popup pages told as tabs, by page (see `ExtensionPageAdapters.swift`).
+    var pageTabs: [ObjectIdentifier: ExtensionPageTab] = [:]
+    /// Popup windows told to the extensions, by window.
+    var popupWindows: [ObjectIdentifier: ExtensionPopupWindow] = [:]
     /// Messages to an extension's app already logged (`id:command`).
     var loggedNativeCommands: Set<String> = []
     /// The extensions' buttons, by extension: a shortcut's popup shows under it.
@@ -356,6 +360,10 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             for tabID in openTabIDs {
                 if let adapter = tabs[tabID] { context.didOpenTab(adapter) }
             }
+            // Peek and popups too.
+            for adapter in pageTabs.values where adapter.page != nil {
+                context.didOpenTab(adapter)
+            }
             if let name = webExtension.displayName, name != installed[index].record.name {
                 installed[index].record.name = name
                 save()
@@ -466,6 +474,13 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             }
     }
 
+    /// The adapter of the told tab showing `page`, if any.
+    func tabAdapter(showing page: BrowserPage) -> ExtensionTab? {
+        tabs.values.first { adapter in
+            adapter.tab.map { openTabIDs.contains($0.id) && $0.browserPage === page } ?? false
+        }
+    }
+
     func window(for tabManager: TabManager) -> ExtensionWindow? {
         windows.values.first { $0.tabManager === tabManager }
     }
@@ -473,6 +488,13 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     /// The windows, private ones included, front to back.
     var orderedWindows: [ExtensionWindow] {
         NSApp.orderedWindows.compactMap { windows[ObjectIdentifier($0)] }
+    }
+
+    /// Browser and popup windows, front to back (`windows.getAll`).
+    var orderedAllWindows: [any WKWebExtensionWindow] {
+        NSApp.orderedWindows.compactMap { window -> (any WKWebExtensionWindow)? in
+            windows[ObjectIdentifier(window)] ?? popupWindows[ObjectIdentifier(window)]
+        }
     }
 
     var focusedWindow: ExtensionWindow? {

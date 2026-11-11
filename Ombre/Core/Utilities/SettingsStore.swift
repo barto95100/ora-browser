@@ -164,6 +164,7 @@ class SettingsStore: ObservableObject {
     private let passwordSavePromptsEnabledKey = "settings.passwords.savePromptsEnabled"
     private let suppressedPasswordSavePromptHostsKey = "settings.passwords.suppressedSavePromptHosts"
     private let developerToolsEnabledKey = "settings.developerToolsEnabled"
+    private let allowsDownloadsByDefaultKey = "settings.downloads.allowByDefault"
 
     // MARK: - Per-Container
 
@@ -239,6 +240,12 @@ class SettingsStore: ObservableObject {
     /// a new tab, or the same tab.
     @Published var pinnedLinkBehavior: PinnedLinkBehavior {
         didSet { defaults.set(pinnedLinkBehavior.rawValue, forKey: pinnedLinkBehaviorKey) }
+    }
+
+    /// Downloads from sites without a choice of their own: asked the first
+    /// time (like Safari, the default) or allowed.
+    @Published var allowsDownloadsByDefault: Bool {
+        didSet { defaults.set(allowsDownloadsByDefault, forKey: allowsDownloadsByDefaultKey) }
     }
 
     @Published var passwordsEnabled: Bool {
@@ -344,6 +351,7 @@ class SettingsStore: ObservableObject {
         let legacyPeekEnabled = defaults.object(forKey: peekEnabledKey) as? Bool ?? true
         pinnedLinkBehavior = defaults.string(forKey: pinnedLinkBehaviorKey).flatMap(PinnedLinkBehavior.init(rawValue:))
             ?? (legacyPeekEnabled ? .peek : .sameTab)
+        allowsDownloadsByDefault = defaults.bool(forKey: allowsDownloadsByDefaultKey)
         passwordsEnabled = defaults.object(forKey: passwordsEnabledKey) as? Bool ?? true
         if let raw = defaults.string(forKey: passwordManagerProviderKey),
            let provider = PasswordManagerProviderKind(rawValue: raw)

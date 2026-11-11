@@ -3239,6 +3239,16 @@
         }
       }
     },
+    "Downloads from websites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements depuis les sites web"
+          }
+        }
+      }
+    },
     "Downloads, Notes, Tasks, Browsing Time" : {
       "localizations" : {
         "fr" : {
@@ -3715,6 +3725,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Suivre la navigation dans les onglets"
+          }
+        }
+      }
+    },
+    "For sites set to Default in each space's site permissions." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour les sites réglés sur « Par défaut » dans les autorisations des sites de chaque espace."
           }
         }
       }

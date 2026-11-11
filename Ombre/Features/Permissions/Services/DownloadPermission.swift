@@ -13,18 +13,20 @@ protocol PermissionGatedDownload: AnyObject {
 extension BrowserDownloadTask: PermissionGatedDownload {}
 
 /// Whether a site may download files, like Safari ("Allow downloads on…"):
-/// the site's choice in its space, else asked the first time. The download
-/// waits for the answer (WebKit's question of where to save it is held), and
-/// is cancelled if refused.
+/// the site's choice in its space, else the general choice of Settings (asked
+/// the first time by default). The download waits for the answer (WebKit's
+/// question of where to save it is held), and is cancelled if refused.
 @MainActor
 enum DownloadPermission {
     /// `site`: the page that started it. `start` hands the download on (to
     /// the download manager); `done` runs once decided, either way.
+    /// `allowsByDefault`: for a site without a choice (Settings).
     static func check(
         _ download: PermissionGatedDownload,
         site: URL?,
         spaceID: UUID,
         isPrivate: Bool,
+        allowsByDefault: Bool = SettingsStore.shared.allowsDownloadsByDefault,
         present: (SitePermissionRequest) -> Void,
         start: @escaping () -> Void,
         done: @escaping () -> Void = {}
@@ -36,7 +38,8 @@ enum DownloadPermission {
             done()
             return
         }
-        switch SitePermissionStore.shared.permissions(for: origin, in: spaceID, isPrivate: isPrivate).downloads {
+        let saved = SitePermissionStore.shared.permissions(for: origin, in: spaceID, isPrivate: isPrivate)
+        switch saved.downloadsChoice ?? (allowsByDefault ? .allow : .ask) {
         case .allow:
             start()
             done()

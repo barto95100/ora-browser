@@ -24,13 +24,19 @@ struct DownloadPermissionTests {
     private let space = UUID()
     private let site = URL(string: "https://files.example/page")
 
-    private func check(_ download: FakeDownload, site: URL? = nil, useDefaultSite: Bool = true) -> Run {
+    private func check(
+        _ download: FakeDownload,
+        site: URL? = nil,
+        useDefaultSite: Bool = true,
+        allowsByDefault: Bool = false
+    ) -> Run {
         let run = Run()
         DownloadPermission.check(
             download,
             site: useDefaultSite ? self.site : site,
             spaceID: space,
             isPrivate: false,
+            allowsByDefault: allowsByDefault,
             present: { run.request = $0 },
             start: { run.started = true },
             done: { run.done = true }
@@ -49,6 +55,48 @@ struct DownloadPermissionTests {
         let download = FakeDownload()
         let run = check(download)
         #expect(run.started && run.done && run.request == nil && !download.isCancelled)
+    }
+
+    /// "Downloads from websites: Allow" in Settings: a site without a choice
+    /// downloads without being asked.
+    @Test func generalAllowSkipsTheQuestion() {
+        let download = FakeDownload()
+        let run = check(download, allowsByDefault: true)
+        #expect(run.started && run.done && run.request == nil && !download.isCancelled)
+    }
+
+    /// A site's own refusal still wins over the general "Allow".
+    @Test func siteRefusalWinsOverGeneralAllow() throws {
+        defer { SitePermissionStore.shared.removeAll(in: space) }
+        try save(.deny)
+        let download = FakeDownload()
+        let run = check(download, allowsByDefault: true)
+        #expect(!run.started && run.done && download.isCancelled)
+    }
+
+    /// A site set to "Ask" in its space is asked, even with the general
+    /// "Allow"; "Default" (no choice) follows the general one.
+    @Test func siteSetToAskIsAskedDespiteGeneralAllow() throws {
+        defer { SitePermissionStore.shared.removeAll(in: space) }
+        try save(.ask)
+        let download = FakeDownload()
+        let run = check(download, allowsByDefault: true)
+        #expect(run.request != nil && !run.started)
+        run.request?.resolve(granted: false)
+    }
+
+    /// Saved before the general choice, "ask" meant no choice: it follows
+    /// the general one; a site's own Allow / Don't Allow is kept.
+    @Test func legacyAskDecodesAsNoChoice() throws {
+        let legacyAsk = try JSONDecoder().decode(SitePermissions.self, from: Data(#"{"downloads":"ask"}"#.utf8))
+        #expect(legacyAsk.downloadsChoice == nil)
+        let legacyDeny = try JSONDecoder().decode(SitePermissions.self, from: Data(#"{"downloads":"deny"}"#.utf8))
+        #expect(legacyDeny.downloadsChoice == .deny)
+        let explicitAsk = try JSONDecoder().decode(
+            SitePermissions.self,
+            from: JSONEncoder().encode(SitePermissions(downloads: .ask))
+        )
+        #expect(explicitAsk.downloadsChoice == .ask)
     }
 
     @Test func refusedSiteIsCancelled() throws {

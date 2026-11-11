@@ -97,7 +97,15 @@ struct SitePermissions: Codable, Hashable {
     var notifications: SitePermissionState = .ask
     var location: SitePermissionState = .ask
     var screen: SitePermissionState = .ask
-    var downloads: SitePermissionState = .ask
+    /// The site's own choice for downloads; nil: none, the general choice of
+    /// Settings applies (asked by default).
+    var downloadsChoice: SitePermissionState?
+
+    /// The site's choice for downloads, "Ask" when it has none.
+    var downloads: SitePermissionState {
+        get { downloadsChoice ?? .ask }
+        set { downloadsChoice = newValue }
+    }
 
     init(
         camera: SitePermissionState = .ask,
@@ -105,14 +113,14 @@ struct SitePermissions: Codable, Hashable {
         notifications: SitePermissionState = .ask,
         location: SitePermissionState = .ask,
         screen: SitePermissionState = .ask,
-        downloads: SitePermissionState = .ask
+        downloads: SitePermissionState? = nil
     ) {
         self.camera = camera
         self.microphone = microphone
         self.notifications = notifications
         self.location = location
         self.screen = screen
-        self.downloads = downloads
+        downloadsChoice = downloads
     }
 
     /// Tolerate missing keys so that capabilities added later decode as `.ask`.
@@ -123,7 +131,14 @@ struct SitePermissions: Codable, Hashable {
         notifications = try container.decodeIfPresent(SitePermissionState.self, forKey: .notifications) ?? .ask
         location = try container.decodeIfPresent(SitePermissionState.self, forKey: .location) ?? .ask
         screen = try container.decodeIfPresent(SitePermissionState.self, forKey: .screen) ?? .ask
-        downloads = try container.decodeIfPresent(SitePermissionState.self, forKey: .downloads) ?? .ask
+        // Saved before the general choice: "ask" there meant no choice.
+        let legacy = try decoder.container(keyedBy: LegacyCodingKeys.self)
+        downloadsChoice = try container.decodeIfPresent(SitePermissionState.self, forKey: .downloadsChoice)
+            ?? legacy.decodeIfPresent(SitePermissionState.self, forKey: .downloads).flatMap { $0 == .ask ? nil : $0 }
+    }
+
+    private enum LegacyCodingKeys: String, CodingKey {
+        case downloads
     }
 
     subscript(type: SitePermissionType) -> SitePermissionState {

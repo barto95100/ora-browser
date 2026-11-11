@@ -56,14 +56,32 @@ struct SitePermissionsSettingsCard: View {
                 .help("Forget this site")
             }
 
-            ForEach(SitePermissionType.allCases) { type in
+            ForEach(SitePermissionType.allCases.filter { $0 != .downloads }) { type in
                 Picker(type.title, selection: binding(for: type, origin: origin)) {
                     ForEach(SitePermissionState.allCases, id: \.self) { state in
                         Text(state.title).tag(state)
                     }
                 }
             }
+            // No choice of its own: the general one of Settings › General.
+            Picker(SitePermissionType.downloads.title, selection: downloadsBinding(origin: origin)) {
+                Text("Default").tag(SitePermissionState?.none)
+                ForEach(SitePermissionState.allCases, id: \.self) { state in
+                    Text(state.title).tag(SitePermissionState?.some(state))
+                }
+            }
         }
+    }
+
+    private func downloadsBinding(origin: SiteOrigin) -> Binding<SitePermissionState?> {
+        Binding(
+            get: { store.permissions(for: origin, in: container.id, isPrivate: false).downloadsChoice },
+            set: { choice in
+                var permissions = store.permissions(for: origin, in: container.id, isPrivate: false)
+                permissions.downloadsChoice = choice
+                store.setPermissions(permissions, for: origin, in: container.id, isPrivate: false)
+            }
+        )
     }
 
     private func binding(for type: SitePermissionType, origin: SiteOrigin) -> Binding<SitePermissionState> {

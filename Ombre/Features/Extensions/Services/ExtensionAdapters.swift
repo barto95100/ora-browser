@@ -144,6 +144,8 @@ final class ExtensionTab: NSObject, WKWebExtensionTab {
     }
 
     func loadURL(_ url: URL, for context: WKWebExtensionContext, completionHandler: @escaping (Error?) -> Void) {
+        // Sent elsewhere: no longer the page of the link's doing.
+        tab?.openerURL = nil
         tab?.browserPage?.load(URLRequest(url: url))
         completionHandler(nil)
     }

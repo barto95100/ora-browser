@@ -98,6 +98,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
             openerWindow: page.window,
             opener: page,
             openerOrigin: openerOrigin,
+            openerURL: tab.shownURL,
             context: PopupContext(tab: tab)
         )
     }
@@ -337,7 +338,11 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         let downloadManager = tab.downloadManager
         DownloadPermission.check(
             download,
-            site: page.lastCommittedURL ?? download.originalURL,
+            site: DownloadPermission.site(
+                shown: page.lastCommittedURL,
+                opener: tab.openerURL,
+                file: download.originalURL
+            ),
             spaceID: tab.container.id,
             isPrivate: tab.isPrivate,
             present: { request in

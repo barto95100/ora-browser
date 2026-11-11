@@ -70,9 +70,11 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         openerWindow: NSWindow?,
         opener: BrowserPage?,
         openerOrigin: URL? = nil,
+        openerURL: URL? = nil,
         context: PopupContext
     ) -> WKWebView {
         let page = PopupPage(configuration: configuration, opener: opener, context: context)
+        page.openerURL = openerURL ?? opener?.lastCommittedURL ?? openerOrigin
         let popup = BrowserPopupWindow(
             popup: page,
             frame: frame(for: windowFeatures, openerWindow: openerWindow)

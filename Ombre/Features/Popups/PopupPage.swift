@@ -56,6 +56,13 @@ final class PopupPage: ObservableObject {
     var closeWindow: (() -> Void)?
     /// The page's address or title changed (the window's title follows).
     var pageDidChange: (() -> Void)?
+    /// The page that opened the popup: the site a download it only opened
+    /// for is asked for.
+    var openerURL: URL?
+    /// The page the popup shows, for the tabs its links open.
+    var shownURL: URL? {
+        page.lastCommittedURL ?? openerURL
+    }
     private let pageDelegate: PopupPageDelegate
 
     /// Made with WebKit's `configuration` (required: it shares its opener's
@@ -150,6 +157,7 @@ private final class PopupPageDelegate: BrowserPageDelegate {
             openerWindow: page.window,
             opener: page,
             openerOrigin: openerOrigin,
+            openerURL: popup.shownURL,
             context: popup.context
         )
     }
@@ -168,7 +176,8 @@ private final class PopupPageDelegate: BrowserPageDelegate {
             // The tab's window comes forward with the tab, not behind the popup.
             let window = tab.browserPage?.window
             if let webView = tabManager.openLinkedTab(
-                url: url, from: tab, configuration: configuration, disposition: disposition
+                url: url, from: tab, configuration: configuration, disposition: disposition,
+                openerURL: popup?.shownURL
             ) {
                 if disposition == .foreground { window?.makeKeyAndOrderFront(nil) }
                 return webView
@@ -180,7 +189,7 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     /// ⌘-click and the like: a tab beside the opener tab, if it is still there.
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
         guard let tab = liveOpenerTab, let tabManager = tab.tabManager else { return }
-        tabManager.openLinkTab(url, from: tab, disposition: disposition)
+        tabManager.openLinkTab(url, from: tab, disposition: disposition, openerURL: popup?.shownURL)
     }
 
     /// The opener tab, if a tab can still open beside it: not closed or
@@ -290,7 +299,11 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         )
         DownloadPermission.check(
             download,
-            site: page.lastCommittedURL ?? download.originalURL,
+            site: DownloadPermission.site(
+                shown: page.lastCommittedURL,
+                opener: popup.openerURL,
+                file: download.originalURL
+            ),
             spaceID: popup.context.spaceID,
             isPrivate: popup.context.isPrivate,
             present: { popup.presentPermissionRequest($0) },

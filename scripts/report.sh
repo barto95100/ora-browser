@@ -12,8 +12,8 @@ set -euo pipefail
 #   - errors.log   the errors and faults of Ombre's own process (WebKit's
 #                  included; its page processes are shared with every app,
 #                  so left out);
-#   - crashes/     Ombre's crash reports, and those of WebKit's page
-#                  processes (any app's: check the app named inside).
+#   - crashes/     the installed Ombre's crash reports, and those of WebKit's
+#                  processes working for an Ombre.
 # Nothing is sent anywhere. The logs may name sites you visited: read them
 # before passing them on.
 
@@ -24,14 +24,22 @@ HOURS="${1:-2}"
 [[ "$HOURS" =~ ^[0-9]+$ ]] || die "Hours must be a whole number (got: ${HOURS})."
 APP="/Applications/Ombre.app"
 SUBSYSTEM="com.barto95100.ora"
-OUT="${2:-$HOME/Desktop/Ombre-report-$(date +%Y-%m-%d_%H-%M)}"
+OUT="${2:-$HOME/Desktop/Ombre-report-$(date +%Y-%m-%d_%H-%M-%S)}"
 mkdir -p "$OUT/crashes"
 
 step "Version"
+# PlistBuddy reads the file itself (no cached value); empty or missing: "?".
+plist_value() {
+    local value
+    value=$(/usr/libexec/PlistBuddy -c "Print :$1" "$APP/Contents/Info.plist" 2>/dev/null || true)
+    echo "${value:-?}"
+}
 {
-    echo "Ombre: $(defaults read "$APP/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "not installed")" \
-        "($(defaults read "$APP/Contents/Info.plist" CFBundleVersion 2>/dev/null || echo "?")," \
-        "commit $(/usr/libexec/PlistBuddy -c "Print :OmbreCommit" "$APP/Contents/Info.plist" 2>/dev/null || echo "?"))"
+    if [[ -d "$APP" ]]; then
+        echo "Ombre: $(plist_value CFBundleShortVersionString) ($(plist_value CFBundleVersion), commit $(plist_value OmbreCommit))"
+    else
+        echo "Ombre: not installed in ${APP}"
+    fi
     echo "macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
     echo "Report: last ${HOURS} h, $(date)"
 } | tee "$OUT/version.txt"
@@ -48,8 +56,18 @@ log show --last "${HOURS}h" --style compact \
 echo "$(wc -l < "$OUT/ombre.log" | tr -d ' ') lines (Ombre), $(wc -l < "$OUT/errors.log" | tr -d ' ') lines (errors)"
 
 step "Crash reports (last 7 days)"
-find "$HOME/Library/Logs/DiagnosticReports" -maxdepth 1 -type f -mtime -7 \
-    \( -name "Ombre*" -o -name "com.apple.WebKit*" \) -exec cp {} "$OUT/crashes/" \; 2>/dev/null || true
+# Only the installed app's (not the Debug app's nor the tests', also named
+# Ombre), and WebKit's processes working for an Ombre (Debug included: same
+# process name), never another app's. Retired/ holds some recent ones too.
+REPORTS="${OMBRE_REPORTS_DIR:-$HOME/Library/Logs/DiagnosticReports}"
+while IFS= read -r -d '' report; do
+    case "$(basename "$report")" in
+    Ombre*) grep -qE "\"bundleID\" *: *\"${SUBSYSTEM//./\\.}\"" "$report" || continue ;;
+    *) grep -qE '"responsibleProc" *: *"Ombre"' "$report" || continue ;;
+    esac
+    cp "$report" "$OUT/crashes/"
+done < <(find "$REPORTS" "$REPORTS/Retired" -maxdepth 1 -type f -mtime -7 \
+    \( -name "Ombre*" -o -name "com.apple.WebKit*" \) -print0 2>/dev/null)
 count=$(find "$OUT/crashes" -type f | wc -l | tr -d ' ')
 echo "${count} report(s)"
 

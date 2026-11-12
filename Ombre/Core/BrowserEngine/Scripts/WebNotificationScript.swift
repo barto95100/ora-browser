@@ -1,3 +1,5 @@
+import Foundation
+
 /// The standard `Notification` API, which WebKit leaves out of apps, backed by
 /// `WebNotificationBridge`. Secure pages only, like in every browser.
 ///
@@ -7,8 +9,37 @@
 /// secret of the page. No handler of the app is in the page's world: Safari's
 /// pages have no `window.webkit`, Ombre's neither.
 enum WebNotificationScript {
-    static func source(channel: String) -> String {
-        "(() => {\n  const channel = '\(channel)';\n" + api + clicks(channel: channel) + permissions
+    /// The permission of the site a page is about to show, given by the
+    /// script so `Notification.permission` is right from the start (MOT-18).
+    /// Only a saved choice ("granted", "denied"), for a secure site.
+    struct InitialState: Equatable {
+        /// As the page's `location.origin` says it.
+        let origin: String
+        let permission: String
+
+        init?(url: URL, permission: String) {
+            guard permission != "default", url.scheme?.lowercased() == "https",
+                  let host = url.host(percentEncoded: true)?.lowercased(), !host.isEmpty
+            else { return nil }
+            let shownHost = host.contains(":") ? "[\(host)]" : host
+            let port = url.port.flatMap { $0 == 443 ? nil : ":\($0)" } ?? ""
+            origin = "https://\(shownHost)\(port)"
+            self.permission = permission
+        }
+
+        /// As JSON, for the script.
+        var json: String {
+            let object = ["origin": origin, "permission": permission]
+            guard let data = try? JSONSerialization.data(withJSONObject: object, options: .sortedKeys),
+                  let json = String(data: data, encoding: .utf8)
+            else { return "null" }
+            return json
+        }
+    }
+
+    static func source(channel: String, initial: InitialState? = nil) -> String {
+        "(() => {\n  const channel = '\(channel)';\n  const initial = \(initial?.json ?? "null");\n"
+            + api + clicks(channel: channel) + permissions
     }
 
     /// In the app's world: passes the API's messages to the app's handler
@@ -67,7 +98,8 @@ enum WebNotificationScript {
       listen(channel + 'r', () => {
         for (const [id, request] of pending) send(id, request.message);
       });
-      let permission = 'default';
+      // The site's saved choice, given by the app for this site only.
+      let permission = initial && location.origin === initial.origin ? initial.permission : 'default';
       post({ action: 'permission' }).then((state) => { permission = state; }, () => {});
 
       const shown = new Map();
@@ -161,20 +193,27 @@ enum WebNotificationScript {
     }
 
     private static let permissions = #"""
-      // navigator.permissions.query({ name: 'notifications' }) follows the same choice
-      // (WebKit itself answers "prompt" for a site denied through this bridge).
-      const permissions = navigator.permissions;
-      if (permissions && typeof permissions.query === 'function') {
-        const query = permissions.query.bind(permissions);
-        permissions.query = (descriptor) => {
-          if (!descriptor || descriptor.name !== 'notifications') return query(descriptor);
-          const status = new EventTarget();
-          const state = permission === 'default' ? 'prompt' : permission;
-          Object.defineProperty(status, 'name', { value: 'notifications' });
-          Object.defineProperty(status, 'state', { value: state });
-          status.onchange = null;
-          return Promise.resolve(status);
-        };
+      // navigator.permissions.query({ name: 'notifications' }) follows the same
+      // choice: WebKit answers "prompt" for notifications whatever the site's
+      // choice (apps have no notifications of its own). WebKit's own query and
+      // PermissionStatus; only the state read for notifications is the choice,
+      // through the prototype's getter (the object has no property of its own).
+      const stateOf = typeof PermissionStatus === 'function'
+        && Object.getOwnPropertyDescriptor(PermissionStatus.prototype, 'state');
+      if (stateOf && typeof stateOf.get === 'function') {
+        const nameOf = Object.getOwnPropertyDescriptor(PermissionStatus.prototype, 'name');
+        const readState = stateOf.get;
+        const readName = nameOf && nameOf.get;
+        const getter = Object.getOwnPropertyDescriptor({
+          get state() {
+            const state = readState.call(this);
+            if (!readName || readName.call(this) !== 'notifications') return state;
+            return permission === 'default' ? 'prompt' : permission;
+          }
+        }, 'state').get;
+        Object.defineProperty(PermissionStatus.prototype, 'state', {
+          get: getter, enumerable: stateOf.enumerable, configurable: stateOf.configurable
+        });
       }
     })();
     """#

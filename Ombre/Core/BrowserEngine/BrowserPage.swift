@@ -49,6 +49,11 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     }
     /// Owned here: the content controller only gets a weak proxy to it.
     var notificationBridge: WebNotificationBridge?
+    /// The notification API's script in the page, replaced when the site's
+    /// choice it starts with changes (see `prepareNotifications(for:)`).
+    var notificationPageScript: WKUserScript?
+    /// The site and permission `Notification.permission` starts with.
+    var notificationInitialState: WebNotificationScript.InitialState?
     /// The secret event name the app tells the page's notifications with
     /// (see `WebNotificationScript`): a page can't guess it.
     let notificationChannel = "n" + UUID().uuidString.replacingOccurrences(of: "-", with: "")

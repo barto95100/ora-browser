@@ -91,6 +91,8 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - **Avant chaque push : lancer les tests** : `scripts/test.sh` (`xcodebuild test` dans `build/TestData.noindex`, puis
   désenregistre l'app de test ; options de `xcodebuild` en plus, ex. `-only-testing:OmbreTests/<Suite>`)
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
+- Problème avec l'Ombre installé : `./scripts/report.sh [heures]` rassemble sur le Bureau sa version, ses journaux
+  (sous-système `com.barto95100.ora`, erreurs de son processus) et les rapports de plantage récents.
 - Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` ne laisse que
   le DMG (`build/Release.noindex/Ombre-<version>.dmg`). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
   `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à

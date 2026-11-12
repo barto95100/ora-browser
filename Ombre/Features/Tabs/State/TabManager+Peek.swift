@@ -50,6 +50,9 @@ extension TabManager {
         tab.openerURL = peek.openerURL
         // What the page blocked so far shows in the tab's shield.
         tab.blockedContent = peek.blockedContent
+        // "Don't show more dialogs" chosen in Peek holds in the tab, until
+        // the page loads a new document.
+        tab.pageDelegate?.sheets.dialogPolicy = peek.sheets.dialogPolicy
         if inSplitView {
             // Beside the tab Peek was opened from.
             if let opener = container.tabs.first(where: { $0.id == peek.openerTabID }), activeTab?.id != opener.id {

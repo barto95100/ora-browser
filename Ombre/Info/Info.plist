@@ -96,6 +96,8 @@
 	<array>
 		<string>NSUserActivityTypeBrowsingWeb</string>
 	</array>
+	<key>OmbreCommit</key>
+	<string>$(OMBRE_GIT_COMMIT)</string>
 	<key>SUEnableAutomaticChecks</key>
 	<false/>
 	<key>SUEnableInstallerLauncherService</key>

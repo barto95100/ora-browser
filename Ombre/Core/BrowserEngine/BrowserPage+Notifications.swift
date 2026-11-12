@@ -106,12 +106,44 @@ extension BrowserPage {
             forMainFrameOnly: true,
             in: Self.appWorld
         ))
-        contentController.addUserScript(WKUserScript(
-            source: WebNotificationScript.source(channel: notificationChannel),
+        let pageScript = makeNotificationPageScript()
+        notificationPageScript = pageScript
+        contentController.addUserScript(pageScript)
+    }
+
+    private func makeNotificationPageScript() -> WKUserScript {
+        WKUserScript(
+            source: WebNotificationScript.source(channel: notificationChannel, initial: notificationInitialState),
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true,
             in: .page
-        ))
+        )
+    }
+
+    /// Before a page of `url` shows: `Notification.permission` gives the
+    /// site's saved choice from the start, not "default" until the app
+    /// answers (MOT-18). Only when that choice changes, and only the
+    /// API's script is replaced: every other one (the app's, the
+    /// extensions') is added back as it was, the same object.
+    func prepareNotifications(for url: URL?) {
+        guard notificationBridge != nil, let delegate else { return }
+        let initial = url.flatMap { url in
+            WebNotificationScript.InitialState(
+                url: url,
+                permission: WebNotificationBridge.permissionName(
+                    for: delegate.browserPage(self, queryPermission: .notifications, origin: url)
+                )
+            )
+        }
+        guard initial != notificationInitialState else { return }
+        notificationInitialState = initial
+        let controller = webView.configuration.userContentController
+        let kept = controller.userScripts.filter { $0 !== notificationPageScript }
+        let pageScript = makeNotificationPageScript()
+        notificationPageScript = pageScript
+        // No API removes one script: all of them, then the same ones again.
+        controller.removeAllUserScripts()
+        (kept + [pageScript]).forEach(controller.addUserScript)
     }
 
     /// Tells the page one of its notifications was clicked in Notification

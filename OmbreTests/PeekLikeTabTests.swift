@@ -112,6 +112,25 @@ extension TabManagerTests {
             }
         }
 
+        /// Dialogs stopped in Peek stay stopped in the tab it becomes.
+        @Test func stoppedDialogsStayStoppedInTheTab() async throws {
+            try await TabManagerTestWindow.run { window in
+                let peek = try await openPeek(in: window)
+                _ = peek.sheets.dialogPolicy.decide(isPageShown: true)
+                peek.sheets.dialogPolicy.stopDialogs()
+
+                window.tabManager.openPeekInTab()
+                for _ in 0 ..< 50 where window.tabManager.peek != nil {
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+
+                let tab = try #require(window.tabManager.activeTab)
+                #expect(tab.browserPage === peek.page)
+                #expect(tab.pageDelegate?.sheets.dialogPolicy.isStopped == true)
+                #expect(tab.pageDelegate?.sheets.dialogPolicy.shownCount == 1)
+            }
+        }
+
         /// What Peek blocked shows in the tab it becomes, and its security.
         @Test func blockedContentGoesToTheTab() async throws {
             try await TabManagerTestWindow.run { window in

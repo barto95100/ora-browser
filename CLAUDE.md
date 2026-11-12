@@ -94,7 +94,8 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - Problème avec l'Ombre installé : `./scripts/report.sh [heures]` rassemble sur le Bureau sa version, ses journaux
   (sous-système `com.barto95100.ora`, erreurs de son processus) et les rapports de plantage récents.
 - Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` ne laisse que
-  le DMG (`build/Release.noindex/Ombre-<version>.dmg`). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
+  le DMG (`build/Release.noindex/Ombre-<version>.dmg`) ; `./scripts/install.sh` le construit et l'installe dans
+  `/Applications` (quitter d'abord l'Ombre installé : le script refuse sinon ; commit installé : clé `OmbreCommit` de son Info.plist). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
   `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à
   Apple : pas encore demandé, donc absent (pas de clés d'accès d'ici là).
   Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).

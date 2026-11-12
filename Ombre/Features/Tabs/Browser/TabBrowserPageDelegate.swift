@@ -130,6 +130,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
 
         case .committed:
             sheets.dialogPolicy.pageDidCommitNewDocument()
+            tab.updateSecurity()
             // A new document: its language is checked once it has loaded.
             MainActor.assumeIsolated { tab.runtime?.resetTranslation() }
             tab.isLoading = event.isLoading
@@ -170,6 +171,10 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         tab?.updateMediaCaptureState(state)
     }
 
+    func browserPageDidChangeSecurity(_ page: BrowserPage) {
+        tab?.updateSecurity()
+    }
+
     func browserPageWebContentProcessDidTerminate(_ page: BrowserPage) {
         guard let tab else { return }
 
@@ -188,6 +193,7 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
     }
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
+        tab?.updateSecurity()
         guard let tab, let url, tab.url != url else { return }
 
         tab.updateURL(url)

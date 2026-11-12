@@ -65,4 +65,33 @@ struct CertificateExceptionTests {
             == CertificateException.digest(of: refused))
         #expect(CertificateException.trust(in: URLError(.timedOut)) == nil)
     }
+
+    /// A page showing a certificate accepted with "Continue Anyway" says
+    /// "Not Secure", wherever it shows (a popup reusing the tab's
+    /// connection); a certificate never accepted keeps the lock.
+    @MainActor @Test func acceptedCertificateIsNotSecure() throws {
+        let accepted = try trust(certificate(Self.first))
+        let other = try trust(certificate(Self.second))
+        let digest = try #require(CertificateException.digest(of: accepted))
+        CertificateException.remember(digest)
+        defer { CertificateException.forget(digest) }
+
+        #expect(CertificateException.wasAccepted(accepted))
+        #expect(!CertificateException.wasAccepted(other))
+        #expect(!CertificateException.wasAccepted(nil))
+
+        let https = try #require(URL(string: "https://self-signed.example/"))
+        #expect(PageSecurity.of(https, hasOnlySecureContent: true, usesAcceptedCertificate: true) == .notSecure)
+        #expect(PageSecurity.of(https, hasOnlySecureContent: true, usesAcceptedCertificate: false) == .secure)
+    }
+
+    /// The tab's bar: a lock, a warning (said in words), or a globe.
+    @MainActor @Test func tabBarSaysWhatThePageIs() throws {
+        let http = try #require(URL(string: "http://example.com/"))
+        let blank = try #require(URL(string: "about:blank"))
+        #expect(URLBar.securitySymbol(.secure) == "lock.fill")
+        #expect(URLBar.securitySymbol(PageSecurity.of(http, hasOnlySecureContent: true))
+            == "exclamationmark.triangle.fill")
+        #expect(URLBar.securitySymbol(PageSecurity.of(blank, hasOnlySecureContent: false)) == "globe")
+    }
 }

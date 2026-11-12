@@ -5698,6 +5698,16 @@
         }
       }
     },
+    "Not Secure, %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non sécurisé, %@"
+          }
+        }
+      }
+    },
     "Notes" : {
       "localizations" : {
         "fr" : {
@@ -8778,6 +8788,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Composants tiers"
+          }
+        }
+      }
+    },
+    "This connection is not secure." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette connexion n’est pas sécurisée."
           }
         }
       }

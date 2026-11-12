@@ -99,7 +99,7 @@ final class PopupPage: ObservableObject {
     func updateAddress() {
         let url = page.currentURL
         if address != url { address = url }
-        let security = PageSecurity.of(url, hasOnlySecureContent: page.hasOnlySecureContent)
+        let security = page.security
         if self.security != security { self.security = security }
     }
 

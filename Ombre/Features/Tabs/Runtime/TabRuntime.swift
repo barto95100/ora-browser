@@ -38,6 +38,8 @@ final class TabRuntime {
     var permissionRequest: SitePermissionRequest?
     /// Camera and microphone in use by the page.
     var mediaCaptureState = BrowserMediaCaptureState()
+    /// How safe the page's connection is, once it has one (see `Tab+Security`).
+    var pageSecurity: PageSecurity?
     /// Site the shown favicon belongs to (see `Tab+Favicon.swift`).
     var faviconSiteHost: String?
     /// Last page recorded in the history (see `Tab+History.swift`).
@@ -95,6 +97,7 @@ final class TabRuntime {
     /// The page went (unloaded, rebuilt): nothing of it is left to show.
     func reset() {
         clearNavigationFailure()
+        pageSecurity = nil
         setHoveredLink(nil)
         resetTranslation()
         translationSession = nil

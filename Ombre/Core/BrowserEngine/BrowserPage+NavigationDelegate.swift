@@ -57,6 +57,10 @@ extension BrowserPage: WKNavigationDelegate {
             // A site exempted from protections loads without content rules.
             if navigationAction.targetFrame?.isMainFrame ?? true, let url = navigationAction.request.url {
                 setContentBlocking(enabled: delegate?.browserPage(self, allowsContentBlockingFor: url) ?? true)
+                // The site's notification choice, from its first script (the
+                // response checks it again after a redirect). Not for a new
+                // window: its page has its own scripts.
+                if navigationAction.targetFrame?.isMainFrame == true { prepareNotifications(for: url) }
             }
             // Link Tracking Protection: the address loads without its
             // tracking parameters.
@@ -269,6 +273,7 @@ extension BrowserPage: WKNavigationDelegate {
             if navigationResponse.isForMainFrame {
                 isDownloadNavigation = false
                 originalURL = nil
+                prepareNotifications(for: navigationResponse.response.url)
             }
             decisionHandler(.allow)
         case .frameDownload:

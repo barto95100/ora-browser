@@ -87,6 +87,7 @@ extension BrowserPage: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         hasProvisionalNavigation = true
+        delegate?.browserPageDidChangeSecurity(self)
         if !isDownloadNavigation {
             originalURL = lastCommittedURL
             emitNavigationEvent(
@@ -101,6 +102,7 @@ extension BrowserPage: WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         hasProvisionalNavigation = false
+        delegate?.browserPageDidChangeSecurity(self)
         httpsUpgrade.navigationCommitted()
         if !isDownloadNavigation {
             lastCommittedURL = webView.url
@@ -274,6 +276,7 @@ extension BrowserPage: WKNavigationDelegate {
         case .pageDownload:
             isDownloadNavigation = true
             hasProvisionalNavigation = false
+            delegate?.browserPageDidChangeSecurity(self)
             emitNavigationEvent(
                 phase: .finished,
                 url: originalURL,

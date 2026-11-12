@@ -22,6 +22,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Certificates the user chose to trust anyway, by host (SHA-256, see
     /// `CertificateException`).
     private(set) var certificateExceptions: [String: String] = [:]
+    /// A load started and not committed yet: the certificate and the
+    /// content WebKit reports are still the previous page's.
+    var hasProvisionalNavigation = false
     private(set) var isReadyForNavigation = false
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
@@ -157,6 +160,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             // Insecure content loaded by a secure page (the lock goes).
             webView.observe(\.hasOnlySecureContent) { [weak self] _, _ in
                 self?.notifyOnMain { $0.delegate?.browserPageDidChangeSecurity($0) }
+            },
+            // A new certificate (one the user accepted: "Not Secure").
+            webView.observe(\.serverTrust) { [weak self] _, _ in
+                self?.notifyOnMain { $0.delegate?.browserPageDidChangeSecurity($0) }
             }
         ]
 
@@ -255,6 +262,21 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Whether everything the page loaded came over a secure connection.
     var hasOnlySecureContent: Bool {
         webView.hasOnlySecureContent
+    }
+
+    /// How safe the connection is, for the address.
+    var security: PageSecurity {
+        let url = currentURL
+        guard url?.scheme?.lowercased() == "https" else {
+            return PageSecurity.of(url, hasOnlySecureContent: false)
+        }
+        // Until the new page commits, its address only.
+        if hasProvisionalNavigation { return PageSecurity.of(url, hasOnlySecureContent: true) }
+        return PageSecurity.of(
+            url,
+            hasOnlySecureContent: hasOnlySecureContent,
+            usesAcceptedCertificate: CertificateException.wasAccepted(webView.serverTrust)
+        )
     }
 
     var canGoBack: Bool {
@@ -432,6 +454,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Trusts this certificate for `host`, and no other one it may present.
     func allowCertificate(digest: String, for host: String) {
         certificateExceptions[host] = digest
+        CertificateException.remember(digest)
     }
 
     private func flushPendingNavigationIfNeeded() {

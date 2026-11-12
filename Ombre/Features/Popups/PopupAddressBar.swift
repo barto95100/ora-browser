@@ -1,24 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// How safe the connection of a page is, for its address.
-enum PageSecurity: Equatable {
-    /// HTTPS, and everything it loaded too.
-    case secure
-    /// HTTP, or an HTTPS page that loaded something over HTTP.
-    case notSecure
-    /// No connection of its own (`about:blank`, `blob:`, `data:`, a file).
-    case local
-
-    static func of(_ url: URL?, hasOnlySecureContent: Bool) -> PageSecurity {
-        switch url?.scheme?.lowercased() {
-        case "https": hasOnlySecureContent ? .secure : .notSecure
-        case "http": .notSecure
-        default: .local
-        }
-    }
-}
-
 /// An address as the popup's bar shows it: the site (host and port, never
 /// any user name before it), then the rest. A long address is cut in the
 /// rest, never in the site, so it can't hide the real domain

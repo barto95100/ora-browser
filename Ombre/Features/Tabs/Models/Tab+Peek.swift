@@ -27,6 +27,8 @@ extension Tab {
         self.historyManager = historyManager
         self.downloadManager = downloadManager
         setupBrowserPageDelegate(for: page)
+        // Already loaded: no event may come to tell it.
+        updateSecurity()
         syncBackgroundColorFromHex()
         isWebViewReady = true
         // A page WebKit is about to load is recorded once loaded.

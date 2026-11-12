@@ -316,23 +316,58 @@ struct URLBar: View {
 
     // MARK: - URL Display Field (non-editing)
 
+    /// The lock, warning or globe (a spinner while loading).
+    private func securityIndicator(tab: Tab) -> some View {
+        ZStack {
+            if tab.isLoading {
+                ProgressView()
+                    .scaleEffect(0.5)
+                    // AppKit's spinner follows the appearance, not a color.
+                    .environment(\.colorScheme, foreground(tab).isLight ? .dark : .light)
+            } else {
+                // A lock, like Safari: the shield is the privacy protections'.
+                Image(systemName: Self.securitySymbol(tab.security))
+                    .font(.system(size: 12))
+                    .foregroundColor(buttonForegroundColor)
+                    .help(Self.securityHelp(tab.security))
+            }
+        }
+        .frame(width: 16, height: 16)
+    }
+
+    /// Said in words, like Safari: HTTP, insecure content, or a certificate
+    /// accepted with "Continue Anyway".
+    @ViewBuilder private func notSecurePrefix(tab: Tab) -> some View {
+        if tab.security == .notSecure {
+            Text("Not Secure")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(buttonForegroundColor)
+                .fixedSize()
+            Text(verbatim: " — ")
+                .font(.system(size: 14))
+                .foregroundColor(tabManager.activeTab.map { foreground($0).secondary } ?? .gray)
+        }
+    }
+
+    static func securitySymbol(_ security: PageSecurity) -> String {
+        switch security {
+        case .secure: "lock.fill"
+        case .notSecure: "exclamationmark.triangle.fill"
+        case .local: "globe"
+        }
+    }
+
+    static func securityHelp(_ security: PageSecurity) -> String {
+        switch security {
+        case .secure: String(localized: "Secure connection")
+        case .notSecure: String(localized: "This connection is not secure.")
+        case .local: ""
+        }
+    }
+
     private func urlDisplayField(tab: Tab) -> some View {
         HStack(spacing: 8) {
-            // Security indicator
-            ZStack {
-                if tab.isLoading {
-                    ProgressView()
-                        .scaleEffect(0.5)
-                        // AppKit's spinner follows the appearance, not a color.
-                        .environment(\.colorScheme, foreground(tab).isLight ? .dark : .light)
-                } else {
-                    // A lock, like Safari: the shield is the privacy protections'.
-                    Image(systemName: tab.url.scheme == "https" ? "lock.fill" : "globe")
-                        .font(.system(size: 12))
-                        .foregroundColor(buttonForegroundColor)
-                }
-            }
-            .frame(width: 16, height: 16)
+            securityIndicator(tab: tab)
 
             ZStack(alignment: .leading) {
                 CopiedURLOverlay(
@@ -348,6 +383,7 @@ struct URLBar: View {
                     showFull: toolbarManager.showFullURL
                 )
                 HStack(spacing: 0) {
+                    notSecurePrefix(tab: tab)
                     Text(parts.host)
                         .font(.system(size: 14))
                         .foregroundColor(buttonForegroundColor)
@@ -372,7 +408,11 @@ struct URLBar: View {
             // bar's other buttons stay reachable.
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Address")
-            .accessibilityValue(tab.url.absoluteString)
+            .accessibilityValue(
+                tab.security == .notSecure
+                    ? String(localized: "Not Secure, \(tab.url.absoluteString)")
+                    : tab.url.absoluteString
+            )
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { startEditing() }
 

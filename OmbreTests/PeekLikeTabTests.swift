@@ -131,7 +131,7 @@ extension TabManagerTests {
             }
         }
 
-        /// What Peek blocked shows in the tab it becomes.
+        /// What Peek blocked shows in the tab it becomes, and its security.
         @Test func blockedContentGoesToTheTab() async throws {
             try await TabManagerTestWindow.run { window in
                 let peek = try await openPeek(in: window)
@@ -148,6 +148,13 @@ extension TabManagerTests {
                 let tab = try #require(window.tabManager.activeTab)
                 #expect(tab.browserPage === peek.page)
                 #expect(tab.blockedContent == ["tracker.example": 2])
+                // Its security comes from the page, already loaded (WebKit's
+                // reports on the failing test load reach it on the main queue).
+                for _ in 0 ..< 50 where tab.runtime?.pageSecurity != peek.page.security {
+                    try await Task.sleep(for: .milliseconds(20))
+                }
+                #expect(tab.runtime?.pageSecurity != nil)
+                #expect(tab.runtime?.pageSecurity == peek.page.security)
             }
         }
 

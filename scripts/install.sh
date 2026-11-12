@@ -11,7 +11,8 @@ set -euo pipefail
 # separate app (com.barto95100.ora.dev): its data, passwords and settings
 # are its own, and it is left alone.
 #
-# The installed version: defaults read /Applications/Ombre.app/Contents/Info.plist OmbreCommit
+# The installed version:
+#   /usr/libexec/PlistBuddy -c "Print :OmbreCommit" /Applications/Ombre.app/Contents/Info.plist
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
@@ -40,28 +41,32 @@ DMG="build/Release.noindex/Ombre-${VERSION}.dmg"
 step "Installing in ${INSTALL_DIR}"
 
 MOUNT=$(mktemp -d)
+NEW="${INSTALL_DIR}/.Ombre-new.app"
 # The DMG's copy is unregistered (same bundle id as the installed app).
 detach() {
     "$LSREGISTER" -u "$MOUNT/Ombre.app" 2>/dev/null || true
+    # Stopped before the swap: no second copy left beside the installed one.
+    if [[ -e "$NEW" ]]; then
+        "$LSREGISTER" -u "$NEW" 2>/dev/null || true
+        rm -rf "$NEW"
+    fi
     hdiutil detach -quiet "$MOUNT" 2>/dev/null || true
     rmdir "$MOUNT" 2>/dev/null || true
 }
 trap detach EXIT
 hdiutil attach -quiet -nobrowse -readonly -mountpoint "$MOUNT" "$DMG" || die "Could not open ${DMG}."
 
-# Opened while it was building?
-is_running && die "Ombre was opened meanwhile: quit it, then run this again."
-
 # Copied next to the old one first, then swapped: a failed copy leaves the
 # installed app as it was.
-NEW="${INSTALL_DIR}/.Ombre-new.app"
 rm -rf "$NEW"
 ditto "$MOUNT/Ombre.app" "$NEW" || die "Copy failed."
 codesign --verify --deep --strict "$NEW" || { rm -rf "$NEW"; die "Signature check failed."; }
+# Opened while it was building or copying? Checked right before the swap.
+is_running && die "Ombre was opened meanwhile: quit it, then run this again."
 "$LSREGISTER" -u "$NEW" 2>/dev/null || true
 rm -rf "$INSTALLED"
 mv "$NEW" "$INSTALLED"
 "$LSREGISTER" -f "$INSTALLED"
 
-COMMIT=$(defaults read "$INSTALLED/Contents/Info.plist" OmbreCommit 2>/dev/null || echo "?")
+COMMIT=$(/usr/libexec/PlistBuddy -c "Print :OmbreCommit" "$INSTALLED/Contents/Info.plist" 2>/dev/null || echo "?")
 green "Installed: ${INSTALLED} (${VERSION}, commit ${COMMIT})"

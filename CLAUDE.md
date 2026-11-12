@@ -93,7 +93,7 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
 - Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` ne laisse que
   le DMG (`build/Release.noindex/Ombre-<version>.dmg`) ; `./scripts/install.sh` le construit et l'installe dans
-  `/Applications` (Ombre installé fermé d'abord ; commit installé : clé `OmbreCommit` de son Info.plist). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
+  `/Applications` (quitter d'abord l'Ombre installé : le script refuse sinon ; commit installé : clé `OmbreCommit` de son Info.plist). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
   `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à
   Apple : pas encore demandé, donc absent (pas de clés d'accès d'ici là).
   Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).

@@ -26,6 +26,30 @@ enum CertificateException {
         return (value as! SecTrust) // swiftlint:disable:this force_cast
     }
 
+    /// Every certificate accepted since launch, in any page: a page showing
+    /// one says "Not Secure", even one that didn't accept it itself (a
+    /// popup reusing the connection of the tab that did). Only for what the
+    /// address shows: which certificate a page trusts stays its own.
+    @MainActor private static var acceptedDigests: Set<String> = []
+
+    @MainActor static func remember(_ digest: String) {
+        acceptedDigests.insert(digest)
+    }
+
+    #if DEBUG
+        /// For the tests: leaves nothing behind.
+        @MainActor static func forget(_ digest: String) {
+            acceptedDigests.remove(digest)
+        }
+    #endif
+
+    /// Whether the certificate of `trust` was accepted by the user rather
+    /// than trusted by macOS.
+    @MainActor static func wasAccepted(_ trust: SecTrust?) -> Bool {
+        guard !acceptedDigests.isEmpty, let trust, let digest = digest(of: trust) else { return false }
+        return acceptedDigests.contains(digest)
+    }
+
     /// Whether a server presenting `digest` for `host` was accepted.
     static func isAccepted(digest: String?, host: String, exceptions: [String: String]) -> Bool {
         guard let digest, let accepted = exceptions[host] else { return false }

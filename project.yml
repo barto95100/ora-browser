@@ -66,6 +66,9 @@ targets:
         NSLocationWhenInUseUsageDescription: "Lets websites you approve know your location, for example for maps or nearby stores."
         SUEnableAutomaticChecks: NO
         SUEnableInstallerLauncherService: YES
+        # The commit a Release was built from (OMBRE_GIT_COMMIT, set by
+        # scripts/build.sh): which version is installed.
+        OmbreCommit: $(OMBRE_GIT_COMMIT)
         CFBundleURLTypes:
           - CFBundleURLName: Ombre
             CFBundleTypeRole: Editor
@@ -109,6 +112,8 @@ targets:
         SWIFT_TREAT_WARNINGS_AS_ERRORS: $(OMBRE_WARNINGS_AS_ERRORS)
         GCC_TREAT_WARNINGS_AS_ERRORS: $(OMBRE_WARNINGS_AS_ERRORS)
         CODE_SIGN_STYLE: Automatic
+        # Set by scripts/build.sh (Info.plist's OmbreCommit).
+        OMBRE_GIT_COMMIT: ""
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 106
         PRODUCT_NAME: Ombre

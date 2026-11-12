@@ -21,6 +21,9 @@ source "$SCRIPT_DIR/_common.sh"
 cd "$SCRIPT_DIR/.."
 
 VERSION=$(grep "MARKETING_VERSION:" project.yml | sed 's/.*MARKETING_VERSION: //' | tr -d ' ')
+# The commit, in the app's Info.plist (OmbreCommit), "+" if the tree had changes.
+COMMIT=$(git rev-parse --short HEAD)
+git diff --quiet HEAD -- || COMMIT="${COMMIT}+"
 OUTPUT="build/Release.noindex"
 WORK="$OUTPUT/work"
 ARCHIVE_PATH="$WORK/Ombre.xcarchive"
@@ -35,7 +38,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-step "Building Ombre ${VERSION}"
+step "Building Ombre ${VERSION} (${COMMIT})"
 
 rm -rf "$WORK" "$DMG_PATH"
 mkdir -p "$WORK"
@@ -49,7 +52,8 @@ archive=(xcodebuild archive
     -configuration Release
     -destination "platform=macOS"
     -archivePath "$ARCHIVE_PATH"
-    -allowProvisioningUpdates)
+    -allowProvisioningUpdates
+    OMBRE_GIT_COMMIT="$COMMIT")
 if command -v xcbeautify >/dev/null 2>&1; then
     "${archive[@]}" 2>&1 | xcbeautify
 else

@@ -31,7 +31,7 @@ step "Version"
 {
     echo "Ombre: $(defaults read "$APP/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "not installed")" \
         "($(defaults read "$APP/Contents/Info.plist" CFBundleVersion 2>/dev/null || echo "?")," \
-        "commit $(defaults read "$APP/Contents/Info.plist" OmbreCommit 2>/dev/null || echo "?"))"
+        "commit $(/usr/libexec/PlistBuddy -c "Print :OmbreCommit" "$APP/Contents/Info.plist" 2>/dev/null || echo "?"))"
     echo "macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
     echo "Report: last ${HOURS} h, $(date)"
 } | tee "$OUT/version.txt"

@@ -44,15 +44,9 @@ final class FaviconService: ObservableObject {
         return nil
     }
 
-    /// The site's icon once found, or its HTTPS address meanwhile. None for a
-    /// host on the local network (an IP address, `.local`…): it has no HTTPS on
-    /// port 443, and asking each time the tab was drawn failed on its
-    /// certificate; the page's own icon comes when it loads.
     func faviconURL(for domain: String) -> URL? {
         let normalizedDomain = normalizeDomain(domain)
-        if let found = sourceURLCache[normalizedDomain] { return found }
-        guard HTTPSUpgradePolicy.isPublic(normalizedDomain) else { return nil }
-        return canonicalURL(for: normalizedDomain)
+        return sourceURLCache[normalizedDomain] ?? canonicalURL(for: normalizedDomain)
     }
 
     func faviconURL(forSearchURL searchURL: String) -> URL? {

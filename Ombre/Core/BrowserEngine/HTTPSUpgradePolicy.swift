@@ -65,6 +65,8 @@ struct HTTPSUpgradePolicy {
 
     /// Whether the host is on the internet, not on the local network.
     static func isPublic(_ host: String) -> Bool {
+        // A fully qualified name may end with a dot (`nas.local.`).
+        let host = host.hasSuffix(".") ? String(host.dropLast()) : host
         guard host.contains("."), !host.contains(":") else { return false } // single label, IPv6
         if host.allSatisfy({ $0.isNumber || $0 == "." }) { return false } // IPv4
         return !localSuffixes.contains { host.hasSuffix($0) }

@@ -197,7 +197,13 @@ class TabManager: ObservableObject {
     static func initialTitleAndFavicon(for url: URL) -> (title: String, favicon: URL?)? {
         if let host = url.host, !host.isEmpty {
             let cleanHost = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-            return (cleanHost, FaviconService.shared.faviconURL(for: host))
+            // None for a host on the local network (an IP address, `.local`…):
+            // it has no HTTPS on port 443, and the tab asked again each time it
+            // was drawn, failing on its certificate. The page's own icon comes
+            // when it loads.
+            let favicon = HTTPSUpgradePolicy.isPublic(host.lowercased())
+                ? FaviconService.shared.faviconURL(for: host) : nil
+            return (cleanHost, favicon)
         }
         if url.isFileURL {
             return (url.lastPathComponent, nil)

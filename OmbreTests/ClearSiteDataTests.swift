@@ -58,6 +58,8 @@ struct ClearSiteDataTests {
             tab.browserPage = tab.makeBrowserPage(isPrivate: true)
             defer {
                 tab.browserPage?.teardown()
+                // Never loaded: the window's teardown would wait for it.
+                tab.browserPage = nil
                 BrowserEngine.shared.endPrivateSession(window.tabManager.privateSessionID)
             }
             let store = try #require(tab.browserPage?.webView.configuration.websiteDataStore)

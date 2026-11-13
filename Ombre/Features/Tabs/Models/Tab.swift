@@ -292,12 +292,24 @@ class Tab: ObservableObject, Identifiable {
         tabManager: TabManager,
         isPrivate: Bool
     ) {
-        // Avoid double initialization
-        if browserPage != nil { return }
-
         // First: the page takes the window's private session from it, and
-        // its state is kept in the window's runtime.
+        // its state is kept in the window's runtime. The page the window
+        // already keeps for the tab, if any, is the tab's again.
         self.tabManager = tabManager
+        if tabManager.existingRuntime(for: id) != nil {
+            _ = tabManager.runtime(for: self)
+        }
+        // Avoid double initialization
+        if browserPage != nil {
+            // Wired to this object, should the page have been made for another
+            // one (`TabManager.runtimeTabs` keeps that from happening).
+            if pageDelegate?.tab !== self { pageDelegate?.tab = self }
+            if passwordCoordinator?.tab !== self { passwordCoordinator?.tab = self }
+            if self.historyManager == nil { self.historyManager = historyManager }
+            if self.downloadManager == nil { self.downloadManager = downloadManager }
+            return
+        }
+
         if passwordCoordinator == nil {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }

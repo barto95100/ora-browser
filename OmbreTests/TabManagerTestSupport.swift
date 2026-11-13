@@ -126,6 +126,16 @@ final class TabManagerTestWindow {
         return tab
     }
 
+    /// Opens a tab and waits for the end of its own load (it fails: see
+    /// `refusingPort`). A page the test then loads into it is not replaced:
+    /// the tab's load waits for its content rules, and could start after it.
+    @discardableResult
+    func openSettled(_ path: String) async throws -> Tab {
+        let tab = try await openLoaded(path)
+        await waitUntil("load of \(path) failed") { tab.failedURL != nil }
+        return tab
+    }
+
     /// A tab restored from the database and never loaded since: no page.
     @discardableResult
     func addUnloadedTab(

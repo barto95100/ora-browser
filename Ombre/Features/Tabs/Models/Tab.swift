@@ -300,7 +300,15 @@ class Tab: ObservableObject, Identifiable {
             _ = tabManager.runtime(for: self)
         }
         // Avoid double initialization
-        if browserPage != nil { return }
+        if browserPage != nil {
+            // Wired to this object, should the page have been made for another
+            // one (`TabManager.runtimeTabs` keeps that from happening).
+            if pageDelegate?.tab !== self { pageDelegate?.tab = self }
+            if passwordCoordinator?.tab !== self { passwordCoordinator?.tab = self }
+            if self.historyManager == nil { self.historyManager = historyManager }
+            if self.downloadManager == nil { self.downloadManager = downloadManager }
+            return
+        }
 
         if passwordCoordinator == nil {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)

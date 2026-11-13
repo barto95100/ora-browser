@@ -42,9 +42,16 @@ extension TabManagerTests {
                 let pinned = try #require(window.tabs(withID: id).first)
                 let page = try #require(pinned.browserPage)
 
-                // What a new object for the same tab looks like.
+                // What a new object for the same tab looks like: empty
+                // transient state, and the page wired to another object.
+                let delegate = try #require(pinned.pageDelegate)
+                let coordinator = try #require(pinned.passwordCoordinator)
                 pinned.pageRuntime = nil
                 pinned.tabManager = nil
+                pinned.historyManager = nil
+                pinned.downloadManager = nil
+                delegate.tab = nil
+                coordinator.tab = nil
 
                 window.tabManager.activateTab(pinned)
                 // The views ask again a moment later (sidebar tap, BrowserView).
@@ -62,6 +69,11 @@ extension TabManagerTests {
                 #expect(pinned.isWebViewReady)
                 #expect(pinned.browserPage === page)
                 #expect(window.tabManager.existingRuntime(for: id)?.page === page)
+                // Titles, addresses, history and passwords reach it again.
+                #expect(delegate.tab === pinned)
+                #expect(coordinator.tab === pinned)
+                #expect(pinned.historyManager === window.historyManager)
+                #expect(pinned.downloadManager === window.downloadManager)
             }
         }
     }

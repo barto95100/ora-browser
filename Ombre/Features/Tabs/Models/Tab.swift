@@ -292,12 +292,16 @@ class Tab: ObservableObject, Identifiable {
         tabManager: TabManager,
         isPrivate: Bool
     ) {
+        // First: the page takes the window's private session from it, and
+        // its state is kept in the window's runtime. The page the window
+        // already keeps for the tab, if any, is the tab's again.
+        self.tabManager = tabManager
+        if tabManager.existingRuntime(for: id) != nil {
+            _ = tabManager.runtime(for: self)
+        }
         // Avoid double initialization
         if browserPage != nil { return }
 
-        // First: the page takes the window's private session from it, and
-        // its state is kept in the window's runtime.
-        self.tabManager = tabManager
         if passwordCoordinator == nil {
             passwordCoordinator = PasswordAutofillCoordinator(tab: self)
         }

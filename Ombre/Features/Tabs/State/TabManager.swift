@@ -40,6 +40,12 @@ class TabManager: ObservableObject {
     var recentlyClosedTabs: [ClosedTabSnapshot] = []
     /// The loaded tabs' state in this window (see `TabRuntime`).
     var runtimes: [UUID: TabRuntime] = [:]
+    /// The objects of the tabs with a runtime, held while the window keeps
+    /// their state: the database then hands out these same objects. Let go,
+    /// a fetch makes a new one, whose transient properties are empty: it had
+    /// no page, made another one each time it was shown and never loaded it.
+    /// Here, not in the runtime: the tab holds its runtime (a cycle).
+    var runtimeTabs: [UUID: Tab] = [:]
     /// Other windows' saves (see `TabManager+WindowSync`).
     nonisolated(unsafe) var windowSyncObserver: NSObjectProtocol?
     var pendingSync: PendingSync?

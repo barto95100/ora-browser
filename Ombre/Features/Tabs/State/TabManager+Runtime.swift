@@ -3,11 +3,13 @@ import Foundation
 extension TabManager {
     /// The tab's state in this window, made when first asked for.
     func runtime(for tab: Tab) -> TabRuntime {
-        if let runtime = runtimes[tab.id] { return runtime }
-        let runtime = TabRuntime()
+        let runtime = runtimes[tab.id] ?? TabRuntime()
         runtimes[tab.id] = runtime
+        // Keeps the tab's object (see `runtimeTabs`).
+        runtimeTabs[tab.id] = tab
         // Observed on the tab: a view that found none redraws when it comes.
-        tab.pageRuntime = runtime
+        // Set again if the tab lost it, or the tab would not see its page.
+        if tab.pageRuntime !== runtime { tab.pageRuntime = runtime }
         return runtime
     }
 
@@ -20,6 +22,7 @@ extension TabManager {
     /// rebuilt keeps its runtime, reset, since the page's view watches it.
     func dropRuntime(for tab: Tab) {
         runtimes[tab.id] = nil
+        runtimeTabs[tab.id] = nil
         tab.pageRuntime = nil
     }
 }

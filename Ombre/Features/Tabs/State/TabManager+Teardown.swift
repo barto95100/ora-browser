@@ -26,6 +26,7 @@ extension TabManager {
             tab.pageRuntime = nil
         }
         runtimes.removeAll()
+        runtimeTabs.removeAll()
         // What was not saved yet (title, URL of in-page navigations…).
         modelContext.saveOrLog("close window")
     }

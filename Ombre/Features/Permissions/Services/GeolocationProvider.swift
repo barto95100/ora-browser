@@ -310,7 +310,7 @@ struct WebKitGeolocation: GeolocationWebKit {
             setEnableHighAccuracy: highAccuracy
         )
         withUnsafePointer(to: &provider) { setProviderFunction(manager, UnsafeRawPointer($0)) }
-        logger.notice("Position provider set for a process pool")
+        logger.debug("Position provider set for a process pool")
     }
 
     func didChangePosition(_ manager: UnsafeRawPointer, _ location: CLLocation) {

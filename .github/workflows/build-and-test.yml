@@ -154,6 +154,9 @@ jobs:
             )
             signing=()
           fi
+          # A cancelled run's xcodebuild may have written its results after
+          # the runner emptied this folder.
+          rm -rf "$RUNNER_TEMP/TestResults.xcresult"
           xcodebuild test \
             -project Ombre.xcodeproj \
             -scheme Ombre \
@@ -216,28 +219,50 @@ jobs:
       # (the app, the tests' app and Sparkle's Updater.app, in Debug and Test).
       # Written out here, not with scripts/unregister-copies.sh: this runs
       # even when the checkout failed.
+      # A cancelled run stops this job's shell only: xcodebuild and the tests'
+      # app go on running, build and launch, and register the apps again after
+      # this step. Stop them first, found by their path in this workspace,
+      # never by name (the Mac's own Ombre may be running). Then unregister,
+      # and check a few times that nothing registered them again.
       - name: Unregister the built apps
         if: always() && runner.environment == 'self-hosted'
         run: |
           lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+          built="$RUNNER_WORKSPACE/DerivedData.noindex"
+          registered() {
+            "$lsregister" -dump \
+              | awk -v dir="$RUNNER_WORKSPACE/" '/^path:/ { sub(/^path: +/, ""); sub(/ \(0x[0-9a-f]+\)$/, ""); if (index($0, dir) == 1) print }' \
+              | sort -u
+          }
           unregister() {
             find "$RUNNER_WORKSPACE" -type d -name '*.app' -print0 \
               | xargs -0 -n 1 "$lsregister" -u 2>/dev/null || true
             # Copies registered from there, even if since deleted.
-            "$lsregister" -dump \
-              | awk -v dir="$RUNNER_WORKSPACE/" '/^path:/ { sub(/^path: +/, ""); sub(/ \(0x[0-9a-f]+\)$/, ""); if (index($0, dir) == 1) print }' \
-              | sort -u | while IFS= read -r app; do "$lsregister" -u "$app" 2>/dev/null || true; done
+            registered | while IFS= read -r app; do "$lsregister" -u "$app" 2>/dev/null || true; done
           }
-          # The tests' app may still be quitting: macOS registered it again
-          # right after it was unregistered. Wait for it (30 s at most),
-          # then unregister twice, a few seconds apart.
-          for _ in $(seq 30); do
-            pgrep -f "$RUNNER_WORKSPACE/DerivedData.noindex" >/dev/null || break
-            sleep 1
+          if pgrep -f "$built" >/dev/null; then
+            echo "Stopping what still runs from $built:"
+            pgrep -lf "$built" || true
+            pkill -TERM -f "$built" || true
+            for _ in $(seq 20); do
+              pgrep -f "$built" >/dev/null || break
+              sleep 1
+            done
+            pkill -KILL -f "$built" || true
+            sleep 2
+          fi
+          for attempt in 1 2 3 4; do
+            unregister
+            sleep 5
+            left=$(registered)
+            if [ -z "$left" ]; then
+              echo "No built app left registered (check $attempt)."
+              exit 0
+            fi
+            echo "Registered again (check $attempt):"
+            echo "$left"
           done
-          unregister
-          sleep 5
-          unregister
+          echo "::warning::Built apps still registered: run scripts/unregister-copies.sh $RUNNER_WORKSPACE"
 
       - name: Upload test results
         if: failure()

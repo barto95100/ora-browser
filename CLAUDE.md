@@ -98,7 +98,7 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   `/Applications` (quitter d'abord l'Ombre installé : le script refuse sinon ; commit installé : clé `OmbreCommit` de son Info.plist). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
   `com.apple.developer.web-browser` (et `.public-key-credential`, clés d'accès sur les sites) exige une demande à
   Apple : pas encore demandé, donc absent (pas de clés d'accès d'ici là).
-  Bundle ID actuel `com.barto95100.ora` (Debug `.dev`).
+  Bundle ID actuel `com.barto95100.ora` (Debug `.dev`, app « Ombre Dev.app » pour ne pas la confondre avec l’Ombre installé ; module Swift `Ombre` partout).
 - **Distribution** : DMG seulement. Mac App Store exclu (ses conditions sont incompatibles avec la GPL-3.0).
   Un DMG signé Apple Development ne tourne que sur les Macs de Ludo ; pour le partager, il faut un certificat
   Developer ID et la notarisation (programme payant). Version : `MARKETING_VERSION` dans `project.yml`,

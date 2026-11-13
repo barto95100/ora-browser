@@ -96,7 +96,11 @@ targets:
           - NSUserActivityTypeBrowsingWeb
         LSMinimumSystemVersion: "15.0"
         LSApplicationCategoryType: public.app-category.web-browser
+        # Read by the string catalog (InfoPlist.xcstrings), which an export or
+        # an Xcode build would rewrite with Debug's name: the built app's names
+        # come from PRODUCT_NAME instead (INFOPLIST_KEY_CFBundleDisplayName).
         CFBundleDisplayName: Ombre
+        CFBundleName: Ombre
 
     settings:
       base:
@@ -117,6 +121,10 @@ targets:
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 106
         PRODUCT_NAME: Ombre
+        # Debug's app is "Ombre Dev" (see Debug below); the Swift module stays
+        # "Ombre" in every configuration.
+        PRODUCT_MODULE_NAME: Ombre
+        INFOPLIST_KEY_CFBundleDisplayName: $(PRODUCT_NAME)
         # Interface in the Mac's language (English, French): the compiler
         # lists the strings to translate in Ombre/Resources/Localizable.xcstrings
         # (checked by scripts/check-localization.sh).
@@ -132,6 +140,9 @@ targets:
       configs:
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.barto95100.ora.dev
+          # Not to be mistaken for the installed Ombre: the Dock, the menu bar
+          # and macOS's lists (default browser) show this name.
+          PRODUCT_NAME: Ombre Dev
           CODE_SIGN_ENTITLEMENTS: Ombre/Info/Ombre-dev.entitlements
           CODE_SIGN_STYLE: Automatic
           CODE_SIGN_IDENTITY: "Apple Development"
@@ -174,6 +185,10 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: Q76T6LDBBZ
+      configs:
+        # The app is "Ombre Dev" in Debug (see the app's settings).
+        Debug:
+          TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Ombre Dev.app/Contents/MacOS/Ombre Dev"
 
 schemes:
   Ombre:

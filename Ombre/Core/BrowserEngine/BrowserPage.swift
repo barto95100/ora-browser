@@ -486,7 +486,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
 
     /// A line about this page in the log (`PageLog`).
     func log(_ event: String, _ url: URL? = nil, error: Error? = nil) {
-        var line = "page \(logID) \(event)"
+        var line = "page \(logID) \(event)" // not shown
         if let url { line += " " + (isExtensionPage ? "extension" : PageLog.site(url, isPrivate: isPrivate)) }
         if let error { line += " (" + PageLog.describe(error) + ")" }
         PageLog.notice(line)

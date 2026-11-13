@@ -42,7 +42,8 @@ extension TabManager {
         let levelName = String(describing: level)
         logger
             .notice(
-                "Memory pressure (\(levelName, privacy: .public)): unloaded \(unloaded.count) of \(loaded.count) pages"
+                "Memory pressure (\(levelName, privacy: .public)): unloaded \(unloaded.count) of \(loaded.count) pages" // not
+                // shown
             )
     }
 }

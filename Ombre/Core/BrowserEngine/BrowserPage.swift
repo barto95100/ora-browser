@@ -10,7 +10,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Made with an extension's configuration, for its own pages: WebKit
     /// loads nothing else in it (a website it leads to opens in a tab).
     var isExtensionPage = false
-    /// In a private window: its sites are never written to the log.
+    /// Its data is private (a private window's): its sites are never written
+    /// to the log. An extension's page is never private here, whatever its
+    /// window: the log writes "extension" for it instead.
     let isPrivate: Bool
     /// Tells this page's lines apart in the log (`PageLog`).
     let logID = String(UUID().uuidString.prefix(6))
@@ -485,7 +487,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// A line about this page in the log (`PageLog`).
     func log(_ event: String, _ url: URL? = nil, error: Error? = nil) {
         var line = "page \(logID) \(event)"
-        if let url { line += " " + PageLog.site(url, isPrivate: isPrivate) }
+        if let url { line += " " + (isExtensionPage ? "extension" : PageLog.site(url, isPrivate: isPrivate)) }
         if let error { line += " (" + PageLog.describe(error) + ")" }
         PageLog.notice(line)
     }

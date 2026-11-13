@@ -143,13 +143,13 @@ extension BrowserPage: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        log("load failed", webView.url, error: error)
         guard !isDownloadNavigation else {
             originalURL = nil
             return
         }
         // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
         guard !isWebContentProcessTerminationError(error) else { return }
+        log("load failed", webView.url, error: error)
 
         emitNavigationEvent(
             phase: .finished,

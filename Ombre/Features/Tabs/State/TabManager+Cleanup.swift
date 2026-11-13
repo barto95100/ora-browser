@@ -11,6 +11,7 @@ extension TabManager {
         // Skip cleanup if set to "Never" (365 days)
         guard timeout < 365 * 24 * 60 * 60 else { return }
 
+        var unloaded = 0
         for container in fetchContainers() {
             for tab in container.tabs {
                 // A tab in a call keeps its page, like one playing media.
@@ -18,9 +19,11 @@ extension TabManager {
                    !tab.mediaCaptureState.isCapturing, tab.type == .normal
                 {
                     tab.destroyWebView()
+                    unloaded += 1
                 }
             }
         }
+        if unloaded > 0 { PageLog.notice("unloaded \(unloaded) tabs not shown for a while") }
     }
 
     /// Closes normal tabs not shown for long (the general setting, or the

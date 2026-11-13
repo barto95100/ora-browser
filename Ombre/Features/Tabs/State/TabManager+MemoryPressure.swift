@@ -40,6 +40,7 @@ extension TabManager {
             tab.destroyWebView()
         }
         let levelName = String(describing: level)
-        logger.info("Memory pressure (\(levelName)): unloaded \(unloaded.count) of \(loaded.count) pages")
+        let counts = "\(unloaded.count) of \(loaded.count)" // not shown
+        logger.notice("Memory pressure (\(levelName, privacy: .public)): unloaded \(counts, privacy: .public) pages")
     }
 }

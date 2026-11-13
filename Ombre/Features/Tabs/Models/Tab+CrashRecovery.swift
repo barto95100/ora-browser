@@ -18,7 +18,9 @@ extension Tab {
         if showsCrashRecoveryNotice { showsCrashRecoveryNotice = false }
         if mediaCaptureState.isCapturing { mediaCaptureState = BrowserMediaCaptureState() }
 
-        switch crashRecovery.processDidTerminate(isVisible: isShownInWindow) {
+        let action = crashRecovery.processDidTerminate(isVisible: isShownInWindow)
+        browserPage?.log("process ended: \(action)")
+        switch action {
         case .reloadNow:
             reloadAfterCrash()
         case .reloadWhenShown:

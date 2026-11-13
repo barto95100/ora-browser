@@ -10,6 +10,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Made with an extension's configuration, for its own pages: WebKit
     /// loads nothing else in it (a website it leads to opens in a tab).
     var isExtensionPage = false
+    /// Its data is private (a private window's): its sites are never written
+    /// to the log. An extension's page is never private here, whatever its
+    /// window: the log writes "extension" for it instead.
+    let isPrivate: Bool
+    /// Tells this page's lines apart in the log (`PageLog`).
+    let logID = String(UUID().uuidString.prefix(6))
 
     /// Engine-internal: used by the delegate extensions. Outside the browser
     /// engine, go through the page API (`contentView`, `load`, …).
@@ -72,6 +78,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webKitConfiguration: WKWebViewConfiguration? = nil,
         inheritedRuleLists: [WKContentRuleList] = []
     ) {
+        isPrivate = profile.isPrivate
         let webConfiguration = webKitConfiguration ?? WKWebViewConfiguration()
         if webKitConfiguration == nil {
             Self.configure(webConfiguration, profile: profile, configuration: configuration)
@@ -428,6 +435,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     }
 
     func teardown() {
+        log("closed")
         observations.forEach { $0.invalidate() }
         observations = []
         if let inspectionObserver {
@@ -474,6 +482,14 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             // Through `reload()`: a local file keeps its read access.
             reload()
         }
+    }
+
+    /// A line about this page in the log (`PageLog`).
+    func log(_ event: String, _ url: URL? = nil, error: Error? = nil) {
+        var line = "page \(logID) \(event)" // not shown
+        if let url { line += " " + (isExtensionPage ? "extension" : PageLog.site(url, isPrivate: isPrivate)) }
+        if let error { line += " (" + PageLog.describe(error) + ")" }
+        PageLog.notice(line)
     }
 
     /// KVO may notify on any thread; the delegate updates the interface.

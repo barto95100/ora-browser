@@ -90,6 +90,7 @@ extension BrowserPage: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        log("load started", webView.url)
         hasProvisionalNavigation = true
         delegate?.browserPageDidChangeSecurity(self)
         if !isDownloadNavigation {
@@ -121,6 +122,7 @@ extension BrowserPage: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        log("load finished", webView.url)
         if !isDownloadNavigation {
             lastCommittedURL = webView.url
             emitNavigationEvent(
@@ -135,6 +137,7 @@ extension BrowserPage: WKNavigationDelegate {
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        log("web content process ended", webView.url)
         originalURL = nil
         delegate?.browserPageWebContentProcessDidTerminate(self)
     }
@@ -146,6 +149,7 @@ extension BrowserPage: WKNavigationDelegate {
         }
         // Handled as a whole by webViewWebContentProcessDidTerminate(_:).
         guard !isWebContentProcessTerminationError(error) else { return }
+        log("load failed", webView.url, error: error)
 
         emitNavigationEvent(
             phase: .finished,
@@ -174,9 +178,11 @@ extension BrowserPage: WKNavigationDelegate {
 
         let nsError = error as NSError
         let failingURL = nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL ?? webView.url
+        log("load failed before showing", failingURL, error: error)
         // The site does not answer over HTTPS: load the HTTP page asked for,
         // without showing an error.
         if let fallback = httpsUpgrade.fallback(afterFailing: failingURL, error: error) {
+            log("HTTPS first failed, back to HTTP", fallback)
             webView.load(URLRequest(url: fallback))
             return
         }
@@ -357,7 +363,9 @@ extension BrowserPage: WKNavigationDelegate {
               navigationAction.navigationType != .reload,
               let url = navigationAction.request.url
         else { return nil }
-        return httpsUpgrade.upgrade(url, httpMethod: navigationAction.request.httpMethod)
+        let upgraded = httpsUpgrade.upgrade(url, httpMethod: navigationAction.request.httpMethod)
+        if let upgraded { log("trying HTTPS first", upgraded) }
+        return upgraded
     }
 
     private func emitNavigationEvent(

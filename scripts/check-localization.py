@@ -113,7 +113,7 @@ RAW_VALUE = re.compile(
 )
 # Lines whose texts never reach the screen.
 NOT_SHOWN = re.compile(
-    r"// not shown|// no translation|\blogger\.|\bLogger\(|\bprint\(|\bfatalError\(|\bprecondition|\bassert|"
+    r"// not shown|// no translation|\blogger\.|\bLogger\(|\bPageLog\.|\blog\(|\bprint\(|\bfatalError\(|\bprecondition|\bassert|"
     r"#Preview|#selector|NSPredicate|evaluateJavaScript|callAsyncJavaScript|case \w+ = \""
 )
 # A text given to one of these is a name or a key, not shown: only it is skipped.

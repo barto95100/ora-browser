@@ -300,10 +300,13 @@ class Tab: ObservableObject, Identifiable {
             _ = tabManager.runtime(for: self)
         }
         // Avoid double initialization
-        if browserPage != nil {
+        if let page = browserPage {
             // Wired to this object, should the page have been made for another
             // one (`TabManager.runtimeTabs` keeps that from happening).
-            if pageDelegate?.tab !== self { pageDelegate?.tab = self }
+            if pageDelegate?.tab !== self {
+                page.log("given back to a new object of its tab (\(type.rawValue))")
+                pageDelegate?.tab = self
+            }
             if passwordCoordinator?.tab !== self { passwordCoordinator?.tab = self }
             if self.historyManager == nil { self.historyManager = historyManager }
             if self.downloadManager == nil { self.downloadManager = downloadManager }
@@ -316,6 +319,7 @@ class Tab: ObservableObject, Identifiable {
         let pageURL = if type != .normal { savedURL ?? url } else { url }
         let page = makeBrowserPage(isPrivate: isPrivate, for: pageURL)
         browserPage = page
+        page.log("made for a tab (\(type.rawValue))", pageURL)
 
         self.historyManager = historyManager
         self.downloadManager = downloadManager
@@ -419,6 +423,7 @@ class Tab: ObservableObject, Identifiable {
 
     @MainActor
     func destroyWebView() {
+        browserPage?.log("unloaded from its tab (\(type.rawValue))")
         cancelPermissionRequest()
         // A new page loads from scratch: nothing left to recover.
         MainActor.assumeIsolated { runtime?.crashRecovery = PageCrashRecoveryPolicy() }

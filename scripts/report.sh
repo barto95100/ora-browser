@@ -10,8 +10,11 @@ set -euo pipefail
 #   - version.txt  the installed app's version and commit, macOS's version;
 #   - ombre.log    the app's own messages (subsystem com.barto95100.ora);
 #   - errors.log   the errors and faults of Ombre's own process (WebKit's
-#                  included; its page processes are shared with every app,
-#                  so left out);
+#                  included);
+#   - webkit.log   WebKit's messages in Ombre's process (pages made, loads,
+#                  processes suspended, resumed or ended, its pages' own
+#                  processes relayed there), and those of the network process
+#                  working for the running Ombre;
 #   - crashes/     the installed Ombre's crash reports, and those of WebKit's
 #                  processes working for an Ombre.
 # Nothing is sent anywhere. The logs may name sites you visited: read them
@@ -53,7 +56,30 @@ log show --last "${HOURS}h" --info --debug --style compact \
 log show --last "${HOURS}h" --style compact \
     --predicate "processImagePath BEGINSWITH \"${APP}/\" AND messageType >= error" \
     > "$OUT/errors.log" 2>&1 || true
-echo "$(wc -l < "$OUT/ombre.log" | tr -d ' ') lines (Ombre), $(wc -l < "$OUT/errors.log" | tr -d ' ') lines (errors)"
+# WebKit in Ombre's process (its pages' processes relay their messages there):
+# loads, processes and visibility, not each resource of each page.
+log show --last "${HOURS}h" --style compact \
+    --predicate "processImagePath BEGINSWITH \"${APP}/\" AND subsystem == \"com.apple.WebKit\" \
+AND category IN {\"Loading\", \"Process\", \"ProcessSuspension\", \"ProcessSwapping\", \"ViewState\"}" \
+    > "$OUT/webkit.log" 2>&1 || true
+# The network process loading the pages is shared by no other app, but it is
+# found through its messages naming the running Ombre (parentPID=…).
+pids=$(pgrep -f "^${APP}/Contents/MacOS/Ombre" || true)
+if [[ -n "$pids" ]]; then
+    match=$(sed 's/.*/composedMessage CONTAINS "parentPID=&,"/' <<<"$pids" | paste -sd'|' - | sed 's/|/ OR /g')
+    network=$(log show --last "${HOURS}h" --style compact \
+        --predicate "process == \"com.apple.WebKit.Networking\" AND (${match})" 2>/dev/null \
+        | sed -nE 's/.*com\.apple\.WebKit\.Networking\[([0-9]+):.*/\1/p' | sort -u || true)
+    if [[ -n "$network" ]]; then
+        ids=$(paste -sd, - <<<"$network")
+        log show --last "${HOURS}h" --style compact \
+            --predicate "process == \"com.apple.WebKit.Networking\" AND processID IN {${ids}} \
+AND (messageType >= error OR composedMessage CONTAINS \"isMainResource=1\")" \
+            >> "$OUT/webkit.log" 2>&1 || true
+    fi
+fi
+echo "$(wc -l < "$OUT/ombre.log" | tr -d ' ') lines (Ombre), $(wc -l < "$OUT/errors.log" | tr -d ' ') lines (errors)," \
+    "$(wc -l < "$OUT/webkit.log" | tr -d ' ') lines (WebKit)"
 
 step "Crash reports (last 7 days)"
 # Only the installed app's (not the Debug app's nor the tests', also named

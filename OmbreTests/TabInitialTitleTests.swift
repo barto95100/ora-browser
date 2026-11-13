@@ -24,4 +24,25 @@ struct TabInitialTitleTests {
 
         #expect(TabManager.initialTitleAndFavicon(for: url) == nil)
     }
+
+    /// A site on the local network has no favicon over HTTPS on port 443: asking
+    /// for one failed on its certificate each time the tab was drawn.
+    @Test(arguments: [
+        "http://10.150.150.84:8078/", "http://192.168.1.1/", "http://nas.local/admin", "http://nas.local./",
+        "http://router/",
+        "http://[fe80::1]:8080/"
+    ])
+    func localNetworkSitesHaveNoPlaceholderFavicon(address: String) throws {
+        let url = try #require(URL(string: address))
+        let initial = try #require(TabManager.initialTitleAndFavicon(for: url))
+
+        #expect(initial.favicon == nil)
+    }
+
+    @Test func websitesKeepTheirPlaceholderFavicon() throws {
+        let url = try #require(URL(string: "http://www.example.com/page"))
+        let initial = try #require(TabManager.initialTitleAndFavicon(for: url))
+
+        #expect(initial.favicon?.absoluteString == "https://example.com")
+    }
 }

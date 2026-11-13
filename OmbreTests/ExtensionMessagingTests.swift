@@ -162,7 +162,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("tab")
+                    let tab = try await window.openSettled("tab")
                     let webView = try #require(tab.browserPage?.webView)
                     let answer = try await Self.probe(webView)
                     #expect(answer == "tab", "\(answer ?? "nil")")
@@ -179,7 +179,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("tab")
+                    let tab = try await window.openSettled("tab")
                     let webView = try #require(tab.browserPage?.webView)
                     _ = try await Self.probe(webView)
                     let base = try? await webView.evaluateJavaScript("document.documentElement.dataset.base ?? null")
@@ -196,7 +196,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("tab")
+                    let tab = try await window.openSettled("tab")
                     let page = try #require(tab.browserPage)
                     _ = try await Self.probe(page.webView)
                     let delegate = try #require(page.delegate)
@@ -215,8 +215,8 @@ extension TabManagerTests {
             try await TabManagerTestWindow.run { window in
                 let nsWindow = Self.register(window)
                 defer { nsWindow.close() }
-                let tab = try await window.openLoaded("tab")
-                let background = try await window.openLoaded("background")
+                let tab = try await window.openSettled("tab")
+                let background = try await window.openSettled("background")
                 window.tabManager.activateTab(tab)
                 try await Self.withProbe {
                     for page in [tab, background] {
@@ -235,7 +235,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("tab")
+                    let tab = try await window.openSettled("tab")
                     window.tabManager.togglePinTab(tab)
                     let webView = try #require(tab.browserPage?.webView)
                     _ = try await Self.probe(webView)
@@ -253,7 +253,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let opener = try await window.openLoaded("opener")
+                    let opener = try await window.openSettled("opener")
                     opener.openPeek(TabManagerTestWindow.url("peek"))
                     let peek = try #require(window.tabManager.peek)
                     defer { window.tabManager.closePeek() }
@@ -273,7 +273,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let opener = try await window.openLoaded("opener")
+                    let opener = try await window.openSettled("opener")
                     opener.openPeek(TabManagerTestWindow.url("peek"))
                     let peek = try #require(window.tabManager.peek)
                     await window.waitUntil("Peek loaded") { !peek.isLoading }
@@ -292,7 +292,7 @@ extension TabManagerTests {
             try await TabManagerTestWindow.run { window in
                 let nsWindow = Self.register(window)
                 defer { nsWindow.close() }
-                let opener = try await window.openLoaded("opener")
+                let opener = try await window.openSettled("opener")
                 opener.openPeek(TabManagerTestWindow.url("peek"))
                 let peek = try #require(window.tabManager.peek)
                 defer { window.tabManager.closePeek() }
@@ -313,7 +313,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.registerInFront(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("tab")
+                    let tab = try await window.openSettled("tab")
                     // Its own first load (which fails here) over first.
                     await window.waitUntil("tab loaded") { !tab.isLoading }
                     try? await Task.sleep(for: .milliseconds(200))
@@ -342,7 +342,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.registerInFront(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("tab")
+                    let tab = try await window.openSettled("tab")
                     // Its own first load (which fails here) over first.
                     await window.waitUntil("tab loaded") { !tab.isLoading }
                     try? await Task.sleep(for: .milliseconds(200))
@@ -374,7 +374,7 @@ extension TabManagerTests {
                 try await Self.withProbe {
                     let nsWindow = Self.register(window)
                     defer { nsWindow.close() }
-                    let tab = try await window.openLoaded("opener")
+                    let tab = try await window.openSettled("opener")
                     let page = try #require(tab.browserPage)
                     let delegate = try #require(tab.pageDelegate)
                     let configuration = try #require(page.webView.configuration.copy() as? WKWebViewConfiguration)

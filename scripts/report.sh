@@ -63,20 +63,30 @@ log show --last "${HOURS}h" --style compact \
 AND category IN {\"Loading\", \"Process\", \"ProcessSuspension\", \"ProcessSwapping\", \"ViewState\"}" \
     > "$OUT/webkit.log" 2>&1 || true
 # The network process loading the pages is shared by no other app, but it is
-# found through its messages naming the running Ombre (parentPID=…).
+# found through its messages naming the running Ombre (parentPID=…), from
+# Ombre's launch only (before it, the same numbers may have been another app's).
 pids=$(pgrep -f "^${APP}/Contents/MacOS/Ombre" || true)
 if [[ -n "$pids" ]]; then
+    since=$(date -v-"${HOURS}"H "+%Y-%m-%d %H:%M:%S")
+    for pid in $pids; do
+        launched=$(date -j -f "%a %b %d %T %Y" "$(ps -o lstart= -p "$pid" | xargs)" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || true)
+        [[ -n "$launched" && "$launched" > "$since" ]] && since="$launched"
+    done
     match=$(sed 's/.*/composedMessage CONTAINS "parentPID=&,"/' <<<"$pids" | paste -sd'|' - | sed 's/|/ OR /g')
-    network=$(log show --last "${HOURS}h" --style compact \
+    network=$(log show --start "$since" --style compact \
         --predicate "process == \"com.apple.WebKit.Networking\" AND (${match})" 2>/dev/null \
         | sed -nE 's/.*com\.apple\.WebKit\.Networking\[([0-9]+):.*/\1/p' | sort -u || true)
     if [[ -n "$network" ]]; then
         ids=$(paste -sd, - <<<"$network")
-        log show --last "${HOURS}h" --style compact \
+        log show --start "$since" --style compact \
             --predicate "process == \"com.apple.WebKit.Networking\" AND processID IN {${ids}} \
 AND (messageType >= error OR composedMessage CONTAINS \"isMainResource=1\")" \
             >> "$OUT/webkit.log" 2>&1 || true
+    else
+        echo "Network process: none found since ${since}."
     fi
+else
+    echo "Network process: Ombre is not running, left out (its PID is needed to find it)."
 fi
 echo "$(wc -l < "$OUT/ombre.log" | tr -d ' ') lines (Ombre), $(wc -l < "$OUT/errors.log" | tr -d ' ') lines (errors)," \
     "$(wc -l < "$OUT/webkit.log" | tr -d ' ') lines (WebKit)"

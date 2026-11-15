@@ -69,6 +69,11 @@ final class PopupPage: ObservableObject {
         page.lastCommittedURL ?? openerURL
     }
     private let pageDelegate: PopupPageDelegate
+    /// Ombre's own password autofill (Little Ombre's), like a tab's: its
+    /// suggestions over the page.
+    private(set) var passwordCoordinator: PasswordAutofillCoordinator?
+    @Published var passwordOverlayState: PasswordAutofillOverlayState?
+    @Published var passwordTriggerOverlayState: PasswordAutofillOverlayState?
     /// Where the pages it shows are recorded (Little Ombre's; a popup isn't
     /// recorded): never for a private page.
     var history: (manager: HistoryManager, space: TabContainer)?
@@ -107,6 +112,18 @@ final class PopupPage: ObservableObject {
         if self.security != security { self.security = security }
     }
 
+    /// Offers the passwords of its space, as a tab does.
+    func enablePasswords() {
+        guard passwordCoordinator == nil else { return }
+        passwordCoordinator = PasswordAutofillCoordinator(host: self)
+    }
+
+    /// Stops offering them (the page went to a tab, which offers them).
+    func disablePasswords() {
+        passwordCoordinator?.clearAutofillState()
+        passwordCoordinator = nil
+    }
+
     /// The page loaded: recorded in the history, if it has one, once per
     /// address (a reload only updates the title).
     func recordVisit() {
@@ -130,6 +147,7 @@ final class PopupPage: ObservableObject {
 
     /// The popup closes: what the page waits for is refused.
     func close() {
+        disablePasswords()
         cancelPermissionRequest()
         sheets.dismiss()
         page.teardown()
@@ -162,6 +180,28 @@ final class PopupPage: ObservableObject {
     func areProtectionsEnabled(for url: URL) -> Bool {
         guard let site = WebSite.registrableDomain(of: url) else { return true }
         return !SettingsStore.shared.privacySettings(for: context.spaceID).exemptSites.contains(site)
+    }
+}
+
+extension PopupPage: PasswordAutofillHost {
+    var isPrivate: Bool {
+        context.isPrivate
+    }
+
+    var passwordSpaceID: UUID? {
+        context.spaceID
+    }
+
+    var browserPage: BrowserPage? {
+        page
+    }
+
+    var pageWindow: NSWindow? {
+        page.window
+    }
+
+    func runPasswordScript(_ script: String) {
+        page.evaluateJavaScript(script)
     }
 }
 
@@ -200,7 +240,9 @@ private final class PopupPageDelegate: BrowserPageDelegate {
     func browserPage(_ page: BrowserPage, didUpdateNavigation event: BrowserNavigationEvent) {
         if event.phase != .committed { WebExtensionsHub.pageChanged(page, loading: true) }
         switch event.phase {
-        case .started: popup?.cancelPermissionRequest()
+        case .started:
+            popup?.cancelPermissionRequest()
+            popup?.passwordCoordinator?.clearAutofillState()
         case .committed:
             popup?.sheets.dialogPolicy.pageDidCommitNewDocument()
             popup?.updateAddress()
@@ -267,6 +309,12 @@ private final class PopupPageDelegate: BrowserPageDelegate {
               !tab.isDeleted, tab.browserPage != nil, tab.parentContainer?.id == popup.context.spaceID
         else { return nil }
         return tab
+    }
+
+    /// The password script, when the page offers Ombre's passwords.
+    func browserPage(_ page: BrowserPage, didReceiveScriptMessage message: BrowserScriptMessage) {
+        guard message.name == "passwordManager", let body = message.body as? String else { return }
+        popup?.passwordCoordinator?.handleMessage(body, pageURL: page.currentURL)
     }
 
     /// `window.close()` from the popup.

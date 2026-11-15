@@ -162,6 +162,8 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                     tab.rememberFileIfNeeded(url)
                     tab.offerFolderAccessIfNeeded()
                 }
+                // Its space may group its tabs by site as they load.
+                MainActor.assumeIsolated { tab.tabManager?.autoGroup(tab) }
             }
             WebExtensionsHub.tabChanged(tab, url: true, title: true, loading: true)
         }

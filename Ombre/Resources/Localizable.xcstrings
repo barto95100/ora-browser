@@ -673,24 +673,6 @@
     },
     "%lld tabs" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld onglet"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld onglets"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -704,6 +686,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld tabs"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets"
                 }
               }
             }
@@ -2066,6 +2066,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Listes intégrées"
+          }
+        }
+      }
+    },
+    "By site, from three tabs of a site. Tabs › Tidy Tabs Now groups them at any time." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par site, à partir de trois onglets d’un même site. Onglets › Ranger les onglets maintenant les regroupe à tout moment."
           }
         }
       }
@@ -4136,6 +4146,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nom du groupe"
+          }
+        }
+      }
+    },
+    "Group tabs automatically" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regrouper automatiquement les onglets"
           }
         }
       }

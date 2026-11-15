@@ -154,6 +154,36 @@ extension TabManager {
         modelContext.saveOrLog("tidy tabs")
     }
 
+    /// A tab of a space grouping its tabs automatically loaded a page: it
+    /// joins its site's group, or makes it once its site has three tabs.
+    /// Never a tab the user took out of a group, nor a site they ungrouped.
+    func autoGroup(_ tab: Tab) {
+        guard tab.type == .normal, let container = tab.parentContainer,
+              SettingsStore.shared.autoGroupsTabs(for: container.id),
+              let site = TabGrouping.site(of: tab.url)
+        else { return }
+        let all = allTabGroups(in: container)
+        let groups = all.filter { !$0.isDissolved }
+        guard !groups.contains(where: { $0.tabIDs.contains(tab.id) }) else { return }
+        let tabs = groupableTabs(in: container)
+        guard tabs.contains(where: { $0.id == tab.id }) else { return }
+        let made = TabGrouping.siteGroups(
+            tabs.map { (id: $0.id, site: TabGrouping.site(of: $0.url)) },
+            grouped: Set(groups.flatMap(\.tabIDs)),
+            groupedSites: Set(groups.compactMap { $0.kind == .site ? $0.siteKey : nil }),
+            excluded: Set(all.flatMap(\.releasedTabIDs)),
+            declined: Set(all.compactMap { $0.isDissolved ? $0.siteKey : nil })
+        )
+        // Only this tab's site: the others wait for their own tabs.
+        guard let ids = made.first(where: { $0.site == site })?.ids, ids.contains(tab.id) else { return }
+        if let group = groups.first(where: { $0.kind == .site && $0.siteKey == site }) {
+            group.tabIDs += ids
+        } else {
+            modelContext.insert(TabGroup(spaceID: container.id, name: site, kind: .site, siteKey: site, tabIDs: ids))
+        }
+        modelContext.saveOrLog("group tabs automatically")
+    }
+
     func renameTabGroup(_ group: TabGroup, to name: String) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, name != group.name else { return }

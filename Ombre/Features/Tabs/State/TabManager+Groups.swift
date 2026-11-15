@@ -75,6 +75,12 @@ enum TabGrouping {
 }
 
 extension TabManager {
+    /// Saves a change of groups, and tells the sidebar.
+    private func saveGroups(_ reason: StaticString) {
+        modelContext.saveOrLog(reason)
+        tabGroupsRevision += 1
+    }
+
     /// The space's groups, ungrouped ones aside.
     func tabGroups(in container: TabContainer) -> [TabGroup] {
         allTabGroups(in: container).filter { !$0.isDissolved }
@@ -151,7 +157,7 @@ extension TabManager {
                 ))
             }
         }
-        modelContext.saveOrLog("tidy tabs")
+        saveGroups("tidy tabs")
     }
 
     /// A tab of a space grouping its tabs automatically loaded a page: it
@@ -181,19 +187,19 @@ extension TabManager {
         } else {
             modelContext.insert(TabGroup(spaceID: container.id, name: site, kind: .site, siteKey: site, tabIDs: ids))
         }
-        modelContext.saveOrLog("group tabs automatically")
+        saveGroups("group tabs automatically")
     }
 
     func renameTabGroup(_ group: TabGroup, to name: String) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, name != group.name else { return }
         group.name = name
-        modelContext.saveOrLog("rename tab group")
+        saveGroups("rename tab group")
     }
 
     func toggleTabGroup(_ group: TabGroup) {
         group.isCollapsed.toggle()
-        modelContext.saveOrLog("toggle tab group")
+        saveGroups("toggle tab group")
     }
 
     /// Ungroup: its tabs stay where they are; its site isn't grouped again
@@ -201,7 +207,7 @@ extension TabManager {
     func ungroup(_ group: TabGroup) {
         group.tabIDs = []
         group.isDissolved = true
-        modelContext.saveOrLog("ungroup tabs")
+        saveGroups("ungroup tabs")
     }
 
     /// Takes `tab` out of its group, for good (not put back automatically).
@@ -214,7 +220,7 @@ extension TabManager {
         if tabs(of: group, in: tab.container).count < 2 {
             modelContext.delete(group)
         }
-        modelContext.saveOrLog("remove tab from group")
+        saveGroups("remove tab from group")
     }
 
     /// Puts `tab` in `group` (dropped among its tabs), out of its own.
@@ -223,7 +229,7 @@ extension TabManager {
         if tabGroup(of: tab) != nil { removeFromGroup(tab) }
         group.releasedTabIDs.removeAll { $0 == tab.id }
         group.tabIDs.append(tab.id)
-        modelContext.saveOrLog("add tab to group")
+        saveGroups("add tab to group")
     }
 
     /// Closes the group's tabs, and the group.
@@ -231,7 +237,7 @@ extension TabManager {
         let tabs = container.map { tabs(of: group, in: $0) } ?? []
         modelContext.delete(group)
         closeTabs(tabs)
-        modelContext.saveOrLog("close tab group")
+        saveGroups("close tab group")
     }
 
     /// A deleted space's groups go with it.

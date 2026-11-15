@@ -279,3 +279,49 @@ extension TabManagerTests {
         }
     }
 }
+
+extension TabManagerTests.AutoTabGroups {
+    /// Pinned tabs, favorites and tabs in a split are never grouped.
+    @Test func onlyOtherTabsOutsideSplitsAreGrouped() async throws {
+        try await TabManagerTestWindow.run { window in
+            let space = try window.activeSpace
+            SettingsStore.shared.setAutoGroupsTabs(true, for: space.id)
+            defer { SettingsStore.shared.setAutoGroupsTabs(false, for: space.id) }
+            let make = { (address: String, order: Int, type: TabType) in
+                try window.tabManager.makeTab(
+                    url: #require(URL(string: address)), title: address, type: type, order: order,
+                    in: space, isPrivate: true
+                )
+            }
+            let pinned = try make("https://example.com/p", 0, .pinned)
+            let fav = try make("https://example.com/f", 0, .fav)
+            let left = try make("https://example.com/l", 1, .normal)
+            let right = try make("https://example.com/r", 2, .normal)
+            window.tabManager.openInSplitView(left: left, right: right)
+            let last = try make("https://example.com/n", 3, .normal)
+            [pinned, fav, left, right, last].forEach(window.tabManager.autoGroup)
+            #expect(window.tabManager.tabGroups(in: space).isEmpty)
+        }
+    }
+}
+
+extension TabManagerTests.TabGroupsInTheSidebar {
+    /// Groups made in one window show in the other.
+    @Test func anotherWindowSeesTheGroups() async throws {
+        try await TabManagerTestWindow.runTwo { first, second in
+            let space = try first.activeSpace
+            for index in 0 ..< 3 {
+                _ = try first.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/\(index)")), title: "\(index)", order: index,
+                    in: space, isPrivate: true
+                )
+            }
+            first.modelContext.saveOrLog("test tabs")
+            let revision = second.tabManager.tabGroupsRevision
+            first.tabManager.tidyTabs(in: space)
+            await second.waitUntil("told") { second.tabManager.tabGroupsRevision > revision }
+            let seen = try #require(second.spaces().first { $0.id == space.id })
+            #expect(second.tabManager.tabGroups(in: seen).count == 1)
+        }
+    }
+}

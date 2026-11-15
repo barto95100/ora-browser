@@ -29,10 +29,15 @@
             <direct-parameter type="text" description="The tab's id, from list tabs."/>
             <result type="text" description="JSON: the tab closed."/>
         </command>
-        <command name="read tab" code="OmbrRdTb" description="The title, address and text of a tab's page (the text cut at 100,000 characters).">
+        <command name="read tab" code="OmbrRdTb" description="The title, address and text of a tab's web page (the text cut at 100,000 characters).">
             <cocoa class="OmbreReadTabCommand"/>
             <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
             <result type="text" description="JSON: id, title, address, text, truncated."/>
+        </command>
+        <command name="capture tab" code="OmbrCpTb" description="An image of a tab's web page as it shows (PNG, at most 2560 pixels wide; videos and 3D may come out blank).">
+            <cocoa class="OmbreCaptureTabCommand"/>
+            <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
+            <result type="text" description="JSON: id, title, address, width, height, png (base64)."/>
         </command>
     </suite>
 </dictionary>

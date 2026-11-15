@@ -7,8 +7,8 @@ import os.log
 /// Little Ombre, passwords or the keychain. Each command is logged in the
 /// "Agent" category (command, app, site, result; never a page's text). While
 /// a session is allowed, the sidebar shows which app drives Ombre (with Stop
-/// Agent Control), and a badge on each tab an agent opened, showed, read or
-/// closed: until Stop, the setting turned off, or an hour without a command.
+/// Agent Control), and a badge on each tab an agent opened, showed, read,
+/// captured or closed: until Stop, the setting turned off, or an hour without a command.
 @MainActor
 final class AgentControl: ObservableObject {
     static let shared = AgentControl()
@@ -148,7 +148,7 @@ final class AgentControl: ObservableObject {
         let alert = NSAlert()
         alert.messageText = String(localized: "\(sender.name) wants to control Ombre")
         alert.informativeText = String(
-            localized: "It will be able to list, open, show, close and read your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords."
+            localized: "It will be able to list, open, show, close, read and capture your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords."
         ) + "\n\n" + sender.key
         alert.addButton(withTitle: String(localized: "Allow for This Session"))
         alert.addButton(withTitle: String(localized: "Deny"))

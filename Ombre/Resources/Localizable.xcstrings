@@ -1620,12 +1620,12 @@
         }
       }
     },
-    "Apps and scripts (the ombre command) can list, open, show, close and read tabs. Each app asks first, once per session. Never private windows, Little Ombre or passwords." : {
+    "Apps and scripts (the ombre command) can list, open, show, close, read and capture tabs. Each app asks first, once per session. Never private windows, Little Ombre or passwords." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Des apps et des scripts (la commande ombre) peuvent lister, ouvrir, afficher, fermer et lire les onglets. Chaque app demande d’abord votre accord, une fois par session. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
+            "value" : "Des apps et des scripts (la commande ombre) peuvent lister, ouvrir, afficher, fermer, lire et capturer les onglets. Chaque app demande d’abord votre accord, une fois par session. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
           }
         }
       }
@@ -4720,12 +4720,12 @@
         }
       }
     },
-    "It will be able to list, open, show, close and read your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords." : {
+    "It will be able to list, open, show, close, read and capture your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cette app pourra lister, ouvrir, afficher, fermer et lire vos onglets jusqu’à ce que vous quittiez Ombre ou qu’une heure passe sans commande. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
+            "value" : "Cette app pourra lister, ouvrir, afficher, fermer, lire et capturer vos onglets jusqu’à ce que vous quittiez Ombre ou qu’une heure passe sans commande. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
           }
         }
       }

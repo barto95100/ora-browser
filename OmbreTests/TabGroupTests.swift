@@ -352,6 +352,16 @@ struct TopicGroupingTests {
     }
 }
 
+private struct GrouperFailure: Error {}
+
+/// A grouper that fails, as the model does when it refuses or runs out of room.
+@MainActor
+private struct FailingGrouper: TopicGrouper {
+    func suggestions(for tabs: [TopicTab], language: String) async throws -> [TopicSuggestion] {
+        throw GrouperFailure()
+    }
+}
+
 /// A grouper that answers what it is given.
 @MainActor
 private struct FixedGrouper: TopicGrouper {
@@ -396,6 +406,31 @@ extension TabManagerTests {
                 #expect(groups.map(\.kind) == [.site, .topic])
                 #expect(groups.last?.name == "Reading")
                 #expect(groups.last?.tabIDs == [tabs[1].id, tabs[3].id, tabs[6].id])
+            }
+        }
+
+        /// The model fails: the groups by site stay, nothing else changes.
+        @Test func aFailingModelLeavesTheSiteGroups() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                for (index, address) in [
+                    "https://example.com/1",
+                    "https://example.com/2",
+                    "https://example.com/3",
+                    "https://a.org/",
+                    "https://b.org/",
+                    "https://c.org/"
+                ].enumerated() {
+                    _ = try window.tabManager.makeTab(
+                        url: #require(URL(string: address)), title: address, order: 10 - index, in: space,
+                        isPrivate: true
+                    )
+                }
+                let saved = TabManager.topicGrouper
+                TabManager.topicGrouper = { FailingGrouper() }
+                defer { TabManager.topicGrouper = saved }
+                await window.tabManager.tidyTabs(in: space)?.value
+                #expect(window.tabManager.tabGroups(in: space).map(\.kind) == [.site])
             }
         }
 

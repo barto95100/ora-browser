@@ -181,11 +181,13 @@ extension TabManager {
     private func groupBySubject(in container: TabContainer) -> Task<Void, Never>? {
         guard let grouper = Self.topicGrouper() else { return nil }
         let grouped = Set(tabGroups(in: container).flatMap(\.tabIDs))
-        let tabs = groupableTabs(in: container).filter { !grouped.contains($0.id) }
+        // The first ones only: the model reads a few thousand words at most.
+        let tabs = Array(groupableTabs(in: container).filter { !grouped.contains($0.id) }.prefix(TopicGrouping.maxTabs))
         guard tabs.count >= TopicGrouping.threshold else { return nil }
         let ids = tabs.map(\.id)
         let input = TopicGrouping.topicTabs(tabs.map { (title: $0.title, url: $0.url) })
-        let language = Locale.preferredLanguages.first ?? "en"
+        // The app's language (the group names sit among its texts).
+        let language = Bundle.main.preferredLocalizations.first ?? "en"
         let spaceID = container.id
         return Task { @MainActor [weak self] in
             let suggestions: [TopicSuggestion]
@@ -193,6 +195,7 @@ extension TabManager {
                 suggestions = try await grouper.suggestions(for: input, language: language)
             } catch {
                 PageLog.notice("tabs by subject: no answer (\(PageLog.describe(error)))")
+                ToastManager.shared.show(String(localized: "Couldn’t group the tabs by subject"), type: .error)
                 return
             }
             guard let self, let container = fetchContainer(id: spaceID) else { return }
@@ -209,6 +212,10 @@ extension TabManager {
             guard made > 0 else { return }
             modelContext.saveOrLog("group tabs by subject")
             tabGroupsDidChange()
+            ToastManager.shared.show(
+                String(localized: "\(made) groups by subject"),
+                icon: .system("rectangle.stack")
+            )
         }
     }
 

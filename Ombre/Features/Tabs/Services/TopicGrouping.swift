@@ -27,6 +27,8 @@ enum TopicGrouping {
     /// Tabs of one subject that make a group, as for a site.
     static let threshold = TabGrouping.threshold
     static let maxNameLength = 40
+    /// The tabs given to the model at most (it reads a few thousand words).
+    static let maxTabs = 50
     /// Titles are cut there: enough to tell a subject.
     static let maxTitleLength = 80
 

@@ -41,6 +41,7 @@ fi
 
 # 2. Frameworks of macOS 26 and later (Apple's on-device model) linked weakly:
 # a strong link and the app no longer opens on macOS 15.
+strong=0
 for framework in FoundationModels; do
     for file in "$BINARY" "$BINARY.debug.dylib"; do
         [[ -f "$file" ]] || continue
@@ -48,11 +49,12 @@ for framework in FoundationModels; do
         line=$(grep "/$framework.framework/" <<<"$dependents" || true)
         if [[ -n "$line" && "$line" != *weak-link* ]]; then
             echo "FAIL: $(basename "$file") links $framework strongly: Ombre would no longer open on macOS 15." >&2
+            strong=1
             failed=1
         fi
     done
 done
-[[ "$failed" == 0 ]] && echo "OK: macOS 26 frameworks are linked weakly (Ombre opens on macOS 15)."
+[[ "$strong" == 0 ]] && echo "OK: macOS 26 frameworks are linked weakly (Ombre opens on macOS 15)."
 
 # 3. The app was signed with the project's entitlements (the same keys). Xcode
 # adds two to a Debug or Test build: get-task-allow (the debugger) and a read

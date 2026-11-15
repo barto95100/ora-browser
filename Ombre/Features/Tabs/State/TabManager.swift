@@ -25,6 +25,10 @@ class TabManager: ObservableObject {
     /// Spaces whose tabs Tidy Tabs Now is grouping by subject (the model
     /// answers in a few seconds): a second one waits until it is done.
     @Published var tidyingSpaceIDs: Set<UUID> = []
+    /// Where each space's tab list was scrolled in this window: the sidebar
+    /// draws only the space shown, and puts it back there when it comes back
+    /// (not published: nothing redraws for it).
+    var sidebarScroll = SpaceScrollMemory()
     /// Tab (or folder) being dragged in the sidebar: the page then offers
     /// split zones (see `SplitDropOverlay`).
     @Published var draggingTabID: UUID?

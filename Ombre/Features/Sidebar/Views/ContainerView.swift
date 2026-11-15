@@ -19,6 +19,11 @@ struct ContainerView: View {
     @State private var dragSession: UUID?
     /// Height of the tab lists, to fill the rest of the sidebar with empty space.
     @State private var tabsHeight: CGFloat = 0
+    /// The tab list's scroll, put back where it was when the space comes back.
+    @State private var scrollPosition = ScrollPosition(edge: .top)
+    /// Scroll changes are noted once the list is back where it was (its
+    /// first ones, at the top, would erase it).
+    @State private var isScrollRestored = false
     /// The double click zooms the window it happened in.
     @Environment(\.window) private var window: NSWindow?
 
@@ -128,6 +133,21 @@ struct ContainerView: View {
                     // takes the clicks there: it gets the window drag and the
                     // double click to zoom too.
                     .modifier(OmbreWindowDragGesture())
+                }
+                .scrollPosition($scrollPosition)
+                // From the top of the content, as `scrollTo(y:)` reads it (the
+                // list has no insets: check both again if it gets some).
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, offset in
+                    guard isScrollRestored else { return }
+                    tabManager.sidebarScroll.note(offset, for: container.id)
+                }
+                .onAppear {
+                    if let offset = tabManager.sidebarScroll.offset(for: container.id) {
+                        scrollPosition.scrollTo(y: offset)
+                    }
+                    isScrollRestored = true
                 }
             }
         }

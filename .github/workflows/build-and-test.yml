@@ -168,6 +168,25 @@ jobs:
             OMBRE_WARNINGS_AS_ERRORS=YES \
             2>&1 | tee "$RUNNER_TEMP/build.log" | xcbeautify --renderer github-actions
 
+      # A Release build can't show Picture in Picture without AVKit linked
+      # (scripts/check-pip-support.sh): checked on the app the tests ran,
+      # same target and links (build.sh checks the Release app itself).
+      - name: Check Picture in Picture support
+        env:
+          GITHUB_HOSTED: ${{ runner.environment == 'github-hosted' }}
+        run: |
+          if [ "$GITHUB_HOSTED" = true ]; then
+            products="$HOME/Library/Developer/Xcode/DerivedData"
+          else
+            products="$RUNNER_WORKSPACE/DerivedData.noindex"
+          fi
+          app=$(find "$products" -path "*/Build/Products/Test/Ombre.app" -maxdepth 6 -type d | head -1)
+          if [ -z "$app" ]; then
+            echo "::error::No Ombre.app built for the tests under $products."
+            exit 1
+          fi
+          scripts/check-pip-support.sh "$app"
+
       # Warnings stay at 0: the compilers' warnings already fail the build
       # above (OMBRE_WARNINGS_AS_ERRORS); this catches the others (linker,
       # asset catalog, build phases), except the packages' own. Xcode's App Intents

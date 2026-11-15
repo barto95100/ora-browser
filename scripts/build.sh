@@ -68,6 +68,9 @@ SIGNATURE=$(codesign -dvv "$APP_PATH" 2>&1)
 grep -m1 "^Authority=" <<<"$SIGNATURE" || true
 grep "^TeamIdentifier=" <<<"$SIGNATURE" || true
 
+echo "Checking Picture in Picture..."
+"$SCRIPT_DIR/check-pip-support.sh" "$APP_PATH" || die "This build can't show Picture in Picture (see above)."
+
 step "Packaging"
 
 mkdir -p "$STAGING"

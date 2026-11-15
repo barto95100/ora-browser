@@ -44,6 +44,9 @@ targets:
       - path: Ombre/Resources
         optional: true
     dependencies:
+      # Loads macOS's Picture in Picture framework at launch, without which
+      # the sandbox refuses its service (see `PictureInPictureSupport`).
+      - sdk: AVKit.framework
       - package: Sparkle
       - package: Inject
       - package: FaviconFinder

@@ -93,7 +93,8 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   (`ls` de Ludo est un alias : utiliser `/bin/ls` dans les scripts).
 - Problème avec l'Ombre installé : `./scripts/report.sh [heures]` rassemble sur le Bureau sa version, ses journaux
   (sous-système `com.barto95100.ora`, dont la catégorie « Pages », erreurs de son processus, messages WebKit de
-  ses pages, de leur PiP et de son processus réseau) et les rapports de plantage récents.
+  ses pages, de leur PiP et de son processus réseau, service PiP de macOS et refus du bac à sable dans `pip.log`)
+  et les rapports de plantage récents.
 - Signature Debug et Release : Personal Team `Q76T6LDBBZ` (Apple Development) ; `./scripts/build.sh` ne laisse que
   le DMG (`build/Release.noindex/Ombre-<version>.dmg`) ; `./scripts/install.sh` le construit et l'installe dans
   `/Applications` (quitter d'abord l'Ombre installé : le script refuse sinon ; commit installé : clé `OmbreCommit` de son Info.plist). Pas de Developer ID ni de notarisation (programme payant), Sparkle désactivé. Le droit
@@ -183,6 +184,11 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
 - Sur un `@Model` SwiftData, une propriété `@Transient` n'est suivie par l'interface (Observation) que si elle est
   aussi `@Published`. L'état de page d'un onglet vit dans `TabRuntime` (`@Observable`, un par onglet et par fenêtre),
   lu à travers les propriétés de transition de `Tab+Runtime.swift` ; ne jamais créer un runtime dans le `body` d'une vue.
+- La version Debug charge des frameworks en plus (aperçus de Xcode : AVKit, PIP…) : ce que le bac à sable autorise
+  peut changer en Release. Le PiP exige PIP.framework chargé au lancement (AVKit lié, `PictureInPictureSupport`),
+  vérifié par `scripts/check-pip-support.sh` (CI et `build.sh`). Un bug « Release seulement » : comparer
+  `codesign -d --entitlements :-`, les liens (`dyld_info -dependents`, et `<nom>.debug.dylib` en Debug) et chercher
+  `Sandbox: Ombre(… deny` dans les journaux.
 - `TabManager` est isolé `@MainActor` (déclaré explicitement) : marquer les suites de tests `@MainActor` ou les
   fonctions pures `nonisolated`.
 

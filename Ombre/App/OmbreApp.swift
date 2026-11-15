@@ -20,6 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSWindow.allowsAutomaticWindowTabbing = false
         AppearanceManager.shared.updateAppearance()
         ShortcutOverrideMonitor.shared.start()
+        PictureInPictureSupport.logAtLaunch()
         // Once per launch, not per window; does nothing when updates are unavailable.
         if UpdateService.isAvailable, !TestHost.isActive, SettingsStore.shared.autoUpdateEnabled {
             UpdateService.shared.checkForUpdatesInBackground()

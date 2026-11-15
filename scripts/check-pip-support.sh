@@ -9,12 +9,13 @@
 # a Release build showed the problem: the video stayed "in Picture in Picture"
 # with no window.
 #
-# Usage: scripts/check-pip-support.sh <path/to/Ombre.app>
+# Usage: scripts/check-pip-support.sh <path/to/Ombre.app> [entitlements file]
+# (default: Ombre/Info/Ombre.entitlements, the Release one)
 set -euo pipefail
 
 APP="${1:?Usage: $0 <path/to/Ombre.app>}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ENTITLEMENTS="$SCRIPT_DIR/../Ombre/Info/Ombre.entitlements"
+ENTITLEMENTS="${2:-$SCRIPT_DIR/../Ombre/Info/Ombre.entitlements}"
 BINARY="$APP/Contents/MacOS/$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP/Contents/Info.plist")"
 failed=0
 
@@ -23,7 +24,11 @@ failed=0
 linked() {
     local file
     for file in "$BINARY" "$BINARY.debug.dylib"; do
-        [[ -f "$file" ]] && dyld_info -dependents "$file" 2>/dev/null | grep -q "/AVKit.framework/" && return 0
+        [[ -f "$file" ]] || continue
+        # Read whole (grep -q would cut dyld_info's output short).
+        local dependents
+        dependents=$(dyld_info -dependents "$file" 2>/dev/null || true)
+        [[ "$dependents" == *"/AVKit.framework/"* ]] && return 0
     done
     return 1
 }
@@ -38,6 +43,10 @@ fi
 # adds two to a Debug or Test build: get-task-allow (the debugger) and a read
 # exception for the tests' files.
 xcode_keys='{"com.apple.security.get-task-allow", "com.apple.security.temporary-exception.files.absolute-path.read-only"}'
+if ! codesign -d --entitlements :- "$APP" >/dev/null 2>&1; then
+    echo "FAIL: can't read $(basename "$APP")'s signature." >&2
+    exit 1
+fi
 signed=$(codesign -d --entitlements :- "$APP" 2>/dev/null | plutil -convert json -o - - \
     | python3 -c "import json,sys; print('\n'.join(sorted(set(json.load(sys.stdin)) - ${xcode_keys})))")
 expected=$(plutil -convert json -o - "$ENTITLEMENTS" | python3 -c 'import json,sys; print("\n".join(sorted(json.load(sys.stdin))))')

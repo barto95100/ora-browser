@@ -295,6 +295,12 @@ final class MediaController: ObservableObject {
 
     static let pictureInPictureEntryDeadline: TimeInterval = 3
 
+    /// The tab's request is no longer waited for (shown again, or its video
+    /// already in Picture in Picture); its page stays kept if it was.
+    func pictureInPictureRequestEnded(for tab: Tab) {
+        pictureInPictureRequests[tab.id] = nil
+    }
+
     /// Tabs in Picture in Picture whose page is loaded, except `excludedTabID`
     /// (the tab currently displayed, whose page is already in the window).
     func pictureInPictureTabs(excluding excludedTabID: UUID?) -> [Tab] {

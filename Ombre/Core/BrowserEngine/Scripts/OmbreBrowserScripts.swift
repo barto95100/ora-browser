@@ -384,7 +384,7 @@ enum OmbreBrowserScripts {
                 // Refused: the app stops keeping the page for it, and says why.
                 return video.requestPictureInPicture().catch((error) => {
                     if (!document.pictureInPictureElement) {
-                        post({ type: 'pip', state: 'failed', error: String((error && error.name) || error) });
+                        post({ type: 'pip', state: 'failed', error: (error && error.name) || 'unknown' });
                     }
                 });
             } else if (isActive && document.pictureInPictureElement) {
@@ -404,14 +404,16 @@ enum OmbreBrowserScripts {
         // and WebKit could keep the video "in Picture in Picture" with no
         // window shown. A change asked meanwhile waits for the running one;
         // otherwise it starts at once (within the app's call). Returns
-        // whether the page is to be kept for Picture in Picture: a change
-        // started or waits, or its video already is in Picture in Picture.
+        // whether the page is to be kept for Picture in Picture: 'started',
+        // 'queued' (after the running change), 'already' (its video is in
+        // Picture in Picture), or false.
         let pendingChange = null;
         window.__triggerPiP = function(isActive = false) {
-            const change = pendingChange
+            const queued = !!pendingChange;
+            const change = queued
                 ? pendingChange.then(() => changePictureInPicture(isActive, true))
                 : changePictureInPicture(isActive, false);
-            if (!change) return !isActive && !!document.pictureInPictureElement;
+            if (!change) return !isActive && !!document.pictureInPictureElement ? 'already' : false;
             // A change WebKit never settles holds the next ones 3 s at most.
             const settled = Promise.race([
                 Promise.resolve(change).catch(() => {}),
@@ -421,7 +423,7 @@ enum OmbreBrowserScripts {
                 if (pendingChange === tracked) pendingChange = null;
             });
             pendingChange = tracked;
-            return true;
+            return queued ? 'queued' : 'started';
         };
 
         post({ type: 'ready', title: document.title });

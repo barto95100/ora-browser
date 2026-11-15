@@ -185,7 +185,8 @@ jobs:
             echo "::error::No Ombre.app built for the tests under $products."
             exit 1
           fi
-          scripts/check-pip-support.sh "$app"
+          # Signed for the tests with the Debug entitlements.
+          scripts/check-pip-support.sh "$app" Ombre/Info/Ombre-dev.entitlements
 
       # Warnings stay at 0: the compilers' warnings already fail the build
       # above (OMBRE_WARNINGS_AS_ERRORS); this catches the others (linker,

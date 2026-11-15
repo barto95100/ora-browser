@@ -431,6 +431,9 @@ private struct WindowLifecycle: ViewModifier {
                 guard let window, note.object as? NSWindow === window else { return }
                 MainActor.assumeIsolated {
                     BrowserPopupWindow.closePopups(openedFrom: window)
+                    // Its Little Ombres too: their pages use its spaces (or
+                    // its private session), and go to its tabs.
+                    LittleOmbreWindow.closeAll(from: tabManager)
                     tabManager.tearDown()
                     if isPrivate {
                         let spaces = (try? tabManager.modelContext.fetch(FetchDescriptor<TabContainer>())) ?? []

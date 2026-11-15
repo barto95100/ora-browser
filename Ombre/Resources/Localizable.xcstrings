@@ -1,10 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {},
-    " — %@" : {},
-    " / %@" : {},
-    "·" : {},
+    "" : {
+
+    },
+    " — %@" : {
+
+    },
+    " / %@" : {
+
+    },
+    "·" : {
+
+    },
     "“%@” is in Ombre." : {
       "localizations" : {
         "fr" : {
@@ -177,8 +185,12 @@
         }
       }
     },
-    "%@." : {},
-    "%lld" : {},
+    "%@." : {
+
+    },
+    "%lld" : {
+
+    },
     "%lld %%" : {
       "localizations" : {
         "fr" : {
@@ -721,7 +733,9 @@
         }
       }
     },
-    "•" : {},
+    "•" : {
+
+    },
     "⌘-click opens in the background" : {
       "localizations" : {
         "fr" : {
@@ -1212,12 +1226,12 @@
         }
       }
     },
-    "All Notes of the Space (⌥⌘N)" : {
+    "All Notes of the Space (⌃⌘N)" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toutes les notes de l’espace (⌥⌘N)"
+            "value" : "Toutes les notes de l’espace (⌃⌘N)"
           }
         }
       }
@@ -3999,7 +4013,9 @@
         }
       }
     },
-    "github.com/the-ora/browser" : {},
+    "github.com/the-ora/browser" : {
+
+    },
     "GNU General Public License v3.0" : {
       "localizations" : {
         "fr" : {
@@ -4298,8 +4314,12 @@
         }
       }
     },
-    "https://example.com/filter.txt" : {},
-    "https://example.com/search?q={query}" : {},
+    "https://example.com/filter.txt" : {
+
+    },
+    "https://example.com/search?q={query}" : {
+
+    },
     "Icon" : {
       "localizations" : {
         "fr" : {

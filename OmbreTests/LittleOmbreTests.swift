@@ -130,3 +130,25 @@ extension TabManagerTests {
         }
     }
 }
+
+extension TabManagerTests {
+    /// Little Ombre goes with what its page uses: its window, its space.
+    @MainActor
+    @Suite(.serialized)
+    struct LittleOmbreLifetime {
+        @Test func itClosesWithItsWindowAndItsSpace() async throws {
+            try await TabManagerTestWindow.run { window in
+                let first = try #require(LittleOmbreWindow.open(nil, from: window.tabManager, window: nil))
+                LittleOmbreWindow.closeAll(from: window.tabManager)
+                #expect(!LittleOmbreWindow.isLittleOmbreWindow(first.window))
+
+                let space = try window.activeSpace
+                let second = try #require(LittleOmbreWindow.open(nil, from: window.tabManager, window: nil))
+                LittleOmbreWindow.closeAll(inSpace: UUID())
+                #expect(LittleOmbreWindow.isLittleOmbreWindow(second.window))
+                LittleOmbreWindow.closeAll(inSpace: space.id)
+                #expect(!LittleOmbreWindow.isLittleOmbreWindow(second.window))
+            }
+        }
+    }
+}

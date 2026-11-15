@@ -133,7 +133,7 @@ struct TabNotePanel: View {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
             }
             .buttonStyle(.plain)
-            .help("All Notes of the Space (⌥⌘N)")
+            .help("All Notes of the Space (⌃⌘N)")
             Button {
                 appState.showTabNote = false
             } label: {

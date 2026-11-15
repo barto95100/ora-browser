@@ -13,6 +13,7 @@ struct LittleOmbreBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            navigationButtons
             PageSecurityLabel(security: popup.security)
             ZStack(alignment: .leading) {
                 TextField("Search or enter address", text: $text)
@@ -24,8 +25,13 @@ struct LittleOmbreBar: View {
                         model.owner?.navigate(to: text)
                         isEditing = false
                     }
-                    .onExitCommand { isEditing = false }
+                    .onExitCommand {
+                        isEditing = false
+                        model.owner?.focusPage()
+                    }
                     .accessibilityLabel(Text("Address"))
+                    // Hidden behind the shown address: VoiceOver reads that one.
+                    .accessibilityHidden(!isEditing && popup.address != nil)
                 if !isEditing, popup.address != nil {
                     shownAddress
                         .contentShape(Rectangle())
@@ -89,7 +95,28 @@ struct LittleOmbreBar: View {
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .disabled(popup.address == nil)
+        .disabled(popup.address == nil || model.owner?.canOpenInOmbre != true)
         .help("Open in Ombre (⌘O)")
+    }
+
+    private var navigationButtons: some View {
+        HStack(spacing: 2) {
+            barButton("chevron.left", label: "Back") { model.owner?.goBack() }
+            barButton("chevron.right", label: "Forward") { model.owner?.goForward() }
+            barButton("arrow.clockwise", label: "Reload") { model.owner?.reload() }
+        }
+    }
+
+    private func barButton(_ symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .medium))
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .help(Text(label))
+        .accessibilityLabel(Text(label))
     }
 }

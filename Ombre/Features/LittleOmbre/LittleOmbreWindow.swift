@@ -29,6 +29,21 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         openWindows.contains { $0.window === window }
     }
 
+    /// Closes the Little Ombres opened from `tabManager`'s window (it closes:
+    /// they use its spaces or its private session).
+    static func closeAll(from tabManager: TabManager) {
+        for little in openWindows where little.tabManager === tabManager || little.tabManager == nil {
+            little.window.close()
+        }
+    }
+
+    /// Closes the Little Ombres of a space being deleted (they use its data).
+    static func closeAll(inSpace spaceID: UUID) {
+        for little in openWindows where little.model.spaceID == spaceID {
+            little.window.close()
+        }
+    }
+
     /// The Little Ombre showing `window`, if it is one.
     static func showing(_ window: NSWindow?) -> LittleOmbreWindow? {
         guard let window else { return nil }
@@ -59,7 +74,8 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         if let url {
             page.load(URLRequest(url: url))
         } else {
-            little.model.focusAddress()
+            // Once the bar is on screen (the page took the focus on show).
+            DispatchQueue.main.async { little.model.focusAddress() }
         }
         page.log("made for Little Ombre")
         return little
@@ -142,6 +158,11 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
 
     // MARK: - Open in Ombre
 
+    /// Whether the browser window it came from is still there.
+    var canOpenInOmbre: Bool {
+        tabManager != nil
+    }
+
     /// The spaces "Open in Ombre" offers: the window's, in their order.
     var spaces: [TabContainer] {
         guard let tabManager else { return [] }
@@ -170,8 +191,28 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         )
         isMovedToTab = adopted
         popup.page.log(adopted ? "moved from Little Ombre to a tab" : "Little Ombre opened again in a tab")
+        // The page's popups ("Sign in with…") go on with it, in the tab's window.
+        if adopted { BrowserPopupWindow.movePopups(openedFrom: window, to: browserWindow) }
         window.close()
         browserWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    /// Back, forward and reload, from the bar and the keys.
+    func goBack() {
+        popup.page.goBack()
+    }
+
+    func goForward() {
+        popup.page.goForward()
+    }
+
+    func reload() {
+        popup.page.reload()
+    }
+
+    /// The keyboard goes back to the page (Escape in the address field).
+    func focusPage() {
+        window.makeFirstResponder(popup.page.webView)
     }
 
     /// Goes to what was typed in the bar: an address, or a search with the
@@ -221,7 +262,9 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     }
 }
 
-/// Little Ombre's window: ⌘O opens its page in Ombre, ⌘L goes to its address.
+/// Little Ombre's window: ⌘O opens its page in Ombre, ⌘L goes to its
+/// address, ⌘R reloads, ⌘[ and ⌘] go back and forward (fixed keys: the
+/// browser window's customized ones don't apply here).
 final class LittleOmbreNSWindow: NSWindow {
     weak var owner: LittleOmbreWindow?
 
@@ -234,6 +277,15 @@ final class LittleOmbreNSWindow: NSWindow {
                 return true
             case "l":
                 owner?.model.focusAddress()
+                return true
+            case "r":
+                owner?.reload()
+                return true
+            case "[":
+                owner?.goBack()
+                return true
+            case "]":
+                owner?.goForward()
                 return true
             default:
                 break

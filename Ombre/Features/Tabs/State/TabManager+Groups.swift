@@ -123,8 +123,16 @@ extension TabManager {
     }
 
     /// Tidy Tabs Now: groups the space's tabs by site, from three tabs of a
-    /// site, also those taken out or ungrouped before.
-    func tidyTabs(in container: TabContainer) {
+    /// site, also those taken out or ungrouped before; then, with Apple's
+    /// model on the Mac, the tabs left by subject. Returns the subject
+    /// grouping under way, if any.
+    @discardableResult
+    func tidyTabs(in container: TabContainer) -> Task<Void, Never>? {
+        groupBySite(in: container)
+        return groupBySubject(in: container)
+    }
+
+    private func groupBySite(in container: TabContainer) {
         let all = allTabGroups(in: container)
         for group in all {
             group.releasedTabIDs = []
@@ -158,6 +166,50 @@ extension TabManager {
         }
         modelContext.saveOrLog("tidy tabs")
         tabGroupsDidChange()
+    }
+
+    /// Who groups tabs by subject: Apple's model on the Mac when it can be
+    /// used; none under the tests (they set their own: the model's answers
+    /// differ from one run to the next).
+    static var topicGrouper: @MainActor () -> (any TopicGrouper)? = {
+        TestHost.isActive ? nil : TopicGrouping.onDeviceGrouper
+    }
+
+    /// The space's tabs in no group, given to the subject grouping (their
+    /// titles and sites only); groups made from what it suggests, if those
+    /// tabs are still free once it answers.
+    private func groupBySubject(in container: TabContainer) -> Task<Void, Never>? {
+        guard let grouper = Self.topicGrouper() else { return nil }
+        let grouped = Set(tabGroups(in: container).flatMap(\.tabIDs))
+        let tabs = groupableTabs(in: container).filter { !grouped.contains($0.id) }
+        guard tabs.count >= TopicGrouping.threshold else { return nil }
+        let ids = tabs.map(\.id)
+        let input = TopicGrouping.topicTabs(tabs.map { (title: $0.title, url: $0.url) })
+        let language = Locale.preferredLanguages.first ?? "en"
+        let spaceID = container.id
+        return Task { @MainActor [weak self] in
+            let suggestions: [TopicSuggestion]
+            do {
+                suggestions = try await grouper.suggestions(for: input, language: language)
+            } catch {
+                PageLog.notice("tabs by subject: no answer (\(PageLog.describe(error)))")
+                return
+            }
+            guard let self, let container = fetchContainer(id: spaceID) else { return }
+            let free = Set(groupableTabs(in: container).map(\.id))
+                .subtracting(tabGroups(in: container).flatMap(\.tabIDs))
+            var made = 0
+            for suggestion in TopicGrouping.validated(suggestions, tabCount: ids.count) {
+                let members = suggestion.indices.map { ids[$0] }.filter { free.contains($0) }
+                guard members.count >= TopicGrouping.threshold else { continue }
+                modelContext.insert(TabGroup(spaceID: spaceID, name: suggestion.name, kind: .topic, tabIDs: members))
+                made += 1
+            }
+            PageLog.notice("tabs by subject: \(made) groups")
+            guard made > 0 else { return }
+            modelContext.saveOrLog("group tabs by subject")
+            tabGroupsDidChange()
+        }
     }
 
     /// A tab of a space grouping its tabs automatically loaded a page: it

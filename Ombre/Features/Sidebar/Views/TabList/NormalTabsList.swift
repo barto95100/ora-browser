@@ -73,7 +73,7 @@ struct NormalTabsList: View {
     @ViewBuilder private var tidyButton: some View {
         if let space = tabs.first?.container {
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { tabManager.tidyTabs(in: space) }
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { _ = tabManager.tidyTabs(in: space) }
             } label: {
                 Label("Tidy Tabs Now", systemImage: "rectangle.stack")
             }

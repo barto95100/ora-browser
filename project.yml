@@ -47,6 +47,10 @@ targets:
       # Loads macOS's Picture in Picture framework at launch, without which
       # the sandbox refuses its service (see `PictureInPictureSupport`).
       - sdk: AVKit.framework
+      # Apple's on-device model, for grouping tabs by subject (macOS 26 and
+      # later only: weakly linked, the app runs on macOS 15).
+      - sdk: FoundationModels.framework
+        weak: true
       - package: Sparkle
       - package: Inject
       - package: FaviconFinder

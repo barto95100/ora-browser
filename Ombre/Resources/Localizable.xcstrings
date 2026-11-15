@@ -1,18 +1,10 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
-    " — %@" : {
-
-    },
-    " / %@" : {
-
-    },
-    "·" : {
-
-    },
+    "" : {},
+    " — %@" : {},
+    " / %@" : {},
+    "·" : {},
     "“%@” is in Ombre." : {
       "localizations" : {
         "fr" : {
@@ -185,12 +177,8 @@
         }
       }
     },
-    "%@." : {
-
-    },
-    "%lld" : {
-
-    },
+    "%@." : {},
+    "%lld" : {},
     "%lld %%" : {
       "localizations" : {
         "fr" : {
@@ -683,6 +671,46 @@
         }
       }
     },
+    "%lld tabs" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tab"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tabs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld tabs selected" : {
       "localizations" : {
         "en" : {
@@ -733,9 +761,7 @@
         }
       }
     },
-    "•" : {
-
-    },
+    "•" : {},
     "⌘-click opens in the background" : {
       "localizations" : {
         "fr" : {
@@ -2564,6 +2590,16 @@
         }
       }
     },
+    "Close Group" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer le groupe"
+          }
+        }
+      }
+    },
     "Close Settings" : {
       "localizations" : {
         "fr" : {
@@ -4013,9 +4049,7 @@
         }
       }
     },
-    "github.com/the-ora/browser" : {
-
-    },
+    "github.com/the-ora/browser" : {},
     "GNU General Public License v3.0" : {
       "localizations" : {
         "fr" : {
@@ -4092,6 +4126,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vert"
+          }
+        }
+      }
+    },
+    "Group Name" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom du groupe"
           }
         }
       }
@@ -4314,12 +4358,8 @@
         }
       }
     },
-    "https://example.com/filter.txt" : {
-
-    },
-    "https://example.com/search?q={query}" : {
-
-    },
+    "https://example.com/filter.txt" : {},
+    "https://example.com/search?q={query}" : {},
     "Icon" : {
       "localizations" : {
         "fr" : {
@@ -7148,6 +7188,16 @@
         }
       }
     },
+    "Remove from Group" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortir du groupe"
+          }
+        }
+      }
+    },
     "Remove from List" : {
       "localizations" : {
         "fr" : {
@@ -7270,6 +7320,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Renommer le dossier"
+          }
+        }
+      }
+    },
+    "Rename Group" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer le groupe"
           }
         }
       }
@@ -9262,6 +9322,16 @@
         }
       }
     },
+    "Tidy Tabs Now" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ranger les onglets maintenant"
+          }
+        }
+      }
+    },
     "Time" : {
       "localizations" : {
         "fr" : {
@@ -9537,6 +9607,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Débloquer %@"
+          }
+        }
+      }
+    },
+    "Ungroup" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dégrouper"
           }
         }
       }

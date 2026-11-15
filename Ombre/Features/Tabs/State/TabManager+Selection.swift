@@ -34,11 +34,22 @@ extension TabManager {
         var order = sorted.filter { $0.type == .fav }
         appendPinned(container.pinnedEntries, of: container, to: &order)
         let splits = splitRows(in: container)
-        for tab in sorted where tab.type == .normal && !splits.hidden.contains(tab.id) {
-            if let split = splits.rows[tab.id] {
-                order += [split.left, split.right]
-            } else {
-                order.append(tab)
+        let shown = sorted.filter { $0.type == .normal && !splits.hidden.contains($0.id) }
+        let byID = Dictionary(shown.map { ($0.id, $0) }) { first, _ in first }
+        // Groups as shown: their tabs together (a folded one, only its tab shown).
+        let groups = tabGroups(in: container)
+        for row in TabGrouping.rows(tabs: shown.map(\.id), groups: shownGroups(groups, in: container)) {
+            switch row {
+            case let .tab(id):
+                guard let tab = byID[id] else { continue }
+                if let split = splits.rows[tab.id] {
+                    order += [split.left, split.right]
+                } else {
+                    order.append(tab)
+                }
+            case let .group(groupID, ids):
+                let isCollapsed = groups.first { $0.id == groupID }?.isCollapsed ?? false
+                order += ids.compactMap { byID[$0] }.filter { !isCollapsed || isShown($0) }
             }
         }
         // A split's other side may be in another section: listed once.

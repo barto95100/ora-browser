@@ -47,8 +47,20 @@ struct TabDropDelegate: DropDelegate {
     }
 
     func performDrop(info: DropInfo) -> Bool {
-        guard draggedItem != nil else { return FileDrop.open(info, in: nil) }
+        guard let draggedID = draggedItem else { return FileDrop.open(info, in: nil) }
         draggedItem = nil
+        // Dropped among a group's tabs, it joins the group; among tabs of no
+        // group, it leaves its own.
+        if let moved = item.container.tabs.first(where: { $0.id == draggedID }), moved.type == .normal,
+           let tabManager = item.tabManager
+        {
+            let target = item.type == .normal ? tabManager.tabGroup(of: item) : nil
+            if let target {
+                tabManager.addToGroup(moved, target)
+            } else if tabManager.tabGroup(of: moved) != nil {
+                tabManager.removeFromGroup(moved)
+            }
+        }
         item.container.modelContext?.saveOrLog("drop on tab")
         return true
     }

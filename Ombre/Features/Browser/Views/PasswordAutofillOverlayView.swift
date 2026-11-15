@@ -3,7 +3,7 @@ import SwiftUI
 
 struct PasswordAutofillOverlayView: View {
     let overlay: PasswordAutofillOverlayState
-    let tab: Tab
+    let coordinator: PasswordAutofillCoordinator?
 
     private let overlayWidth: CGFloat = 320
     private let cornerRadius: CGFloat = 18
@@ -47,7 +47,7 @@ struct PasswordAutofillOverlayView: View {
                         activate(suggestion)
                     } onHoverChanged: { isHovering in
                         if isHovering {
-                            tab.passwordCoordinator?.updateSelection(to: index, for: overlay)
+                            coordinator?.updateSelection(to: index, for: overlay)
                         }
                     } content: {
                         suggestionContent(for: suggestion)
@@ -58,7 +58,7 @@ struct PasswordAutofillOverlayView: View {
             Divider()
 
             Button("Manage Passwords") {
-                tab.passwordCoordinator?.openPasswordsManager()
+                coordinator?.openPasswordsManager()
             }
             .buttonStyle(.plain)
             .font(.caption.weight(.medium))
@@ -114,11 +114,11 @@ struct PasswordAutofillOverlayView: View {
     private func activate(_ suggestion: PasswordAutofillSuggestion) {
         switch suggestion {
         case .generatedPassword:
-            tab.passwordCoordinator?.fillGeneratedPassword(for: overlay)
+            coordinator?.fillGeneratedPassword(for: overlay)
         case let .savedCredential(entry):
-            tab.passwordCoordinator?.autofill(entry, for: overlay)
+            coordinator?.autofill(entry, for: overlay)
         case let .email(emailSuggestion):
-            tab.passwordCoordinator?.fillEmailSuggestion(emailSuggestion, for: overlay)
+            coordinator?.fillEmailSuggestion(emailSuggestion, for: overlay)
         }
     }
 }
@@ -138,7 +138,7 @@ private extension PasswordAutofillSuggestion {
 
 struct PasswordAutofillTriggerView: View {
     let overlay: PasswordAutofillOverlayState
-    let tab: Tab
+    let coordinator: PasswordAutofillCoordinator?
 
     private let buttonSize: CGFloat = 24
     private let fieldInset: CGFloat = 9
@@ -149,7 +149,7 @@ struct PasswordAutofillTriggerView: View {
     var body: some View {
         GeometryReader { proxy in
             Button {
-                tab.passwordCoordinator?.presentTriggerOverlay()
+                coordinator?.presentTriggerOverlay()
             } label: {
                 Image(systemName: "key.fill")
                     .font(.system(size: 13, weight: .semibold))

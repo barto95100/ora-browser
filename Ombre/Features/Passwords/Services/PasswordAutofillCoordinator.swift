@@ -131,9 +131,30 @@ struct PasswordSavePromptDetails: Equatable {
     let showsSecurityWarning: Bool
 }
 
+/// What the password autofill needs from where its page shows: a tab, or
+/// Little Ombre's page.
+@MainActor
+protocol PasswordAutofillHost: AnyObject {
+    var passwordOverlayState: PasswordAutofillOverlayState? { get set }
+    var passwordTriggerOverlayState: PasswordAutofillOverlayState? { get set }
+    var isPrivate: Bool { get }
+    /// The space whose passwords are offered first.
+    var passwordSpaceID: UUID? { get }
+    var browserPage: BrowserPage? { get }
+    var pageWindow: NSWindow? { get }
+    /// Runs the password script's code in the page.
+    func runPasswordScript(_ script: String)
+}
+
 @MainActor
 final class PasswordAutofillCoordinator {
-    weak var tab: Tab?
+    weak var host: (any PasswordAutofillHost)?
+
+    /// The tab it works for, if its host is one.
+    var tab: Tab? {
+        get { host as? Tab }
+        set { host = newValue }
+    }
 
     private let passwordManager = PasswordManagerService.shared
     private let providers = PasswordManagerProviderRegistry.shared
@@ -142,8 +163,12 @@ final class PasswordAutofillCoordinator {
 
     private var dismissWorkItem: DispatchWorkItem?
 
-    init(tab: Tab) {
-        self.tab = tab
+    init(host: any PasswordAutofillHost) {
+        self.host = host
+    }
+
+    convenience init(tab: Tab) {
+        self.init(host: tab)
     }
 
     func handleMessage(_ messageBody: String, pageURL: URL?) {
@@ -181,21 +206,21 @@ final class PasswordAutofillCoordinator {
 
     func dismissOverlay() {
         dismissWorkItem?.cancel()
-        tab?.passwordOverlayState = nil
+        host?.passwordOverlayState = nil
         setOverlayKeyboardActive(false)
     }
 
     func clearAutofillState() {
         dismissWorkItem?.cancel()
-        tab?.passwordOverlayState = nil
-        tab?.passwordTriggerOverlayState = nil
+        host?.passwordOverlayState = nil
+        host?.passwordTriggerOverlayState = nil
         setOverlayKeyboardActive(false)
     }
 
     func presentTriggerOverlay() {
         dismissWorkItem?.cancel()
-        guard let overlay = tab?.passwordTriggerOverlayState else { return }
-        tab?.passwordOverlayState = overlay
+        guard let overlay = host?.passwordTriggerOverlayState else { return }
+        host?.passwordOverlayState = overlay
         setOverlayKeyboardActive(true)
     }
 
@@ -216,7 +241,7 @@ final class PasswordAutofillCoordinator {
             await MainActor.run {
                 // The page may have navigated while the user was authenticating:
                 // never send the password to a page the entry doesn't belong to.
-                guard let pageURL = self.tab?.browserPage?.currentURL,
+                guard let pageURL = self.host?.browserPage?.currentURL,
                       PasswordManagerService.entry(origin: entry.origin, host: entry.host, matches: pageURL)
                 else {
                     self.clearAutofillState()
@@ -301,7 +326,7 @@ final class PasswordAutofillCoordinator {
         guard settings.passwordsEnabled,
               settings.passwordAutofillEnabled,
               provider.usesBuiltInOverlay,
-              tab?.isPrivate == false,
+              host?.isPrivate == false,
               let pageURL,
               let normalizedHost = PasswordManagerService.normalizedHost(from: pageURL)
         else {
@@ -311,8 +336,8 @@ final class PasswordAutofillCoordinator {
 
         let suggestions = Self.resolveSuggestions(
             for: focus,
-            matchingEntries: passwordManager.matchingEntries(for: pageURL, containerID: tab?.container.id),
-            emailSuggestions: passwordManager.emailSuggestions(for: tab?.container.id),
+            matchingEntries: passwordManager.matchingEntries(for: pageURL, containerID: host?.passwordSpaceID),
+            emailSuggestions: passwordManager.emailSuggestions(for: host?.passwordSpaceID),
             generatedPassword: focus.action == .createAccount ? passwordManager.generateStrongPassword() : nil
         )
 
@@ -341,15 +366,15 @@ final class PasswordAutofillCoordinator {
             pageOrigin: PasswordManagerService.normalizedOrigin(from: pageURL)
         )
 
-        tab?.passwordTriggerOverlayState = overlayState
-        tab?.passwordOverlayState = overlayState
+        host?.passwordTriggerOverlayState = overlayState
+        host?.passwordOverlayState = overlayState
         setOverlayKeyboardActive(true)
     }
 
     /// Whether the tab still shows the page the overlay was opened for.
     private func isStillOnPage(of overlay: PasswordAutofillOverlayState) -> Bool {
         guard let pageOrigin = overlay.pageOrigin,
-              let pageURL = tab?.browserPage?.currentURL
+              let pageURL = host?.browserPage?.currentURL
         else {
             return false
         }
@@ -357,16 +382,16 @@ final class PasswordAutofillCoordinator {
     }
 
     private func updateOverlayRect(for fieldID: String, rect: PasswordBridgeRect) {
-        if let triggerOverlay = tab?.passwordTriggerOverlayState,
+        if let triggerOverlay = host?.passwordTriggerOverlayState,
            triggerOverlay.focus.fieldID == fieldID
         {
-            tab?.passwordTriggerOverlayState = overlayState(triggerOverlay, updatingRectTo: rect)
+            host?.passwordTriggerOverlayState = overlayState(triggerOverlay, updatingRectTo: rect)
         }
 
-        if let overlay = tab?.passwordOverlayState,
+        if let overlay = host?.passwordOverlayState,
            overlay.focus.fieldID == fieldID
         {
-            tab?.passwordOverlayState = overlayState(overlay, updatingRectTo: rect)
+            host?.passwordOverlayState = overlayState(overlay, updatingRectTo: rect)
         }
     }
 
@@ -375,7 +400,7 @@ final class PasswordAutofillCoordinator {
         guard settings.passwordsEnabled,
               settings.passwordSavePromptsEnabled,
               provider.usesBuiltInVault,
-              tab?.isPrivate == false,
+              host?.isPrivate == false,
               let pageURL,
               let normalizedHost = PasswordManagerService.normalizedHost(from: pageURL)
         else {
@@ -396,7 +421,7 @@ final class PasswordAutofillCoordinator {
         }
 
         let matchingEntry = passwordManager
-            .matchingEntries(for: pageURL, containerID: tab?.container.id)
+            .matchingEntries(for: pageURL, containerID: host?.passwordSpaceID)
             .first { $0.username == trimmedUsername }
 
         if let matchingEntry,
@@ -419,7 +444,7 @@ final class PasswordAutofillCoordinator {
                     for: pageURL,
                     username: trimmedUsername,
                     password: trimmedPassword,
-                    containerID: self.tab?.container.id
+                    containerID: self.host?.passwordSpaceID
                 )
             } catch {
                 // Logged with its status by the service; never a silent failure.
@@ -477,7 +502,7 @@ final class PasswordAutofillCoordinator {
 
     @MainActor
     private func presentationWindow() -> NSWindow? {
-        if let window = tab?.pageWindow {
+        if let window = host?.pageWindow {
             return window
         }
 
@@ -543,11 +568,11 @@ final class PasswordAutofillCoordinator {
             window.__passwordManager.\(scriptMethod)(\(payloadString));
         }
         """
-        tab?.evaluateJavaScript(script)
+        host?.runPasswordScript(script)
     }
 
     private func setOverlayKeyboardActive(_ isActive: Bool) {
-        guard tab?.browserPage != nil else { return }
+        guard host?.browserPage != nil else { return }
         evaluate(scriptMethod: "setOverlayKeyboardActive", payload: isActive)
     }
 
@@ -565,7 +590,7 @@ final class PasswordAutofillCoordinator {
     }
 
     func moveSelection(by delta: Int) {
-        guard let overlay = tab?.passwordOverlayState else { return }
+        guard let overlay = host?.passwordOverlayState else { return }
         let suggestionCount = overlay.suggestions.count
         guard suggestionCount > 0 else { return }
 
@@ -574,7 +599,7 @@ final class PasswordAutofillCoordinator {
     }
 
     func activateCurrentSelection() {
-        guard let overlay = tab?.passwordOverlayState,
+        guard let overlay = host?.passwordOverlayState,
               overlay.suggestions.indices.contains(overlay.selectedSuggestionIndex)
         else {
             return
@@ -591,16 +616,16 @@ final class PasswordAutofillCoordinator {
     }
 
     private func applySelectionIndex(_ selectionIndex: Int, forFieldID fieldID: String) {
-        if let overlay = tab?.passwordOverlayState,
+        if let overlay = host?.passwordOverlayState,
            overlay.focus.fieldID == fieldID
         {
-            tab?.passwordOverlayState = overlayState(overlay, updatingSelectionIndexTo: selectionIndex)
+            host?.passwordOverlayState = overlayState(overlay, updatingSelectionIndexTo: selectionIndex)
         }
 
-        if let triggerOverlay = tab?.passwordTriggerOverlayState,
+        if let triggerOverlay = host?.passwordTriggerOverlayState,
            triggerOverlay.focus.fieldID == fieldID
         {
-            tab?.passwordTriggerOverlayState = overlayState(triggerOverlay, updatingSelectionIndexTo: selectionIndex)
+            host?.passwordTriggerOverlayState = overlayState(triggerOverlay, updatingSelectionIndexTo: selectionIndex)
         }
     }
 
@@ -695,5 +720,15 @@ final class PasswordAutofillCoordinator {
             selectedSuggestionIndex: (savedPasswordEntries.isEmpty && filteredEmailSuggestions
                 .isEmpty && filteredGeneratedPassword == nil) ? -1 : 0
         )
+    }
+}
+
+extension Tab: PasswordAutofillHost {
+    var passwordSpaceID: UUID? {
+        parentContainer?.id
+    }
+
+    func runPasswordScript(_ script: String) {
+        evaluateJavaScript(script)
     }
 }

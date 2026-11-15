@@ -44,12 +44,15 @@ struct TabPageContent: View {
                     }
                     .overlay(alignment: .topLeading) {
                         if let triggerState = tab.passwordTriggerOverlayState {
-                            PasswordAutofillTriggerView(overlay: triggerState, tab: tab)
+                            PasswordAutofillTriggerView(overlay: triggerState, coordinator: tab.passwordCoordinator)
                         }
                     }
                     .overlay(alignment: .topLeading) {
                         if let passwordOverlayState = tab.passwordOverlayState {
-                            PasswordAutofillOverlayView(overlay: passwordOverlayState, tab: tab)
+                            PasswordAutofillOverlayView(
+                                overlay: passwordOverlayState,
+                                coordinator: tab.passwordCoordinator
+                            )
                         }
                     }
                     .overlay(alignment: .topTrailing) {

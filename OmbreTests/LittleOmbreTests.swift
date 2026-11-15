@@ -70,9 +70,12 @@ extension TabManagerTests {
                 let page = little.popup.page
                 await window.waitUntil("address known") { page.currentURL != nil }
 
+                let previous = window.tabManager.activeTab?.id
                 little.openInOmbre()
+                await window.waitUntil("moved to a tab") { !LittleOmbreWindow.isLittleOmbreWindow(little.window) }
 
                 let tab = try #require(window.tabManager.activeTab)
+                #expect(tab.id != previous)
                 #expect(tab.browserPage === page)
                 #expect(tab.container.id == space.id)
                 #expect(!LittleOmbreWindow.isLittleOmbreWindow(little.window))
@@ -94,6 +97,7 @@ extension TabManagerTests {
                 await window.waitUntil("address known") { page.currentURL != nil }
 
                 little.openInOmbre(space: other)
+                await window.waitUntil("opened in a tab") { !LittleOmbreWindow.isLittleOmbreWindow(little.window) }
 
                 let tab = try #require(window.tabManager.activeTab)
                 #expect(tab.container.id == other.id)
@@ -112,6 +116,19 @@ extension TabManagerTests {
                 #expect(little.popup.context.isPrivate)
                 #expect(little.popup.context.privateSession == window.tabManager.privateSessionID)
                 #expect(little.popup.history == nil)
+            }
+        }
+
+        /// Ombre's passwords are offered there, as in a tab of its space.
+        @Test func itOffersThePasswordsOfItsSpace() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let little = try #require(LittleOmbreWindow.open(nil, from: window.tabManager, window: nil))
+                defer { little.window.close() }
+                let coordinator = try #require(little.popup.passwordCoordinator)
+                #expect(coordinator.host === little.popup)
+                #expect(little.popup.passwordSpaceID == space.id)
+                #expect(coordinator.tab == nil)
             }
         }
 

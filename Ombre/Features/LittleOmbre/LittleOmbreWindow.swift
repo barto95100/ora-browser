@@ -22,7 +22,6 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     private weak var browserWindow: NSWindow?
     /// The page went to a tab: not torn down with the window.
     private var isMovedToTab = false
-    private var promptView: NSView?
     private var observations: Set<AnyCancellable> = []
 
     static func isLittleOmbreWindow(_ window: NSWindow) -> Bool {
@@ -68,6 +67,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
             downloadManager: tabManager.downloadManager
         ))
         if !isPrivate { popup.history = (tabManager.historyManager, space) }
+        popup.enablePasswords()
         let little = LittleOmbreWindow(popup: popup, tabManager: tabManager, space: space)
         little.browserWindow = browserWindow
         little.show()
@@ -96,17 +96,10 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         (window as? LittleOmbreNSWindow)?.owner = self
         model.owner = self
 
-        let content = NSView(frame: NSRect(origin: .zero, size: frame.size))
-        let barHeight = LittleOmbreBar.height
-        let pageView = popup.page.contentView
-        pageView.frame = NSRect(x: 0, y: 0, width: content.bounds.width, height: content.bounds.height - barHeight)
-        pageView.autoresizingMask = [.width, .height]
-        content.addSubview(pageView)
-        let bar = NSHostingView(rootView: LittleOmbreBar(popup: popup, model: model))
-        bar.frame = NSRect(x: 0, y: content.bounds.height - barHeight, width: content.bounds.width, height: barHeight)
-        bar.autoresizingMask = [.width, .minYMargin]
-        bar.sizingOptions = []
-        content.addSubview(bar)
+        // The bar, then the page with its password suggestions and its
+        // permission prompt over it, like a tab.
+        let content = NSHostingView(rootView: LittleOmbreContent(popup: popup, model: model))
+        content.sizingOptions = []
         window.contentView = content
         window.initialFirstResponder = popup.page.webView
         window.isReleasedWhenClosed = false
@@ -116,8 +109,6 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         window.setAccessibilityLabel(String(localized: "Little Ombre"))
         popup.pageDidChange = { [weak self] in self?.updateTitle() }
         popup.closeWindow = { [weak self] in self?.window.close() }
-        popup.$permissionRequest.sink { [weak self] request in self?.showPrompt(request) }
-            .store(in: &observations)
     }
 
     /// Smaller than a browser window, centered on the screen in front.
@@ -179,22 +170,27 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         else { return }
         popup.sheets.dismiss()
         popup.cancelPermissionRequest()
-        // Lets go of the page first: the tab's view takes it.
-        popup.page.contentView.removeFromSuperview()
-        let adopted = tabManager.openLittleOmbrePage(
-            popup.page,
-            url: url,
-            title: popup.page.title ?? "",
-            pageSpaceID: model.spaceID,
-            isPrivate: popup.context.isPrivate,
-            in: target
-        )
-        isMovedToTab = adopted
-        popup.page.log(adopted ? "moved from Little Ombre to a tab" : "Little Ombre opened again in a tab")
-        // The page's popups ("Sign in with…") go on with it, in the tab's window.
-        if adopted { BrowserPopupWindow.movePopups(openedFrom: window, to: browserWindow) }
-        window.close()
-        browserWindow?.makeKeyAndOrderFront(nil)
+        popup.passwordCoordinator?.clearAutofillState()
+        // Little Ombre lets go of the page first; the tab takes it on the
+        // next pass (at once, Little Ombre's view could take it back).
+        model.isPageGone = true
+        DispatchQueue.main.async { [weak self, weak tabManager] in
+            guard let self, let tabManager else { return }
+            let adopted = tabManager.openLittleOmbrePage(
+                popup.page,
+                url: url,
+                title: popup.page.title ?? "",
+                pageSpaceID: model.spaceID,
+                isPrivate: popup.context.isPrivate,
+                in: target
+            )
+            isMovedToTab = adopted
+            popup.page.log(adopted ? "moved from Little Ombre to a tab" : "Little Ombre opened again in a tab")
+            // The page's popups ("Sign in with…") go on with it, in the tab's window.
+            if adopted { BrowserPopupWindow.movePopups(openedFrom: window, to: browserWindow) }
+            window.close()
+            browserWindow?.makeKeyAndOrderFront(nil)
+        }
     }
 
     /// Back, forward and reload, from the bar and the keys.
@@ -228,26 +224,6 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     }
 
     // MARK: - Window
-
-    /// The page's permission prompt, at the top of the page.
-    private func showPrompt(_ request: SitePermissionRequest?) {
-        promptView?.removeFromSuperview()
-        promptView = nil
-        guard let request, let content = window.contentView else { return }
-        let prompt = NSHostingView(rootView: SitePermissionPromptView(
-            request: request,
-            isPrivate: popup.context.isPrivate
-        ) { [weak popup] granted, remember in
-            popup?.answerPermissionRequest(granted: granted, remember: remember)
-        })
-        prompt.translatesAutoresizingMaskIntoConstraints = false
-        content.addSubview(prompt)
-        NSLayoutConstraint.activate([
-            prompt.topAnchor.constraint(equalTo: content.topAnchor, constant: LittleOmbreBar.height + 12),
-            prompt.centerXAnchor.constraint(equalTo: content.centerXAnchor)
-        ])
-        promptView = prompt
-    }
 
     func windowWillClose(_ notification: Notification) {
         observations.removeAll()
@@ -305,6 +281,8 @@ final class LittleOmbreModel: ObservableObject {
     /// Changes when the address field is to take the focus (⌘L, an empty
     /// Little Ombre).
     @Published private(set) var addressFocusRequest = 0
+    /// The page is going to a tab: Little Ombre no longer shows it.
+    @Published var isPageGone = false
 
     init(popup: PopupPage, spaceID: UUID) {
         self.popup = popup
@@ -313,5 +291,60 @@ final class LittleOmbreModel: ObservableObject {
 
     func focusAddress() {
         addressFocusRequest += 1
+    }
+}
+
+/// Little Ombre's window: its bar, then its page, with the page's password
+/// suggestions and permission prompt over it.
+struct LittleOmbreContent: View {
+    @ObservedObject var popup: PopupPage
+    @ObservedObject var model: LittleOmbreModel
+
+    var body: some View {
+        VStack(spacing: 0) {
+            LittleOmbreBar(popup: popup, model: model)
+            ZStack(alignment: .top) {
+                if model.isPageGone {
+                    Color.clear
+                } else {
+                    LittlePageView(page: popup.page)
+                        .overlay(alignment: .topLeading) {
+                            if let trigger = popup.passwordTriggerOverlayState {
+                                PasswordAutofillTriggerView(overlay: trigger, coordinator: popup.passwordCoordinator)
+                            }
+                        }
+                        .overlay(alignment: .topLeading) {
+                            if let overlay = popup.passwordOverlayState {
+                                PasswordAutofillOverlayView(overlay: overlay, coordinator: popup.passwordCoordinator)
+                            }
+                        }
+                }
+                if let request = popup.permissionRequest {
+                    SitePermissionPromptView(
+                        request: request,
+                        isPrivate: popup.context.isPrivate
+                    ) { granted, remember in
+                        popup.answerPermissionRequest(granted: granted, remember: remember)
+                    }
+                    .padding(.top, 12)
+                }
+            }
+        }
+    }
+}
+
+/// The page itself, in the window (as a tab's, without the tab's managers).
+private struct LittlePageView: NSViewRepresentable {
+    let page: BrowserPage
+
+    func makeNSView(context: Context) -> BrowserPageHostView {
+        let host = BrowserPageHostView(frame: .zero)
+        host.host(contentView: page.contentView)
+        host.cancelOperationHandler = BrowserPageView.cancelOperationHandler(for: page)
+        return host
+    }
+
+    func updateNSView(_ host: BrowserPageHostView, context: Context) {
+        host.host(contentView: page.contentView)
     }
 }

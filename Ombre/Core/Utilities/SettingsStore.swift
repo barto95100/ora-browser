@@ -177,6 +177,10 @@ class SettingsStore: ObservableObject {
         "settings.container.\(containerId.uuidString).defaultAI"
     }
 
+    private func keyForAutoGroup(for containerId: UUID) -> String {
+        "settings.container.\(containerId.uuidString).autoGroupTabs"
+    }
+
     private func keyForAutoClear(for containerId: UUID) -> String {
         "settings.container.\(containerId.uuidString).autoClearTabsAfter"
     }
@@ -411,6 +415,16 @@ class SettingsStore: ObservableObject {
         objectWillChange.send()
     }
 
+    /// The space's tabs grouped by site as they open (off by default).
+    func autoGroupsTabs(for containerId: UUID) -> Bool {
+        defaults.bool(forKey: keyForAutoGroup(for: containerId))
+    }
+
+    func setAutoGroupsTabs(_ value: Bool, for containerId: UUID) {
+        defaults.set(value, forKey: keyForAutoGroup(for: containerId))
+        objectWillChange.send()
+    }
+
     func privacySettings(for containerId: UUID) -> SpacePrivacySettings {
         Self.loadCodable(SpacePrivacySettings.self, key: keyForPrivacySettings(for: containerId))
             ?? legacyPrivacySettings
@@ -433,6 +447,7 @@ class SettingsStore: ObservableObject {
         defaults.removeObject(forKey: keyForDefaultSearch(for: containerId))
         defaults.removeObject(forKey: keyForDefaultAI(for: containerId))
         defaults.removeObject(forKey: keyForAutoClear(for: containerId))
+        defaults.removeObject(forKey: keyForAutoGroup(for: containerId))
         defaults.removeObject(forKey: keyForPrivacySettings(for: containerId))
         SitePermissionStore.shared.removeAll(in: containerId)
         objectWillChange.send()

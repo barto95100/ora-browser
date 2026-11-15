@@ -24,7 +24,7 @@ extension TabManager {
 
     private nonisolated static let syncedEntities: Set<String> = [
         String(describing: TabContainer.self), String(describing: Tab.self), String(describing: Folder.self),
-        String(describing: SpaceTask.self)
+        String(describing: SpaceTask.self), String(describing: TabGroup.self)
     ]
 
     func startSyncingWithOtherWindows() {
@@ -114,6 +114,12 @@ extension TabManager {
         }
         for space in spaces where touchedSpaceIDs.contains(space.id) {
             space.noteChangedElsewhere()
+        }
+        // Groups made, changed or deleted elsewhere: fetched again, and the
+        // sidebar told.
+        if pending.all.contains(where: { $0.entityName == String(describing: TabGroup.self) }) {
+            _ = try? modelContext.fetch(FetchDescriptor<TabGroup>())
+            tabGroupsRevision += 1
         }
 
         for tab in goneTabs {

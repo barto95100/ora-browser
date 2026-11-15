@@ -19,6 +19,9 @@ class TabManager: ObservableObject {
     @Published var renamingFolderID: UUID?
     /// Tab group whose name the sidebar is editing.
     @Published var renamingGroupID: UUID?
+    /// Changes with the groups (here or in another window): the sidebar reads
+    /// them again.
+    @Published var tabGroupsRevision = 0
     /// Tab (or folder) being dragged in the sidebar: the page then offers
     /// split zones (see `SplitDropOverlay`).
     @Published var draggingTabID: UUID?

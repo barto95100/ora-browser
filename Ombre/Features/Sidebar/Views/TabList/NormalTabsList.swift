@@ -17,8 +17,6 @@ struct NormalTabsList: View {
         ) -> Void
     let onAddNewTab: () -> Void
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
-    /// Followed here: a group made or changed redraws the list.
-    @Query(sort: \TabGroup.createdAt) private var allGroups: [TabGroup]
     @EnvironmentObject var tabManager: TabManager
     @State private var previousTabIds: [UUID] = []
     /// Tab under the mouse, closed by a middle click like in every browser.
@@ -36,16 +34,17 @@ struct NormalTabsList: View {
             let shownTabs = tabs.filter { !hiddenTabIDs.contains($0.id) }
             let tabsByID = Dictionary(shownTabs.map { ($0.id, $0) }) { first, _ in first }
             let groups = spaceGroups
+            let groupedIDs = Set(groups.flatMap(\.tabIDs))
             ForEach(rows(of: shownTabs, groups: groups), id: \.id) { row in
                 switch row.content {
                 case let .tab(id):
                     if let tab = tabsByID[id] {
-                        decoratedRow(for: tab, split: splits?.rows[tab.id])
+                        decoratedRow(for: tab, split: splits?.rows[tab.id], inGroup: groupedIDs.contains(tab.id))
                     }
                 case let .group(groupID, ids):
                     if let group = groups.first(where: { $0.id == groupID }) {
                         TabGroupSection(group: group, tabs: ids.compactMap { tabsByID[$0] }) { tab in
-                            decoratedRow(for: tab, split: splits?.rows[tab.id])
+                            decoratedRow(for: tab, split: splits?.rows[tab.id], inGroup: true)
                         }
                     }
                 }
@@ -83,8 +82,10 @@ struct NormalTabsList: View {
 
     /// The space's groups (not ungrouped ones).
     private var spaceGroups: [TabGroup] {
-        guard let spaceID = tabs.first?.container.id else { return [] }
-        return allGroups.filter { $0.spaceID == spaceID && !$0.isDissolved }
+        // Read again when groups change, here or in another window.
+        _ = tabManager.tabGroupsRevision
+        guard let space = tabs.first?.container else { return [] }
+        return tabManager.tabGroups(in: space)
     }
 
     private struct ListRow {
@@ -104,8 +105,8 @@ struct NormalTabsList: View {
 
     /// A tab's row as the list shows it: dragged, dropped on, closed with a
     /// middle click.
-    private func decoratedRow(for tab: Tab, split: (left: Tab, right: Tab)?) -> some View {
-        row(for: tab, split: split)
+    private func decoratedRow(for tab: Tab, split: (left: Tab, right: Tab)?, inGroup: Bool) -> some View {
+        row(for: tab, split: split, inGroup: inGroup)
             .onDrag { onDrag(tab.id) }
             .onDrop(
                 of: [.text, .fileURL],
@@ -129,7 +130,7 @@ struct NormalTabsList: View {
     }
 
     @ViewBuilder
-    private func row(for tab: Tab, split: (left: Tab, right: Tab)?) -> some View {
+    private func row(for tab: Tab, split: (left: Tab, right: Tab)?, inGroup: Bool) -> some View {
         if let split {
             SplitTabItem(
                 left: split.left,
@@ -154,7 +155,7 @@ struct NormalTabsList: View {
                 onMoveToContainer: { onMoveToContainer(tab, $0) },
                 availableContainers: containers
             )
-            .environment(\.isInTabGroup, spaceGroups.contains { $0.tabIDs.contains(tab.id) })
+            .environment(\.isInTabGroup, inGroup)
             .onHover { updateHover(tab, $0) }
         }
     }

@@ -166,6 +166,14 @@ struct SpacesSettingsView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
+
+                            Toggle("Group tabs automatically", isOn: Binding(
+                                get: { settings.autoGroupsTabs(for: container.id) },
+                                set: { settings.setAutoGroupsTabs($0, for: container.id) }
+                            ))
+                            Text("By site, from three tabs of a site. Tabs › Tidy Tabs Now groups them at any time.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
 
                         privacySettingsCard(for: container)

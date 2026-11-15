@@ -204,3 +204,124 @@ extension TabManagerTests {
         }
     }
 }
+
+extension TabManagerTests {
+    /// A space grouping its tabs by site as they load.
+    @MainActor
+    @Suite(.serialized)
+    struct AutoTabGroups {
+        private func tab(_ address: String, _ order: Int, in window: TabManagerTestWindow) throws -> Tab {
+            try window.tabManager.makeTab(
+                url: #require(URL(string: address)), title: address, order: order,
+                in: window.activeSpace, isPrivate: true
+            )
+        }
+
+        private func withAutoGroups(in window: TabManagerTestWindow, _ body: () throws -> Void) throws {
+            let space = try window.activeSpace
+            SettingsStore.shared.setAutoGroupsTabs(true, for: space.id)
+            defer { SettingsStore.shared.setAutoGroupsTabs(false, for: space.id) }
+            try body()
+        }
+
+        private func groups(_ window: TabManagerTestWindow) throws -> [TabGroup] {
+            try window.tabManager.tabGroups(in: window.activeSpace)
+        }
+
+        @Test func offByDefault() async throws {
+            try await TabManagerTestWindow.run { window in
+                #expect(try !SettingsStore.shared.autoGroupsTabs(for: window.activeSpace.id))
+                let tabs = try (0 ..< 3).map { try tab("https://example.com/\($0)", $0, in: window) }
+                tabs.forEach(window.tabManager.autoGroup)
+                #expect(try groups(window).isEmpty)
+            }
+        }
+
+        /// The third tab of a site makes the group; the next ones join it.
+        @Test func theThirdTabOfASiteMakesTheGroup() async throws {
+            try await TabManagerTestWindow.run { window in
+                try withAutoGroups(in: window) {
+                    let first = try tab("https://example.com/1", 1, in: window)
+                    window.tabManager.autoGroup(first)
+                    let second = try tab("https://example.com/2", 2, in: window)
+                    window.tabManager.autoGroup(second)
+                    #expect(try groups(window).isEmpty)
+                    let third = try tab("https://example.com/3", 3, in: window)
+                    window.tabManager.autoGroup(third)
+                    #expect(try Set(groups(window).first?.tabIDs ?? []) == [first.id, second.id, third.id])
+
+                    let fourth = try tab("https://example.com/4", 4, in: window)
+                    window.tabManager.autoGroup(fourth)
+                    #expect(try groups(window).first?.tabIDs.contains(fourth.id) == true)
+                    #expect(try groups(window).count == 1)
+                }
+            }
+        }
+
+        /// What the user undid stays undone: a tab taken out, a site ungrouped.
+        @Test func theUsersChoicesHold() async throws {
+            try await TabManagerTestWindow.run { window in
+                try withAutoGroups(in: window) {
+                    let tabs = try (0 ..< 3).map { try tab("https://example.com/\($0)", $0, in: window) }
+                    tabs.forEach(window.tabManager.autoGroup)
+                    let group = try #require(try groups(window).first)
+
+                    window.tabManager.removeFromGroup(tabs[0])
+                    window.tabManager.autoGroup(tabs[0])
+                    #expect(group.tabIDs.contains(tabs[0].id) == false)
+
+                    window.tabManager.ungroup(group)
+                    let more = try tab("https://example.com/more", 9, in: window)
+                    window.tabManager.autoGroup(more)
+                    #expect(try groups(window).isEmpty)
+                }
+            }
+        }
+    }
+}
+
+extension TabManagerTests.AutoTabGroups {
+    /// Pinned tabs, favorites and tabs in a split are never grouped.
+    @Test func onlyOtherTabsOutsideSplitsAreGrouped() async throws {
+        try await TabManagerTestWindow.run { window in
+            let space = try window.activeSpace
+            SettingsStore.shared.setAutoGroupsTabs(true, for: space.id)
+            defer { SettingsStore.shared.setAutoGroupsTabs(false, for: space.id) }
+            let make = { (address: String, order: Int, type: TabType) in
+                try window.tabManager.makeTab(
+                    url: #require(URL(string: address)), title: address, type: type, order: order,
+                    in: space, isPrivate: true
+                )
+            }
+            let pinned = try make("https://example.com/p", 0, .pinned)
+            let fav = try make("https://example.com/f", 0, .fav)
+            let left = try make("https://example.com/l", 1, .normal)
+            let right = try make("https://example.com/r", 2, .normal)
+            window.tabManager.openInSplitView(left: left, right: right)
+            let last = try make("https://example.com/n", 3, .normal)
+            [pinned, fav, left, right, last].forEach(window.tabManager.autoGroup)
+            #expect(window.tabManager.tabGroups(in: space).isEmpty)
+        }
+    }
+}
+
+extension TabManagerTests.TabGroupsInTheSidebar {
+    /// Groups made in one window show in the other.
+    @Test func anotherWindowSeesTheGroups() async throws {
+        try await TabManagerTestWindow.runTwo { first, second in
+            let space = try first.activeSpace
+            for index in 0 ..< 3 {
+                _ = try first.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/\(index)")), title: "\(index)", order: index,
+                    in: space, isPrivate: true
+                )
+            }
+            first.modelContext.saveOrLog("test tabs")
+            let revision = second.tabManager.tabGroupsRevision
+            first.tabManager.tidyTabs(in: space)
+            await second.waitUntil("told") { second.tabManager.tabGroupsRevision > revision }
+            let seen = try #require(second.spaces().first { $0.id == space.id })
+            #expect(second.tabManager.tabGroups(in: seen).count == 1)
+        }
+    }
+}

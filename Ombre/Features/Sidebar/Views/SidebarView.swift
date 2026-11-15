@@ -89,6 +89,7 @@ struct SidebarView: View {
         .onDisappear {
             swipeMonitor.stop()
         }
+        .modifier(TabSelectionKeys(tabManager: tabManager, window: window))
         .enableInjection()
     }
 

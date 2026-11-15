@@ -88,18 +88,6 @@ struct FavTabItem: View {
                     }
                 }
         }
-        .onTapGesture {
-            onTap()
-            if !tab.isWebViewReady {
-                tab
-                    .restoreTransientState(
-                        historyManager: historyManager,
-                        downloadManager: downloadManager,
-                        tabManager: tabManager,
-                        isPrivate: privacyMode.isPrivate
-                    )
-            }
-        }
         .onAppear {
             if tabManager.isActive(tab) {
                 tab
@@ -117,6 +105,7 @@ struct FavTabItem: View {
         .opacity(isDragging ? 0.0 : 1.0)
         .background(backgroundColor)
         .cornerRadius(10)
+        .overlay(SelectionRing(isShown: tabManager.isInSelection(tab) && !isDragging))
         .overlay(
             isDragging
                 ? RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -133,8 +122,10 @@ struct FavTabItem: View {
                 : nil
         )
         .onTapGesture {
+            // A ⌘- or ⇧-click selects: the tab isn't shown, its page not loaded.
+            let isPlainClick = TabManager.SelectionClick(NSEvent.modifierFlags) == .plain
             onTap()
-            if !tab.isWebViewReady {
+            if isPlainClick, !tab.isWebViewReady {
                 tab
                     .restoreTransientState(
                         historyManager: historyManager,
@@ -145,12 +136,31 @@ struct FavTabItem: View {
             }
         }
         .onHover { isHovering = $0 }
-        .tabAccessibility(tab: tab, isSelected: isSelected, activate: onTap, actions: [
-            (name: String(localized: "Close Tab"), action: onClose),
-            (name: String(localized: "Remove from Favorites"), action: onFavoriteToggle),
-            (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
-        ])
+        .tabAccessibility(
+            tab: tab,
+            isSelected: isSelected,
+            isInSelection: tabManager.isInSelection(tab),
+            activate: onTap, actions: TabSelectionAccessibility.actions(
+                for: tab,
+                tabManager: tabManager
+            ) + [
+                (name: String(localized: "Close Tab"), action: onClose),
+                (name: String(localized: "Remove from Favorites"), action: onFavoriteToggle),
+                (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
+            ]
+        )
         .contextMenu {
+            let menuTabs = tabManager.menuTabs(for: tab)
+            if menuTabs.count > 1 {
+                MultipleTabsMenu(tabs: menuTabs)
+            } else {
+                singleTabMenuItems
+            }
+        }
+    }
+
+    private var singleTabMenuItems: some View {
+        Group {
             Button(action: onFavoriteToggle) {
                 Label("Remove from Favorites", systemImage: "star.slash")
             }
@@ -174,6 +184,8 @@ struct FavTabItem: View {
             return theme.activeTabBackground.opacity(0.1)
         } else if isSelected {
             return theme.invertedSolidWindowBackgroundColor.opacity(0.3)
+        } else if tabManager.isInSelection(tab) {
+            return theme.activeTabBackground.opacity(0.35)
         } else if isHovering {
             return theme.activeTabBackground.opacity(0.3)
         }

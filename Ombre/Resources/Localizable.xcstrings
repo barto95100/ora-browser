@@ -671,6 +671,46 @@
         }
       }
     },
+    "%lld tabs selected" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet sélectionné"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets sélectionnés"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tab selected"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld tabs selected"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld%%" : {
       "localizations" : {
         "fr" : {
@@ -1038,6 +1078,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter à Ombre…"
+          }
+        }
+      }
+    },
+    "Add to Selection" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à la sélection"
           }
         }
       }
@@ -2450,6 +2500,46 @@
         }
       }
     },
+    "Close %lld Tabs" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fermer %lld onglet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fermer les %lld onglets"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Close %lld Tab"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Close %lld Tabs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Close Both Tabs" : {
       "localizations" : {
         "fr" : {
@@ -2683,6 +2773,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier l’adresse"
+          }
+        }
+      }
+    },
+    "Copy Addresses" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier les adresses"
           }
         }
       }
@@ -4326,6 +4426,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dans Safari, choisissez Fichier › Exporter les données de navigation dans un fichier, puis choisissez ici le fichier exporté. Chaque profil Safari devient un espace avec son historique, et vos signets deviennent des onglets épinglés."
+          }
+        }
+      }
+    },
+    "In selection" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans la sélection"
           }
         }
       }
@@ -6456,6 +6566,16 @@
         }
       }
     },
+    "Pin Tabs" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler les onglets"
+          }
+        }
+      }
+    },
     "Pin the current tab" : {
       "localizations" : {
         "fr" : {
@@ -6974,6 +7094,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Retirer d’Ombre"
+          }
+        }
+      }
+    },
+    "Remove from Selection" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer de la sélection"
           }
         }
       }
@@ -7533,6 +7663,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choisissez au moins une liste de filtres pour bloquer les publicités dans cet espace."
+          }
+        }
+      }
+    },
+    "Selection cleared" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélection annulée"
           }
         }
       }
@@ -9357,6 +9497,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désépingler l’onglet"
+          }
+        }
+      }
+    },
+    "Unpin Tabs" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désépingler les onglets"
           }
         }
       }

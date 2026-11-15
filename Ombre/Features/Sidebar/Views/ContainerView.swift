@@ -187,7 +187,11 @@ struct ContainerView: View {
         tabManager.toggleFavTab(tab)
     }
 
+    /// A click on a tab: shows it, or with ⌘ or ⇧ changes the selection
+    /// (see `TabManager+Selection.swift`).
     private func selectTab(_ tab: Tab) {
+        let click = TabManager.SelectionClick(NSEvent.modifierFlags)
+        if tabManager.handleSidebarClick(on: tab, click) { return }
         tabManager.activateTab(tab)
     }
 

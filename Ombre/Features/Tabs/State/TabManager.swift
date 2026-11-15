@@ -3,7 +3,12 @@ import SwiftUI
 
 @MainActor
 class TabManager: ObservableObject {
-    @Published var activeContainer: TabContainer?
+    @Published var activeContainer: TabContainer? {
+        didSet {
+            // The sidebar's selection stays in its space.
+            if oldValue?.id != activeContainer?.id, !selectedTabIDs.isEmpty { clearTabSelection() }
+        }
+    }
     @Published var activeTab: Tab?
     /// A link previewed over the active tab, see `TabManager+Peek.swift`.
     @Published var peek: PeekPage?
@@ -15,6 +20,11 @@ class TabManager: ObservableObject {
     /// Tab (or folder) being dragged in the sidebar: the page then offers
     /// split zones (see `SplitDropOverlay`).
     @Published var draggingTabID: UUID?
+    /// Tabs selected together in the sidebar (⌘-click, ⇧-click), in the
+    /// active space; empty when none (see `TabManager+Selection.swift`).
+    @Published var selectedTabIDs: Set<UUID> = []
+    /// Where a ⇧-click range starts: the last tab ⌘-clicked.
+    var selectionAnchorID: UUID?
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController

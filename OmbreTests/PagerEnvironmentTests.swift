@@ -44,7 +44,7 @@ private struct Pager: View {
     @Environment(\.pagerProbe) private var probe
 
     var body: some View {
-        NSPageView(selection: $pages.index, pageObjects: pages.ids, idKeyPath: \.self) { id in
+        SpacePager(pages: pages.ids, selection: pages.index, id: \.self) { id in
             if injects {
                 ProbePage(id: id, log: log).environment(\.pagerProbe, probe)
             } else {
@@ -54,10 +54,9 @@ private struct Pager: View {
     }
 }
 
-/// The spaces' pages in the sidebar (`NSPageView`) are hosted apart: a page
-/// made while the app runs (a new space) is laid out before it joins the
-/// window, where it inherits none of the window's environment. What the page
-/// reads must be given to it.
+/// The spaces' pages in the sidebar (`SpacePager`): a page made while the app
+/// runs (a new space) sees the window's environment. With AppKit's page
+/// controller, it was first laid out apart, with none of it, and crashed.
 @MainActor
 struct PagerEnvironmentTests {
     /// A new page, shown as the sidebar's "+" does (added and selected at
@@ -99,10 +98,10 @@ struct PagerEnvironmentTests {
         return log
     }
 
-    /// Why the sidebar gives its pages their environment (a crash otherwise).
-    @Test func aNewPageShownAtOnceIsFirstLaidOutWithoutTheWindowsEnvironment() async throws {
+    /// Nothing needs to be given: the pages are in the window's views.
+    @Test func aNewPageShownAtOnceHasTheWindowsEnvironment() async throws {
         let log = try await showNewPage(injects: false, together: true, animated: true)
-        #expect(log.seen["b"]?.contains("none") == true)
+        #expect(log.seen["b"] == ["window"])
     }
 
     @Test(arguments: [(true, true), (true, false), (false, true), (false, false)])

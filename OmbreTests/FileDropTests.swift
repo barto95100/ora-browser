@@ -90,8 +90,9 @@ private struct DropTestFile {
 }
 
 /// A browser window as the app shows it (`BrowserView` and its managers).
+/// A real browser window (`BrowserView`), kept behind the others.
 @MainActor
-private final class BrowserTestWindow {
+final class BrowserTestWindow {
     let window: NSWindow
     private let host: NSView
     private static var sequenceNumber = 4000
@@ -147,9 +148,25 @@ private final class BrowserTestWindow {
 
     /// The sidebar, in window coordinates: the spaces' pager.
     var sidebarFrame: NSRect? {
-        guard let pager = Self.find(NSPageController.self, in: host)?.view, pager.window != nil else { return nil }
+        guard let pager = Self.view(SpacePagerFrameView.self, in: host), pager.window != nil else { return nil }
         let frame = pager.convert(pager.bounds, to: nil)
         return frame.width > 50 ? frame : nil
+    }
+
+    /// Lays the window out and lets SwiftUI catch up.
+    func settle() async {
+        for _ in 0 ..< 5 {
+            host.layoutSubtreeIfNeeded()
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+    }
+
+    private static func view<T: NSView>(_ type: T.Type, in view: NSView) -> T? {
+        if let match = view as? T { return match }
+        for subview in view.subviews {
+            if let match = Self.view(type, in: subview) { return match }
+        }
+        return nil
     }
 
     /// Drags `file` from another app to `point` (window coordinates) and drops
@@ -230,19 +247,6 @@ private final class BrowserTestWindow {
 
     func close() {
         window.close()
-    }
-
-    private static func find<T>(_ type: T.Type, in view: NSView) -> T? {
-        var controller: NSResponder? = view.nextResponder
-        while let current = controller {
-            if let match = current as? T { return match }
-            controller = current.nextResponder
-        }
-        for subview in view.subviews {
-            if let match = subview.nextResponder as? T { return match }
-            if let match = find(type, in: subview) { return match }
-        }
-        return nil
     }
 }
 

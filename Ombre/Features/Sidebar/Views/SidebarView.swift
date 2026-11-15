@@ -22,9 +22,8 @@ struct SidebarView: View {
     /// Downloads transition state
     @State private var dragOffset: CGFloat = 0
 
-    /// Trackpad and Magic Mouse swipes, handled here rather than by the page
-    /// controller (whose transition felt slow): one swipe changes space with a
-    /// short animation; from the first space, swiping right shows the
+    /// Trackpad and Magic Mouse swipes, all handled here (the pager has no
+    /// swipe of its own): one swipe changes space with a short animation; from the first space, swiping right shows the
     /// downloads (they sit before it), swiping left hides them.
     @State private var swipeMonitor = HorizontalSwipeMonitor()
     @State private var swipeArea = SidebarSwipeArea()
@@ -42,19 +41,9 @@ struct SidebarView: View {
         return media.isVisible && !others.isEmpty
     }
 
-    private var selectedContainerIndex: Binding<Int> {
-        Binding(
-            get: {
-                guard let activeContainer = tabManager.activeContainer else {
-                    return 0
-                }
-                return containers.firstIndex { $0.id == activeContainer.id } ?? 0
-            },
-            set: { newIndex in
-                guard newIndex >= 0, newIndex < containers.count else { return }
-                tabManager.activateContainer(containers[newIndex])
-            }
-        )
+    private var selectedContainerIndex: Int {
+        guard let activeContainer = tabManager.activeContainer else { return 0 }
+        return containers.firstIndex { $0.id == activeContainer.id } ?? 0
     }
 
     var body: some View {
@@ -83,7 +72,7 @@ struct SidebarView: View {
             .simultaneousGesture(downloadsNavigationGesture(width: width))
         }
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { swipeArea.frame = $0 }
-        .onChange(of: selectedContainerIndex.wrappedValue, initial: true) { _, index in
+        .onChange(of: selectedContainerIndex, initial: true) { _, index in
             swipeArea.selectedIndex = index
         }
         .onChange(of: containers.map(\.id), initial: true) {
@@ -135,8 +124,9 @@ struct SidebarView: View {
             showSpace(at: index + 1)
             return true
         case .fingersLeft:
-            // Last space: the page controller bounces.
-            return false
+            // Last space: nothing further. Kept from the views all the same,
+            // as every horizontal swipe of the sidebar.
+            return true
         }
     }
 
@@ -168,7 +158,7 @@ struct SidebarView: View {
                     if value.translation.width > 0 {
                         dragOffset = value.translation.width
                     }
-                } else if selectedContainerIndex.wrappedValue == 0 {
+                } else if selectedContainerIndex == 0 {
                     // Swipe left from first container to show downloads
                     if value.translation.width < 0 {
                         dragOffset = value.translation.width
@@ -190,7 +180,7 @@ struct SidebarView: View {
                             dragOffset = 0
                         }
                     }
-                } else if selectedContainerIndex.wrappedValue == 0 {
+                } else if selectedContainerIndex == 0 {
                     if -value.translation.width > threshold
                         || -value.predictedEndTranslation.width > threshold * 2
                     {
@@ -235,13 +225,11 @@ struct SidebarView: View {
             } else {
                 SidebarHeader()
             }
-            NSPageView(
+            SpacePager(
+                pages: containers,
                 selection: selectedContainerIndex,
-                pageObjects: containers,
-                idKeyPath: \.pageID
+                id: \.pageID
             ) { container in
-                // Hosted apart: a new space's page is first laid out without
-                // the window's environment (see `SpacePageEnvironment`).
                 ContainerView(container: container)
                     .padding(.horizontal, 10)
                     .modifier(spacePageEnvironment)

@@ -102,7 +102,9 @@ extension TabManager {
         let shown = sidebarOrder(in: container).filter { selectedTabIDs.contains($0.id) }
         let shownIDs = Set(shown.map(\.id))
         // Selected, but no longer shown (in a folder closed since): last.
-        let hidden = container.tabs.filter { selectedTabIDs.contains($0.id) && !shownIDs.contains($0.id) }
+        let hidden = container.tabs
+            .filter { selectedTabIDs.contains($0.id) && !shownIDs.contains($0.id) }
+            .sorted { $0.order > $1.order }
         return shown + hidden
     }
 
@@ -130,24 +132,32 @@ extension TabManager {
 
     // MARK: - Actions on several tabs
 
+    /// The tab shown last: done first, the next tab shown would be another
+    /// of them, shown (and loaded) for nothing.
+    private func shownLast(_ tabs: [Tab]) -> [Tab] {
+        tabs.filter { !isShown($0) } + tabs.filter { isShown($0) }
+    }
+
     func closeTabs(_ tabs: [Tab]) {
         clearTabSelection()
-        for tab in tabs {
+        for tab in shownLast(tabs) {
             closeTab(tab: tab)
         }
     }
 
-    /// Pins them all (`true`), or unpins them all, in the sidebar's order.
+    /// Pins them all (`true`), or unpins them all, keeping their order: a tab
+    /// pinned goes last of the pinned ones, a tab unpinned first of the
+    /// others (so these go from the last one).
     func setPinned(_ tabs: [Tab], _ pinned: Bool) {
         clearTabSelection()
-        for tab in tabs where (tab.type == .pinned) != pinned {
+        for tab in pinned ? tabs : tabs.reversed() where (tab.type == .pinned) != pinned {
             togglePinTab(tab)
         }
     }
 
     func moveTabs(_ tabs: [Tab], to container: TabContainer) {
         clearTabSelection()
-        for tab in tabs {
+        for tab in shownLast(tabs) {
             moveTabToContainer(tab, toContainer: container)
         }
     }

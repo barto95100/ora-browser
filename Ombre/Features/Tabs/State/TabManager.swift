@@ -225,6 +225,7 @@ class TabManager: ObservableObject {
         // Already being closed (a double click): once is enough.
         guard !tab.isClosing else { return }
         tab.isClosing = true
+        if selectedTabIDs.contains(tab.id) { selectedTabIDs.remove(tab.id) }
         // Closing one side of a split shows the other side alone.
         let partner = splitPartner(of: tab)
         separateSplit(containing: tab, save: false)

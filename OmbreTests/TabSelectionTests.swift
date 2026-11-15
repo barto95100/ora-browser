@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import Foundation
 @testable import Ombre
 import Testing
@@ -158,15 +159,45 @@ extension TabManagerTests {
             }
         }
 
+        /// The tab shown among them goes last: no other of them is shown on
+        /// the way.
         @Test func closeTogether() async throws {
             try await TabManagerTestWindow.run { window in
+                let kept = try await window.openLoaded("kept")
                 let first = try await window.openLoaded("first")
                 let second = try await window.openLoaded("second")
-                let kept = try await window.openLoaded("kept")
+                window.tabManager.activateTab(first)
+                var shown: [UUID?] = []
+                let observation = window.tabManager.$activeTab.sink { shown.append($0?.id) }
+                defer { observation.cancel() }
                 window.tabManager.closeTabs([first, second])
                 await window.waitUntilClosed(first)
                 await window.waitUntilClosed(second)
                 #expect(!window.isDeleted(kept))
+                #expect(!shown.contains(second.id))
+                #expect(window.tabManager.activeTab?.id == kept.id)
+            }
+        }
+
+        /// Unpinned, they keep their order (each goes first of the others).
+        @Test func unpinningKeepsTheOrder() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let pinned = (0 ..< 3).map { window.addUnloadedTab("/p\($0)", type: .pinned, order: 3 - $0, in: space) }
+                window.tabManager.setPinned(pinned, false)
+                let normal = window.tabManager.sidebarOrder(in: space).filter { $0.type == .normal }
+                #expect(ids(Array(normal.prefix(3))) == ids(pinned))
+            }
+        }
+
+        /// A tab closed on its own leaves the selection.
+        @Test func aTabClosedLeavesTheSelection() async throws {
+            try await TabManagerTestWindow.run { window in
+                let first = try await window.openLoaded("first")
+                let second = try await window.openLoaded("second")
+                window.tabManager.handleSidebarClick(on: first, .toggle)
+                window.tabManager.closeTab(tab: first)
+                #expect(window.tabManager.selectedTabIDs == [second.id])
             }
         }
     }

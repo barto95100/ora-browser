@@ -13,7 +13,8 @@ final class TabSelectionEscapeMonitor {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Local monitors run on the main thread. Only a Bool leaves the
             // isolated closure: NSEvent is not Sendable.
-            let isEscape = event.keyCode == 53 && event.modifierFlags.isDisjoint(with: .deviceIndependentFlagsMask)
+            let isEscape = event.keyCode == 53 && event.modifierFlags
+                .isDisjoint(with: .deviceIndependentFlagsMask.subtracting(.capsLock))
             let eventWindow = event.window
             let handled = MainActor.assumeIsolated {
                 guard isEscape, let window = window(), eventWindow === window else { return false }
@@ -39,26 +40,46 @@ struct TabSelectionKeys: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onChange(of: tabManager.selectedTabIDs.isEmpty) { _, isEmpty in
-                if isEmpty {
-                    escape.stop()
-                } else {
-                    let manager = tabManager
-                    let target = window
-                    escape.start(window: { [weak target] in target }, onEscape: { [weak manager] in
-                        manager?.clearTabSelection()
-                    })
-                }
+                updateEscape(isEmpty: isEmpty)
             }
+            // The floating sidebar comes and goes: the selection may still be there.
+            .onAppear { updateEscape(isEmpty: tabManager.selectedTabIDs.isEmpty) }
             .onChange(of: tabManager.selectedTabIDs.count) { _, count in
-                NSAccessibility.post(
-                    element: NSApp as Any,
-                    notification: .announcementRequested,
-                    userInfo: [
-                        .announcement: TabSelectionAccessibility.announcement(count: count),
-                        .priority: NSAccessibilityPriorityLevel.high.rawValue
-                    ]
-                )
+                // Cleared after an action of the menu: the action says enough.
+                if count > 0 { announce(count: count) }
             }
             .onDisappear { escape.stop() }
+    }
+
+    private func updateEscape(isEmpty: Bool) {
+        guard !isEmpty else {
+            escape.stop()
+            return
+        }
+        let manager = tabManager
+        let target = window
+        escape.start(window: { [weak target, weak manager] in
+            // Tabs closed or moved away: nothing selected to clear, the
+            // Escape goes on to the page.
+            manager?.selectedTabs.isEmpty == false ? target : nil
+        }, onEscape: { [weak manager] in
+            manager?.clearTabSelection()
+            Self.announce(count: 0)
+        })
+    }
+
+    private func announce(count: Int) {
+        Self.announce(count: count)
+    }
+
+    private static func announce(count: Int) {
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: TabSelectionAccessibility.announcement(count: count),
+                .priority: NSAccessibilityPriorityLevel.high.rawValue
+            ]
+        )
     }
 }

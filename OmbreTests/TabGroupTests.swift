@@ -151,3 +151,56 @@ extension TabManagerTests {
         }
     }
 }
+
+extension TabManagerTests {
+    @MainActor
+    struct TabGroupsInTheSidebar {
+        private func tab(_ address: String, _ order: Int, in window: TabManagerTestWindow) throws -> Tab {
+            try window.tabManager.makeTab(
+                url: #require(URL(string: address)), title: address, order: order,
+                in: window.activeSpace, isPrivate: true
+            )
+        }
+
+        /// ⇧-click follows what the sidebar shows: a group's tabs together
+        /// where its first tab is, a folded group's hidden ones left out.
+        @Test func theSidebarOrderShowsGroups() async throws {
+            try await TabManagerTestWindow.run { window in
+                let a1 = try tab("https://example.com/1", 5, in: window)
+                let other = try tab("https://other.org/", 4, in: window)
+                let a2 = try tab("https://example.com/2", 3, in: window)
+                let a3 = try tab("https://example.com/3", 2, in: window)
+                let space = try window.activeSpace
+                window.tabManager.tidyTabs(in: space)
+                let order = window.tabManager.sidebarOrder(in: space).map(\.id)
+                #expect(order.suffix(4) == [a1.id, a2.id, a3.id, other.id])
+
+                let group = try #require(window.tabManager.tabGroups(in: space).first)
+                window.tabManager.toggleTabGroup(group)
+                #expect(window.tabManager.sidebarOrder(in: space).map(\.id).suffix(1) == [other.id])
+            }
+        }
+
+        /// A tab dropped among a group's tabs joins it; a group left with
+        /// one tab goes.
+        @Test func droppedTabsJoinAndLeave() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tabs = try (0 ..< 3).map { try tab("https://example.com/\($0)", 5 - $0, in: window) }
+                let other = try tab("https://other.org/", 1, in: window)
+                let space = try window.activeSpace
+                let manager = window.tabManager
+                manager.tidyTabs(in: space)
+                let group = try #require(manager.tabGroups(in: space).first)
+                manager.addToGroup(other, group)
+                #expect(manager.tabGroup(of: other)?.id == group.id)
+
+                manager.removeFromGroup(tabs[0])
+                manager.removeFromGroup(tabs[1])
+                manager.removeFromGroup(tabs[2])
+                #expect(manager.tabGroups(in: space).isEmpty)
+                // Not "ungrouped by the user": the site may be grouped again.
+                #expect(try window.modelContext.fetch(FetchDescriptor<TabGroup>()).isEmpty)
+            }
+        }
+    }
+}

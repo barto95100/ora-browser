@@ -139,3 +139,8 @@ enum TabGroupAccessibility {
         return "\(String(localized: "\(count) tabs")), \(state)"
     }
 }
+
+extension EnvironmentValues {
+    /// Whether the tab row is in a group (its menu offers Remove from Group).
+    @Entry var isInTabGroup = false
+}

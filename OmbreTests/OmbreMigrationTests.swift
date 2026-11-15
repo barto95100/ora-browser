@@ -3,6 +3,9 @@ import Foundation
 import SwiftData
 import Testing
 
+/// Finds the test bundle's resources.
+private final class FixtureToken {}
+
 /// The plan of the builds before tab groups: V1 only.
 private enum PlanBeforeGroups: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
@@ -67,6 +70,38 @@ struct OmbreMigrationTests {
         let reopened = try ModelContext(ModelConfiguration.createMainContainer(at: url))
         let groups = try reopened.fetch(FetchDescriptor<TabGroup>())
         #expect(groups.map(\.tabIDs) == [[tabID]])
+    }
+
+    /// A database written by the build before tab groups (`main` at
+    /// ce2520a: two spaces, a folder, three tabs, a history entry, a task),
+    /// opened by this one.
+    @Test func aDatabaseOfTheBuildBeforeOpens() throws {
+        let fixture = try #require(Bundle(for: FixtureToken.self).url(
+            forResource: "OmbreData-v1",
+            withExtension: "sqlite"
+        ))
+        let url = try temporaryStore()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        try FileManager.default.copyItem(at: fixture, to: url)
+
+        let context = try ModelContext(ModelConfiguration.createMainContainer(at: url))
+        // The default space made by its first window, and "Work".
+        let spaces = try context.fetch(FetchDescriptor<TabContainer>(sortBy: TabContainer.displayOrder))
+        #expect(spaces.count == 2)
+        let work = try #require(spaces.first { $0.name == "Work" })
+        let tabs = try context.fetch(FetchDescriptor<Tab>(sortBy: [SortDescriptor(\.order)]))
+        #expect(tabs.map(\.url.absoluteString) == [
+            "https://example.com/a",
+            "https://example.com/b",
+            "https://other.org/"
+        ])
+        #expect(tabs.map(\.type) == [.pinned, .normal, .normal])
+        #expect(tabs.allSatisfy { $0.parentContainer?.id == work.id })
+        #expect(try context.fetch(FetchDescriptor<Folder>()).map(\.name) == ["Reading"])
+        #expect(try context.fetch(FetchDescriptor<History>()).map(\.visitCount) == [2])
+        #expect(try context.fetch(FetchDescriptor<SpaceTask>()).map(\.title) == ["Task"])
+        context.insert(TabGroup(spaceID: work.id, name: "example.com", kind: .site, tabIDs: tabs.map(\.id)))
+        try context.save()
     }
 
     /// Opened twice at the new version: no migration the second time.

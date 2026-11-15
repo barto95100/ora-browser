@@ -94,7 +94,17 @@ extension TabManager {
     func groupableTabs(in container: TabContainer) -> [Tab] {
         let splits = splitPairs(in: container)
         let inSplit = Set(splits.keys).union(splits.values)
-        return sidebarOrder(in: container).filter { $0.type == .normal && !inSplit.contains($0.id) }
+        // Their own order (not `sidebarOrder`, which shows the groups).
+        return container.tabs
+            .filter { $0.type == .normal && !inSplit.contains($0.id) }
+            .sorted { $0.order > $1.order }
+    }
+
+    /// The groups as the sidebar shows them: their tabs that can be grouped
+    /// (a tab gone into a split leaves them), for `TabGrouping.rows`.
+    func shownGroups(_ groups: [TabGroup], in container: TabContainer) -> [(id: UUID, tabs: [UUID])] {
+        let groupable = Set(groupableTabs(in: container).map(\.id))
+        return groups.map { (id: $0.id, tabs: $0.tabIDs.filter { groupable.contains($0) }) }
     }
 
     /// The group `tab` is in, if any.
@@ -117,6 +127,11 @@ extension TabManager {
         }
         let groups = all.filter { !$0.isDissolved }
         let tabs = groupableTabs(in: container)
+        // Tabs closed, moved or pinned since: no longer listed.
+        let groupable = Set(tabs.map(\.id))
+        for group in groups {
+            group.tabIDs = group.tabIDs.filter { groupable.contains($0) }
+        }
         let groupedIDs = Set(groups.flatMap(\.tabIDs))
         let made = TabGrouping.siteGroups(
             tabs.map { (id: $0.id, site: TabGrouping.site(of: $0.url)) },
@@ -160,16 +175,25 @@ extension TabManager {
     }
 
     /// Takes `tab` out of its group, for good (not put back automatically).
-    /// A group left with one tab is ungrouped.
+    /// A group left with one tab goes (its site may be grouped again later:
+    /// the user only took tabs out).
     func removeFromGroup(_ tab: Tab) {
         guard let group = tabGroup(of: tab) else { return }
         group.tabIDs.removeAll { $0 == tab.id }
         group.releasedTabIDs.append(tab.id)
         if tabs(of: group, in: tab.container).count < 2 {
-            ungroup(group)
-        } else {
-            modelContext.saveOrLog("remove tab from group")
+            modelContext.delete(group)
         }
+        modelContext.saveOrLog("remove tab from group")
+    }
+
+    /// Puts `tab` in `group` (dropped among its tabs), out of its own.
+    func addToGroup(_ tab: Tab, _ group: TabGroup) {
+        guard !group.tabIDs.contains(tab.id) else { return }
+        if tabGroup(of: tab) != nil { removeFromGroup(tab) }
+        group.releasedTabIDs.removeAll { $0 == tab.id }
+        group.tabIDs.append(tab.id)
+        modelContext.saveOrLog("add tab to group")
     }
 
     /// Closes the group's tabs, and the group.

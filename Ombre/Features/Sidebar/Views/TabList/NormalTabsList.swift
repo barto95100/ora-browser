@@ -93,7 +93,8 @@ struct NormalTabsList: View {
     }
 
     private func rows(of tabs: [Tab], groups: [TabGroup]) -> [ListRow] {
-        TabGrouping.rows(tabs: tabs.map(\.id), groups: groups.map { (id: $0.id, tabs: $0.tabIDs) }).map { row in
+        guard let space = tabs.first?.container else { return [] }
+        return TabGrouping.rows(tabs: tabs.map(\.id), groups: tabManager.shownGroups(groups, in: space)).map { row in
             switch row {
             case let .tab(id): ListRow(id: id, content: row)
             case let .group(id, _): ListRow(id: id, content: row)
@@ -153,6 +154,7 @@ struct NormalTabsList: View {
                 onMoveToContainer: { onMoveToContainer(tab, $0) },
                 availableContainers: containers
             )
+            .environment(\.isInTabGroup, spaceGroups.contains { $0.tabIDs.contains(tab.id) })
             .onHover { updateHover(tab, $0) }
         }
     }

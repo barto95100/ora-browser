@@ -129,6 +129,8 @@ struct TabItem: View {
     let availableContainers: [TabContainer]
 
     @Environment(\.theme) private var theme
+    /// Given by the list (no database read for each row).
+    @Environment(\.isInTabGroup) private var isInTabGroup
     @State private var isHovering = false
 
     var body: some View {
@@ -285,7 +287,7 @@ struct TabItem: View {
 
         CopyTabAddressButton(tab: tab)
 
-        if tab.type == .normal, tabManager.tabGroup(of: tab) != nil {
+        if tab.type == .normal, isInTabGroup {
             Button {
                 tabManager.removeFromGroup(tab)
             } label: {

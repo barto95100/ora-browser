@@ -39,5 +39,32 @@
             <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
             <result type="text" description="JSON: id, title, address, width, height, png (base64)."/>
         </command>
+        <command name="click element" code="OmbrClik" description="Clicks the first element a CSS selector matches in a tab's web page (page actions must be allowed too; the page sees a click from a script).">
+            <cocoa class="OmbreClickElementCommand"/>
+            <direct-parameter type="text" description="The CSS selector."/>
+            <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
+                <cocoa key="tab"/>
+            </parameter>
+            <result type="text" description="JSON: id, title, address, element."/>
+        </command>
+        <command name="fill field" code="OmbrFill" description="Fills in the first field a CSS selector matches in a tab's web page, as typing would (never a password field; page actions must be allowed too).">
+            <cocoa class="OmbreFillFieldCommand"/>
+            <direct-parameter type="text" description="The CSS selector."/>
+            <parameter name="to" code="OmVl" type="text" description="The text to fill in (a list's value for a list).">
+                <cocoa key="value"/>
+            </parameter>
+            <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
+                <cocoa key="tab"/>
+            </parameter>
+            <result type="text" description="JSON: id, title, address, element."/>
+        </command>
+        <command name="run javascript" code="OmbrRnJS" description="Runs JavaScript in a tab's web page, apart from the page's own scripts (page actions must be allowed too). The code is an async function's body: return gives its result, await works; 15 seconds at most.">
+            <cocoa class="OmbreRunJavaScriptCommand"/>
+            <direct-parameter type="text" description="The code."/>
+            <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
+                <cocoa key="tab"/>
+            </parameter>
+            <result type="text" description="JSON: id, title, address, result (any JSON value)."/>
+        </command>
     </suite>
 </dictionary>

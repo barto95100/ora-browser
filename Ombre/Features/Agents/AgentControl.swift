@@ -5,10 +5,12 @@ import os.log
 /// settings, then each app asks the user once per session ("Terminal wants
 /// to control Ombre"). Only the front normal window: never a private window,
 /// Little Ombre, passwords or the keychain. Each command is logged in the
-/// "Agent" category (command, app, site, result; never a page's text). While
+/// "Agent" category (command, app, site, result; never a page's text, a
+/// selector, a value filled in nor a script). Page actions (click, fill in,
+/// JavaScript) need a setting of their own, off by default. While
 /// a session is allowed, the sidebar shows which app drives Ombre (with Stop
 /// Agent Control), and a badge on each tab an agent opened, showed, read,
-/// captured or closed: until Stop, the setting turned off, or an hour without a command.
+/// captured, acted in or closed: until Stop, the setting turned off, or an hour without a command.
 @MainActor
 final class AgentControl: ObservableObject {
     static let shared = AgentControl()
@@ -36,6 +38,8 @@ final class AgentControl: ObservableObject {
 
     /// Whether the settings allow agents (the tests set their own).
     var isAllowed: () -> Bool = { SettingsStore.shared.allowsAgentControl }
+    /// Whether the settings allow page actions too (the tests set their own).
+    var allowsPageActions: () -> Bool = { SettingsStore.shared.allowsAgentPageActions }
     /// How long without a command ends the indicator and the badges (the
     /// sessions then expire: see `AgentSessions`); the tests set their own.
     var idleLimit = AgentSessions.idleLimit
@@ -48,6 +52,9 @@ final class AgentControl: ObservableObject {
     /// Runs an agent's command, once the settings and the user allow it.
     func run(_ command: AgentCommand, from sender: AgentSender) async -> Result<String, AgentError> {
         guard isAllowed() else { return log(command, sender, nil, .failure(.off)) }
+        guard !command.isPageAction || allowsPageActions() else {
+            return log(command, sender, nil, .failure(.actionsOff))
+        }
         // The question shows in that window.
         guard tabManager() != nil else { return log(command, sender, nil, .failure(.noWindow)) }
         switch await authorization(sender) {
@@ -57,15 +64,26 @@ final class AgentControl: ObservableObject {
         }
         // Turned off while the user was asked.
         guard isAllowed() else { return log(command, sender, nil, .failure(.off)) }
+        guard !command.isPageAction || allowsPageActions() else {
+            return log(command, sender, nil, .failure(.actionsOff))
+        }
         guard let tabManager = tabManager() else { return log(command, sender, nil, .failure(.noWindow)) }
         noteDriving(by: sender)
         let started = generation
         let done = await AgentCommands.run(command, in: tabManager)
         // Not after Stop meanwhile (a page read waits for its page).
-        if case .success = done.result, let tabID = done.tabID, started == generation {
+        if let tabID = done.tabID, started == generation, Self.touches(done.result) {
             touchedTabIDs.insert(tabID)
         }
         return log(command, sender, done.host, done.result)
+    }
+
+    /// Whether a command's tab gets its badge: done, or a script that ran.
+    private static func touches(_ result: Result<String, AgentError>) -> Bool {
+        switch result {
+        case .success: true
+        case let .failure(error): error.mayHaveActed
+        }
     }
 
     /// Stop Agent Control (sidebar or address bar), or the setting turned off: every app
@@ -134,7 +152,7 @@ final class AgentControl: ObservableObject {
     ) -> Result<String, AgentError> {
         let outcome = switch result {
         case .success: "ok"
-        case let .failure(error): error.message
+        case let .failure(error): error.logged ?? error.message
         }
         let line = "\(command.name) from \(sender.name) [\(host ?? "-")]: \(outcome)" // not shown
         logger.notice("\(line, privacy: .public)")
@@ -147,9 +165,14 @@ final class AgentControl: ObservableObject {
         guard !TestHost.isActive, let window = BrowserWindows.front else { return nil }
         let alert = NSAlert()
         alert.messageText = String(localized: "\(sender.name) wants to control Ombre")
-        alert.informativeText = String(
-            localized: "It will be able to list, open, show, close, read and capture your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords."
-        ) + "\n\n" + sender.key
+        let can = allowsPageActions()
+            ? String(
+                localized: "It will be able to list, open, show, close, read and capture your tabs, and to click, fill in fields and run JavaScript in web pages (which sees everything they hold, what you type or autofill included), until you quit Ombre or an hour passes without a command. Never private windows or Little Ombre."
+            )
+            : String(
+                localized: "It will be able to list, open, show, close, read and capture your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords."
+            )
+        alert.informativeText = can + "\n\n" + sender.key
         alert.addButton(withTitle: String(localized: "Allow for This Session"))
         alert.addButton(withTitle: String(localized: "Deny"))
         NSApp.activate()

@@ -157,6 +157,7 @@ class SettingsStore: ObservableObject {
     private let autoPiPEnabledKey = "settings.autoPiPEnabled"
     private let littleOmbreForLinksKey = "settings.littleOmbreForLinks"
     private let allowsAgentControlKey = "settings.allowsAgentControl"
+    private let allowsAgentPageActionsKey = "settings.allowsAgentPageActions"
     private let peekEnabledKey = "settings.peekEnabled"
     private let pinnedLinkBehaviorKey = "settings.pinnedLinkBehavior"
     private let passwordsEnabledKey = "settings.passwords.enabled"
@@ -248,10 +249,16 @@ class SettingsStore: ObservableObject {
     }
 
     /// Agents (apps, scripts, the `ombre` command) may drive Ombre through
-    /// Apple Events: list, open, show, close and read tabs. Off by default;
+    /// Apple Events: list, open, show, close, read and capture tabs. Off by default;
     /// each app still asks once per session (see `AgentControl`).
     @Published var allowsAgentControl: Bool {
         didSet { defaults.set(allowsAgentControl, forKey: allowsAgentControlKey) }
+    }
+
+    /// Agents may also act in pages: click, fill in fields, run JavaScript.
+    /// Off by default, and only with `allowsAgentControl`.
+    @Published var allowsAgentPageActions: Bool {
+        didSet { defaults.set(allowsAgentPageActions, forKey: allowsAgentPageActionsKey) }
     }
 
     /// Links from pinned and favorite tabs to other sites: Peek (like Arc),
@@ -367,6 +374,7 @@ class SettingsStore: ObservableObject {
         autoPiPEnabled = defaults.object(forKey: autoPiPEnabledKey) as? Bool ?? true
         opensLinksInLittleOmbre = defaults.object(forKey: littleOmbreForLinksKey) as? Bool ?? true
         allowsAgentControl = defaults.bool(forKey: allowsAgentControlKey)
+        allowsAgentPageActions = defaults.bool(forKey: allowsAgentPageActionsKey)
         // Before this choice, Peek could only be turned on or off.
         let legacyPeekEnabled = defaults.object(forKey: peekEnabledKey) as? Bool ?? true
         pinnedLinkBehavior = defaults.string(forKey: pinnedLinkBehaviorKey).flatMap(PinnedLinkBehavior.init(rawValue:))

@@ -386,6 +386,22 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// The world of the app's scripts, apart from the page's.
     static let appWorld = WKContentWorld.world(name: "app")
 
+    /// Agents' scripts (see `AgentPageActions`): apart from the page's and
+    /// from the app's, whose message handlers they can't reach.
+    static let agentWorld = WKContentWorld.world(name: "agent")
+
+    /// Runs `body` (an async function's body, `arguments` its parameters, as
+    /// data) in the agents' world; the value it returns, as WebKit gives it.
+    func callAgentJavaScript(
+        _ body: String,
+        arguments: [String: Any] = [:],
+        completion: @escaping @MainActor (Result<Any?, Error>) -> Void
+    ) {
+        webView.callAsyncJavaScript(body, arguments: arguments, in: nil, in: Self.agentWorld) { result in
+            completion(result.map { $0 })
+        }
+    }
+
     static func contentWorld(_ world: BrowserScriptWorld) -> WKContentWorld {
         switch world {
         case .app: appWorld

@@ -122,7 +122,10 @@ struct AgentScriptingDefinitionTests {
             ("AcTb", ActivateTabScriptCommand.self),
             ("ClTb", CloseTabScriptCommand.self),
             ("RdTb", ReadTabScriptCommand.self),
-            ("CpTb", CaptureTabScriptCommand.self)
+            ("CpTb", CaptureTabScriptCommand.self),
+            ("Clik", ClickElementScriptCommand.self),
+            ("Fill", FillFieldScriptCommand.self),
+            ("RnJS", RunJavaScriptScriptCommand.self)
         ]
         for command in commands {
             let description = registry.commandDescription(
@@ -131,6 +134,20 @@ struct AgentScriptingDefinitionTests {
             )
             #expect(description?.commandClassName == NSStringFromClass(command.type), "\(command.code)")
         }
+        // Their parameters reach the commands under these keys.
+        for code in ["Clik", "Fill", "RnJS"] {
+            let description = registry.commandDescription(
+                withAppleEventClass: Self.code("Ombr"),
+                andAppleEventCode: Self.code(code)
+            )
+            #expect(description?.appleEventCodeForArgument(withName: "tab") == Self.code("OmTb"), "\(code)")
+        }
+        let fill = registry.commandDescription(
+            withAppleEventClass: Self.code("Ombr"),
+            andAppleEventCode: Self.code("Fill")
+        )
+        #expect(fill?.appleEventCodeForArgument(withName: "value") == Self.code("OmVl"))
+        #expect(fill?.isOptionalArgument(withName: "value") == false)
     }
 
     private static func code(_ text: String) -> FourCharCode {
@@ -153,12 +170,14 @@ extension TabManagerTests {
         private func control(
             _ window: TabManagerTestWindow?,
             allowed: Bool = true,
+            pageActions: Bool = false,
             answer: Bool? = true,
             asked: Asked = Asked(),
             whileAsking: @escaping @MainActor (AgentControl) -> Void = { _ in }
         ) -> AgentControl {
             let control = AgentControl()
             control.isAllowed = { allowed }
+            control.allowsPageActions = { pageActions }
             control.ask = { [unowned control] _ in
                 asked.questions += 1
                 whileAsking(control)
@@ -350,6 +369,96 @@ extension TabManagerTests {
                 let control = control(window)
                 #expect(await control.run(.read(tab.id.uuidString), from: terminal) == .failure(.notWebPage))
                 #expect(await control.run(.capture(tab.id.uuidString), from: terminal) == .failure(.notWebPage))
+            }
+        }
+
+        private func pageActions(on id: String?) -> [AgentCommand] {
+            [
+                .click(tab: id, selector: "button"),
+                .fill(tab: id, selector: "input", value: "text"),
+                .runScript(tab: id, code: "return 1")
+            ]
+        }
+
+        /// Page actions need their own setting, checked before any question.
+        @Test func pageActionsOffNothingIsAsked() async throws {
+            try await TabManagerTestWindow.run { window in
+                let asked = Asked()
+                let control = control(window, asked: asked)
+                for command in pageActions(on: nil) {
+                    #expect(await control.run(command, from: terminal) == .failure(.actionsOff))
+                }
+                #expect(asked.questions == 0)
+                // The other commands still work.
+                #expect(await control.run(.listTabs, from: terminal).map { _ in true } == .success(true))
+            }
+        }
+
+        /// Turned off while the user was asked: not done.
+        @Test func pageActionsTurnedOffDuringTheQuestion() async throws {
+            try await TabManagerTestWindow.run { window in
+                var pageActions = true
+                let control = control(window, whileAsking: { _ in pageActions = false })
+                control.allowsPageActions = { pageActions }
+                let command = AgentCommand.click(tab: nil, selector: "button")
+                #expect(await control.run(command, from: terminal) == .failure(.actionsOff))
+            }
+        }
+
+        /// What page actions answer: the tab, and the element or the result.
+        @Test func pageActionRepliesNameTheTab() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let tab = try window.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/")), title: "Example", in: space,
+                    isPrivate: false
+                )
+                let action = try #require(AgentCommands.action("button#go", in: tab).data(using: .utf8))
+                let reply = try JSONDecoder().decode(AgentAction.self, from: action)
+                #expect(reply == AgentAction(
+                    id: tab.id.uuidString, title: "Example", address: "https://example.com/", element: "button#go"
+                ))
+                let result = try AgentCommands.scriptResult(#"{"ok":true}"#, in: tab).get()
+                #expect(result.contains(#""result":{"ok":true}"#))
+                #expect(result.contains(#""id":"\#(tab.id.uuidString)""#))
+                #expect(try AgentCommands.scriptResult("null", in: tab).get().contains(#""result":null"#))
+            }
+        }
+
+        /// Web pages only, loaded, never a private tab.
+        @Test(arguments: ["file:///Users/someone/notes.html", "webkit-extension://vault/index.html"])
+        func pageActionsOnWebPagesOnly(address: String) async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let tab = try window.tabManager.makeTab(
+                    url: #require(URL(string: address)), title: "Page", in: space, isPrivate: false
+                )
+                let control = control(window, pageActions: true)
+                for command in pageActions(on: tab.id.uuidString) {
+                    #expect(await control.run(command, from: terminal) == .failure(.notWebPage))
+                }
+                #expect(control.touchedTabIDs.isEmpty)
+            }
+        }
+
+        @Test func pageActionsNeedTheTabsPage() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let tab = try window.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/")), title: "Example", in: space,
+                    isPrivate: false
+                )
+                let privateTab = try window.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/private")), title: "Private", in: space,
+                    isPrivate: true
+                )
+                let control = control(window, pageActions: true)
+                for command in pageActions(on: tab.id.uuidString) {
+                    #expect(await control.run(command, from: terminal) == .failure(.notLoaded))
+                }
+                for command in pageActions(on: privateTab.id.uuidString) {
+                    #expect(await control.run(command, from: terminal) == .failure(.noTab))
+                }
             }
         }
 

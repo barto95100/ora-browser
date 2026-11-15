@@ -10,6 +10,17 @@
 #   ombre capture [<tab id>] [-o <file.png>]
 #                           an image of a page as it shows (PNG); prints the file's path
 #                           (without -o: in $TMPDIR/ombre-captures, never the current folder)
+#   ombre click <css selector> [-t <tab id>]
+#                           clicks the first element it matches
+#   ombre fill <css selector> <text> [-t <tab id>]
+#                           fills in that field as typing would (never a password field)
+#   ombre js <code> [-t <tab id>]
+#                           runs JavaScript in the page (an async function's body:
+#                           return gives the result, as JSON)
+#   For fill and js, - reads the text or the code from the standard input
+#   (for fill, without its last newline).
+#   Without -t: the active tab. click, fill and js also need Settings › General ›
+#   Allow agents to act in pages.
 #
 # First allow it in Ombre › Settings › General › Allow agents to control Ombre.
 # macOS then asks once to let this terminal control Ombre (Automation), and
@@ -23,7 +34,7 @@ app_id=${OMBRE_APP_ID:-com.barto95100.ora}
 script=$0
 
 usage() {
-    sed -n '4,12p' "$script" | sed 's/^# \{0,1\}//' >&2
+    sed -n '4,23p' "$script" | sed 's/^# \{0,1\}//' >&2
     exit "${1:-2}"
 }
 
@@ -49,6 +60,33 @@ case $1 in
         done
         set -- capture "$tab"
         ;;
+    click|fill|js)
+        command=$1
+        shift
+        tab=""
+        words=()
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                -t) [[ $# -ge 2 ]] || usage; tab=$2; shift 2 ;;
+                *) words+=("$1"); shift ;;
+            esac
+        done
+        case $command in
+            click) code=Clik; [[ ${#words} -eq 1 ]] || usage ;;
+            fill) code=Fill; [[ ${#words} -eq 2 ]] || usage ;;
+            js) code=RnJS; [[ ${#words} -eq 1 ]] || usage ;;
+        esac
+        # From the standard input: kept out of the shell's history.
+        # (The dot keeps its last newlines, which $( ) would drop.)
+        if [[ ${words[-1]} == - && $command != click ]]; then
+            input=$(cat; print -n .)
+            words[-1]=${input%.}
+            # As echo ends a line: one last newline isn't part of a field's text.
+            [[ $command != fill ]] || words[-1]=${words[-1]%$'\n'}
+        fi
+        # The selector or the code, then the text to fill in, then the tab.
+        set -- "$command" "${words[1]}" "${words[2]-}" "$tab"
+        ;;
     -h|--help|help) usage 0 ;;
     *) usage ;;
 esac
@@ -56,12 +94,26 @@ esac
 # Raw event codes (Ombre.sdef): no dictionary needed to compile the script,
 # and the argument goes as data, never as script text.
 # Errors as osascript writes them, without its "execution error:" prefix.
-if ! reply=$(osascript - "$app_id" "$code" "${2-}" 2>&1 <<'APPLESCRIPT'
+if ! reply=$(osascript - "$app_id" "$code" "${2-}" "${3-}" "${4-}" 2>&1 <<'APPLESCRIPT'
 on run argv
     set appID to item 1 of argv
     set eventCode to item 2 of argv
     set argument to item 3 of argv
+    set value to item 4 of argv
+    set tabID to item 5 of argv
     tell application id appID
+        if eventCode is "Clik" then
+            if tabID is "" then return «event OmbrClik» argument
+            return «event OmbrClik» argument given «class OmTb»:tabID
+        end if
+        if eventCode is "Fill" then
+            if tabID is "" then return «event OmbrFill» argument given «class OmVl»:value
+            return «event OmbrFill» argument given «class OmVl»:value, «class OmTb»:tabID
+        end if
+        if eventCode is "RnJS" then
+            if tabID is "" then return «event OmbrRnJS» argument
+            return «event OmbrRnJS» argument given «class OmTb»:tabID
+        end if
         if eventCode is "LsTb" then return «event OmbrLsTb»
         if eventCode is "OpAd" then return «event OmbrOpAd» argument
         if eventCode is "AcTb" then return «event OmbrAcTb» argument

@@ -10,6 +10,18 @@ enum AgentCommand: Equatable, Sendable {
     case read(String?)
     /// A PNG of the page as it shows; the active tab without an id.
     case capture(String?)
+    /// Page actions (their own setting): in a tab, the active one without an id.
+    case click(tab: String?, selector: String)
+    case fill(tab: String?, selector: String, value: String)
+    case runScript(tab: String?, code: String)
+
+    /// Acts in a page: allowed only with page actions on.
+    var isPageAction: Bool {
+        switch self {
+        case .click, .fill, .runScript: true
+        default: false
+        }
+    }
 
     /// Its name in the logs and the sdef.
     var name: String {
@@ -20,6 +32,9 @@ enum AgentCommand: Equatable, Sendable {
         case .close: "close tab" // not shown
         case .read: "read tab" // not shown
         case .capture: "capture tab" // not shown
+        case .click: "click element" // not shown
+        case .fill: "fill field" // not shown
+        case .runScript: "run javascript" // not shown
         }
     }
 }
@@ -28,6 +43,9 @@ enum AgentCommand: Equatable, Sendable {
 /// Apple Events errors are), never shown in Ombre.
 struct AgentError: Error, Equatable {
     let message: String
+    /// In the log instead of `message`, when that holds what the page or the
+    /// agent's code said.
+    var logged: String?
 
     static let off = AgentError(message: "Agent control is off: turn it on in Settings › General.") // not shown
     static let denied = AgentError(message: "The user denied this app control of Ombre for this session.") // not shown
@@ -38,8 +56,38 @@ struct AgentError: Error, Equatable {
     static let unanswered = AgentError(message: "The user didn't answer in time: try again.") // not shown
     static let noActiveTab = AgentError(message: "No tab is active: give a tab id.") // not shown
     static let notLoaded = AgentError(message: "This tab's page isn't loaded: activate it first.") // not shown
-    static let notWebPage = AgentError(message: "Only web pages (http, https) can be read or captured.") // not shown
+    static let notWebPage =
+        AgentError(message: "Only web pages (http, https) can be read, captured or acted on.") // not shown
     static let noImage = AgentError(message: "The page couldn't be captured: show its tab first.") // not shown
+    static let actionsOff = AgentError(
+        message: "Page actions are off: turn on Allow agents to act in pages in Settings › General." // not shown
+    )
+    static let badSelector = AgentError(message: "This CSS selector isn't valid.") // not shown
+    static let noElement = AgentError(message: "No element matches this selector.") // not shown
+    static let passwordField = AgentError(message: "Password fields are never filled by agents.") // not shown
+    static let notFillable =
+        AgentError(message: "This element isn't a text field, a list or editable text.") // not shown
+    static let readOnlyField = AgentError(message: "This field is read-only or disabled.") // not shown
+    static let disabledElement = AgentError(message: "This element is disabled.") // not shown
+    static let noOption = AgentError(message: "No option of this list has this value.") // not shown
+    static let valueRefused =
+        AgentError(message: "The field refused this text: it expects another format.") // not shown
+    static let timedOut = AgentError(message: "The page didn't answer in 15 seconds.") // not shown
+    static let unsupportedResult = AgentError(
+        message: "The script's result isn't JSON (strings, numbers, booleans, arrays, objects, null)." // not shown
+    )
+    static let resultTooLong = AgentError(message: "The script's result is over 100,000 characters.") // not shown
+    /// The page may have been changed although the command failed: the
+    /// agent's script ran (it threw, took too long or gave no JSON).
+    var mayHaveActed: Bool {
+        logged != nil || [.timedOut, .resultTooLong, .unsupportedResult].contains(self)
+    }
+
+    /// The script's own error goes to the agent, not into the log.
+    static func scriptFailed(_ reason: String) -> AgentError {
+        AgentError(message: "The script failed: \(reason)", logged: "The script failed.") // not shown
+    }
+
     static func failed(_ reason: String) -> AgentError {
         AgentError(message: "The page couldn't be read: \(reason)") // not shown
     }
@@ -60,6 +108,15 @@ struct AgentSpace: Codable, Equatable {
     let name: String
     let active: Bool
     let tabs: [AgentTab]
+}
+
+/// An element an agent clicked or filled in.
+struct AgentAction: Codable, Equatable {
+    let id: String
+    let title: String
+    let address: String
+    /// Its tag, id and text, shortened.
+    let element: String
 }
 
 /// A page's image: a PNG, in base64.
@@ -118,6 +175,19 @@ enum AgentCommands {
             return await onWebPage(id, in: tabManager, read)
         case let .capture(id):
             return await onWebPage(id, in: tabManager, capture)
+        case let .click(id, selector):
+            return await onWebPage(id, in: tabManager) { tab in
+                await onPage(tab) { await AgentPageActions.click(selector, on: $0) }.map { action($0, in: tab) }
+            }
+        case let .fill(id, selector, value):
+            return await onWebPage(id, in: tabManager) { tab in
+                await onPage(tab) { await AgentPageActions.fill(selector, with: value, on: $0) }
+                    .map { action($0, in: tab) }
+            }
+        case let .runScript(id, code):
+            return await onWebPage(id, in: tabManager) { tab in
+                await onPage(tab) { await AgentPageActions.run(code, on: $0) }.flatMap { scriptResult($0, in: tab) }
+            }
         }
     }
 
@@ -182,7 +252,9 @@ enum AgentCommands {
             return Done(result: .failure(id == nil ? .noActiveTab : .noTab), host: nil)
         }
         guard isWebPage(tab) else { return Done(result: .failure(.notWebPage), host: nil) }
-        return await Done(result: action(tab), host: tab.url.host(), tabID: tab.id)
+        // Before the action: a click may lead elsewhere.
+        let host = tab.url.host()
+        return await Done(result: action(tab), host: host, tabID: tab.id)
     }
 
     /// Read or captured: a web page only, never an extension's page (a
@@ -201,6 +273,32 @@ enum AgentCommands {
     private static func tab(_ id: String, in tabManager: TabManager) -> Tab? {
         guard let uuid = UUID(uuidString: id.trimmingCharacters(in: .whitespacesAndNewlines)) else { return nil }
         return tabManager.fetchContainers().lazy.flatMap(\.tabs).first { $0.id == uuid && isListed($0) }
+    }
+
+    /// `action` on the tab's loaded page.
+    private static func onPage<Value>(
+        _ tab: Tab,
+        _ action: @MainActor (BrowserPage) async -> Result<Value, AgentError>
+    ) async -> Result<Value, AgentError> {
+        guard let page = tab.browserPage, tab.isWebViewReady else { return .failure(.notLoaded) }
+        return await action(page)
+    }
+
+    static func action(_ element: String, in tab: Tab) -> String {
+        json(AgentAction(id: tab.id.uuidString, title: tab.title, address: tab.url.absoluteString, element: element))
+    }
+
+    /// The tab and the script's result (JSON text, any value), as JSON.
+    static func scriptResult(_ result: String, in tab: Tab) -> Result<String, AgentError> {
+        let value = AgentPageActions.value(of: result) ?? NSNull()
+        let reply: [String: Any] = [
+            "id": tab.id.uuidString,
+            "title": tab.title,
+            "address": tab.url.absoluteString,
+            "result": value
+        ]
+        guard let text = AgentPageActions.json(reply) else { return .failure(.unsupportedResult) }
+        return .success(text)
     }
 
     /// The page's visible text, cut in the page (a huge page isn't copied whole).

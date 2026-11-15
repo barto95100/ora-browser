@@ -73,6 +73,11 @@ targets:
         NSLocationWhenInUseUsageDescription: "Lets websites you approve know your location, for example for maps or nearby stores."
         SUEnableAutomaticChecks: NO
         SUEnableInstallerLauncherService: YES
+        # Agents drive Ombre through Apple Events (Ombre/Resources/Ombre.sdef,
+        # see AgentControl): no network port. macOS asks the user before an
+        # app sends them (Automation), and Ombre asks once per session.
+        NSAppleScriptEnabled: true
+        OSAScriptingDefinition: Ombre.sdef
         # The commit a Release was built from (OMBRE_GIT_COMMIT, set by
         # scripts/build.sh): which version is installed.
         OmbreCommit: $(OMBRE_GIT_COMMIT)

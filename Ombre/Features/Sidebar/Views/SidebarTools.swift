@@ -29,6 +29,8 @@ struct SidebarSettingsButton: View {
 @MainActor
 enum BrowserWindows {
     static let normal = NSHashTable<NSWindow>.weakObjects()
+    /// Each normal window's tab manager (for agents, see `AgentControl`).
+    static let tabManagers = NSMapTable<NSWindow, TabManager>.weakToWeakObjects()
     /// All browser windows, normal and private.
     static let browsing = NSHashTable<NSWindow>.weakObjects()
 
@@ -47,6 +49,11 @@ enum BrowserWindows {
         let isCandidate = { (window: NSWindow) in candidates.contains { $0 === window } }
         if let keyWindow, isCandidate(keyWindow) { return keyWindow }
         return orderedWindows.first(where: isCandidate) ?? candidates.first
+    }
+
+    /// The tab manager of the normal window in front.
+    static var frontTabManager: TabManager? {
+        front.flatMap { tabManagers.object(forKey: $0) }
     }
 
     static func isNormal(_ window: NSWindow?) -> Bool {

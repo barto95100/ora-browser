@@ -84,6 +84,8 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>NSAppleScriptEnabled</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Allows websites to use the camera, for example during video calls.</string>
 	<key>NSLocationUsageDescription</key>
@@ -96,6 +98,8 @@
 	<array>
 		<string>NSUserActivityTypeBrowsingWeb</string>
 	</array>
+	<key>OSAScriptingDefinition</key>
+	<string>Ombre.sdef</string>
 	<key>OmbreCommit</key>
 	<string>$(OMBRE_GIT_COMMIT)</string>
 	<key>SUEnableAutomaticChecks</key>

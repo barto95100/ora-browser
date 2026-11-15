@@ -1,0 +1,61 @@
+#!/bin/zsh
+# ombre — drive Ombre from a terminal, a script or an agent (Apple Events).
+#
+# Usage:
+#   ombre tabs              the spaces and their tabs (JSON)
+#   ombre open <address>    opens an http(s) address in a new tab
+#   ombre show <tab id>     shows a tab (and its space)
+#   ombre close <tab id>    closes a tab
+#   ombre read [<tab id>]   title, address and text of a page (the active tab without an id)
+#
+# First allow it in Ombre › Settings › General › Allow agents to control Ombre.
+# macOS then asks once to let this terminal control Ombre (Automation), and
+# Ombre asks once per session. Never private windows, Little Ombre or passwords.
+# Installed in ~/.local/bin by scripts/install.sh. OMBRE_APP_ID picks another
+# Ombre (com.barto95100.ora.dev for the Debug app).
+
+set -euo pipefail
+
+app_id=${OMBRE_APP_ID:-com.barto95100.ora}
+script=$0
+
+usage() {
+    sed -n '4,9p' "$script" | sed 's/^# \{0,1\}//' >&2
+    exit "${1:-2}"
+}
+
+[[ $# -ge 1 ]] || usage
+
+case $1 in
+    tabs) code=LsTb; [[ $# -eq 1 ]] || usage ;;
+    open) code=OpAd; [[ $# -eq 2 ]] || usage ;;
+    show) code=AcTb; [[ $# -eq 2 ]] || usage ;;
+    close) code=ClTb; [[ $# -eq 2 ]] || usage ;;
+    read) code=RdTb; [[ $# -le 2 ]] || usage ;;
+    -h|--help|help) usage 0 ;;
+    *) usage ;;
+esac
+
+# Raw event codes (Ombre.sdef): no dictionary needed to compile the script,
+# and the argument goes as data, never as script text.
+# Errors as osascript writes them, without its "execution error:" prefix.
+if ! reply=$(osascript - "$app_id" "$code" "${2-}" 2>&1 <<'APPLESCRIPT'
+on run argv
+    set appID to item 1 of argv
+    set eventCode to item 2 of argv
+    set argument to item 3 of argv
+    tell application id appID
+        if eventCode is "LsTb" then return «event OmbrLsTb»
+        if eventCode is "OpAd" then return «event OmbrOpAd» argument
+        if eventCode is "AcTb" then return «event OmbrAcTb» argument
+        if eventCode is "ClTb" then return «event OmbrClTb» argument
+        if argument is "" then return «event OmbrRdTb»
+        return «event OmbrRdTb» argument
+    end tell
+end run
+APPLESCRIPT
+); then
+    print -r -- "${reply#*execution error: }" >&2
+    exit 1
+fi
+print -r -- "$reply"

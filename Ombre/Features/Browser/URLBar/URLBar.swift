@@ -436,6 +436,7 @@ struct URLBar: View {
             )
 
             if !privacyMode.isPrivate {
+                AgentIndicator(foregroundColor: buttonForegroundColor)
                 FocusIndicator(foregroundColor: buttonForegroundColor)
                 URLBarTools(foregroundColor: buttonForegroundColor)
             }

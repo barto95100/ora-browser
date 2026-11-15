@@ -61,9 +61,18 @@ final class MediaController: ObservableObject {
         switch event.type {
         case "pip":
             if event.state == "entered" {
+                tab.browserPage?.log("picture in picture entered")
+                // Confirmed: no longer waited for (see `pictureInPictureNotEntered`).
+                pictureInPictureRequests[tab.id] = nil
                 pictureInPictureTabRefs[tab.id] = WeakTab(tab)
                 pictureInPictureTabIDs.insert(tab.id)
-            } else if pictureInPictureTabIDs.contains(tab.id) {
+            } else {
+                if event.state == "failed" {
+                    tab.browserPage?.log("picture in picture refused (\(event.error ?? "?"))")
+                } else if pictureInPictureTabIDs.contains(tab.id) {
+                    tab.browserPage?.log("picture in picture left")
+                }
+                guard pictureInPictureTabIDs.contains(tab.id) else { break }
                 pictureInPictureRequests[tab.id] = nil
                 pictureInPictureTabRefs[tab.id] = nil
                 pictureInPictureTabIDs.remove(tab.id)
@@ -268,6 +277,24 @@ final class MediaController: ObservableObject {
         pictureInPictureTabIDs.remove(tab.id)
     }
 
+    /// Picture in Picture asked for `request` was still not confirmed after
+    /// `pictureInPictureEntryDeadline`: macOS refused it without a word (its
+    /// service unreachable), and the video showed "in Picture in Picture"
+    /// with no window. The video is put back in the page.
+    func pictureInPictureNotEntered(for tab: Tab, request: UUID) {
+        guard pictureInPictureRequests[tab.id] == request else { return }
+        tab.browserPage?.log("picture in picture not entered in 3 s, video put back in the page")
+        if let page = tab.browserPage {
+            page.evaluateJavaScript("document.pictureInPictureElement && document.exitPictureInPicture(); true")
+            page.closeMediaPresentations {}
+        }
+        pictureInPictureRequests[tab.id] = nil
+        pictureInPictureTabRefs[tab.id] = nil
+        pictureInPictureTabIDs.remove(tab.id)
+    }
+
+    static let pictureInPictureEntryDeadline: TimeInterval = 3
+
     /// Tabs in Picture in Picture whose page is loaded, except `excludedTabID`
     /// (the tab currently displayed, whose page is already in the window).
     func pictureInPictureTabs(excluding excludedTabID: UUID?) -> [Tab] {
@@ -322,4 +349,6 @@ struct MediaEventPayload: Codable {
     let title: String?
     let hasNext: Bool?
     let hasPrevious: Bool?
+    /// Why the page's request was refused (a DOMException's name).
+    var error: String?
 }

@@ -89,8 +89,13 @@ AND (messageType >= error OR composedMessage CONTAINS \"isMainResource=1\")" \
 else
     echo "Network process: Ombre is not running, left out (its PID is needed to find it)."
 fi
+# Picture in Picture: macOS's service (PIPAgent, AVKit in it) and what the
+# sandbox refused Ombre (the kernel names the process, "Ombre(<pid>)").
+log show --last "${HOURS}h" --style compact \
+    --predicate "process == \"PIPAgent\" OR (process == \"kernel\" AND composedMessage CONTAINS \"Sandbox: Ombre(\")" \
+    > "$OUT/pip.log" 2>&1 || true
 echo "$(wc -l < "$OUT/ombre.log" | tr -d ' ') lines (Ombre), $(wc -l < "$OUT/errors.log" | tr -d ' ') lines (errors)," \
-    "$(wc -l < "$OUT/webkit.log" | tr -d ' ') lines (WebKit)"
+    "$(wc -l < "$OUT/webkit.log" | tr -d ' ') lines (WebKit), $(wc -l < "$OUT/pip.log" | tr -d ' ') lines (Picture in Picture)"
 
 step "Crash reports (last 7 days)"
 # Only the installed app's (not the Debug app's nor the tests', also named

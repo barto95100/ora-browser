@@ -381,9 +381,11 @@ enum OmbreBrowserScripts {
                 !isActive &&
                 isAudible(video)
             ) {
-                // Refused: the app stops keeping the page for it.
-                return video.requestPictureInPicture().catch(() => {
-                    if (!document.pictureInPictureElement) post({ type: 'pip', state: 'left' });
+                // Refused: the app stops keeping the page for it, and says why.
+                return video.requestPictureInPicture().catch((error) => {
+                    if (!document.pictureInPictureElement) {
+                        post({ type: 'pip', state: 'failed', error: String((error && error.name) || error) });
+                    }
                 });
             } else if (isActive && document.pictureInPictureElement) {
                 // Only bring the video back when its tab is shown again; leaving

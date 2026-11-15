@@ -113,6 +113,30 @@ extension TabManagerTests {
             }
         }
 
+        /// Picture in Picture never confirmed (macOS refused it without a
+        /// word): after the deadline, the page is let go; once confirmed, it is
+        /// kept.
+        @Test func anEntryNeverConfirmedIsGivenUp() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await window.openLoaded("leaving")
+                let media = window.mediaController
+                let request = media.pictureInPictureWillStart(for: tab)
+                media.pictureInPictureNotEntered(for: tab, request: request)
+                #expect(!isKeptForPiP(tab, in: window))
+
+                let confirmed = media.pictureInPictureWillStart(for: tab)
+                media.receive(event: Self.event("entered"), from: tab)
+                media.pictureInPictureNotEntered(for: tab, request: confirmed)
+                #expect(isKeptForPiP(tab, in: window))
+            }
+        }
+
+        private static func event(_ state: String) -> MediaEventPayload {
+            MediaEventPayload(
+                type: "pip", wasPlayed: nil, state: state, volume: nil, title: nil, hasNext: nil, hasPrevious: nil
+            )
+        }
+
         /// A tab playing nothing is not kept: no page moves on each switch.
         @Test func aSilentTabLeavingIsNotKept() async throws {
             try await withAutoPiP {

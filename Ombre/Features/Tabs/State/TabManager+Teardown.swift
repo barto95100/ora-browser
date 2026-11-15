@@ -38,22 +38,10 @@ extension TabManager {
 
     /// Stops a page's media and its Picture in Picture before it goes: a video
     /// still playing went to a black Picture in Picture that kept the closed
-    /// window alive. The same steps as closing a tab (`Tab.stopMedia`), sent
-    /// in this order before the page is torn down; the page stays alive until
-    /// Picture in Picture has closed.
+    /// window alive. The same steps as closing a tab (`BrowserPage.stopMedia`),
+    /// sent before the page is torn down; the page stays alive until Picture
+    /// in Picture has closed (or the steps' deadline).
     private func silence(_ page: BrowserPage) {
-        page.pauseAllMedia {}
-        page.evaluateJavaScript(Self.stopMediaScript)
-        page.closeMediaPresentations { withExtendedLifetime(page) {} }
+        page.stopMedia { withExtendedLifetime(page) {} }
     }
-
-    private static let stopMediaScript = """
-    document.querySelectorAll('video, audio').forEach(el => {
-        try {
-            el.pause();
-            el.src = '';
-            el.load();
-        } catch (e) {}
-    });
-    """
 }

@@ -61,7 +61,7 @@ final class MediaController: ObservableObject {
             if event.state == "entered" {
                 pictureInPictureTabRefs[tab.id] = WeakTab(tab)
                 pictureInPictureTabIDs.insert(tab.id)
-            } else {
+            } else if pictureInPictureTabIDs.contains(tab.id) {
                 pictureInPictureTabRefs[tab.id] = nil
                 pictureInPictureTabIDs.remove(tab.id)
             }
@@ -241,6 +241,20 @@ final class MediaController: ObservableObject {
 
     private func eval(_ tabID: UUID, _ javaScript: String) {
         tabRefs[tabID]?.value?.evaluateJavaScript(javaScript)
+    }
+
+    /// The tab's video is asked to go to Picture in Picture: its page is kept
+    /// in the window from now on, as when it is in Picture in Picture.
+    func pictureInPictureWillStart(for tab: Tab) {
+        pictureInPictureTabRefs[tab.id] = WeakTab(tab)
+        pictureInPictureTabIDs.insert(tab.id)
+    }
+
+    /// The page had no video to put in Picture in Picture.
+    func pictureInPictureDidNotStart(for tab: Tab) {
+        guard pictureInPictureTabIDs.contains(tab.id) else { return }
+        pictureInPictureTabRefs[tab.id] = nil
+        pictureInPictureTabIDs.remove(tab.id)
     }
 
     /// Tabs in Picture in Picture whose page is loaded, except `excludedTabID`

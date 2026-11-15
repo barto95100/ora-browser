@@ -112,6 +112,19 @@ struct MediaScriptTests {
     }
 
     /// A carousel's or a form's "Next" is not the next track.
+    /// Nothing to put in Picture in Picture (no video playing): the app is
+    /// told not to keep the page for it, and nothing is posted (an event on
+    /// each tab switch would redraw the window).
+    @Test func pictureInPictureWithNoVideoSaysSo() async throws {
+        let page = makePage()
+        defer { page.teardown() }
+        try await load(page, body: "<video></video>")
+        #expect(await evaluateInApp(page, "window.__triggerPiP()") as? Bool == false)
+        #expect(await evaluateInApp(page, "window.__triggerPiP(true)") as? Bool == false)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(await events(of: page).allSatisfy { $0.type != "pip" })
+    }
+
     @Test func genericNextButtonIsNotATrackControl() async throws {
         let page = makePage()
         defer { page.teardown() }

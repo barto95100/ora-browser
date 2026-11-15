@@ -57,10 +57,11 @@ log show --last "${HOURS}h" --style compact \
     --predicate "processImagePath BEGINSWITH \"${APP}/\" AND messageType >= error" \
     > "$OUT/errors.log" 2>&1 || true
 # WebKit in Ombre's process (its pages' processes relay their messages there):
-# loads, processes and visibility, not each resource of each page.
+# loads, processes, visibility and Picture in Picture or full screen, not each
+# resource of each page.
 log show --last "${HOURS}h" --style compact \
     --predicate "processImagePath BEGINSWITH \"${APP}/\" AND subsystem == \"com.apple.WebKit\" \
-AND category IN {\"Loading\", \"Process\", \"ProcessSuspension\", \"ProcessSwapping\", \"ViewState\"}" \
+AND category IN {\"Loading\", \"Process\", \"ProcessSuspension\", \"ProcessSwapping\", \"ViewState\", \"Fullscreen\"}" \
     > "$OUT/webkit.log" 2>&1 || true
 # The network process loading the pages is shared by no other app, but it is
 # found through its messages naming the running Ombre (parentPID=…), from

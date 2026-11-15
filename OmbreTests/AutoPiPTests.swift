@@ -9,18 +9,29 @@ extension TabManagerTests {
         /// Replaces the page's `__triggerPiP` (app's world) with one that
         /// records its calls in the document, where the test reads them. Once
         /// the page's load is over, so its document stays.
-        private func recordPiPRequests(of tab: Tab, in window: TabManagerTestWindow) async throws {
+        /// `answer`: what it says back (whether the page is to be kept for
+        /// Picture in Picture).
+        private func recordPiPRequests(
+            of tab: Tab,
+            in window: TabManagerTestWindow,
+            answer: Bool = false
+        ) async throws {
             await window.waitUntil("load over") { tab.browserPage?.isLoading == false }
             _ = try await evaluate(
                 """
                 window.__triggerPiP = (isActive = false) => {
                   document.documentElement.dataset.pip =
                     (document.documentElement.dataset.pip || '') + (isActive ? 'back;' : 'leave;');
+                  return \(answer);
                 };
                 true
                 """,
                 in: tab
             )
+        }
+
+        private func isKeptForPiP(_ tab: Tab, in window: TabManagerTestWindow) -> Bool {
+            window.mediaController.pictureInPictureTabs(excluding: nil).contains { $0.id == tab.id }
         }
 
         private func pipRequests(of tab: Tab) async throws -> String {
@@ -59,6 +70,62 @@ extension TabManagerTests {
                     window.tabManager.activateTab(other)
 
                     #expect(try await pipRequests(of: leaving) == "leave;")
+                }
+            }
+        }
+
+        /// A tab whose video plays keeps its page in the window from the
+        /// request on, not only once in Picture in Picture: a page that left
+        /// the window while entering stayed "entering" in WebKit, with no
+        /// Picture in Picture window, and its tab could no longer be closed.
+        @Test(arguments: [true, false])
+        func aPlayingTabLeavingIsKeptWhilePiPStarts(started: Bool) async throws {
+            try await withAutoPiP {
+                try await TabManagerTestWindow.run { window in
+                    let other = try await window.openLoaded("other")
+                    let leaving = try await window.openLoaded("leaving")
+                    try await recordPiPRequests(of: leaving, in: window, answer: started)
+                    leaving.isPlayingMedia = true
+
+                    window.tabManager.activateTab(other)
+
+                    #expect(isKeptForPiP(leaving, in: window))
+                    // The page's answer (handled before the next evaluation
+                    // returns): kept if a change started, else let go.
+                    #expect(try await pipRequests(of: leaving) == "leave;")
+                    #expect(isKeptForPiP(leaving, in: window) == started)
+                }
+            }
+        }
+
+        /// An answer to an earlier request doesn't let go of the page kept
+        /// for a later one.
+        @Test func aLateAnswerKeepsTheLaterRequest() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await window.openLoaded("leaving")
+                let media = window.mediaController
+                let first = media.pictureInPictureWillStart(for: tab)
+                let second = media.pictureInPictureWillStart(for: tab)
+                media.pictureInPictureDidNotStart(for: tab, request: first)
+                #expect(isKeptForPiP(tab, in: window))
+                media.pictureInPictureDidNotStart(for: tab, request: second)
+                #expect(!isKeptForPiP(tab, in: window))
+            }
+        }
+
+        /// A tab playing nothing is not kept: no page moves on each switch.
+        @Test func aSilentTabLeavingIsNotKept() async throws {
+            try await withAutoPiP {
+                try await TabManagerTestWindow.run { window in
+                    let other = try await window.openLoaded("other")
+                    let leaving = try await window.openLoaded("leaving")
+                    try await recordPiPRequests(of: leaving, in: window, answer: true)
+
+                    window.tabManager.activateTab(other)
+
+                    #expect(!isKeptForPiP(leaving, in: window))
+                    #expect(try await pipRequests(of: leaving) == "leave;")
+                    #expect(!isKeptForPiP(leaving, in: window))
                 }
             }
         }

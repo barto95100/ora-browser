@@ -345,33 +345,18 @@ class Tab: ObservableObject, Identifiable {
             return
         }
 
-        let js = """
-        document.querySelectorAll('video, audio').forEach(el => {
-            try {
-                el.pause();
-                el.src = '';
-                el.load();
-            } catch (e) {}
-        });
-        """
-        // Silence first: closing Picture in Picture is animated and takes a
-        // moment, during which the sound kept playing.
-        page.pauseAllMedia { [weak self] in
-            page.evaluateJavaScript(js) { _, _ in
-                page.closeMediaPresentations {
-                    page.teardown()
-                    if let self, self.browserPage === page {
-                        WebExtensionsHub.tabClosed(self)
-                    }
-                    if self?.browserPage === page {
-                        self?.pageDelegate?.dismissDialog()
-                        self?.browserPage = nil
-                        self?.pageDelegate = nil
-                        self?.endFileAccess()
-                    }
-                    completed()
-                }
+        page.stopMedia { [weak self] in
+            page.teardown()
+            if let self, self.browserPage === page {
+                WebExtensionsHub.tabClosed(self)
             }
+            if self?.browserPage === page {
+                self?.pageDelegate?.dismissDialog()
+                self?.browserPage = nil
+                self?.pageDelegate = nil
+                self?.endFileAccess()
+            }
+            completed()
         }
     }
 

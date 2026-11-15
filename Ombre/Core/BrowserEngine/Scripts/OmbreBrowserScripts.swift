@@ -364,7 +364,9 @@ enum OmbreBrowserScripts {
             }
         };
 
-        window.__triggerPiP = function(isActive = false) {
+        // Enters or leaves Picture in Picture if needed; returns the change's
+        // promise, or nothing when there is nothing to do.
+        function changePictureInPicture(isActive, waited) {
             // Pages can hold several videos (hover previews, ads...): use the
             // one actually playing with sound, not merely the first one. Same
             // rule as the mini player: not muted, and with a sound track.
@@ -379,12 +381,45 @@ enum OmbreBrowserScripts {
                 !isActive &&
                 isAudible(video)
             ) {
-                video.requestPictureInPicture().catch(() => {});
+                // Refused: the app stops keeping the page for it.
+                return video.requestPictureInPicture().catch(() => {
+                    if (!document.pictureInPictureElement) post({ type: 'pip', state: 'left' });
+                });
             } else if (isActive && document.pictureInPictureElement) {
                 // Only bring the video back when its tab is shown again; leaving
                 // a tab whose video is already in Picture in Picture keeps it.
-                document.exitPictureInPicture().catch(() => {});
+                return document.exitPictureInPicture();
             }
+            // Asked to leave with nothing to put in Picture in Picture, once a
+            // change running meanwhile has ended: the app, told the change
+            // waited, stops keeping the page for it.
+            if (waited && !isActive && !document.pictureInPictureElement) post({ type: 'pip', state: 'left' });
+            return null;
+        }
+
+        // One Picture in Picture change at a time: switching tabs quickly
+        // asked to enter while the previous exit still ran (or the reverse),
+        // and WebKit could keep the video "in Picture in Picture" with no
+        // window shown. A change asked meanwhile waits for the running one;
+        // otherwise it starts at once (within the app's call). Returns
+        // whether the page is to be kept for Picture in Picture: a change
+        // started or waits, or its video already is in Picture in Picture.
+        let pendingChange = null;
+        window.__triggerPiP = function(isActive = false) {
+            const change = pendingChange
+                ? pendingChange.then(() => changePictureInPicture(isActive, true))
+                : changePictureInPicture(isActive, false);
+            if (!change) return !isActive && !!document.pictureInPictureElement;
+            // A change WebKit never settles holds the next ones 3 s at most.
+            const settled = Promise.race([
+                Promise.resolve(change).catch(() => {}),
+                new Promise((resolve) => setTimeout(resolve, 3000))
+            ]);
+            const tracked = settled.then(() => {
+                if (pendingChange === tracked) pendingChange = null;
+            });
+            pendingChange = tracked;
+            return true;
         };
 
         post({ type: 'ready', title: document.title });

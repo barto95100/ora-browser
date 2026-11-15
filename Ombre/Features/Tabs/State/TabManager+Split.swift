@@ -135,7 +135,15 @@ extension TabManager {
             page.evaluateJavaScript("window.__triggerPiP(true)")
         }
         for page in leaving where !coming.contains(where: { $0.id == page.id }) {
-            page.evaluateJavaScript("window.__triggerPiP()")
+            // Its page stays in the window from the request on: entering
+            // Picture in Picture takes a moment, and a page that left the
+            // window meanwhile stayed "entering" in WebKit, with no Picture in
+            // Picture window, until the tab was closed (which then waited).
+            let request = page.isPlayingMedia ? mediaController.pictureInPictureWillStart(for: page) : nil
+            page.evaluateJavaScript("window.__triggerPiP()") { [weak self, weak page] result, _ in
+                guard let request, let page, result as? Bool != true else { return }
+                self?.mediaController.pictureInPictureDidNotStart(for: page, request: request)
+            }
         }
     }
 

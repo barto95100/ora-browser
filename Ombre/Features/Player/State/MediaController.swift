@@ -38,6 +38,8 @@ final class MediaController: ObservableObject {
     /// bring the video back when the user clicks "back to tab".
     @Published private(set) var pictureInPictureTabIDs: Set<UUID> = []
     private var pictureInPictureTabRefs: [UUID: WeakTab] = [:]
+    /// The last request to go to Picture in Picture, by tab.
+    private var pictureInPictureRequests: [UUID: UUID] = [:]
     /// The tab manager of the window this controller belongs to (set by it).
     weak var tabManager: TabManager?
 
@@ -61,7 +63,8 @@ final class MediaController: ObservableObject {
             if event.state == "entered" {
                 pictureInPictureTabRefs[tab.id] = WeakTab(tab)
                 pictureInPictureTabIDs.insert(tab.id)
-            } else {
+            } else if pictureInPictureTabIDs.contains(tab.id) {
+                pictureInPictureRequests[tab.id] = nil
                 pictureInPictureTabRefs[tab.id] = nil
                 pictureInPictureTabIDs.remove(tab.id)
             }
@@ -210,6 +213,7 @@ final class MediaController: ObservableObject {
         if let idx = sessions.firstIndex(where: { $0.tabID == tabID }) {
             sessions.remove(at: idx)
         }
+        pictureInPictureRequests[tabID] = nil
         pictureInPictureTabRefs[tabID] = nil
         pictureInPictureTabIDs.remove(tabID)
         // Update tab's isPlayingMedia property
@@ -241,6 +245,27 @@ final class MediaController: ObservableObject {
 
     private func eval(_ tabID: UUID, _ javaScript: String) {
         tabRefs[tabID]?.value?.evaluateJavaScript(javaScript)
+    }
+
+    /// The tab's video is asked to go to Picture in Picture: its page is kept
+    /// in the window from now on, as when it is in Picture in Picture.
+    /// Returns the request, to tell its answer from a later request's.
+    @discardableResult
+    func pictureInPictureWillStart(for tab: Tab) -> UUID {
+        let request = UUID()
+        pictureInPictureRequests[tab.id] = request
+        pictureInPictureTabRefs[tab.id] = WeakTab(tab)
+        pictureInPictureTabIDs.insert(tab.id)
+        return request
+    }
+
+    /// The page had no video to put in Picture in Picture for `request` (a
+    /// later request of the tab keeps its page).
+    func pictureInPictureDidNotStart(for tab: Tab, request: UUID) {
+        guard pictureInPictureRequests[tab.id] == request, pictureInPictureTabIDs.contains(tab.id) else { return }
+        pictureInPictureRequests[tab.id] = nil
+        pictureInPictureTabRefs[tab.id] = nil
+        pictureInPictureTabIDs.remove(tab.id)
     }
 
     /// Tabs in Picture in Picture whose page is loaded, except `excludedTabID`

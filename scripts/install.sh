@@ -11,6 +11,10 @@ set -euo pipefail
 # separate app (com.barto95100.ora.dev): its data, passwords and settings
 # are its own, and it is left alone.
 #
+# It also installs the ombre command (scripts/ombre: agents and scripts
+# drive Ombre) in ~/.local/bin, and says how to add that folder to the PATH
+# when it isn't there.
+#
 # The installed version:
 #   /usr/libexec/PlistBuddy -c "Print :OmbreCommit" /Applications/Ombre.app/Contents/Info.plist
 
@@ -70,3 +74,17 @@ mv "$NEW" "$INSTALLED"
 
 COMMIT=$(/usr/libexec/PlistBuddy -c "Print :OmbreCommit" "$INSTALLED/Contents/Info.plist" 2>/dev/null || echo "?")
 green "Installed: ${INSTALLED} (${VERSION}, commit ${COMMIT})"
+
+# The ombre command (agents, scripts: see scripts/ombre), in ~/.local/bin.
+BIN_DIR="${OMBRE_BIN_DIR:-$HOME/.local/bin}"
+mkdir -p "$BIN_DIR"
+install -m 755 "$SCRIPT_DIR/ombre" "$BIN_DIR/ombre"
+green "Installed: ${BIN_DIR}/ombre"
+case ":${PATH}:" in
+    *":${BIN_DIR}:"*) ;;
+    *)
+        yellow "${BIN_DIR} isn't in your PATH: add this line to ~/.zshrc, then open a new terminal:"
+        # The folder written as the user's shell will read it.
+        echo "  export PATH=\"${BIN_DIR/#$HOME/\$HOME}:\$PATH\""
+        ;;
+esac

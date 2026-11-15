@@ -4,96 +4,6 @@
     "" : {},
     " — %@" : {},
     " / %@" : {},
-    "%lld groups made" : {
-      "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld groupe créé"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld groupes créés"
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld group made"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld groups made"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "Couldn’t group the tabs by subject: %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de regrouper les onglets par sujet : %@"
-          }
-        }
-      }
-    },
-    "Groups by site: %lld; couldn’t group by subject: %@" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Groupes par site : %1$lld ; regroupement par sujet impossible : %2$@"
-          }
-        }
-      }
-    },
-    "No groups to make" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun groupe à créer"
-          }
-        }
-      }
-    },
-    "the model took too long" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "le modèle a mis trop de temps"
-          }
-        }
-      }
-    },
-    "Tidying tabs…" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rangement des onglets…"
-          }
-        }
-      }
-    },
     "·" : {},
     "“%@” is in Ombre." : {
       "localizations" : {
@@ -253,6 +163,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ veut accéder à %2$@"
+          }
+        }
+      }
+    },
+    "%@ wants to control Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ veut piloter Ombre"
           }
         }
       }
@@ -494,6 +414,46 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld dossiers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld groups made" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld group made"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld groups made"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld groupe créé"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld groupes créés"
                 }
               }
             }
@@ -1458,6 +1418,16 @@
         }
       }
     },
+    "Allow agents to control Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser le pilotage par des agents"
+          }
+        }
+      }
+    },
     "Allow all" : {
       "localizations" : {
         "fr" : {
@@ -1474,6 +1444,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autoriser pendant un jour"
+          }
+        }
+      }
+    },
+    "Allow for This Session" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser pour cette session"
           }
         }
       }
@@ -1568,6 +1548,16 @@
         }
       }
     },
+    "An app" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une app"
+          }
+        }
+      }
+    },
     "An unexpected error occurred while loading this page." : {
       "localizations" : {
         "fr" : {
@@ -1626,6 +1616,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apparence"
+          }
+        }
+      }
+    },
+    "Apps and scripts (the ombre command) can list, open, show, close and read tabs. Each app asks first, once per session. Never private windows, Little Ombre or passwords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des apps et des scripts (la commande ombre) peuvent lister, ouvrir, afficher, fermer et lire les onglets. Chaque app demande d’abord votre accord, une fois par session. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
           }
         }
       }
@@ -2857,6 +2857,16 @@
         }
       }
     },
+    "Controlled by %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piloté par %@"
+          }
+        }
+      }
+    },
     "Conventional Search Engines" : {
       "localizations" : {
         "fr" : {
@@ -3024,6 +3034,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de vérifier les mises à jour."
+          }
+        }
+      }
+    },
+    "Couldn’t group the tabs by subject: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de regrouper les onglets par sujet : %@"
           }
         }
       }
@@ -3325,6 +3345,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer…"
+          }
+        }
+      }
+    },
+    "Deny" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refuser"
           }
         }
       }
@@ -4250,6 +4280,16 @@
         }
       }
     },
+    "Groups by site: %lld; couldn’t group by subject: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Groupes par site : %1$lld ; regroupement par sujet impossible : %2$@"
+          }
+        }
+      }
+    },
     "Heart" : {
       "localizations" : {
         "fr" : {
@@ -4676,6 +4716,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "délai dépassé"
+          }
+        }
+      }
+    },
+    "It will be able to list, open, show, close and read your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette app pourra lister, ouvrir, afficher, fermer et lire vos onglets jusqu’à ce que vous quittiez Ombre ou qu’une heure passe sans commande. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
           }
         }
       }
@@ -5714,6 +5764,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune extension pour l’instant. Ajoutez-en une parmi vos apps ci-dessous."
+          }
+        }
+      }
+    },
+    "No groups to make" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun groupe à créer"
           }
         }
       }
@@ -8555,6 +8615,16 @@
         }
       }
     },
+    "Stop Agent Control" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter le pilotage"
+          }
+        }
+      }
+    },
     "Store data" : {
       "localizations" : {
         "fr" : {
@@ -8981,6 +9051,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La liste n’a pas pu être mise à jour"
+          }
+        }
+      }
+    },
+    "the model took too long" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "le modèle a mis trop de temps"
           }
         }
       }
@@ -9438,6 +9518,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ranger les onglets maintenant"
+          }
+        }
+      }
+    },
+    "Tidying tabs…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rangement des onglets…"
           }
         }
       }

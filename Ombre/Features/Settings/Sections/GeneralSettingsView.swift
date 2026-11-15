@@ -104,6 +104,15 @@ struct GeneralSettingsView: View {
                 Text("Inspect pages from Safari's Develop menu (Safari › Settings › Advanced).")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                Toggle("Allow agents to control Ombre", isOn: $settings.allowsAgentControl)
+                    .onChange(of: settings.allowsAgentControl) { _, isOn in
+                        if !isOn { AgentControl.shared.stop() }
+                    }
+                Text(
+                    "Apps and scripts (the ombre command) can list, open, show, close and read tabs. Each app asks first, once per session. Never private windows, Little Ombre or passwords."
+                )
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
 
             if UpdateService.isAvailable {

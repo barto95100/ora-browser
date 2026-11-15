@@ -149,6 +149,7 @@ private struct BrowserWindowRoot: View {
                 }
                 BrowsingTimeTracker.shared.register(newWindow, tabManager: tabManager)
                 BrowserWindows.normal.add(newWindow)
+                BrowserWindows.tabManagers.setObject(tabManager, forKey: newWindow)
                 for file in ExternalFileOpener.shared.register(newWindow) {
                     tabManager.openTab(
                         url: file,

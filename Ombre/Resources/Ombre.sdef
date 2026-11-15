@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<!--
+  What agents (apps, scripts, the ombre command) may ask Ombre, through Apple
+  Events: no network port. Only the tabs of the front normal window: never a
+  private window, Little Ombre, passwords or the keychain. Off until allowed in
+  Settings › General; each app is then asked about once per session (see
+  AgentControl.swift). No standard suite: it would show every window,
+  private ones too. Replies are JSON text.
+-->
+<dictionary title="Ombre Terminology">
+    <suite name="Ombre Suite" code="Ombr" description="Tabs of Ombre's front window, for agents. Allowed in Settings › General; each app asks once per session.">
+        <command name="list tabs" code="OmbrLsTb" description="The spaces and their tabs, as JSON.">
+            <cocoa class="OmbreListTabsCommand"/>
+            <result type="text" description="JSON: spaces, each with its tabs (id, title, address, kind, active)."/>
+        </command>
+        <command name="open address" code="OmbrOpAd" description="Opens an http or https address in a new tab of the active space.">
+            <cocoa class="OmbreOpenAddressCommand"/>
+            <direct-parameter type="text" description="The address."/>
+            <result type="text" description="JSON: the new tab."/>
+        </command>
+        <command name="activate tab" code="OmbrAcTb" description="Shows a tab (and its space).">
+            <cocoa class="OmbreActivateTabCommand"/>
+            <direct-parameter type="text" description="The tab's id, from list tabs."/>
+            <result type="text" description="JSON: the tab."/>
+        </command>
+        <command name="close tab" code="OmbrClTb" description="Closes a tab.">
+            <cocoa class="OmbreCloseTabCommand"/>
+            <direct-parameter type="text" description="The tab's id, from list tabs."/>
+            <result type="text" description="JSON: the tab closed."/>
+        </command>
+        <command name="read tab" code="OmbrRdTb" description="The title, address and text of a tab's page (the text cut at 100,000 characters).">
+            <cocoa class="OmbreReadTabCommand"/>
+            <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
+            <result type="text" description="JSON: id, title, address, text, truncated."/>
+        </command>
+    </suite>
+</dictionary>

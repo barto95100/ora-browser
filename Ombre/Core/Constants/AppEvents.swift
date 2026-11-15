@@ -26,6 +26,8 @@ extension Notification.Name {
     static let zoomPage = Notification.Name("ZoomPage")
     static let translatePage = Notification.Name("TranslatePage")
     static let openPeekInTab = Notification.Name("OpenPeekInTab")
+    /// ⌥⌘N: an empty Little Ombre, from the browser window it is posted to.
+    static let newLittleOmbre = Notification.Name("NewLittleOmbre")
     static let newSplitView = Notification.Name("NewSplitView")
     static let restoreLastTab = Notification.Name("RestoreLastTab")
     static let findInPage = Notification.Name("FindInPage")

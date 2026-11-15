@@ -40,5 +40,6 @@ final class WindowSession: ObservableObject {
             downloadManager: downloadManager,
             historyManager: historyManager
         )
+        tabManager.isPrivateWindow = isPrivate
     }
 }

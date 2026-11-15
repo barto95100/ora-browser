@@ -1,10 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {},
-    " — %@" : {},
-    " / %@" : {},
-    "·" : {},
+    "" : {
+
+    },
+    " — %@" : {
+
+    },
+    " / %@" : {
+
+    },
+    "·" : {
+
+    },
     "“%@” is in Ombre." : {
       "localizations" : {
         "fr" : {
@@ -177,8 +185,12 @@
         }
       }
     },
-    "%@." : {},
-    "%lld" : {},
+    "%@." : {
+
+    },
+    "%lld" : {
+
+    },
     "%lld %%" : {
       "localizations" : {
         "fr" : {
@@ -673,24 +685,6 @@
     },
     "%lld tabs selected" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld onglet sélectionné"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld onglets sélectionnés"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -708,6 +702,24 @@
               }
             }
           }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet sélectionné"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets sélectionnés"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -721,7 +733,9 @@
         }
       }
     },
-    "•" : {},
+    "•" : {
+
+    },
     "⌘-click opens in the background" : {
       "localizations" : {
         "fr" : {
@@ -1212,12 +1226,12 @@
         }
       }
     },
-    "All Notes of the Space (⌥⌘N)" : {
+    "All Notes of the Space (⌃⌘N)" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toutes les notes de l’espace (⌥⌘N)"
+            "value" : "Toutes les notes de l’espace (⌃⌘N)"
           }
         }
       }
@@ -2502,24 +2516,6 @@
     },
     "Close %lld Tabs" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Fermer %lld onglet"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Fermer les %lld onglets"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -2533,6 +2529,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Close %lld Tabs"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fermer %lld onglet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fermer les %lld onglets"
                 }
               }
             }
@@ -3999,7 +4013,9 @@
         }
       }
     },
-    "github.com/the-ora/browser" : {},
+    "github.com/the-ora/browser" : {
+
+    },
     "GNU General Public License v3.0" : {
       "localizations" : {
         "fr" : {
@@ -4298,8 +4314,12 @@
         }
       }
     },
-    "https://example.com/filter.txt" : {},
-    "https://example.com/search?q={query}" : {},
+    "https://example.com/filter.txt" : {
+
+    },
+    "https://example.com/search?q={query}" : {
+
+    },
     "Icon" : {
       "localizations" : {
         "fr" : {
@@ -4776,6 +4796,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les liens ouverts depuis Mail, Messages et vos autres apps atterriront ici."
+          }
+        }
+      }
+    },
+    "Little Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Little Ombre"
           }
         }
       }
@@ -5314,6 +5344,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau dossier avec l’onglet"
+          }
+        }
+      }
+    },
+    "New Little Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle Little Ombre"
           }
         }
       }
@@ -6226,6 +6266,26 @@
         }
       }
     },
+    "Open in Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans Ombre"
+          }
+        }
+      }
+    },
+    "Open in Ombre (⌘O)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans Ombre (⌘O)"
+          }
+        }
+      }
+    },
     "Open in Split View" : {
       "localizations" : {
         "fr" : {
@@ -6262,6 +6322,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir le lien en vue partagée"
+          }
+        }
+      }
+    },
+    "Open links from other apps in Little Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les liens des autres apps dans Little Ombre"
           }
         }
       }
@@ -7556,6 +7626,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher sur %@"
+          }
+        }
+      }
+    },
+    "Search or enter address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher ou saisir une adresse"
           }
         }
       }

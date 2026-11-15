@@ -25,6 +25,8 @@ class TabManager: ObservableObject {
     @Published var selectedTabIDs: Set<UUID> = []
     /// Where a ⇧-click range starts: the last tab ⌘-clicked.
     var selectionAnchorID: UUID?
+    /// Whether this is a private window's (set by its `WindowSession`).
+    var isPrivateWindow = false
     let modelContainer: ModelContainer
     let modelContext: ModelContext
     let mediaController: MediaController

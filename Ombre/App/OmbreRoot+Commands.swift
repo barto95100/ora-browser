@@ -258,12 +258,19 @@ private struct WindowTabCommands: ViewModifier {
     }
 }
 
-/// Spaces asked for from elsewhere (Settings › Spaces › New Space…).
+/// Spaces asked for from elsewhere (Settings › Spaces › New Space…), and a
+/// new Little Ombre in the window's space (⌥⌘N).
 private struct WindowSpaceCommands: ViewModifier {
     let targets: WindowCommandTargets
 
     func body(content: Content) -> some View {
         content
+            .onNotification(.newLittleOmbre) { note in
+                Task { @MainActor in
+                    guard let window = targets.window, note.object as? NSWindow === window else { return }
+                    LittleOmbreWindow.open(nil, from: targets.tabManager, window: window)
+                }
+            }
             .onNotification(.newSpace) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === targets.window else { return }
@@ -424,6 +431,9 @@ private struct WindowLifecycle: ViewModifier {
                 guard let window, note.object as? NSWindow === window else { return }
                 MainActor.assumeIsolated {
                     BrowserPopupWindow.closePopups(openedFrom: window)
+                    // Its Little Ombres too: their pages use its spaces (or
+                    // its private session), and go to its tabs.
+                    LittleOmbreWindow.closeAll(from: tabManager)
                     tabManager.tearDown()
                     if isPrivate {
                         let spaces = (try? tabManager.modelContext.fetch(FetchDescriptor<TabContainer>())) ?? []

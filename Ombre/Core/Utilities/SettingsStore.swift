@@ -155,6 +155,7 @@ class SettingsStore: ObservableObject {
     private let tabRemovalTimeoutKey = "settings.tabRemovalTimeout"
     private let maxRecentTabsKey = "settings.maxRecentTabs"
     private let autoPiPEnabledKey = "settings.autoPiPEnabled"
+    private let littleOmbreForLinksKey = "settings.littleOmbreForLinks"
     private let peekEnabledKey = "settings.peekEnabled"
     private let pinnedLinkBehaviorKey = "settings.pinnedLinkBehavior"
     private let passwordsEnabledKey = "settings.passwords.enabled"
@@ -234,6 +235,11 @@ class SettingsStore: ObservableObject {
 
     @Published var autoPiPEnabled: Bool {
         didSet { defaults.set(autoPiPEnabled, forKey: autoPiPEnabledKey) }
+    }
+
+    /// Links from other apps open in Little Ombre (like Arc), not in a tab.
+    @Published var opensLinksInLittleOmbre: Bool {
+        didSet { defaults.set(opensLinksInLittleOmbre, forKey: littleOmbreForLinksKey) }
     }
 
     /// Links from pinned and favorite tabs to other sites: Peek (like Arc),
@@ -347,6 +353,7 @@ class SettingsStore: ObservableObject {
         maxRecentTabs = maxRecentTabsValue == 0 ? 5 : maxRecentTabsValue
 
         autoPiPEnabled = defaults.object(forKey: autoPiPEnabledKey) as? Bool ?? true
+        opensLinksInLittleOmbre = defaults.object(forKey: littleOmbreForLinksKey) as? Bool ?? true
         // Before this choice, Peek could only be turned on or off.
         let legacyPeekEnabled = defaults.object(forKey: peekEnabledKey) as? Bool ?? true
         pinnedLinkBehavior = defaults.string(forKey: pinnedLinkBehaviorKey).flatMap(PinnedLinkBehavior.init(rawValue:))

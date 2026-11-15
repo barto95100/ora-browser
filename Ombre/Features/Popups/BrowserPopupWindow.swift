@@ -40,6 +40,14 @@ final class BrowserPopupWindow: NSObject, NSWindowDelegate {
         }
     }
 
+    /// The popups opened from `window` now belong to `newWindow` (Little
+    /// Ombre's page went to a tab of it): they close with it instead.
+    static func movePopups(openedFrom window: NSWindow, to newWindow: NSWindow?) {
+        for popup in openPopups where popup.openerWindow === window {
+            popup.openerWindow = newWindow
+        }
+    }
+
     /// Closes the popups of a space being deleted.
     static func closePopups(inSpace spaceID: UUID) {
         for popup in openPopups where popup.popupPage.context.spaceID == spaceID {

@@ -63,7 +63,7 @@ class AppState: ObservableObject {
     @Published var showLauncher: Bool = false
     /// The history panel (⌘Y), see `HistoryPanel`.
     @Published var showHistory: Bool = false
-    /// The space's notes (⌥⌘N), see `NotesPanel`.
+    /// The space's notes (⌃⌘N), see `NotesPanel`.
     @Published var showNotes: Bool = false
     /// The browsing time (⌥⌘Y), see `TimePanel`.
     @Published var showTime: Bool = false

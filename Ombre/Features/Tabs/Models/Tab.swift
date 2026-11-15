@@ -213,16 +213,27 @@ class Tab: ObservableObject, Identifiable {
         if let url, let page = WebExtensionsHub.extensionPage(for: url, spaceID: container.id) {
             return page
         }
-        let engine = BrowserEngine.shared
-        let profile = engine.makeProfile(
-            identifier: container.id,
+        return Self.makeSpacePage(
+            spaceID: container.id,
             isPrivate: isPrivate,
             privateSession: tabManager?.privateSessionID
         )
-        let privacySettings = SettingsStore.shared.privacySettings(for: container.id)
+    }
+
+    /// A page of the space `spaceID` (its data, protections and scripts), in
+    /// a private window's session if private: a tab's, or Little Ombre's.
+    @MainActor
+    static func makeSpacePage(spaceID: UUID, isPrivate: Bool, privateSession: UUID?) -> BrowserPage {
+        let engine = BrowserEngine.shared
+        let profile = engine.makeProfile(
+            identifier: spaceID,
+            isPrivate: isPrivate,
+            privateSession: privateSession
+        )
+        let privacySettings = SettingsStore.shared.privacySettings(for: spaceID)
         let userScripts = OmbreBrowserScripts.userScripts() + BrowserPrivacyService.privacyScripts(
             for: privacySettings,
-            spaceID: container.id,
+            spaceID: spaceID,
             isPrivate: isPrivate
         )
         return engine.makePage(

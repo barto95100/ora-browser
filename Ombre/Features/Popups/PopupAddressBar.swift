@@ -41,7 +41,7 @@ struct PopupAddressBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            securityLabel
+            PageSecurityLabel(security: popup.security)
             let display = PopupDisplayAddress(popup.address)
             let full = popup.address?.absoluteString ?? ""
             // The end of the site (its domain) shows first if it is too long.
@@ -77,9 +77,15 @@ struct PopupAddressBar: View {
     }
 
     static let height: CGFloat = 28
+}
 
-    @ViewBuilder private var securityLabel: some View {
-        switch popup.security {
+/// The lock, "Not Secure" or the globe before an address (a popup's, Little
+/// Ombre's).
+struct PageSecurityLabel: View {
+    let security: PageSecurity
+
+    var body: some View {
+        switch security {
         case .secure:
             Image(systemName: "lock.fill")
                 .font(.system(size: 11))
@@ -103,7 +109,7 @@ struct PopupAddressBar: View {
 
 /// Read-only text that can be selected and copied (⌘C). The site is cut at
 /// its start when too long (its domain stays), the rest at its end.
-private struct SelectableAddressField: NSViewRepresentable {
+struct SelectableAddressField: NSViewRepresentable {
     let text: String
     let help: String
     let isSite: Bool

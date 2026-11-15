@@ -173,6 +173,12 @@ enum KeyboardShortcuts {
             category: String(localized: "Window"),
             defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command])
         )
+        static let newLittleOmbre = KeyboardShortcutDefinition(
+            id: "window.newLittleOmbre",
+            name: String(localized: "New Little Ombre"),
+            category: String(localized: "Window"),
+            defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command, .option])
+        )
         static let newPrivate = KeyboardShortcutDefinition(
             id: "window.newPrivate",
             name: String(localized: "New Private Window"),
@@ -257,7 +263,8 @@ enum KeyboardShortcuts {
             id: "notes.show",
             name: String(localized: "Show Notes"),
             category: String(localized: "Notes"),
-            defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command, .option])
+            // ⌥⌘N is New Little Ombre, like Arc's.
+            defaultChord: KeyChord(keyEquivalent: .init("n"), modifiers: [.command, .control])
         )
         static let tasks = KeyboardShortcutDefinition(
             id: "notes.tasks",
@@ -338,7 +345,7 @@ enum KeyboardShortcuts {
         Navigation.clearCookiesAndReload, Navigation.openPeekInNewTab,
 
         // Window
-        Window.new, Window.newPrivate, Window.close, Window.fullscreen,
+        Window.new, Window.newPrivate, Window.newLittleOmbre, Window.close, Window.fullscreen,
 
         // Address
         Address.copyURL, Address.focus,

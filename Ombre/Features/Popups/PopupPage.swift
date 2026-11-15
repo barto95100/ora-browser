@@ -69,6 +69,10 @@ final class PopupPage: ObservableObject {
         page.lastCommittedURL ?? openerURL
     }
     private let pageDelegate: PopupPageDelegate
+    /// Where the pages it shows are recorded (Little Ombre's; a popup isn't
+    /// recorded): never for a private page.
+    var history: (manager: HistoryManager, space: TabContainer)?
+    private var lastRecordedURL: URL?
 
     /// Made with WebKit's `configuration` (required: it shares its opener's
     /// process and data), linked to `opener`.
@@ -101,6 +105,27 @@ final class PopupPage: ObservableObject {
         if address != url { address = url }
         let security = page.security
         if self.security != security { self.security = security }
+    }
+
+    /// The page loaded: recorded in the history, if it has one, once per
+    /// address (a reload only updates the title).
+    func recordVisit() {
+        guard let history, !context.isPrivate, let url = page.currentURL,
+              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https"
+        else { return }
+        let title = page.title ?? ""
+        if lastRecordedURL == url {
+            history.manager.updateTitle(title, for: url, container: history.space)
+            return
+        }
+        lastRecordedURL = url
+        history.manager.record(title: title, url: url, container: history.space)
+    }
+
+    func updateRecordedTitle() {
+        guard let history, let url = lastRecordedURL, url == page.currentURL, let title = page.title, !title.isEmpty
+        else { return }
+        history.manager.updateTitle(title, for: url, container: history.space)
     }
 
     /// The popup closes: what the page waits for is refused.
@@ -151,6 +176,8 @@ private final class PopupPageDelegate: BrowserPageDelegate {
 
     func browserPage(_ page: BrowserPage, didChangeURL url: URL?) {
         popup?.updateAddress()
+        // In-page navigations (history API) are visits too, once loaded.
+        if page.isLoading == false { popup?.recordVisit() }
         popup?.pageDidChange?()
         WebExtensionsHub.pageChanged(page, url: true)
     }
@@ -165,6 +192,8 @@ private final class PopupPageDelegate: BrowserPageDelegate {
 
     func browserPage(_ page: BrowserPage, didChangeTitle title: String?) {
         popup?.pageDidChange?()
+        // The title known once loaded is often empty: the history follows it.
+        popup?.updateRecordedTitle()
         WebExtensionsHub.pageChanged(page, title: true)
     }
 
@@ -175,7 +204,8 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         case .committed:
             popup?.sheets.dialogPolicy.pageDidCommitNewDocument()
             popup?.updateAddress()
-        case .finished: break
+        case .finished:
+            popup?.recordVisit()
         }
     }
 

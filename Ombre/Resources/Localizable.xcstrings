@@ -411,6 +411,46 @@
         }
       }
     },
+    "%lld groups by subject" : {
+      "localizations" : {
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld groupe par sujet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld groupes par sujet"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld group by subject"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld groups by subject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld h" : {
       "localizations" : {
         "fr" : {
@@ -2934,6 +2974,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de vérifier les mises à jour."
+          }
+        }
+      }
+    },
+    "Couldn’t group the tabs by subject" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de regrouper les onglets par sujet"
           }
         }
       }

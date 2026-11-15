@@ -85,3 +85,10 @@ final class ReadTabScriptCommand: AgentScriptCommand {
         .read(text)
     }
 }
+
+@objc(OmbreCaptureTabCommand)
+final class CaptureTabScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        .capture(text)
+    }
+}

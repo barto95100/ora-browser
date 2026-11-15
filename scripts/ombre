@@ -7,6 +7,8 @@
 #   ombre show <tab id>     shows a tab (and its space)
 #   ombre close <tab id>    closes a tab
 #   ombre read [<tab id>]   title, address and text of a page (the active tab without an id)
+#   ombre capture [<tab id>] [-o <file.png>]
+#                           an image of a page as it shows (PNG); prints the file's path
 #
 # First allow it in Ombre › Settings › General › Allow agents to control Ombre.
 # macOS then asks once to let this terminal control Ombre (Automation), and
@@ -20,7 +22,7 @@ app_id=${OMBRE_APP_ID:-com.barto95100.ora}
 script=$0
 
 usage() {
-    sed -n '4,9p' "$script" | sed 's/^# \{0,1\}//' >&2
+    sed -n '4,11p' "$script" | sed 's/^# \{0,1\}//' >&2
     exit "${1:-2}"
 }
 
@@ -32,6 +34,20 @@ case $1 in
     show) code=AcTb; [[ $# -eq 2 ]] || usage ;;
     close) code=ClTb; [[ $# -eq 2 ]] || usage ;;
     read) code=RdTb; [[ $# -le 2 ]] || usage ;;
+    capture)
+        code=CpTb
+        shift
+        tab=""
+        output=""
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                -o) [[ $# -ge 2 ]] || usage; output=$2; shift 2 ;;
+                -*) usage ;;
+                *) [[ -z $tab ]] || usage; tab=$1; shift ;;
+            esac
+        done
+        set -- capture "$tab"
+        ;;
     -h|--help|help) usage 0 ;;
     *) usage ;;
 esac
@@ -49,6 +65,10 @@ on run argv
         if eventCode is "OpAd" then return «event OmbrOpAd» argument
         if eventCode is "AcTb" then return «event OmbrAcTb» argument
         if eventCode is "ClTb" then return «event OmbrClTb» argument
+        if eventCode is "CpTb" then
+            if argument is "" then return «event OmbrCpTb»
+            return «event OmbrCpTb» argument
+        end if
         if argument is "" then return «event OmbrRdTb»
         return «event OmbrRdTb» argument
     end tell
@@ -58,4 +78,19 @@ APPLESCRIPT
     print -r -- "${reply#*execution error: }" >&2
     exit 1
 fi
-print -r -- "$reply"
+if [[ $code != CpTb ]]; then
+    print -r -- "$reply"
+    exit 0
+fi
+
+# The image into its file (plutil reads the JSON), the file's path printed.
+[[ -n $output ]] || output="ombre-capture-$(date +%Y%m%d-%H%M%S).png"
+# Decoded beside it first: a failure leaves no empty or half file.
+partial="${output}.partial"
+trap 'rm -f -- "$partial"' EXIT
+if ! print -r -- "$reply" | plutil -extract png raw -o - - | base64 -D > "$partial"; then
+    print -r -- "Ombre's reply held no image." >&2
+    exit 1
+fi
+mv -f -- "$partial" "$output"
+print -r -- "${output:A}"

@@ -39,6 +39,36 @@ struct AgentSessionsTests {
     }
 }
 
+/// The image agents get: a PNG, scaled down past the widest allowed.
+struct AgentImageTests {
+    /// An image of exactly `width` × `height` pixels, whatever the screen.
+    private func image(width: Int, height: Int) throws -> NSImage {
+        let context = try #require(CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ))
+        context.setFillColor(NSColor.systemTeal.cgColor)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        let cgImage = try #require(context.makeImage())
+        return NSImage(cgImage: cgImage, size: NSSize(width: width, height: height))
+    }
+
+    @Test func aWideImageIsScaledDown() throws {
+        let png = try #require(try AgentImage.png(of: image(width: 4000, height: 2000), maxWidth: 2560))
+        #expect(png.width == 2560)
+        #expect(png.height == 1280)
+        let decoded = try #require(NSBitmapImageRep(data: png.data))
+        #expect(decoded.pixelsWide == 2560)
+        #expect(png.data.starts(with: [0x89, 0x50, 0x4E, 0x47]))
+    }
+
+    @Test func aSmallImageKeepsItsSize() throws {
+        let png = try #require(try AgentImage.png(of: image(width: 300, height: 200), maxWidth: 2560))
+        #expect(png.width == 300)
+        #expect(png.height == 200)
+    }
+}
+
 /// Where the agents' indicator shows: the sidebar's header, else the address bar.
 struct SidebarHeaderPlacementTests {
     @Test(arguments: [
@@ -91,7 +121,8 @@ struct AgentScriptingDefinitionTests {
             ("OpAd", OpenAddressScriptCommand.self),
             ("AcTb", ActivateTabScriptCommand.self),
             ("ClTb", CloseTabScriptCommand.self),
-            ("RdTb", ReadTabScriptCommand.self)
+            ("RdTb", ReadTabScriptCommand.self),
+            ("CpTb", CaptureTabScriptCommand.self)
         ]
         for command in commands {
             let description = registry.commandDescription(
@@ -307,6 +338,21 @@ extension TabManagerTests {
             }
         }
 
+        /// Only web pages are read or captured: never a file, an extension's
+        /// page (a password manager's vault) or Ombre's own pages.
+        @Test(arguments: ["file:///Users/someone/notes.html", "webkit-extension://vault/index.html"])
+        func onlyWebPagesAreReadOrCaptured(address: String) async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let tab = try window.tabManager.makeTab(
+                    url: #require(URL(string: address)), title: "Page", in: space, isPrivate: false
+                )
+                let control = control(window)
+                #expect(await control.run(.read(tab.id.uuidString), from: terminal) == .failure(.notWebPage))
+                #expect(await control.run(.capture(tab.id.uuidString), from: terminal) == .failure(.notWebPage))
+            }
+        }
+
         /// A private tab is never listed, shown, closed or read.
         @Test func privateTabsAreNeverReached() async throws {
             try await TabManagerTestWindow.run { window in
@@ -321,7 +367,8 @@ extension TabManagerTests {
                 for command in [
                     AgentCommand.activate(tab.id.uuidString),
                     .close(tab.id.uuidString),
-                    .read(tab.id.uuidString)
+                    .read(tab.id.uuidString),
+                    .capture(tab.id.uuidString)
                 ] {
                     #expect(await control.run(command, from: terminal) == .failure(.noTab))
                 }
@@ -347,6 +394,9 @@ extension TabManagerTests {
                 )
                 let control = control(window)
                 #expect(await control.run(.read(tab.id.uuidString), from: terminal) == .failure(.notLoaded))
+                #expect(await control.run(.capture(tab.id.uuidString), from: terminal) == .failure(.notLoaded))
+                #expect(await control.run(.capture("nope"), from: terminal) == .failure(.noTab))
+                #expect(await control.run(.capture(nil), from: terminal) == .failure(.noActiveTab))
                 #expect(await control.run(.read("nope"), from: terminal) == .failure(.noTab))
             }
         }

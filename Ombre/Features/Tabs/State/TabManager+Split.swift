@@ -132,6 +132,9 @@ extension TabManager {
         let leaving = shownTabs(around: activeTab).filter { !$0.isClosing }
         let coming = shownTabs(around: tab)
         for page in coming where !leaving.contains(where: { $0.id == page.id }) {
+            // Shown again: an entry still under way is no longer waited for
+            // (giving it up would act on the page shown).
+            mediaController.pictureInPictureRequestEnded(for: page)
             page.evaluateJavaScript("window.__triggerPiP(true)")
         }
         for page in leaving where !coming.contains(where: { $0.id == page.id }) {
@@ -141,8 +144,28 @@ extension TabManager {
             // Picture window, until the tab was closed (which then waited).
             let request = page.isPlayingMedia ? mediaController.pictureInPictureWillStart(for: page) : nil
             page.evaluateJavaScript("window.__triggerPiP()") { [weak self, weak page] result, _ in
-                guard let request, let page, result as? Bool != true else { return }
-                self?.mediaController.pictureInPictureDidNotStart(for: page, request: request)
+                guard let request, let page, let self else { return }
+                let answer = result as? String
+                guard answer == "started" || answer == "queued" else {
+                    if answer == "already" {
+                        // Already in Picture in Picture: nothing to confirm.
+                        mediaController.pictureInPictureRequestEnded(for: page)
+                    } else {
+                        mediaController.pictureInPictureDidNotStart(for: page, request: request)
+                    }
+                    return
+                }
+                page.browserPage?.log("picture in picture asked")
+                // Never confirmed: the video is put back in the page. A
+                // change that waits for the running one starts up to 3 s
+                // later (the page's own limit).
+                let deadline = MediaController.pictureInPictureEntryDeadline * (answer == "queued" ? 2 : 1)
+                DispatchQueue.main.asyncAfter(deadline: .now() + deadline) { [weak self, weak page] in
+                    MainActor.assumeIsolated {
+                        guard let page else { return }
+                        self?.mediaController.pictureInPictureNotEntered(for: page, request: request)
+                    }
+                }
             }
         }
     }

@@ -9,12 +9,12 @@ extension TabManagerTests {
         /// Replaces the page's `__triggerPiP` (app's world) with one that
         /// records its calls in the document, where the test reads them. Once
         /// the page's load is over, so its document stays.
-        /// `answer`: what it says back (whether the page is to be kept for
-        /// Picture in Picture).
+        /// `answer`: what it says back, as script (whether the page is to be
+        /// kept for Picture in Picture: `'started'`, `'already'`, `false`).
         private func recordPiPRequests(
             of tab: Tab,
             in window: TabManagerTestWindow,
-            answer: Bool = false
+            answer: String = "false"
         ) async throws {
             await window.waitUntil("load over") { tab.browserPage?.isLoading == false }
             _ = try await evaluate(
@@ -84,7 +84,7 @@ extension TabManagerTests {
                 try await TabManagerTestWindow.run { window in
                     let other = try await window.openLoaded("other")
                     let leaving = try await window.openLoaded("leaving")
-                    try await recordPiPRequests(of: leaving, in: window, answer: started)
+                    try await recordPiPRequests(of: leaving, in: window, answer: started ? "'started'" : "false")
                     leaving.isPlayingMedia = true
 
                     window.tabManager.activateTab(other)
@@ -113,13 +113,51 @@ extension TabManagerTests {
             }
         }
 
+        /// Picture in Picture never confirmed (macOS refused it without a
+        /// word): after the deadline, the page is let go; once confirmed, it is
+        /// kept.
+        @Test func anEntryNeverConfirmedIsGivenUp() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await window.openLoaded("leaving")
+                let media = window.mediaController
+                let request = media.pictureInPictureWillStart(for: tab)
+                media.pictureInPictureNotEntered(for: tab, request: request)
+                #expect(!isKeptForPiP(tab, in: window))
+
+                let confirmed = media.pictureInPictureWillStart(for: tab)
+                media.receive(event: Self.event("entered"), from: tab)
+                media.pictureInPictureNotEntered(for: tab, request: confirmed)
+                #expect(isKeptForPiP(tab, in: window))
+            }
+        }
+
+        private static func event(_ state: String) -> MediaEventPayload {
+            MediaEventPayload(
+                type: "pip", wasPlayed: nil, state: state, volume: nil, title: nil, hasNext: nil, hasPrevious: nil
+            )
+        }
+
+        /// A tab shown again, or whose video already is in Picture in Picture,
+        /// is not given up: that would close a working Picture in Picture, or
+        /// act on the page shown.
+        @Test func aRequestEndedIsNotGivenUp() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await window.openLoaded("leaving")
+                let media = window.mediaController
+                let request = media.pictureInPictureWillStart(for: tab)
+                media.pictureInPictureRequestEnded(for: tab)
+                media.pictureInPictureNotEntered(for: tab, request: request)
+                #expect(isKeptForPiP(tab, in: window))
+            }
+        }
+
         /// A tab playing nothing is not kept: no page moves on each switch.
         @Test func aSilentTabLeavingIsNotKept() async throws {
             try await withAutoPiP {
                 try await TabManagerTestWindow.run { window in
                     let other = try await window.openLoaded("other")
                     let leaving = try await window.openLoaded("leaving")
-                    try await recordPiPRequests(of: leaving, in: window, answer: true)
+                    try await recordPiPRequests(of: leaving, in: window, answer: "'started'")
 
                     window.tabManager.activateTab(other)
 

@@ -12,10 +12,15 @@ class AgentScriptCommand: NSScriptCommand {
         directParameter as? String
     }
 
+    /// The `in tab` parameter: none for the active tab.
+    var tab: String? {
+        evaluatedArguments?["tab"] as? String
+    }
+
     override func performDefaultImplementation() -> Any? {
         guard let command = agentCommand else {
             scriptErrorNumber = Int(errAEParamMissed)
-            scriptErrorString = "A tab id or an address is needed." // not shown
+            scriptErrorString = "A parameter is missing." // not shown
             return nil
         }
         let pid = appleEvent?.attributeDescriptor(forKeyword: AEKeyword(keySenderPIDAttr))?.int32Value ?? 0
@@ -90,5 +95,27 @@ final class ReadTabScriptCommand: AgentScriptCommand {
 final class CaptureTabScriptCommand: AgentScriptCommand {
     override var agentCommand: AgentCommand? {
         .capture(text)
+    }
+}
+
+@objc(OmbreClickElementCommand)
+final class ClickElementScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        text.map { .click(tab: tab, selector: $0) }
+    }
+}
+
+@objc(OmbreFillFieldCommand)
+final class FillFieldScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        guard let selector = text, let value = evaluatedArguments?["value"] as? String else { return nil }
+        return .fill(tab: tab, selector: selector, value: value)
+    }
+}
+
+@objc(OmbreRunJavaScriptCommand)
+final class RunJavaScriptScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        text.map { .runScript(tab: tab, code: $0) }
     }
 }

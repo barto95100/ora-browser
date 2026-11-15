@@ -1362,6 +1362,16 @@
         }
       }
     },
+    "Allow agents to act in pages" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les agents à agir dans les pages"
+          }
+        }
+      }
+    },
     "Allow “%@” on %@?" : {
       "localizations" : {
         "en" : {
@@ -4726,6 +4736,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette app pourra lister, ouvrir, afficher, fermer, lire et capturer vos onglets jusqu’à ce que vous quittiez Ombre ou qu’une heure passe sans commande. Jamais les fenêtres privées, Little Ombre ni les mots de passe."
+          }
+        }
+      }
+    },
+    "It will be able to list, open, show, close, read and capture your tabs, and to click, fill in fields and run JavaScript in web pages (which sees everything they hold, what you type or autofill included), until you quit Ombre or an hour passes without a command. Never private windows or Little Ombre." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette app pourra lister, ouvrir, afficher, fermer, lire et capturer vos onglets, et aussi cliquer, remplir des champs et exécuter du JavaScript dans les pages web (qui voit tout ce qu’elles contiennent, y compris ce que vous tapez ou remplissez automatiquement), jusqu’à ce que vous quittiez Ombre ou qu’une heure passe sans commande. Jamais les fenêtres privées ni Little Ombre."
           }
         }
       }
@@ -9258,6 +9278,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ces sites restent fermés pendant un cycle de concentration dans %@. Les pauses les rouvrent."
+          }
+        }
+      }
+    },
+    "They can also click, fill in fields (never password fields) and run JavaScript in web pages. JavaScript sees everything a page holds, what you type or autofill in it included: turn this on only for agents you trust." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ils pourront aussi cliquer, remplir des champs (jamais les champs de mot de passe) et exécuter du JavaScript dans les pages web. Le JavaScript voit tout ce que contient une page, y compris ce que vous y tapez ou remplissez automatiquement : à n’activer que pour des agents de confiance."
           }
         }
       }

@@ -113,6 +113,17 @@ struct GeneralSettingsView: View {
                 )
                 .font(.caption)
                 .foregroundColor(.secondary)
+                Toggle("Allow agents to act in pages", isOn: $settings.allowsAgentPageActions)
+                    .disabled(!settings.allowsAgentControl)
+                    .onChange(of: settings.allowsAgentPageActions) { _, isOn in
+                        // Each app asks again, told what it may now do.
+                        if isOn { AgentControl.shared.stop() }
+                    }
+                Text(
+                    "They can also click, fill in fields (never password fields) and run JavaScript in web pages. JavaScript sees everything a page holds, what you type or autofill in it included: turn this on only for agents you trust."
+                )
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
 
             if UpdateService.isAvailable {

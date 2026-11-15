@@ -77,6 +77,7 @@ struct NormalTabsList: View {
             } label: {
                 Label("Tidy Tabs Now", systemImage: "rectangle.stack")
             }
+            .disabled(tabManager.tidyingSpaceIDs.contains(space.id))
         }
     }
 

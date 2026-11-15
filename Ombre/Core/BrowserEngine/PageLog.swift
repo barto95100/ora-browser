@@ -28,4 +28,11 @@ enum PageLog {
     static func notice(_ message: String) {
         logger.notice("\(message, privacy: .public)")
     }
+
+    /// For a diagnosis only: by default macOS keeps debug messages in memory,
+    /// seen while someone watches (`log stream --level debug`), not on the
+    /// disk, so not in a report either.
+    static func debug(_ message: String) {
+        logger.debug("\(message, privacy: .public)")
+    }
 }

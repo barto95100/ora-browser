@@ -22,6 +22,9 @@ class TabManager: ObservableObject {
     /// Changes with the groups (here or in another window): the sidebar reads
     /// them again.
     @Published var tabGroupsRevision = 0
+    /// Spaces whose tabs Tidy Tabs Now is grouping by subject (the model
+    /// answers in a few seconds): a second one waits until it is done.
+    @Published var tidyingSpaceIDs: Set<UUID> = []
     /// Tab (or folder) being dragged in the sidebar: the page then offers
     /// split zones (see `SplitDropOverlay`).
     @Published var draggingTabID: UUID?

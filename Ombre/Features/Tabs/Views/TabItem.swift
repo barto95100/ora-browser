@@ -208,7 +208,8 @@ struct TabItem: View {
                 name: tab
                     .type == .fav ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites"),
                 action: onFavoriteToggle
-            )
+            ),
+            (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
         ])
         .contextMenu { contextMenuItems }
         .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isDragging)
@@ -269,6 +270,8 @@ struct TabItem: View {
         Button(action: onDuplicate) {
             Label("Duplicate Tab", systemImage: "doc.on.doc")
         }
+
+        CopyTabAddressButton(tab: tab)
 
         if tab.type == .pinned {
             folderMenuItems

@@ -147,7 +147,8 @@ struct FavTabItem: View {
         .onHover { isHovering = $0 }
         .tabAccessibility(tab: tab, isSelected: isSelected, activate: onTap, actions: [
             (name: String(localized: "Close Tab"), action: onClose),
-            (name: String(localized: "Remove from Favorites"), action: onFavoriteToggle)
+            (name: String(localized: "Remove from Favorites"), action: onFavoriteToggle),
+            (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
         ])
         .contextMenu {
             Button(action: onFavoriteToggle) {
@@ -157,6 +158,8 @@ struct FavTabItem: View {
             Button(action: onDuplicate) {
                 Label("Duplicate Tab", systemImage: "doc.on.doc")
             }
+
+            CopyTabAddressButton(tab: tab)
 
             Divider()
 

@@ -36,6 +36,20 @@ enum Deadline {
     }
 }
 
+/// A main-actor closure handed to a `@Sendable` completion of WebKit.
+@MainActor
+final class MainActorCall {
+    private let body: () -> Void
+
+    init(_ body: @escaping @MainActor () -> Void) {
+        self.body = body
+    }
+
+    func run() {
+        body()
+    }
+}
+
 private extension Duration {
     var timeInterval: TimeInterval {
         let (seconds, attoseconds) = components
@@ -56,7 +70,8 @@ extension BrowserPage {
     static var stopMediaSteps: MediaStopSteps = { page, done in
         page.pauseAllMedia {
             page.evaluateJavaScript(stopMediaScript) { _, _ in
-                page.closeMediaPresentations(completion: done)
+                let finish = MainActorCall(done)
+                page.closeMediaPresentations { finish.run() }
             }
         }
     }

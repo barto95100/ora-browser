@@ -47,7 +47,10 @@ extension TabManager {
         page.evaluateJavaScript(BrowserPage.stopMediaScript)
         Deadline.run(
             BrowserPage.mediaStopDeadline,
-            work: { done in page.closeMediaPresentations { done() } },
+            work: { done in
+                let finish = MainActorCall(done)
+                page.closeMediaPresentations { finish.run() }
+            },
             completion: { withExtendedLifetime(page) {} }
         )
     }

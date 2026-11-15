@@ -4640,6 +4640,16 @@
         }
       }
     },
+    "Links copied" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens copiés"
+          }
+        }
+      }
+    },
     "Links from pinned tabs to other sites" : {
       "localizations" : {
         "fr" : {

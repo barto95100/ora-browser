@@ -87,6 +87,8 @@ struct SplitTabItem: View {
             )
         }
 
+        CopyTabAddressButton(tab: tab)
+
         Divider()
 
         Button {
@@ -154,7 +156,8 @@ struct SplitTabItem: View {
             (name: String(localized: "Close Both Tabs"), action: {
                 onClose(right)
                 onClose(left)
-            })
+            }),
+            (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
         ])
         .onHover { hovering in
             if hovering {

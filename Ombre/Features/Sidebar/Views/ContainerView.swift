@@ -3,8 +3,7 @@ import SwiftUI
 
 struct ContainerView: View {
     let container: TabContainer
-    /// The spaces now (for "Move to"), not as they were when the page was made:
-    /// a page's view is made once (`NSPageView`).
+    /// The spaces now (for "Move to").
     @Query(sort: TabContainer.displayOrder) private var containers: [TabContainer]
 
     @EnvironmentObject var appState: AppState
@@ -20,14 +19,13 @@ struct ContainerView: View {
     @State private var dragSession: UUID?
     /// Height of the tab lists, to fill the rest of the sidebar with empty space.
     @State private var tabsHeight: CGFloat = 0
-    /// May be nil: the spaces' pages are hosted apart (`NSPageView`); the
-    /// double click zooms the window it happened in.
+    /// The double click zooms the window it happened in.
     @Environment(\.window) private var window: NSWindow?
 
     var body: some View {
         content
-            // This page is hosted apart (`NSPageView`): files dropped on its
-            // tab lists open as tabs here too, not lost to them.
+            // Files dropped on its tab lists open as tabs here too, not lost
+            // to them.
             .onDrop(of: [.fileURL], delegate: FileDropDelegate(window: window))
     }
 

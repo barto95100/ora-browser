@@ -4,8 +4,8 @@ import AppKit
 /// seen before the views under the mouse get them. The handler decides on the
 /// first event of a gesture; when it acts, the whole gesture (momentum
 /// included) is kept from the views. Deciding later is not possible: a view
-/// that got the start of a gesture (a list, the spaces' page controller) and
-/// never its end can crash the app.
+/// that got the start of a gesture (a list) and never its end can crash the
+/// app.
 @MainActor
 final class HorizontalSwipeMonitor {
     enum Direction {

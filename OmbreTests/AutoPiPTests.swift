@@ -90,12 +90,26 @@ extension TabManagerTests {
                     window.tabManager.activateTab(other)
 
                     #expect(isKeptForPiP(leaving, in: window))
-                    // The page's answer: kept if a change started, else let go.
+                    // The page's answer (handled before the next evaluation
+                    // returns): kept if a change started, else let go.
                     #expect(try await pipRequests(of: leaving) == "leave;")
-                    await window.waitUntil("answer handled", timeout: .seconds(5)) {
-                        isKeptForPiP(leaving, in: window) == started
-                    }
+                    #expect(isKeptForPiP(leaving, in: window) == started)
                 }
+            }
+        }
+
+        /// An answer to an earlier request doesn't let go of the page kept
+        /// for a later one.
+        @Test func aLateAnswerKeepsTheLaterRequest() async throws {
+            try await TabManagerTestWindow.run { window in
+                let tab = try await window.openLoaded("leaving")
+                let media = window.mediaController
+                let first = media.pictureInPictureWillStart(for: tab)
+                let second = media.pictureInPictureWillStart(for: tab)
+                media.pictureInPictureDidNotStart(for: tab, request: first)
+                #expect(isKeptForPiP(tab, in: window))
+                media.pictureInPictureDidNotStart(for: tab, request: second)
+                #expect(!isKeptForPiP(tab, in: window))
             }
         }
 

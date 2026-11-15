@@ -139,11 +139,10 @@ extension TabManager {
             // Picture in Picture takes a moment, and a page that left the
             // window meanwhile stayed "entering" in WebKit, with no Picture in
             // Picture window, until the tab was closed (which then waited).
-            let mayStart = page.isPlayingMedia
-            if mayStart { mediaController.pictureInPictureWillStart(for: page) }
+            let request = page.isPlayingMedia ? mediaController.pictureInPictureWillStart(for: page) : nil
             page.evaluateJavaScript("window.__triggerPiP()") { [weak self, weak page] result, _ in
-                guard mayStart, let page, result as? Bool != true else { return }
-                self?.mediaController.pictureInPictureDidNotStart(for: page)
+                guard let request, let page, result as? Bool != true else { return }
+                self?.mediaController.pictureInPictureDidNotStart(for: page, request: request)
             }
         }
     }

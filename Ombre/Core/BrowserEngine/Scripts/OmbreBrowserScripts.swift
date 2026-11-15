@@ -410,7 +410,12 @@ enum OmbreBrowserScripts {
                 ? pendingChange.then(() => changePictureInPicture(isActive, true))
                 : changePictureInPicture(isActive, false);
             if (!change) return !isActive && !!document.pictureInPictureElement;
-            const tracked = Promise.resolve(change).catch(() => {}).then(() => {
+            // A change WebKit never settles holds the next ones 3 s at most.
+            const settled = Promise.race([
+                Promise.resolve(change).catch(() => {}),
+                new Promise((resolve) => setTimeout(resolve, 3000))
+            ]);
+            const tracked = settled.then(() => {
                 if (pendingChange === tracked) pendingChange = null;
             });
             pendingChange = tracked;

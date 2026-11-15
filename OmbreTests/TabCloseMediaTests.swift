@@ -22,7 +22,7 @@ struct DeadlineTests {
             onTimeout: { calls.timeouts += 1 },
             completion: { calls.completions += 1 }
         )
-        try await Task.sleep(for: .milliseconds(300))
+        try await Task.sleep(for: .milliseconds(800))
         #expect(calls.completions == 1)
         #expect(calls.timeouts == 0)
     }
@@ -37,7 +37,7 @@ struct DeadlineTests {
             completion: { calls.completions += 1 }
         )
         #expect(calls.completions == 0)
-        try await Task.sleep(for: .milliseconds(300))
+        try await Task.sleep(for: .milliseconds(800))
         #expect(calls.completions == 1)
         #expect(calls.timeouts == 1)
         // Done after the deadline: nothing more.

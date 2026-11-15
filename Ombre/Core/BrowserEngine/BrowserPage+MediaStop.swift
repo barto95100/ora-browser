@@ -74,7 +74,7 @@ extension BrowserPage {
         )
     }
 
-    private static let stopMediaScript = """
+    static let stopMediaScript = """
     document.querySelectorAll('video, audio').forEach(el => {
         try {
             el.pause();

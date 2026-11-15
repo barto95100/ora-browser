@@ -111,7 +111,6 @@ struct MediaScriptTests {
         #expect(events.contains { $0.type == "state" })
     }
 
-    /// A carousel's or a form's "Next" is not the next track.
     /// Nothing to put in Picture in Picture (no video playing): the app is
     /// told not to keep the page for it, and nothing is posted (an event on
     /// each tab switch would redraw the window).
@@ -125,6 +124,7 @@ struct MediaScriptTests {
         #expect(await events(of: page).allSatisfy { $0.type != "pip" })
     }
 
+    /// A carousel's or a form's "Next" is not the next track.
     @Test func genericNextButtonIsNotATrackControl() async throws {
         let page = makePage()
         defer { page.teardown() }

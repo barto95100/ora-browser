@@ -105,7 +105,7 @@ extension TabManager {
             if logs { PageLog.debug("tabs by subject: reply \(reply.raw)") }
             guard !run.isDone else { return }
             guard let self else { return finish(nil) }
-            finish(.made(applySubjects(reply.suggestions, tabIDs: tabIDs, spaceID: spaceID)))
+            finish(.made(applySubjects(reply.suggestions, tabs: input, tabIDs: tabIDs, spaceID: spaceID)))
         }
         deadline = Task { @MainActor in
             try? await Task.sleep(for: TopicGrouping.deadline)
@@ -119,14 +119,21 @@ extension TabManager {
 
     /// Makes the groups the model suggests, from tabs still free; returns how
     /// many.
-    private func applySubjects(_ suggestions: [TopicSuggestion], tabIDs: [String: UUID], spaceID: UUID) -> Int {
+    private func applySubjects(
+        _ suggestions: [TopicSuggestion],
+        tabs: [TopicTab],
+        tabIDs: [String: UUID],
+        spaceID: UUID
+    ) -> Int {
         guard let container = fetchContainer(id: spaceID) else { return 0 }
         let free = Set(groupableTabs(in: container).map(\.id))
             .subtracting(tabGroups(in: container).flatMap(\.tabIDs))
+        // Checked among the tabs still free only: a group that lost some
+        // tabs meanwhile follows the same rules.
+        let freeTabs = tabs.filter { tabIDs[$0.id].map(free.contains) ?? false }
         var made = 0
-        for suggestion in TopicGrouping.validated(suggestions, known: Set(tabIDs.keys)) {
-            let members = suggestion.tabIDs.compactMap { tabIDs[$0] }.filter { free.contains($0) }
-            guard members.count >= TopicGrouping.threshold else { continue }
+        for suggestion in TopicGrouping.validated(suggestions, tabs: freeTabs) {
+            let members = suggestion.tabIDs.compactMap { tabIDs[$0] }
             modelContext.insert(TabGroup(spaceID: spaceID, name: suggestion.name, kind: .topic, tabIDs: members))
             made += 1
         }

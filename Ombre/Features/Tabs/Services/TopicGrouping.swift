@@ -51,8 +51,12 @@ enum TopicGrouping {
 
     /// What the model said, kept only where it makes sense: ids given to it
     /// (others ignored), each tab in one group, groups of `threshold` tabs at
-    /// least, a name.
-    static func validated(_ suggestions: [TopicSuggestion], known: Set<String>) -> [TopicSuggestion] {
+    /// least, a name. A group of one site's tabs only is a site's group: it
+    /// needs `TabGrouping.threshold` tabs, as by site (two searches of one
+    /// search engine are no subject).
+    static func validated(_ suggestions: [TopicSuggestion], tabs: [TopicTab]) -> [TopicSuggestion] {
+        let sites = Dictionary(tabs.map { ($0.id, $0.site) }, uniquingKeysWith: { first, _ in first })
+        let known = Set(sites.keys)
         var used = Set<String>()
         return suggestions.compactMap { suggestion in
             let name = String(suggestion.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(maxNameLength))
@@ -63,6 +67,10 @@ enum TopicGrouping {
                 ids.append(id)
             }
             guard !name.isEmpty, ids.count >= threshold else { return nil }
+            let groupSites = Set(ids.map { sites[$0] ?? "" })
+            if groupSites.count == 1, groupSites.first?.isEmpty == false, ids.count < TabGrouping.threshold {
+                return nil
+            }
             used.formUnion(ids)
             return TopicSuggestion(name: name, tabIDs: ids)
         }

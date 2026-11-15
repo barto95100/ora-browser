@@ -23,8 +23,9 @@ struct SidebarView: View {
     @State private var dragOffset: CGFloat = 0
 
     /// Trackpad and Magic Mouse swipes, all handled here (the pager has no
-    /// swipe of its own): one swipe changes space with a short animation; from the first space, swiping right shows the
-    /// downloads (they sit before it), swiping left hides them.
+    /// swipe of its own): one swipe changes space with a short animation;
+    /// from the first space, swiping right shows the downloads (they sit
+    /// before it), swiping left hides them.
     @State private var swipeMonitor = HorizontalSwipeMonitor()
     @State private var swipeArea = SidebarSwipeArea()
 

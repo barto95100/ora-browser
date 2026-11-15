@@ -89,8 +89,8 @@ private struct DropTestFile {
     }
 }
 
-/// A browser window as the app shows it (`BrowserView` and its managers).
-/// A real browser window (`BrowserView`), kept behind the others.
+/// A browser window as the app shows it (`BrowserView` and its managers),
+/// kept behind the others.
 @MainActor
 final class BrowserTestWindow {
     let window: NSWindow

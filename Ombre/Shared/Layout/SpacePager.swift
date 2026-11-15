@@ -37,8 +37,9 @@ struct SpacePager<Page, Content: View>: View {
     let id: KeyPath<Page, String>
     @ViewBuilder let content: (Page) -> Content
 
-    /// The page left by the last move, drawn until the move has surely ended.
-    @State private var leaving: Int?
+    /// The page left by the last move (its identifier), drawn until the move
+    /// has surely ended.
+    @State private var leaving: String?
     @State private var leavingEnd: Task<Void, Never>?
 
     /// Longer than the sidebar's animations of a change of space (0.3 s).
@@ -56,7 +57,8 @@ struct SpacePager<Page, Content: View>: View {
     }
 
     var body: some View {
-        let layout = SpacePagerLayout(count: pages.count, selection: selection, leaving: leaving)
+        let leavingIndex = leaving.flatMap { leaving in pages.firstIndex { $0[keyPath: id] == leaving } }
+        let layout = SpacePagerLayout(count: pages.count, selection: selection, leaving: leavingIndex)
         GeometryReader { geometry in
             let width = geometry.size.width
             HStack(spacing: 0) {
@@ -72,16 +74,22 @@ struct SpacePager<Page, Content: View>: View {
                             Color.clear
                         }
                     }
+                    // Slides in and out with the row, without fading.
+                    .transition(.identity)
                     .frame(width: width, height: geometry.size.height)
+                    // Only the page shown takes clicks and drops: the page
+                    // left is drawn beside the sidebar for a moment.
+                    .allowsHitTesting(position == layout.index)
                 }
             }
             .frame(width: width, alignment: .leading)
             .offset(x: layout.offset(width: width))
         }
         .clipped()
+        .contentShape(Rectangle())
         .background(SpacePagerFrame())
         .onChange(of: selection) { previous, _ in
-            leaving = previous
+            leaving = pages.indices.contains(previous) ? pages[previous][keyPath: id] : nil
             leavingEnd?.cancel()
             leavingEnd = Task { @MainActor in
                 try? await Task.sleep(for: Self.leavingDuration)
@@ -91,6 +99,7 @@ struct SpacePager<Page, Content: View>: View {
         }
         .onDisappear {
             leavingEnd?.cancel()
+            leaving = nil
         }
     }
 }

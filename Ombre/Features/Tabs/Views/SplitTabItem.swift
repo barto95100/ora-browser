@@ -68,6 +68,16 @@ struct SplitTabItem: View {
 
     @ViewBuilder
     private var contextMenuItems: some View {
+        let menuTabs = tabManager.menuTabs(for: menuTab)
+        if menuTabs.count > 1 {
+            MultipleTabsMenu(tabs: menuTabs)
+        } else {
+            singleTabMenuItems
+        }
+    }
+
+    @ViewBuilder
+    private var singleTabMenuItems: some View {
         let tab = menuTab
         Button {
             onPinToggle(tab)
@@ -138,27 +148,35 @@ struct SplitTabItem: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
-        .background(isFocused ? theme.activeTabBackground : .clear, in: .rect(cornerRadius: 7))
+        .background(sideBackground(tab, isFocused: isFocused), in: .rect(cornerRadius: 7))
+        .overlay(SelectionRing(isShown: tabManager.isInSelection(tab), cornerRadius: 7))
         // Each side, a tab of its own for VoiceOver (the row's tap picks a
         // side by where it lands).
-        .tabAccessibility(tab: tab, isSelected: isFocused, activate: { onSelect(tab) }, actions: [
-            (name: String(localized: "Close Tab"), action: { onClose(tab) }),
-            (
-                name: tab.type == .pinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab"),
-                action: { onPinToggle(tab) }
-            ),
-            (
-                name: tab
-                    .type == .fav ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites"),
-                action: { onFavoriteToggle(tab) }
-            ),
-            (name: String(localized: "Separate Tabs"), action: { tabManager.separateSplit(containing: left) }),
-            (name: String(localized: "Close Both Tabs"), action: {
-                onClose(right)
-                onClose(left)
-            }),
-            (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
-        ])
+        .tabAccessibility(
+            tab: tab,
+            isSelected: isFocused,
+            isInSelection: tabManager.isInSelection(tab),
+            activate: { onSelect(tab) }, actions: TabSelectionAccessibility
+                .actions(for: tab, tabManager: tabManager) + [
+                    (name: String(localized: "Close Tab"), action: { onClose(tab) }),
+                    (
+                        name: tab.type == .pinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab"),
+                        action: { onPinToggle(tab) }
+                    ),
+                    (
+                        name: tab
+                            .type == .fav ? String(localized: "Remove from Favorites") :
+                            String(localized: "Add to Favorites"),
+                        action: { onFavoriteToggle(tab) }
+                    ),
+                    (name: String(localized: "Separate Tabs"), action: { tabManager.separateSplit(containing: left) }),
+                    (name: String(localized: "Close Both Tabs"), action: {
+                        onClose(right)
+                        onClose(left)
+                    }),
+                    (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
+                ]
+        )
         .onHover { hovering in
             if hovering {
                 hoveredTabID = tab.id
@@ -167,6 +185,13 @@ struct SplitTabItem: View {
             }
             onHoverTab(tab, hovering)
         }
+    }
+
+    private func sideBackground(_ tab: Tab, isFocused: Bool) -> Color {
+        if isFocused { return theme.activeTabBackground }
+        if tabManager
+            .isInSelection(tab) { return theme.activeTabBackground.opacity(colorScheme == .dark ? 0.45 : 0.25) }
+        return .clear
     }
 
     private var rowBackground: Color {

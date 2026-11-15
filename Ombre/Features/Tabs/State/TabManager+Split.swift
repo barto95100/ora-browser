@@ -80,6 +80,14 @@ extension TabManager {
         activateTab(tab)
     }
 
+    /// Two tabs side by side (the sidebar's multiple selection), the left one
+    /// shown and focused.
+    func openInSplitView(left: Tab, right: Tab) {
+        guard left.id != right.id, left.container.id == right.container.id else { return }
+        pairInSplit(left, with: right)
+        activateTab(left)
+    }
+
     /// Separates the split `tab` is in: the right tab comes back under the left
     /// one when both are in the same section.
     func separateSplit(containing tab: Tab, save: Bool = true) {

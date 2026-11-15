@@ -8,9 +8,11 @@ enum TabAccessibility {
         return title.isEmpty ? (url.host ?? url.absoluteString) : title
     }
 
-    static func value(isLoaded: Bool, isPlayingMedia: Bool) -> String {
+    static func value(isLoaded: Bool, isPlayingMedia: Bool, isInSelection: Bool = false) -> String {
         // Shown: the selected trait says it.
         var parts: [String] = []
+        // Among the tabs selected together (⌘-click), not the tab shown.
+        if isInSelection { parts.append(String(localized: "In selection")) }
         if !isLoaded { parts.append(String(localized: "Not loaded")) }
         if isPlayingMedia { parts.append(String(localized: "Playing audio")) }
         return parts.joined(separator: ", ")
@@ -23,6 +25,7 @@ extension View {
     func tabAccessibility(
         tab: Tab,
         isSelected: Bool,
+        isInSelection: Bool = false,
         activate: @escaping () -> Void,
         actions: [(name: String, action: () -> Void)]
     ) -> some View {
@@ -30,7 +33,8 @@ extension View {
             .accessibilityLabel(TabAccessibility.label(title: tab.title, url: tab.url))
             .accessibilityValue(TabAccessibility.value(
                 isLoaded: tab.isWebViewReady,
-                isPlayingMedia: tab.isPlayingMedia
+                isPlayingMedia: tab.isPlayingMedia,
+                isInSelection: isInSelection
             ))
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
             .accessibilityAction(.default) { activate() }

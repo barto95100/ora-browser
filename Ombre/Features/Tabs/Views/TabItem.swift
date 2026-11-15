@@ -156,23 +156,10 @@ struct TabItem: View {
                     )
             }
         }
-        .onTapGesture {
-            onTap()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                if !tab.isWebViewReady {
-                    tab
-                        .restoreTransientState(
-                            historyManager: historyManager,
-                            downloadManager: downloadManager,
-                            tabManager: tabManager,
-                            isPrivate: privacyMode.isPrivate
-                        )
-                }
-            }
-        }
         .padding(8)
         .opacity(isDragging ? 0.0 : 1.0)
         .background(backgroundColor, in: .rect(cornerRadius: 10))
+        .overlay(SelectionRing(isShown: tabManager.isInSelection(tab) && !isDragging))
         .overlay(
             isDragging ?
                 ConditionallyConcentricRectangle(cornerRadius: 10)
@@ -184,7 +171,11 @@ struct TabItem: View {
         )
         .contentShape(ConditionallyConcentricRectangle(cornerRadius: 10))
         .onTapGesture {
+            // A ⌘- or ⇧-click selects (see `TabManager+Selection.swift`): the
+            // tab isn't shown, its page not loaded.
+            let isPlainClick = TabManager.SelectionClick(NSEvent.modifierFlags) == .plain
             onTap()
+            guard isPlainClick else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
                 if !tab.isWebViewReady {
                     tab
@@ -198,19 +189,28 @@ struct TabItem: View {
             }
         }
         .onHover { isHovering = $0 }
-        .tabAccessibility(tab: tab, isSelected: isSelected, activate: onTap, actions: [
-            (name: String(localized: "Close Tab"), action: onClose),
-            (
-                name: tab.type == .pinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab"),
-                action: onPinToggle
-            ),
-            (
-                name: tab
-                    .type == .fav ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites"),
-                action: onFavoriteToggle
-            ),
-            (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
-        ])
+        .tabAccessibility(
+            tab: tab,
+            isSelected: isSelected,
+            isInSelection: tabManager.isInSelection(tab),
+            activate: onTap, actions: TabSelectionAccessibility.actions(
+                for: tab,
+                tabManager: tabManager
+            ) + [
+                (name: String(localized: "Close Tab"), action: onClose),
+                (
+                    name: tab.type == .pinned ? String(localized: "Unpin Tab") : String(localized: "Pin Tab"),
+                    action: onPinToggle
+                ),
+                (
+                    name: tab
+                        .type == .fav ? String(localized: "Remove from Favorites") :
+                        String(localized: "Add to Favorites"),
+                    action: onFavoriteToggle
+                ),
+                (name: String(localized: "Copy Address"), action: { TabAddresses.copy([tab]) })
+            ]
+        )
         .contextMenu { contextMenuItems }
         .animation(.spring(response: 0.2, dampingFraction: 0.8), value: isDragging)
         .geometryGroup()
@@ -228,6 +228,8 @@ struct TabItem: View {
             return theme.activeTabBackground.opacity(0.1)
         } else if isSelected {
             return theme.activeTabBackground
+        } else if tabManager.isInSelection(tab) {
+            return theme.activeTabBackground.opacity(colorScheme == .dark ? 0.45 : 0.25)
         } else if isHovering {
             if colorScheme == .dark {
                 return theme.activeTabBackground.opacity(0.3)
@@ -253,6 +255,16 @@ struct TabItem: View {
 
     @ViewBuilder
     private var contextMenuItems: some View {
+        let menuTabs = tabManager.menuTabs(for: tab)
+        if menuTabs.count > 1 {
+            MultipleTabsMenu(tabs: menuTabs)
+        } else {
+            singleTabMenuItems
+        }
+    }
+
+    @ViewBuilder
+    private var singleTabMenuItems: some View {
         Button(action: onPinToggle) {
             Label(
                 tab.type == .pinned ? "Unpin Tab" : "Pin Tab",

@@ -5,17 +5,41 @@ import Testing
 /// Subject grouping: what the model suggests is checked before use.
 struct TopicGroupingTests {
     @Test func suggestionsAreChecked() {
-        let known: Set = ["t1", "t2", "t3", "t4", "t5", "t6"]
+        let tabs = (1 ... 6).map { TopicTab(id: "t\($0)", title: "Tab \($0)", site: "site\($0).example") }
         let checked = TopicGrouping.validated([
             TopicSuggestion(name: "  Travel  ", tabIDs: ["t1", " T2 ", "t2", "t9", "3"]),
             TopicSuggestion(name: "Again", tabIDs: ["t1", "t2"]),
             TopicSuggestion(name: "Alone", tabIDs: ["t1", "t3"]),
             TopicSuggestion(name: "", tabIDs: ["t4", "t5"]),
             TopicSuggestion(name: String(repeating: "x", count: 60), tabIDs: ["t4", "t5", "t6"])
-        ], known: known)
+        ], tabs: tabs)
         #expect(checked.map(\.tabIDs) == [["t1", "t2"], ["t4", "t5", "t6"]])
         #expect(checked.first?.name == "Travel")
         #expect(checked.last?.name.count == TopicGrouping.maxNameLength)
+    }
+
+    /// Two tabs of one site make no subject group; three do, or two sites.
+    @Test func oneSiteNeedsASiteGroupsTabs() {
+        let tabs = [
+            TopicTab(id: "t1", title: "a", site: "search.example"),
+            TopicTab(id: "t2", title: "b", site: "search.example"),
+            TopicTab(id: "t3", title: "c", site: "search.example"),
+            TopicTab(id: "t4", title: "d", site: "other.example"),
+            TopicTab(id: "t5", title: "e", site: "search.example")
+        ]
+        #expect(TopicGrouping.validated([TopicSuggestion(name: "Search", tabIDs: ["t1", "t2"])], tabs: tabs).isEmpty)
+        #expect(TopicGrouping.validated([
+            TopicSuggestion(name: "Search", tabIDs: ["t1", "t2", "t3"]),
+            TopicSuggestion(name: "Mixed", tabIDs: ["t4", "t5"])
+        ], tabs: tabs).map(\.name) == ["Search", "Mixed"])
+        // A suggestion left out leaves its tabs to the next one.
+        #expect(TopicGrouping.validated([
+            TopicSuggestion(name: "Search", tabIDs: ["t1", "t2"]),
+            TopicSuggestion(name: "Mixed", tabIDs: ["t1", "t4"])
+        ], tabs: tabs).map(\.tabIDs) == [["t1", "t4"]])
+        // Tabs without a site (not web pages) aren't one site.
+        let local = [TopicTab(id: "t1", title: "a", site: ""), TopicTab(id: "t2", title: "b", site: "")]
+        #expect(TopicGrouping.validated([TopicSuggestion(name: "Notes", tabIDs: ["t1", "t2"])], tabs: local).count == 1)
     }
 
     /// The model gets an id, the title (cut) and the site of each tab, never
@@ -198,6 +222,28 @@ extension TabManagerTests {
                 let groups = window.tabManager.tabGroups(in: space)
                 #expect(groups.map(\.kind) == [.site, .topic])
                 #expect(groups.last?.tabIDs == [tabs[1].id, tabs[5].id])
+            }
+        }
+
+        /// Two tabs of one site are no subject group (a site needs three):
+        /// two searches of one search engine stay out of any group.
+        @Test func twoTabsOfOneSiteMakeNoSubjectGroup() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                _ = try makeTabs(window, [
+                    (title: "grafana - Search", address: "https://www.search.example/q=grafana"),
+                    (title: "a", address: "https://a.org/"),
+                    (title: "recipes - Search", address: "https://www.search.example/q=recipes")
+                ])
+                let saved = TabManager.topicGrouper
+                TabManager.topicGrouper = {
+                    FixedGrouper(reply: [TopicSuggestion(name: "search.example", tabIDs: ["t1", "t3"])])
+                }
+                defer { TabManager.topicGrouper = saved }
+
+                await window.tabManager.tidyTabs(in: space)?.value
+
+                #expect(window.tabManager.tabGroups(in: space).isEmpty)
             }
         }
 

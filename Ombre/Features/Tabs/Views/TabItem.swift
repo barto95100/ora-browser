@@ -143,6 +143,10 @@ struct TabItem: View {
                 isPlayingMedia: tab.isPlayingMedia,
                 mediaCaptureState: tab.mediaCaptureState
             )
+            // Above the icon's corner: the sound and camera ones sit beside it.
+            .overlay(alignment: .topLeading) {
+                AgentTabBadge(tabID: tab.id).offset(x: -5, y: -5)
+            }
             tabTitle
             Spacer()
             actionButton

@@ -87,6 +87,9 @@ struct FavTabItem: View {
                             .offset(x: 7, y: 7)
                     }
                 }
+                .overlay(alignment: .topTrailing) {
+                    AgentTabBadge(tabID: tab.id).offset(x: 7, y: -7)
+                }
         }
         .onAppear {
             if tabManager.isActive(tab) {

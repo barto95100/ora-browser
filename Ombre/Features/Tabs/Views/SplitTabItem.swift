@@ -135,6 +135,9 @@ struct SplitTabItem: View {
                 isPlayingMedia: tab.isPlayingMedia,
                 mediaCaptureState: tab.mediaCaptureState
             )
+            .overlay(alignment: .topLeading) {
+                AgentTabBadge(tabID: tab.id).offset(x: -5, y: -5)
+            }
             Text(tab.title)
                 .font(.system(size: 13))
                 .foregroundColor(textColor)

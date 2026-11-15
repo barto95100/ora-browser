@@ -39,6 +39,21 @@ struct AgentSessionsTests {
     }
 }
 
+/// Where the agents' indicator shows: the sidebar's header, else the address bar.
+struct SidebarHeaderPlacementTests {
+    @Test(arguments: [
+        (SidebarPosition.primary, false, false, true),
+        (.primary, false, true, false),
+        (.secondary, false, false, false),
+        (.secondary, true, false, true),
+        (.primary, true, true, true)
+    ])
+    func theHeaderShows(_ position: SidebarPosition, toolbarHidden: Bool, fullscreen: Bool, shown: Bool) {
+        #expect(SidebarHeader
+            .isShown(position: position, isToolbarHidden: toolbarHidden, isFullscreen: fullscreen) == shown)
+    }
+}
+
 /// The app named is the one the user knows, up the sender's parents.
 struct AgentSenderLookupTests {
     @Test func theFirstRegularAppUpTheParents() {
@@ -243,6 +258,52 @@ extension TabManagerTests {
                 let opened = try JSONDecoder().decode(AgentTab.self, from: Data(reply.utf8))
                 #expect(opened.address == "http://127.0.0.1:1/agent")
                 #expect(space.tabs.contains { $0.id.uuidString == opened.id })
+            }
+        }
+
+        /// The tabs an agent opened, showed or read get a badge; listing or a
+        /// failed command doesn't; Stop removes them all.
+        @Test func touchedTabsGetABadgeUntilStop() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let shown = try window.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/a")), title: "A", in: space, isPrivate: false
+                )
+                let untouched = try window.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/b")), title: "B", in: space, isPrivate: false
+                )
+                window.tabManager.isPrivateWindow = true
+                let control = control(window)
+
+                _ = try await control.run(.listTabs, from: terminal).get()
+                #expect(control.touchedTabIDs.isEmpty)
+                #expect(control.drivingApp == "Terminal")
+
+                _ = try await control.run(.activate(shown.id.uuidString), from: terminal).get()
+                let reply = try await control.run(.open("http://127.0.0.1:1/agent"), from: terminal).get()
+                let opened = try JSONDecoder().decode(AgentTab.self, from: Data(reply.utf8))
+                _ = await control.run(.read(untouched.id.uuidString), from: terminal) // not loaded: fails
+                #expect(try control.touchedTabIDs == [shown.id, #require(UUID(uuidString: opened.id))])
+
+                control.stop()
+                #expect(control.touchedTabIDs.isEmpty)
+                #expect(control.drivingApp == nil)
+            }
+        }
+
+        /// An hour without a command ends the indicator and the badges.
+        @Test func idleEndsTheIndicatorAndBadges() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let tab = try window.tabManager.makeTab(
+                    url: #require(URL(string: "https://example.com/a")), title: "A", in: space, isPrivate: false
+                )
+                let control = control(window)
+                control.idleLimit = 0.05
+                _ = try await control.run(.activate(tab.id.uuidString), from: terminal).get()
+                #expect(control.touchedTabIDs == [tab.id])
+                await window.waitUntil("idle end") { control.drivingApp == nil }
+                #expect(control.touchedTabIDs.isEmpty)
             }
         }
 

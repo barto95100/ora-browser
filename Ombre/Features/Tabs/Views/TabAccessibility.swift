@@ -8,13 +8,19 @@ enum TabAccessibility {
         return title.isEmpty ? (url.host ?? url.absoluteString) : title
     }
 
-    static func value(isLoaded: Bool, isPlayingMedia: Bool, isInSelection: Bool = false) -> String {
+    static func value(
+        isLoaded: Bool,
+        isPlayingMedia: Bool,
+        isInSelection: Bool = false,
+        isUsedByAgent: Bool = false
+    ) -> String {
         // Shown: the selected trait says it.
         var parts: [String] = []
         // Among the tabs selected together (⌘-click), not the tab shown.
         if isInSelection { parts.append(String(localized: "In selection")) }
         if !isLoaded { parts.append(String(localized: "Not loaded")) }
         if isPlayingMedia { parts.append(String(localized: "Playing audio")) }
+        if isUsedByAgent { parts.append(String(localized: "Used by an agent")) }
         return parts.joined(separator: ", ")
     }
 }
@@ -31,14 +37,26 @@ extension View {
     ) -> some View {
         accessibilityElement(children: .ignore)
             .accessibilityLabel(TabAccessibility.label(title: tab.title, url: tab.url))
-            .accessibilityValue(TabAccessibility.value(
-                isLoaded: tab.isWebViewReady,
-                isPlayingMedia: tab.isPlayingMedia,
-                isInSelection: isInSelection
-            ))
+            .modifier(TabAccessibilityValue(tab: tab, isInSelection: isInSelection))
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
             .accessibilityAction(.default) { activate() }
             .modifier(NamedAccessibilityActions(actions: actions))
+    }
+}
+
+/// The tab's value, read again when agents touch it.
+private struct TabAccessibilityValue: ViewModifier {
+    @ObservedObject private var agents = AgentControl.shared
+    let tab: Tab
+    let isInSelection: Bool
+
+    func body(content: Content) -> some View {
+        content.accessibilityValue(TabAccessibility.value(
+            isLoaded: tab.isWebViewReady,
+            isPlayingMedia: tab.isPlayingMedia,
+            isInSelection: isInSelection,
+            isUsedByAgent: agents.touchedTabIDs.contains(tab.id)
+        ))
     }
 }
 

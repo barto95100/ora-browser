@@ -72,18 +72,24 @@ enum AgentCommands {
     /// A page's text is cut there.
     static let maxTextLength = 100_000
 
-    /// Runs `command`; returns its JSON reply, and the site it touched (for
-    /// the log).
-    static func run(_ command: AgentCommand, in tabManager: TabManager) async
-        -> (result: Result<String, AgentError>, host: String?)
-    {
+    /// What a command did.
+    struct Done {
+        let result: Result<String, AgentError>
+        /// The site it touched (for the log).
+        let host: String?
+        /// The tab it opened, showed, read or closed (for its badge).
+        var tabID: UUID?
+    }
+
+    /// Runs `command`.
+    static func run(_ command: AgentCommand, in tabManager: TabManager) async -> Done {
         switch command {
         case .listTabs:
-            return (.success(json(spaces(in: tabManager))), nil)
+            return Done(result: .success(json(spaces(in: tabManager))), host: nil)
         case let .open(address):
             guard let url = URL(string: address.trimmingCharacters(in: .whitespacesAndNewlines)),
                   ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host() != nil
-            else { return (.failure(.badAddress), nil) }
+            else { return Done(result: .failure(.badAddress), host: nil) }
             // Never private: agents only get normal windows.
             let isPrivate = tabManager.isPrivateWindow
             guard let tab = tabManager.openTab(
@@ -91,21 +97,25 @@ enum AgentCommands {
                 historyManager: tabManager.historyManager,
                 isPrivate: isPrivate
             )
-            else { return (.failure(.noWindow), url.host()) }
-            return (.success(json(agentTab(tab, in: tabManager))), url.host())
+            else { return Done(result: .failure(.noWindow), host: url.host()) }
+            return Done(result: .success(json(agentTab(tab, in: tabManager))), host: url.host(), tabID: tab.id)
         case let .activate(id):
-            guard let tab = tab(id, in: tabManager) else { return (.failure(.noTab), nil) }
+            guard let tab = tab(id, in: tabManager) else { return Done(result: .failure(.noTab), host: nil) }
             tabManager.activateTab(id: tab.id)
-            return (.success(json(agentTab(tab, in: tabManager))), tab.url.host())
+            return Done(result: .success(json(agentTab(tab, in: tabManager))), host: tab.url.host(), tabID: tab.id)
         case let .close(id):
-            guard let tab = tab(id, in: tabManager) else { return (.failure(.noTab), nil) }
+            guard let tab = tab(id, in: tabManager) else { return Done(result: .failure(.noTab), host: nil) }
             let closed = agentTab(tab, in: tabManager)
+            let host = tab.url.host()
             tabManager.closeTab(tab: tab)
-            return (.success(json(closed)), tab.url.host())
+            // A pinned or favorite tab stays in the sidebar, with its badge.
+            return Done(result: .success(json(closed)), host: host, tabID: tab.id)
         case let .read(id):
             let found = id.map { tab($0, in: tabManager) } ?? tabManager.activeTab.flatMap { isListed($0) ? $0 : nil }
-            guard let tab = found else { return (.failure(id == nil ? .noActiveTab : .noTab), nil) }
-            return await (read(tab), tab.url.host())
+            guard let tab = found else {
+                return Done(result: .failure(id == nil ? .noActiveTab : .noTab), host: nil)
+            }
+            return await Done(result: read(tab), host: tab.url.host(), tabID: tab.id)
         }
     }
 

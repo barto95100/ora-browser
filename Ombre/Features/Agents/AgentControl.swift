@@ -5,17 +5,18 @@ import os.log
 /// settings, then each app asks the user once per session ("Terminal wants
 /// to control Ombre"). Only the front normal window: never a private window,
 /// Little Ombre, passwords or the keychain. Each command is logged in the
-/// "Agent" category (command, app, site, result; never a page's text), and
-/// the address bar shows that an agent is at work for 30 s after its last one.
+/// "Agent" category (command, app, site, result; never a page's text). While
+/// a session is allowed, the sidebar shows which app drives Ombre (with Stop
+/// Agent Control), and a badge on each tab an agent opened, showed, read or
+/// closed: until Stop, the setting turned off, or an hour without a command.
 @MainActor
 final class AgentControl: ObservableObject {
     static let shared = AgentControl()
 
-    /// The app whose command came last, while the indicator shows.
+    /// The app whose command came last, while agents drive Ombre.
     @Published private(set) var drivingApp: String?
-
-    /// The indicator shows that long after the last command.
-    static let indicatorDuration: TimeInterval = 30
+    /// The tabs agents touched meanwhile (badges in the sidebar).
+    @Published private(set) var touchedTabIDs: Set<UUID> = []
 
     /// The question is given up after that, before the agent's Apple Event
     /// is (osascript waits 120 s): a late answer would run a command the
@@ -29,11 +30,15 @@ final class AgentControl: ObservableObject {
     private var generation = 0
     /// The questions shown, closed by Stop.
     private var questions: [(window: NSWindow, sheet: NSWindow)] = []
-    private var hideIndicator: DispatchWorkItem?
+    /// Ends the indicator and the badges once every session is idle.
+    private var endWhenIdle: DispatchWorkItem?
     private let logger = Logger(category: "Agent")
 
     /// Whether the settings allow agents (the tests set their own).
     var isAllowed: () -> Bool = { SettingsStore.shared.allowsAgentControl }
+    /// How long without a command ends the indicator and the badges (the
+    /// sessions then expire: see `AgentSessions`); the tests set their own.
+    var idleLimit = AgentSessions.idleLimit
     /// Asks the user about a new session: true to allow, nil without an
     /// answer (the tests answer for them; none: the alert).
     var ask: (@MainActor (AgentSender) async -> Bool?)?
@@ -53,12 +58,17 @@ final class AgentControl: ObservableObject {
         // Turned off while the user was asked.
         guard isAllowed() else { return log(command, sender, nil, .failure(.off)) }
         guard let tabManager = tabManager() else { return log(command, sender, nil, .failure(.noWindow)) }
-        showIndicator(for: sender)
+        noteDriving(by: sender)
+        let started = generation
         let done = await AgentCommands.run(command, in: tabManager)
+        // Not after Stop meanwhile (a page read waits for its page).
+        if case .success = done.result, let tabID = done.tabID, started == generation {
+            touchedTabIDs.insert(tabID)
+        }
         return log(command, sender, done.host, done.result)
     }
 
-    /// Stop Agent Control (address bar), or the setting turned off: every app
+    /// Stop Agent Control (sidebar or address bar), or the setting turned off: every app
     /// asks again next time, and a question shown is closed unanswered.
     func stop() {
         generation += 1
@@ -66,9 +76,14 @@ final class AgentControl: ObservableObject {
         for question in questions {
             question.window.endSheet(question.sheet, returnCode: .abort)
         }
-        hideIndicator?.cancel()
-        drivingApp = nil
+        endIndicators()
         logger.notice("agent control stopped")
+    }
+
+    private func endIndicators() {
+        endWhenIdle?.cancel()
+        drivingApp = nil
+        touchedTabIDs = []
     }
 
     /// The user's answer for `sender`'s session: asked once for commands
@@ -98,12 +113,16 @@ final class AgentControl: ObservableObject {
         return answer
     }
 
-    private func showIndicator(for sender: AgentSender) {
-        drivingApp = sender.name
-        hideIndicator?.cancel()
-        let hide = DispatchWorkItem { [weak self] in self?.drivingApp = nil }
-        hideIndicator = hide
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.indicatorDuration, execute: hide)
+    /// Shows `sender` at work, until an hour passes without a command (the
+    /// allowed sessions are then over; a denied app's answer stays until its
+    /// own hour passes).
+    private func noteDriving(by sender: AgentSender) {
+        if drivingApp != sender.name { drivingApp = sender.name }
+        endWhenIdle?.cancel()
+        let end = DispatchWorkItem { [weak self] in self?.endIndicators() }
+        endWhenIdle = end
+        // The clock's time: the Mac's sleep counts, as for the sessions.
+        DispatchQueue.main.asyncAfter(wallDeadline: .now() + idleLimit, execute: end)
     }
 
     @discardableResult

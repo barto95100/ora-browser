@@ -10137,6 +10137,16 @@
         }
       }
     },
+    "Used by an agent" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisé par un agent"
+          }
+        }
+      }
+    },
     "Username" : {
       "localizations" : {
         "fr" : {

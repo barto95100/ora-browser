@@ -220,12 +220,14 @@ struct SidebarView: View {
 
     private var spacesContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if sidebarManager.sidebarPosition == .secondary, !toolbarManager.isToolbarHidden {
-                Spacer().frame(height: 8)
-            } else if appState.isFullscreen, !toolbarManager.isToolbarHidden {
-                Spacer().frame(height: 8)
-            } else {
+            if SidebarHeader.isShown(
+                position: sidebarManager.sidebarPosition,
+                isToolbarHidden: toolbarManager.isToolbarHidden,
+                isFullscreen: appState.isFullscreen
+            ) {
                 SidebarHeader()
+            } else {
+                Spacer().frame(height: 8)
             }
             SpacePager(
                 pages: containers,

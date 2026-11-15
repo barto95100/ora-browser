@@ -436,7 +436,14 @@ struct URLBar: View {
             )
 
             if !privacyMode.isPrivate {
-                AgentIndicator(foregroundColor: buttonForegroundColor)
+                // At the top of the sidebar while it shows its header.
+                if sidebarManager.isSidebarHidden || !SidebarHeader.isShown(
+                    position: sidebarManager.sidebarPosition,
+                    isToolbarHidden: toolbarManager.isToolbarHidden,
+                    isFullscreen: appState.isFullscreen
+                ) {
+                    AgentIndicator(foregroundColor: buttonForegroundColor)
+                }
                 FocusIndicator(foregroundColor: buttonForegroundColor)
                 URLBarTools(foregroundColor: buttonForegroundColor)
             }

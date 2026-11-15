@@ -14,6 +14,13 @@ struct SidebarHeader: View {
     @EnvironmentObject var toolbarManager: ToolbarManager
     @EnvironmentObject var privacyMode: PrivacyMode
 
+    /// Whether the sidebar shows its header (window buttons, sidebar button,
+    /// extensions, agents): not with the sidebar at the right or full screen
+    /// while the toolbar shows them.
+    static func isShown(position: SidebarPosition, isToolbarHidden: Bool, isFullscreen: Bool) -> Bool {
+        isToolbarHidden || (position != .secondary && !isFullscreen)
+    }
+
     private var sidebarIcon: String {
         sidebarManager.sidebarPosition == .secondary ? "sidebar.right" : "sidebar.left"
     }
@@ -82,6 +89,9 @@ struct SidebarHeader: View {
                         .ombreShortcutHelp("Toggle Sidebar", for: KeyboardShortcuts.App.toggleSidebar)
                     }
                 }
+            }
+            if !privacyMode.isPrivate {
+                AgentIndicator(foregroundColor: theme.foreground.opacity(0.8), leadingSpace: true)
             }
         }
         .padding(.horizontal, 18)

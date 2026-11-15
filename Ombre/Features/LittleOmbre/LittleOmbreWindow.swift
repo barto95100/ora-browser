@@ -22,6 +22,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     private weak var browserWindow: NSWindow?
     /// The page went to a tab: not torn down with the window.
     private var isMovedToTab = false
+    private var isClosed = false
     private var observations: Set<AnyCancellable> = []
 
     static func isLittleOmbreWindow(_ window: NSWindow) -> Bool {
@@ -138,6 +139,12 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
             NSApp.activate()
         }
         window.makeFirstResponder(popup.page.webView)
+        // The page joins the window on SwiftUI's first layout: the keyboard
+        // goes to it then.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !model.isPageGone, window.firstResponder === window else { return }
+            window.makeFirstResponder(popup.page.webView)
+        }
     }
 
     /// The site as the title (never the page's own title alone).
@@ -165,17 +172,24 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     /// `space` (none: Little Ombre's own, the page then kept as it is), and
     /// Little Ombre closes.
     func openInOmbre(space: TabContainer? = nil) {
-        guard let tabManager, let url = popup.page.currentURL ?? popup.address,
+        // Once: the page is already on its way to a tab.
+        guard !model.isPageGone, let tabManager, let url = popup.page.currentURL ?? popup.address,
               let target = space ?? spaces.first(where: { $0.id == model.spaceID }) ?? tabManager.activeContainer
         else { return }
         popup.sheets.dismiss()
         popup.cancelPermissionRequest()
-        popup.passwordCoordinator?.clearAutofillState()
+        // The tab offers the passwords from now on.
+        popup.disablePasswords()
         // Little Ombre lets go of the page first; the tab takes it on the
         // next pass (at once, Little Ombre's view could take it back).
         model.isPageGone = true
         DispatchQueue.main.async { [weak self, weak tabManager] in
-            guard let self, let tabManager else { return }
+            // Closed meanwhile (its page torn down): nothing to move.
+            guard let self, !isClosed else { return }
+            guard let tabManager else {
+                model.isPageGone = false
+                return
+            }
             let adopted = tabManager.openLittleOmbrePage(
                 popup.page,
                 url: url,
@@ -226,6 +240,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     // MARK: - Window
 
     func windowWillClose(_ notification: Notification) {
+        isClosed = true
         observations.removeAll()
         popup.pageDidChange = nil
         popup.closeWindow = nil

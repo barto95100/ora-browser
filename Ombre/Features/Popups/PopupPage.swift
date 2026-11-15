@@ -118,6 +118,12 @@ final class PopupPage: ObservableObject {
         passwordCoordinator = PasswordAutofillCoordinator(host: self)
     }
 
+    /// Stops offering them (the page went to a tab, which offers them).
+    func disablePasswords() {
+        passwordCoordinator?.clearAutofillState()
+        passwordCoordinator = nil
+    }
+
     /// The page loaded: recorded in the history, if it has one, once per
     /// address (a reload only updates the title).
     func recordVisit() {
@@ -141,8 +147,7 @@ final class PopupPage: ObservableObject {
 
     /// The popup closes: what the page waits for is refused.
     func close() {
-        passwordCoordinator?.clearAutofillState()
-        passwordCoordinator = nil
+        disablePasswords()
         cancelPermissionRequest()
         sheets.dismiss()
         page.teardown()

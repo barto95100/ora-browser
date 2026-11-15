@@ -72,6 +72,8 @@ extension TabManagerTests {
 
                 let previous = window.tabManager.activeTab?.id
                 little.openInOmbre()
+                // Twice: once only.
+                little.openInOmbre()
                 await window.waitUntil("moved to a tab") { !LittleOmbreWindow.isLittleOmbreWindow(little.window) }
 
                 let tab = try #require(window.tabManager.activeTab)
@@ -80,6 +82,8 @@ extension TabManagerTests {
                 #expect(tab.container.id == space.id)
                 #expect(!LittleOmbreWindow.isLittleOmbreWindow(little.window))
                 #expect(page.delegate === tab.pageDelegate)
+                #expect(window.tabManager.activeContainer?.tabs.filter { $0.browserPage === page }.count == 1)
+                #expect(little.popup.passwordCoordinator == nil)
             }
         }
 

@@ -69,6 +69,12 @@ final class PopupPage: ObservableObject {
         page.lastCommittedURL ?? openerURL
     }
     private let pageDelegate: PopupPageDelegate
+    /// Where the pages it shows are recorded (Little Ombre's; a popup isn't
+    /// recorded): never for a private page.
+    var history: (manager: HistoryManager, space: TabContainer)?
+    private var lastRecordedURL: URL?
+    /// A page loaded (Little Ombre's bar follows it).
+    var pageDidLoad: (() -> Void)?
 
     /// Made with WebKit's `configuration` (required: it shares its opener's
     /// process and data), linked to `opener`.
@@ -101,6 +107,21 @@ final class PopupPage: ObservableObject {
         if address != url { address = url }
         let security = page.security
         if self.security != security { self.security = security }
+    }
+
+    /// The page loaded: recorded in the history, if it has one, once per
+    /// address (a reload only updates the title).
+    func recordVisit() {
+        guard let history, !context.isPrivate, let url = page.currentURL,
+              let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https"
+        else { return }
+        let title = page.title ?? ""
+        if lastRecordedURL == url {
+            history.manager.updateTitle(title, for: url, container: history.space)
+            return
+        }
+        lastRecordedURL = url
+        history.manager.record(title: title, url: url, container: history.space)
     }
 
     /// The popup closes: what the page waits for is refused.
@@ -175,7 +196,9 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         case .committed:
             popup?.sheets.dialogPolicy.pageDidCommitNewDocument()
             popup?.updateAddress()
-        case .finished: break
+        case .finished:
+            popup?.recordVisit()
+            popup?.pageDidLoad?()
         }
     }
 

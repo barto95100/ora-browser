@@ -22,6 +22,14 @@ struct OmbreCommands: Commands {
             Button("New Private Window") { openWindow(id: "private") }
                 .keyboardShortcut(KeyboardShortcuts.Window.newPrivate.keyboardShortcut)
 
+            Button("New Little Ombre") {
+                // From the browser window in front (also from a Little Ombre).
+                let target = NSApp.keyWindow.flatMap { BrowserWindows.browsing.contains($0) ? $0 : nil }
+                    ?? NSApp.orderedWindows.first { BrowserWindows.browsing.contains($0) }
+                NotificationCenter.default.post(name: .newLittleOmbre, object: target)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Window.newLittleOmbre.keyboardShortcut)
+
             Button("New Tab") {
                 NotificationCenter.default.post(name: .showLauncher, object: NSApp.keyWindow)
             }.keyboardShortcut(KeyboardShortcuts.Tabs.new.keyboardShortcut)

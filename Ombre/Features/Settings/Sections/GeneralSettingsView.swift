@@ -80,6 +80,8 @@ struct GeneralSettingsView: View {
 
                 Toggle("Auto Picture-in-Picture on tab switch", isOn: $settings.autoPiPEnabled)
 
+                Toggle("Open links from other apps in Little Ombre", isOn: $settings.opensLinksInLittleOmbre)
+
                 Picker("Links from pinned tabs to other sites", selection: $settings.pinnedLinkBehavior) {
                     ForEach(PinnedLinkBehavior.allCases) { behavior in
                         Text(behavior.title).tag(behavior)

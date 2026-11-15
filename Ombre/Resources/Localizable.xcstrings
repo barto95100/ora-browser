@@ -673,24 +673,6 @@
     },
     "%lld tabs selected" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld onglet sélectionné"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld onglets sélectionnés"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -704,6 +686,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld tabs selected"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet sélectionné"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets sélectionnés"
                 }
               }
             }
@@ -2502,24 +2502,6 @@
     },
     "Close %lld Tabs" : {
       "localizations" : {
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Fermer %lld onglet"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Fermer les %lld onglets"
-                }
-              }
-            }
-          }
-        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -2533,6 +2515,24 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Close %lld Tabs"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fermer %lld onglet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Fermer les %lld onglets"
                 }
               }
             }
@@ -4780,6 +4780,16 @@
         }
       }
     },
+    "Little Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Little Ombre"
+          }
+        }
+      }
+    },
     "Live preview of your space" : {
       "localizations" : {
         "fr" : {
@@ -5314,6 +5324,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nouveau dossier avec l’onglet"
+          }
+        }
+      }
+    },
+    "New Little Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle Little Ombre"
           }
         }
       }
@@ -6226,6 +6246,26 @@
         }
       }
     },
+    "Open in Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans Ombre"
+          }
+        }
+      }
+    },
+    "Open in Ombre (⌘O)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir dans Ombre (⌘O)"
+          }
+        }
+      }
+    },
     "Open in Split View" : {
       "localizations" : {
         "fr" : {
@@ -6262,6 +6302,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir le lien en vue partagée"
+          }
+        }
+      }
+    },
+    "Open links from other apps in Little Ombre" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les liens des autres apps dans Little Ombre"
           }
         }
       }
@@ -7556,6 +7606,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher sur %@"
+          }
+        }
+      }
+    },
+    "Search or enter address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher ou saisir une adresse"
           }
         }
       }

@@ -110,6 +110,12 @@ private struct BrowserWindowRoot: View {
             )
             .onOpenURL { url in
                 guard !privacyMode.isPrivate else { return }
+                // Like Arc: in a small window of its own, unless turned off.
+                if SettingsStore.shared.opensLinksInLittleOmbre,
+                   LittleOmbreWindow.open(url, from: tabManager, window: window) != nil
+                {
+                    return
+                }
                 tabManager.openTab(
                     url: url,
                     historyManager: historyManager,

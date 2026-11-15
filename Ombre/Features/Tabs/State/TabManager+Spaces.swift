@@ -162,6 +162,7 @@ extension TabManager {
         for folder in Array(container.folders) {
             modelContext.delete(folder)
         }
+        deleteTabGroups(ofSpace: container.id)
         // The space's history goes with it (cascade).
     }
 

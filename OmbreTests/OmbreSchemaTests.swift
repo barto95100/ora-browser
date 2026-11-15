@@ -32,10 +32,10 @@ extension TabManagerTests {
 
         @Test func listsEveryModel() {
             let names = Set(schema.entities.map(\.name))
-            #expect(names == ["TabContainer", "Tab", "Folder", "SpaceTask", "History", "Download"])
+            #expect(names == ["TabContainer", "Tab", "Folder", "SpaceTask", "History", "Download", "TabGroup"])
         }
 
-        @Test(arguments: ["TabContainer", "Tab", "Folder", "SpaceTask", "History", "Download"])
+        @Test(arguments: ["TabContainer", "Tab", "Folder", "SpaceTask", "History", "Download", "TabGroup"])
         func identifiersAreUnique(_ name: String) {
             let id = entity(name)?.attributes.first { $0.name == "id" }
             #expect(id?.isUnique == true)

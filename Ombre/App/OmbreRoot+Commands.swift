@@ -265,6 +265,14 @@ private struct WindowSpaceCommands: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .onNotification(.tidyTabs) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === targets.window,
+                          let space = targets.tabManager.activeContainer
+                    else { return }
+                    targets.tabManager.tidyTabs(in: space)
+                }
+            }
             .onNotification(.newLittleOmbre) { note in
                 Task { @MainActor in
                     guard let window = targets.window, note.object as? NSWindow === window else { return }

@@ -219,6 +219,10 @@ struct OmbreCommands: Commands {
             .keyboardShortcut(KeyboardShortcuts.Navigation.openPeekInNewTab.keyboardShortcut)
             .disabled(isPeekOpen != true)
 
+            Button("Tidy Tabs Now") {
+                NotificationCenter.default.post(name: .tidyTabs, object: NSApp.keyWindow)
+            }
+
             Button("New Split View") {
                 NotificationCenter.default.post(name: .newSplitView, object: NSApp.keyWindow)
             }

@@ -285,6 +285,14 @@ struct TabItem: View {
 
         CopyTabAddressButton(tab: tab)
 
+        if tab.type == .normal, tabManager.tabGroup(of: tab) != nil {
+            Button {
+                tabManager.removeFromGroup(tab)
+            } label: {
+                Label("Remove from Group", systemImage: "rectangle.stack.badge.minus")
+            }
+        }
+
         if tab.type == .pinned {
             folderMenuItems
         }

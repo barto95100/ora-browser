@@ -17,13 +17,26 @@ enum OmbreSchemaV1: VersionedSchema {
     }
 }
 
-/// How the main database moves from one schema to the next (none yet).
+/// The second schema: tab groups (`TabGroup`), a model of their own. The
+/// other models are unchanged, so V1 can keep listing the current classes.
+enum OmbreSchemaV2: VersionedSchema {
+    static var versionIdentifier: Schema.Version {
+        Schema.Version(2, 0, 0)
+    }
+
+    static var models: [any PersistentModel.Type] {
+        OmbreSchemaV1.models + [TabGroup.self]
+    }
+}
+
+/// How the main database moves from one schema to the next.
 enum OmbreMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [OmbreSchemaV1.self]
+        [OmbreSchemaV1.self, OmbreSchemaV2.self]
     }
 
     static var stages: [MigrationStage] {
-        []
+        // A new model only: SwiftData adds its table.
+        [.lightweight(fromVersion: OmbreSchemaV1.self, toVersion: OmbreSchemaV2.self)]
     }
 }

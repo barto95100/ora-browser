@@ -32,12 +32,12 @@
         <command name="read tab" code="OmbrRdTb" description="The title, address and text of a tab's web page (the text cut at 100,000 characters), once it has loaded (10 seconds at most).">
             <cocoa class="OmbreReadTabCommand"/>
             <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
-            <result type="text" description="JSON: id, title, address, text, truncated."/>
+            <result type="text" description="JSON: id, title, address, text, truncated; loadError when the last load failed (the text is then the error page's or the previous page's)."/>
         </command>
         <command name="capture tab" code="OmbrCpTb" description="An image of a tab's web page as it shows (PNG, at most 2560 pixels wide; videos and 3D may come out blank), once it has loaded (10 seconds at most).">
             <cocoa class="OmbreCaptureTabCommand"/>
             <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
-            <result type="text" description="JSON: id, title, address, width, height, png (base64)."/>
+            <result type="text" description="JSON: id, title, address, width, height, png (base64); loadError when the last load failed."/>
         </command>
         <command name="click element" code="OmbrClik" description="Once its page has loaded, clicks the first element a CSS selector matches (waited for 5 seconds at most) in a tab's web page (page actions must be allowed too; the page sees a click from a script).">
             <cocoa class="OmbreClickElementCommand"/>
@@ -45,7 +45,7 @@
             <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
                 <cocoa key="tab"/>
             </parameter>
-            <result type="text" description="JSON: id, title, address, element."/>
+            <result type="text" description="JSON: id, title, address, element; loadError when the last load failed."/>
         </command>
         <command name="fill field" code="OmbrFill" description="Once its page has loaded, fills in the first field a CSS selector matches (waited for 5 seconds at most) in a tab's web page, as typing would (never a password field; page actions must be allowed too).">
             <cocoa class="OmbreFillFieldCommand"/>
@@ -56,7 +56,7 @@
             <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
                 <cocoa key="tab"/>
             </parameter>
-            <result type="text" description="JSON: id, title, address, element."/>
+            <result type="text" description="JSON: id, title, address, element; loadError when the last load failed."/>
         </command>
         <command name="run javascript" code="OmbrRnJS" description="Runs JavaScript in a tab's web page, apart from the page's own scripts (page actions must be allowed too). The code is an async function's body: return gives its result, await works; 15 seconds at most.">
             <cocoa class="OmbreRunJavaScriptCommand"/>

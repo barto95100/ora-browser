@@ -505,9 +505,33 @@ extension TabManagerTests {
                 let clock = ContinuousClock()
                 let start = clock.now
                 let read = await control.run(.read(id), from: terminal)
-                #expect((try? read.get()) != nil, "\(read)")
                 // Its load ended (it fails: a refusing port): not waited for till the limit.
                 #expect(clock.now - start < AgentPageActions.loadWait)
+                // An empty page isn't taken for one: the failure is said.
+                let page = try JSONDecoder().decode(AgentPage.self, from: Data(read.get().utf8))
+                let loadError = try #require(page.loadError)
+                #expect(loadError.contains("NSURLErrorDomain -1004"), "\(loadError)")
+            }
+        }
+
+        /// No element on a page that failed to load: the failure says why,
+        /// without saying the page may have been changed.
+        @Test func anActionOnAFailedPageSaysTheLoadFailed() async throws {
+            try await TabManagerTestWindow.run { window in
+                let control = control(window, pageActions: true)
+                let address = TabManagerTestWindow.url("agent-action").absoluteString
+                let opened = try await control.run(.open(address), from: terminal).get()
+                let id = try #require(AgentPageActions.value(of: opened) as? [String: Any])["id"] as? String
+                let click = await control.run(.click(tab: id, selector: "button["), from: terminal)
+                guard case let .failure(error) = click else {
+                    Issue.record("A click on a failed page: \(click)")
+                    return
+                }
+                #expect(error.message == AgentError.badSelector.message)
+                #expect(error.reply.contains("The page's last load failed:"), "\(error.reply)")
+                #expect(error.reply.contains("NSURLErrorDomain -1004"), "\(error.reply)")
+                #expect(!error.mayHaveActed)
+                #expect(error.logged == nil)
             }
         }
 

@@ -50,7 +50,7 @@ private final class ScriptReply: @unchecked Sendable {
             command.resumeExecution(withResult: json)
         case let .failure(error):
             command.scriptErrorNumber = errOSAGeneralError
-            command.scriptErrorString = error.message
+            command.scriptErrorString = error.reply
             command.resumeExecution(withResult: nil)
         }
     }

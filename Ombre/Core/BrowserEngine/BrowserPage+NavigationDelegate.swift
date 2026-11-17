@@ -51,7 +51,9 @@ extension BrowserPage: WKNavigationDelegate {
                RestrictedPort.isRestricted(url)
             {
                 decisionHandler(.cancel)
-                delegate?.browserPage(self, didFailNavigationWith: RestrictedPort.error(for: url), failingURL: url)
+                let error = RestrictedPort.error(for: url)
+                lastLoadFailure = error
+                delegate?.browserPage(self, didFailNavigationWith: error, failingURL: url)
                 return
             }
             // A site exempted from protections loads without content rules.
@@ -92,6 +94,7 @@ extension BrowserPage: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         log("load started", webView.url)
         hasProvisionalNavigation = true
+        lastLoadFailure = nil
         delegate?.browserPageDidChangeSecurity(self)
         if !isDownloadNavigation {
             originalURL = lastCommittedURL
@@ -139,6 +142,8 @@ extension BrowserPage: WKNavigationDelegate {
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         log("web content process ended", webView.url)
         originalURL = nil
+        // A crash isn't a load's failure: an earlier one no longer holds.
+        lastLoadFailure = nil
         delegate?.browserPageWebContentProcessDidTerminate(self)
     }
 
@@ -160,6 +165,7 @@ extension BrowserPage: WKNavigationDelegate {
         )
 
         if !BrowserNavigationError.isInterruption(error) {
+            lastLoadFailure = error
             delegate?.browserPage(self, didFailNavigationWith: error, failingURL: webView.url)
         }
         originalURL = nil
@@ -199,6 +205,7 @@ extension BrowserPage: WKNavigationDelegate {
             return
         }
 
+        lastLoadFailure = error
         delegate?.browserPage(self, didFailNavigationWith: error, failingURL: failingURL)
         originalURL = nil
     }

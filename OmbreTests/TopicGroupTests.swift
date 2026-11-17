@@ -269,15 +269,14 @@ extension TabManagerTests {
                     "<head><meta name=\"Description\" content=\"Dashboards for monitoring\n your systems\"></head>",
                     baseURL: URL(string: "https://grafana.example/")
                 )
+                let pages = TopicPageSummaries.pages(of: [grafana])
                 let clock = ContinuousClock()
                 let deadline = clock.now + .seconds(10)
-                while await TopicPageSummaries.read(TopicPageSummaries.pages(of: [grafana])).isEmpty,
-                      clock.now < deadline
-                {
+                while await TopicPageSummaries.read(pages).isEmpty, clock.now < deadline {
                     try await Task.sleep(for: .milliseconds(50))
                 }
-                #expect(await TopicPageSummaries
-                    .read([grafana]) == [grafana.id: "Dashboards for monitoring\n your systems"])
+                let summaries = await TopicPageSummaries.read(pages)
+                #expect(summaries == [grafana.id: "Dashboards for monitoring\n your systems"])
                 grafana.title = "Full-stack observability for the agentic era"
                 let others = try makeTabs(window, Array(recipesAndMonitoring[4 ..< 6]))
                 // A tab without its page: no description, nothing waited for.

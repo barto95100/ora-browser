@@ -66,6 +66,22 @@ extension LittleOmbreWindow {
         Self.reveal(browserWindow)
     }
 
+    /// A tab opened in the background: the browser window shows behind
+    /// Little Ombre (one it hid is kept, and no longer closed with it).
+    func showBrowserWindowBehind() {
+        guard let browserWindow else { return }
+        for little in Self.openWindows where little.browserWindow === browserWindow {
+            little.hiddenBrowserWindow = nil
+        }
+        hiddenBrowserWindow = nil
+        browserWindow.isExcludedFromWindowsMenu = false
+        if TestHost.isActive {
+            browserWindow.orderBack(nil)
+        } else if !Self.isOpen(browserWindow) {
+            browserWindow.order(.below, relativeTo: window.windowNumber)
+        }
+    }
+
     /// `browserWindow` is needed (a link opens in it as a tab): shown if a
     /// Little Ombre hid it.
     static func browserWindowNeeded(_ browserWindow: NSWindow) {

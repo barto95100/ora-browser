@@ -59,6 +59,10 @@ final class PopupPage: ObservableObject {
     /// Closes the popup's window (`window.close()`, a popup only opened for a
     /// file).
     var closeWindow: (() -> Void)?
+    /// Little Ombre's: the windows its page opens are tabs of its browser
+    /// window (a popup's open beside its opener tab). Linked to the page
+    /// with WebKit's configuration, else loading the address (⌘-click).
+    var opensLinkTab: ((URL?, WKWebViewConfiguration?, BrowserNewTabDisposition) -> WKWebView?)?
     /// The page's address or title changed (the window's title follows).
     var pageDidChange: (() -> Void)?
     /// The page that opened the popup: the site a download it only opened
@@ -280,6 +284,9 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         for url: URL?,
         disposition: BrowserNewTabDisposition
     ) -> WKWebView? {
+        if let open = popup?.opensLinkTab, let webView = open(url, configuration, disposition) {
+            return webView
+        }
         if let tab = liveOpenerTab, let tabManager = tab.tabManager {
             // The tab's window comes forward with the tab, not behind the popup.
             let window = tab.browserPage?.window
@@ -296,6 +303,10 @@ private final class PopupPageDelegate: BrowserPageDelegate {
 
     /// ⌘-click and the like: a tab beside the opener tab, if it is still there.
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
+        if let open = popup?.opensLinkTab {
+            _ = open(url, nil, disposition)
+            return
+        }
         guard let tab = liveOpenerTab, let tabManager = tab.tabManager else { return }
         tabManager.openLinkTab(url, from: tab, disposition: disposition, openerURL: popup?.shownURL)
     }

@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import SwiftData
 import SwiftUI
+@preconcurrency import WebKit
 
 /// Little Ombre, like Little Arc: a small window with one page and a minimal
 /// bar (the address, its lock, "Open in Ombre"), for links from other apps and
@@ -115,6 +116,9 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         window.minSize = NSSize(width: 420, height: 300)
         window.setAccessibilityLabel(String(localized: "Little Ombre"))
         popup.pageDidChange = { [weak self] in self?.updateTitle() }
+        popup.opensLinkTab = { [weak self] url, configuration, disposition in
+            self?.openLinkTab(url, configuration: configuration, disposition: disposition)
+        }
         popup.closeWindow = { [weak self] in self?.window.close() }
     }
 
@@ -215,6 +219,27 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         }
     }
 
+    /// A link of its page opening a new window: a tab of its space in the
+    /// browser window it came from, shown in front (unless in the
+    /// background: then just behind), like Little Arc; Little Ombre stays. None (a popup
+    /// window then) once that window or its space is gone.
+    func openLinkTab(
+        _ url: URL?,
+        configuration: WKWebViewConfiguration?,
+        disposition: BrowserNewTabDisposition
+    ) -> WKWebView? {
+        guard let tab = tabManager?.openLittleOmbreLink(
+            url, from: popup, configuration: configuration, disposition: disposition
+        ) else { return nil }
+        if disposition == .background {
+            // Behind Little Ombre: the tab is there, the page stays in front.
+            showBrowserWindowBehind()
+        } else {
+            showBrowserWindow()
+        }
+        return tab.browserPage?.webView
+    }
+
     /// Back, forward and reload, from the bar and the keys.
     func goBack() {
         popup.page.goBack()
@@ -252,6 +277,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         observations.removeAll()
         popup.pageDidChange = nil
         popup.closeWindow = nil
+        popup.opensLinkTab = nil
         if !isMovedToTab {
             WebExtensionsHub.pageClosed(popup.page)
             popup.close()

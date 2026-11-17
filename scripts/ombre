@@ -21,6 +21,8 @@
 #   (for fill, without its last newline).
 #   Without -t: the active tab. click, fill and js also need Settings › General ›
 #   Allow agents to act in pages.
+#   read, capture, click and fill wait for the page to load (10 s at most); click and
+#   fill wait up to 5 s for an element to match (15 s in all). js doesn't wait.
 #
 # First allow it in Ombre › Settings › General › Allow agents to control Ombre.
 # macOS then asks once to let this terminal control Ombre (Automation), and
@@ -34,7 +36,7 @@ app_id=${OMBRE_APP_ID:-com.barto95100.ora}
 script=$0
 
 usage() {
-    sed -n '4,23p' "$script" | sed 's/^# \{0,1\}//' >&2
+    sed -n '4,25p' "$script" | sed 's/^# \{0,1\}//' >&2
     exit "${1:-2}"
 }
 

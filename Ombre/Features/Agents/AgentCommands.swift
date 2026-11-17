@@ -76,6 +76,9 @@ struct AgentError: Error, Equatable {
     /// WebKit gave up waiting: the script's promise was freed, or its page left.
     static let promiseDropped =
         AgentError(message: "The script's promise was dropped by the page before it answered.") // not shown
+    /// Before the element was found: nothing done.
+    static let pageChanged =
+        AgentError(message: "The page changed while the element was waited for: try again.") // not shown
     static let unsupportedResult = AgentError(
         message: "The script's result isn't JSON (strings, numbers, booleans, arrays, objects, null)." // not shown
     )
@@ -175,16 +178,21 @@ enum AgentCommands {
             // A pinned or favorite tab stays in the sidebar, with its badge.
             return Done(result: .success(json(closed)), host: host, tabID: tab.id)
         case let .read(id):
-            return await onWebPage(id, in: tabManager, read)
+            return await onWebPage(id, in: tabManager) { tab in
+                await onLoadedPage(tab) { await read(tab, $0, until: $1) }
+            }
         case let .capture(id):
-            return await onWebPage(id, in: tabManager, capture)
+            return await onWebPage(id, in: tabManager) { tab in
+                await onLoadedPage(tab) { _, deadline in await capture(tab, until: deadline) }
+            }
         case let .click(id, selector):
             return await onWebPage(id, in: tabManager) { tab in
-                await onPage(tab) { await AgentPageActions.click(selector, on: $0) }.map { action($0, in: tab) }
+                await onLoadedPage(tab) { await AgentPageActions.click(selector, on: $0, until: $1) }
+                    .map { action($0, in: tab) }
             }
         case let .fill(id, selector, value):
             return await onWebPage(id, in: tabManager) { tab in
-                await onPage(tab) { await AgentPageActions.fill(selector, with: value, on: $0) }
+                await onLoadedPage(tab) { await AgentPageActions.fill(selector, with: value, on: $0, until: $1) }
                     .map { action($0, in: tab) }
             }
         case let .runScript(id, code):
@@ -278,6 +286,21 @@ enum AgentCommands {
         return tabManager.fetchContainers().lazy.flatMap(\.tabs).first { $0.id == uuid && isListed($0) }
     }
 
+    /// `action` on the tab's page once it has loaded (`AgentPageActions.loadWait`
+    /// at most: then as it is), before the command's deadline. A tab just
+    /// opened is waited for too.
+    private static func onLoadedPage<Value>(
+        _ tab: Tab,
+        _ action: @MainActor (BrowserPage, ContinuousClock.Instant) async -> Result<Value, AgentError>
+    ) async -> Result<Value, AgentError> {
+        let deadline = AgentPageActions.deadline()
+        guard let page = tab.browserPage else { return .failure(.notLoaded) }
+        _ = await page.waitUntilLoaded(within: AgentPageActions.loadWait)
+        // Unloaded or replaced meanwhile.
+        guard tab.browserPage === page, tab.isWebViewReady else { return .failure(.notLoaded) }
+        return await action(page, deadline)
+    }
+
     /// `action` on the tab's loaded page.
     private static func onPage<Value>(
         _ tab: Tab,
@@ -310,16 +333,21 @@ enum AgentCommands {
     return [t.slice(0, \(maxTextLength)), t.length > \(maxTextLength)]; })()
     """ // not shown
 
-    private static func read(_ tab: Tab) async -> Result<String, AgentError> {
-        guard let page = tab.browserPage, tab.isWebViewReady else { return .failure(.notLoaded) }
-        let reply: Result<(String, Bool), AgentError> = await withCheckedContinuation { continuation in
+    private static func read(
+        _ tab: Tab,
+        _ page: BrowserPage,
+        until deadline: ContinuousClock.Instant
+    ) async -> Result<String, AgentError> {
+        let reply: Result<(String, Bool), AgentError> = await AgentPageActions.answer(until: deadline) { reply in
             page.evaluateJavaScript(textScript) { value, error in
-                if let error {
-                    continuation.resume(returning: .failure(.failed(PageLog.describe(error))))
-                } else if let parts = value as? [Any], let text = parts.first as? String {
-                    continuation.resume(returning: .success((text, parts.last as? Bool ?? false)))
-                } else {
-                    continuation.resume(returning: .success(("", false)))
+                MainActor.assumeIsolated {
+                    if let error {
+                        reply(.failure(.failed(PageLog.describe(error))))
+                    } else if let parts = value as? [Any], let text = parts.first as? String {
+                        reply(.success((text, parts.last as? Bool ?? false)))
+                    } else {
+                        reply(.success(("", false)))
+                    }
                 }
             }
         }
@@ -338,15 +366,22 @@ enum AgentCommands {
     /// points): enough to read a page, a few megabytes at most.
     static let maxImageWidth = 2560
 
-    private static func capture(_ tab: Tab) async -> Result<String, AgentError> {
-        guard tab.browserPage != nil, tab.isWebViewReady else { return .failure(.notLoaded) }
+    private static func capture(
+        _ tab: Tab,
+        until deadline: ContinuousClock.Instant
+    ) async -> Result<String, AgentError> {
         let configuration = BrowserSnapshotConfiguration(rect: nil, afterScreenUpdates: false)
-        let image: NSImage? = await withCheckedContinuation { continuation in
-            tab.takeSnapshot(configuration: configuration) { image, _ in continuation.resume(returning: image) }
+        let snapshot: Result<NSImage?, AgentError> = await AgentPageActions.answer(until: deadline) { reply in
+            tab.takeSnapshot(configuration: configuration) { image, _ in reply(.success(image)) }
         }
-        guard let image, let png = AgentImage.png(of: image, maxWidth: maxImageWidth) else {
-            return .failure(.noImage)
+        let image: NSImage
+        switch snapshot {
+        case let .failure(error): return .failure(error)
+        case let .success(taken):
+            guard let taken else { return .failure(.noImage) }
+            image = taken
         }
+        guard let png = AgentImage.png(of: image, maxWidth: maxImageWidth) else { return .failure(.noImage) }
         return .success(json(AgentCapture(
             id: tab.id.uuidString,
             title: tab.title,

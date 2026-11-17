@@ -11,6 +11,11 @@ enum AgentPageActions {
     /// An action not answered by then is given up: with the user's question
     /// (100 s at most), within the 120 s osascript waits. The tests set their own.
     static var timeout: Duration = .seconds(15)
+    /// A page still loading is waited for that long at most: then acted on
+    /// as it is. Within `timeout`, with `elementWait`.
+    static var loadWait: Duration = .seconds(10)
+    /// How long click and fill wait for an element to match their selector.
+    static var elementWait: Duration = .seconds(5)
     /// A script's result is refused past that (in JSON characters).
     static let maxResultLength = 100_000
 
@@ -27,11 +32,32 @@ enum AgentPageActions {
     };
     """ // not shown
 
+    /// The first element `selector` matches, waited for `wait` ms at most
+    /// as the page changes (no polling), or an error to return.
+    private static let find = """
+    const find = async () => {
+        let el;
+        try { el = document.querySelector(selector); } catch (e) { return { error: 'selector' }; }
+        if (!el && wait > 0) {
+            el = await new Promise((resolve) => {
+                const observer = new MutationObserver(() => {
+                    const found = document.querySelector(selector);
+                    if (found) { observer.disconnect(); clearTimeout(timer); resolve(found); }
+                });
+                // Keeps the promise alive while it waits.
+                const timer = setTimeout(() => { observer.disconnect(); resolve(null); }, wait);
+                observer.observe(document, { childList: true, subtree: true, attributes: true });
+            });
+        }
+        return el ? { el } : { error: 'none' };
+    };
+    const found = await find();
+    if (found.error) return found;
+    const el = found.el;
+    """ // not shown
+
     /// Clicks the first element `selector` matches.
-    static let clickScript = describe + """
-    let el;
-    try { el = document.querySelector(selector); } catch (e) { return { error: 'selector' }; }
-    if (!el) return { error: 'none' };
+    static let clickScript = describe + find + """
     if (el.matches(':disabled')) return { error: 'disabled' };
     el.scrollIntoView({ block: 'center', inline: 'center' });
     if (typeof el.focus === 'function') el.focus();
@@ -47,10 +73,7 @@ enum AgentPageActions {
     /// Fills the first field `selector` matches with `value`, as typing
     /// would (input and change events: the page's own code sees it).
     /// Never a password field.
-    static let fillScript = describe + """
-    let el;
-    try { el = document.querySelector(selector); } catch (e) { return { error: 'selector' }; }
-    if (!el) return { error: 'none' };
+    static let fillScript = describe + find + """
     if (el instanceof HTMLInputElement && el.type.toLowerCase() === 'password') return { error: 'password' };
     const unfillable = ['button', 'checkbox', 'file', 'hidden', 'image', 'radio', 'reset', 'submit'];
     if (el instanceof HTMLInputElement && unfillable.includes(el.type.toLowerCase())) return { error: 'field' };
@@ -86,12 +109,26 @@ enum AgentPageActions {
     return { element: describe(el) };
     """ // not shown
 
-    static func click(_ selector: String, on page: BrowserPage) async -> Result<String, AgentError> {
-        await element(clickScript, ["selector": selector], on: page)
+    /// When a command started now must have answered.
+    static func deadline() -> ContinuousClock.Instant {
+        .now + timeout
     }
 
-    static func fill(_ selector: String, with value: String, on page: BrowserPage) async -> Result<String, AgentError> {
-        await element(fillScript, ["selector": selector, "value": value], on: page)
+    static func click(
+        _ selector: String,
+        on page: BrowserPage,
+        until deadline: ContinuousClock.Instant = deadline()
+    ) async -> Result<String, AgentError> {
+        await element(clickScript, ["selector": selector], on: page, until: deadline)
+    }
+
+    static func fill(
+        _ selector: String,
+        with value: String,
+        on page: BrowserPage,
+        until deadline: ContinuousClock.Instant = deadline()
+    ) async -> Result<String, AgentError> {
+        await element(fillScript, ["selector": selector, "value": value], on: page, until: deadline)
     }
 
     /// The agent's code, as an async function's body, its result made JSON
@@ -131,9 +168,18 @@ enum AgentPageActions {
     private static func element(
         _ script: String,
         _ arguments: [String: Any],
-        on page: BrowserPage
+        on page: BrowserPage,
+        until deadline: ContinuousClock.Instant
     ) async -> Result<String, AgentError> {
-        switch await call(script, arguments, on: page) {
+        // A second left to say no element matched, rather than time out.
+        let left = deadline - .now - .seconds(1)
+        let wait = max(.zero, min(elementWait, left))
+        var arguments = arguments
+        arguments["wait"] = Int(wait / .milliseconds(1))
+        switch await call(script, arguments, on: page, until: deadline) {
+        case .failure(.promiseDropped):
+            // Its document went while the element was waited for.
+            return .failure(.pageChanged)
         case let .failure(error):
             return .failure(error)
         case let .success(json):
@@ -158,21 +204,35 @@ enum AgentPageActions {
     private static func call(
         _ body: String,
         _ arguments: [String: Any],
-        on page: BrowserPage
+        on page: BrowserPage,
+        until deadline: ContinuousClock.Instant = deadline()
     ) async -> Result<String, AgentError> {
-        await withCheckedContinuation { continuation in
-            let answer = Once(continuation)
-            let deadline = Task { @MainActor in
-                try? await Task.sleep(for: timeout)
-                guard !Task.isCancelled else { return }
-                answer.resume(.failure(.timedOut))
-            }
+        await answer(until: deadline) { reply in
             page.callAgentJavaScript(body, arguments: arguments) { result in
-                deadline.cancel()
-                answer.resume(
+                reply(
                     result.mapError(failure)
                         .flatMap { json($0 ?? NSNull()).map { .success($0) } ?? .failure(.unsupportedResult) }
                 )
+            }
+        }
+    }
+
+    /// What `start` gives to its reply, or `timedOut` at `deadline`: the
+    /// first one only.
+    static func answer<Value: Sendable>(
+        until deadline: ContinuousClock.Instant,
+        _ start: (@escaping @MainActor (Result<Value, AgentError>) -> Void) -> Void
+    ) async -> Result<Value, AgentError> {
+        await withCheckedContinuation { continuation in
+            let answer = Once(continuation)
+            let timer = Task { @MainActor in
+                try? await Task.sleep(until: deadline)
+                guard !Task.isCancelled else { return }
+                answer.resume(.failure(.timedOut))
+            }
+            start { result in
+                timer.cancel()
+                answer.resume(result)
             }
         }
     }
@@ -218,14 +278,14 @@ enum AgentPageActions {
     }
 
     /// Resumes its continuation once.
-    private final class Once {
-        private var continuation: CheckedContinuation<Result<String, AgentError>, Never>?
+    private final class Once<Value: Sendable> {
+        private var continuation: CheckedContinuation<Result<Value, AgentError>, Never>?
 
-        init(_ continuation: CheckedContinuation<Result<String, AgentError>, Never>) {
+        init(_ continuation: CheckedContinuation<Result<Value, AgentError>, Never>) {
             self.continuation = continuation
         }
 
-        func resume(_ result: Result<String, AgentError>) {
+        func resume(_ result: Result<Value, AgentError>) {
             continuation?.resume(returning: result)
             continuation = nil
         }

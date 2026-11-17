@@ -70,6 +70,9 @@ struct AgentPageActionsTests {
     @Test func clickClicksTheFirstMatch() async throws {
         let page = try await loadedPage()
         defer { page.teardown() }
+        let saved = AgentPageActions.elementWait
+        AgentPageActions.elementWait = .milliseconds(200)
+        defer { AgentPageActions.elementWait = saved }
 
         #expect(await AgentPageActions.click("#go", on: page) == .success("button#go \"Go\""))
         #expect(await inPage(page, "window.clicks") as? Int == 1)
@@ -245,6 +248,78 @@ struct AgentPageActionsTests {
             AgentPageActions.failure(error(WKError.errorDomain, .javaScriptExceptionOccurred, "Error: boom"))
                 == .scriptFailed("Error: boom")
         )
+    }
+
+    /// A page not loaded yet is waited for: told by WebKit, within a limit.
+    @Test func aPageIsWaitedForUntilLoaded() async {
+        let page = makePage()
+        defer { page.teardown() }
+
+        #expect(await page.waitUntilLoaded(within: .milliseconds(200)) == false)
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            page.extensionWebView.loadHTMLString("<p>Late</p>", baseURL: URL(string: "https://example.com/"))
+        }
+        #expect(await page.waitUntilLoaded(within: .seconds(10)))
+        #expect(page.hasLoaded)
+        // Loaded: no wait.
+        #expect(await page.waitUntilLoaded(within: .zero))
+    }
+
+    /// Click and fill wait for an element the page adds later.
+    @Test func anElementAddedLaterIsWaitedFor() async throws {
+        let page = try await loadedPage()
+        defer { page.teardown() }
+
+        _ = await inPage(page, """
+        setTimeout(() => {
+            const field = document.createElement('input');
+            field.id = 'later';
+            document.body.append(field);
+            const button = document.createElement('button');
+            button.id = 'late';
+            button.textContent = 'Late';
+            document.body.append(button);
+        }, 300); true
+        """)
+        #expect(await AgentPageActions.fill("#later", with: "x", on: page) == .success("input#later"))
+        #expect(await AgentPageActions.click("#late", on: page) == .success("button#late \"Late\""))
+    }
+
+    /// The element wait ends before the command's deadline: no element,
+    /// not a page that didn't answer.
+    @Test func theElementWaitKeepsToTheDeadline() async throws {
+        let page = try await loadedPage()
+        defer { page.teardown() }
+
+        let clock = ContinuousClock()
+        let start = clock.now
+        let reply = await AgentPageActions.click("#never", on: page, until: start + .seconds(2))
+        #expect(reply == .failure(.noElement))
+        #expect(clock.now - start < .seconds(2))
+    }
+
+    /// A page that goes while click waits for its element: said so.
+    @Test func aPageThatChangesDuringTheWaitIsSaid() async throws {
+        let page = try await loadedPage()
+        defer { page.teardown() }
+
+        let reply = Task { @MainActor in await AgentPageActions.click("#never", on: page) }
+        try await Task.sleep(for: .milliseconds(200))
+        page.extensionWebView.loadHTMLString("<p>Next</p>", baseURL: URL(string: "https://example.com/next"))
+        #expect(await reply.value == .failure(.pageChanged))
+        #expect(!AgentError.pageChanged.mayHaveActed)
+    }
+
+    /// read and capture answer by the command's deadline too.
+    @Test func anAnswerNeverGivenTimesOut() async {
+        let never: Result<Int, AgentError> = await AgentPageActions.answer(until: .now + .milliseconds(100)) { _ in }
+        #expect(never == .failure(.timedOut))
+        let given: Result<Int, AgentError> = await AgentPageActions.answer(until: .now + .seconds(5)) { reply in
+            reply(.success(1))
+            reply(.success(2))
+        }
+        #expect(given == .success(1))
     }
 
     @Test func resultsAreJSONOnly() {

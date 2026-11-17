@@ -29,17 +29,17 @@
             <direct-parameter type="text" description="The tab's id, from list tabs."/>
             <result type="text" description="JSON: the tab closed."/>
         </command>
-        <command name="read tab" code="OmbrRdTb" description="The title, address and text of a tab's web page (the text cut at 100,000 characters).">
+        <command name="read tab" code="OmbrRdTb" description="The title, address and text of a tab's web page (the text cut at 100,000 characters), once it has loaded (10 seconds at most).">
             <cocoa class="OmbreReadTabCommand"/>
             <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
             <result type="text" description="JSON: id, title, address, text, truncated."/>
         </command>
-        <command name="capture tab" code="OmbrCpTb" description="An image of a tab's web page as it shows (PNG, at most 2560 pixels wide; videos and 3D may come out blank).">
+        <command name="capture tab" code="OmbrCpTb" description="An image of a tab's web page as it shows (PNG, at most 2560 pixels wide; videos and 3D may come out blank), once it has loaded (10 seconds at most).">
             <cocoa class="OmbreCaptureTabCommand"/>
             <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
             <result type="text" description="JSON: id, title, address, width, height, png (base64)."/>
         </command>
-        <command name="click element" code="OmbrClik" description="Clicks the first element a CSS selector matches in a tab's web page (page actions must be allowed too; the page sees a click from a script).">
+        <command name="click element" code="OmbrClik" description="Once its page has loaded, clicks the first element a CSS selector matches (waited for 5 seconds at most) in a tab's web page (page actions must be allowed too; the page sees a click from a script).">
             <cocoa class="OmbreClickElementCommand"/>
             <direct-parameter type="text" description="The CSS selector."/>
             <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
@@ -47,7 +47,7 @@
             </parameter>
             <result type="text" description="JSON: id, title, address, element."/>
         </command>
-        <command name="fill field" code="OmbrFill" description="Fills in the first field a CSS selector matches in a tab's web page, as typing would (never a password field; page actions must be allowed too).">
+        <command name="fill field" code="OmbrFill" description="Once its page has loaded, fills in the first field a CSS selector matches (waited for 5 seconds at most) in a tab's web page, as typing would (never a password field; page actions must be allowed too).">
             <cocoa class="OmbreFillFieldCommand"/>
             <direct-parameter type="text" description="The CSS selector."/>
             <parameter name="to" code="OmVl" type="text" description="The text to fill in (a list's value for a list).">

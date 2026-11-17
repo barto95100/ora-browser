@@ -98,9 +98,17 @@ enum AgentPageActions {
     /// in the page: a huge one never comes to the app.
     static func runScript(_ code: String) -> String {
         """
-        const result = await (async () => {
+        let result;
+        try {
+            result = await (async () => {
         \(code)
-        })();
+            })();
+        } catch (error) {
+            // What the code threw, apart from WebKit's own errors.
+            let thrown;
+            try { thrown = String(error); } catch (e) { thrown = 'A value that has no text.'; }
+            return { thrown: thrown.slice(0, limit) };
+        }
         const text = JSON.stringify(result === undefined ? null : result);
         if (text === undefined) return { unsupported: true };
         if (text.length > limit) return { tooLong: true };
@@ -114,6 +122,7 @@ enum AgentPageActions {
         await call(runScript(code), ["limit": maxResultLength], on: page).flatMap { reply in
             let reply = value(of: reply) as? [String: Any]
             if let json = reply?["json"] as? String { return .success(json) }
+            if let thrown = reply?["thrown"] as? String { return .failure(.scriptFailed(thrown)) }
             return .failure(reply?["tooLong"] != nil ? .resultTooLong : .unsupportedResult)
         }
     }

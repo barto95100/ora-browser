@@ -27,19 +27,51 @@ struct TopicGroupingTests {
             TopicTab(id: "t4", title: "d", site: "other.example"),
             TopicTab(id: "t5", title: "e", site: "search.example")
         ]
-        #expect(TopicGrouping.validated([TopicSuggestion(name: "Search", tabIDs: ["t1", "t2"])], tabs: tabs).isEmpty)
+        #expect(TopicGrouping.validated([TopicSuggestion(name: "Travel", tabIDs: ["t1", "t2"])], tabs: tabs).isEmpty)
         #expect(TopicGrouping.validated([
-            TopicSuggestion(name: "Search", tabIDs: ["t1", "t2", "t3"]),
+            TopicSuggestion(name: "Travel", tabIDs: ["t1", "t2", "t3"]),
             TopicSuggestion(name: "Mixed", tabIDs: ["t4", "t5"])
-        ], tabs: tabs).map(\.name) == ["Search", "Mixed"])
+        ], tabs: tabs).map(\.name) == ["Travel", "Mixed"])
         // A suggestion left out leaves its tabs to the next one.
         #expect(TopicGrouping.validated([
-            TopicSuggestion(name: "Search", tabIDs: ["t1", "t2"]),
+            TopicSuggestion(name: "Travel", tabIDs: ["t1", "t2"]),
             TopicSuggestion(name: "Mixed", tabIDs: ["t1", "t4"])
         ], tabs: tabs).map(\.tabIDs) == [["t1", "t4"]])
         // Tabs without a site (not web pages) aren't one site.
         let local = [TopicTab(id: "t1", title: "a", site: ""), TopicTab(id: "t2", title: "b", site: "")]
         #expect(TopicGrouping.validated([TopicSuggestion(name: "Notes", tabIDs: ["t1", "t2"])], tabs: local).count == 1)
+    }
+
+    /// A catch-all group (searches, a login page and an encyclopedia under
+    /// "Documentation") is left out, in English or in French; a real subject stays.
+    @Test(arguments: ["Web Browsing", "documentation", "Divers", "Général", " Autres "])
+    func genericNamesMakeNoGroup(name: String) {
+        let tabs = [
+            TopicTab(id: "t1", title: "Sign in to GitHub", site: "github.com"),
+            TopicTab(id: "t2", title: "Wikipedia", site: "wikipedia.org"),
+            TopicTab(id: "t3", title: "Grafana", site: "grafana.com"),
+            TopicTab(id: "t4", title: "Prometheus", site: "prometheus.io")
+        ]
+        let checked = TopicGrouping.validated([
+            TopicSuggestion(name: name, tabIDs: ["t1", "t2"]),
+            TopicSuggestion(name: "Supervision", tabIDs: ["t3", "t4"])
+        ], tabs: tabs)
+        #expect(checked == [TopicSuggestion(name: "Supervision", tabIDs: ["t3", "t4"])])
+    }
+
+    /// Only a name that says nothing else: a subject's own name stays.
+    @Test func aNamedSubjectIsNotGeneric() {
+        #expect(!TopicGrouping.isGeneric("Swift documentation"))
+        #expect(!TopicGrouping.isGeneric("Web development"))
+    }
+
+    /// The groups are named in Ombre's language, told by its name (a code
+    /// alone left them in English), and loose groups are ruled out.
+    @Test func theModelIsToldTheLanguageAndNoCatchAllGroups() {
+        let french = TopicGrouping.instructions(language: "fr")
+        #expect(french.contains("Write every group name in French"))
+        #expect(french.contains("Never make a catch-all group"))
+        #expect(TopicGrouping.instructions(language: "en").contains("in English"))
     }
 
     /// The model gets an id, the title, the site and the page's description
@@ -225,7 +257,7 @@ extension TabManagerTests {
                 let saved = TabManager.topicGrouper
                 // The tabs left, in order: t1 a.org, t2 b.org, t3 c.org.
                 TabManager
-                    .topicGrouper = { FixedGrouper(reply: [TopicSuggestion(name: "Reading", tabIDs: ["t1", "t3"])]) }
+                    .topicGrouper = { FixedGrouper(reply: [TopicSuggestion(name: "Gardening", tabIDs: ["t1", "t3"])]) }
                 defer { TabManager.topicGrouper = saved }
 
                 await window.tabManager.tidyTabs(in: space)?.value

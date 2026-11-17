@@ -80,7 +80,7 @@ enum TopicGrouping {
                 guard known.contains(id), !used.contains(id), !ids.contains(id) else { continue }
                 ids.append(id)
             }
-            guard !name.isEmpty, ids.count >= threshold else { return nil }
+            guard !name.isEmpty, !isGeneric(name), ids.count >= threshold else { return nil }
             let groupSites = Set(ids.map { sites[$0] ?? "" })
             if groupSites.count == 1, groupSites.first?.isEmpty == false, ids.count < TabGrouping.threshold {
                 return nil
@@ -88,6 +88,41 @@ enum TopicGrouping {
             used.formUnion(ids)
             return TopicSuggestion(name: name, tabIDs: ids)
         }
+    }
+
+    /// Names that say no subject: the group they make gathers tabs with
+    /// nothing in common (searches, a login page and an encyclopedia).
+    private static let genericNames: Set<String> = [
+        "web browsing", "browsing", "websites", "web pages", "pages", "tabs", "documentation", "docs", // no translation
+        "search", "searches", "research", "login", "sign in", "misc", "miscellaneous", "other", // no translation
+        "others", "various", "general", "reading", "resources", "navigation web", "sites web", // no translation
+        "pages web", "onglets", "recherche", "recherches", "connexion", "divers", "autre", "autres", // no translation
+        "lecture", "ressources" // no translation
+    ]
+
+    /// A name of `genericNames`, whatever its case and accents.
+    static func isGeneric(_ name: String) -> Bool {
+        genericNames.contains(name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil))
+    }
+
+    /// What the model is told (never shown): the groups' language by its
+    /// English name (a code alone left the names in English) and no group
+    /// without a real subject.
+    static func instructions(language: String) -> String {
+        let languageName = Locale(identifier: "en").localizedString(forLanguageCode: language) ?? language
+        return [
+            "You sort a web browser's tabs into groups by subject.", // no translation
+            "Each line is a tab: its id, a colon, its title and its site,", // no translation
+            "sometimes followed by a dash and the page's description.", // no translation
+            "Make a group only for tabs that clearly share one real, specific subject,", // no translation
+            "at least \(threshold) tabs each.", // no translation
+            "Leave out every tab that shares no such subject with others:", // no translation
+            "leaving tabs out is better than a loose group.", // no translation
+            "Never make a catch-all group, and never give a group a generic name", // no translation
+            "such as Web Browsing, Documentation, Search, Login, Miscellaneous or Other.", // no translation
+            "Give the tabs by their ids, exactly as written.", // no translation
+            "Write every group name in \(languageName), whatever the language of the tabs." // no translation
+        ].joined(separator: " ")
     }
 
     /// The tabs as the model gets them, numbered from "t1".
@@ -129,14 +164,14 @@ enum TopicGrouping {
     @available(macOS 26.0, *)
     @Generable
     struct TopicGroupsReply {
-        @Guide(description: "Groups of tabs, one subject each; tabs fitting none left out.") // no translation
+        @Guide(description: "Groups of tabs, one specific subject each; tabs fitting none left out.") // no translation
         var groups: [TopicGroupReply]
     }
 
     @available(macOS 26.0, *)
     @Generable
     struct TopicGroupReply {
-        @Guide(description: "A short name for the subject, two or three words.") // no translation
+        @Guide(description: "A short, specific name for the subject, two or three words.") // no translation
         var name: String
         @Guide(description: "The ids of the tabs in this group, exactly as given (t1, t2…).") // no translation
         var tabs: [String]
@@ -148,15 +183,7 @@ enum TopicGrouping {
     @MainActor
     struct OnDeviceTopicGrouper: TopicGrouper {
         func suggestions(for tabs: [TopicTab], language: String) async throws -> TopicReply {
-            // For the model, never shown.
-            let instructions = [
-                "You sort a web browser's tabs into groups by subject.", // no translation
-                "Each line is a tab: its id, a colon, its title and its site,", // no translation
-                "sometimes followed by a dash and the page's description.", // no translation
-                "Each group holds at least \(TopicGrouping.threshold) tabs about one subject.", // no translation
-                "Give the tabs by their ids, exactly as written.", // no translation
-                "Name each group in the language whose code is \(language)." // no translation
-            ].joined(separator: " ")
+            let instructions = TopicGrouping.instructions(language: language)
             let session = LanguageModelSession(model: .default, instructions: instructions)
             let reply = try await session.respond(to: TopicGrouping.request(tabs), generating: TopicGroupsReply.self)
             return TopicReply(

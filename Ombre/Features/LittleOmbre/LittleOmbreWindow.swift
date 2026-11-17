@@ -120,6 +120,26 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
             self?.openLinkTab(url, configuration: configuration, disposition: disposition)
         }
         popup.closeWindow = { [weak self] in self?.window.close() }
+        observeNavigationCommands()
+    }
+
+    /// Reload, Back and Forward from the menu, with their keys as the menu
+    /// matches them (customized, and on any keyboard layout).
+    private func observeNavigationCommands() {
+        let commands: [(Notification.Name, @MainActor (LittleOmbreWindow) -> Void)] = [
+            (.reloadPage, { $0.reload() }),
+            (.goBack, { $0.goBack() }),
+            (.goForward, { $0.goForward() })
+        ]
+        for (name, command) in commands {
+            NotificationCenter.default.publisher(for: name, object: window)
+                .sink { [weak self] _ in
+                    MainActor.assumeIsolated {
+                        if let self { command(self) }
+                    }
+                }
+                .store(in: &observations)
+        }
     }
 
     /// Smaller than a browser window, centered on the screen in front.
@@ -288,34 +308,44 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     }
 }
 
-/// Little Ombre's window: ⌘O opens its page in Ombre, ⌘L goes to its
-/// address, ⌘R reloads, ⌘[ and ⌘] go back and forward (fixed keys: the
-/// browser window's customized ones don't apply here).
+/// What Little Ombre's own keys do. Reload, Back and Forward come from the
+/// menu (see `observeNavigationCommands`).
+enum LittleOmbreKey: Equatable {
+    case openInOmbre
+    case focusAddress
+
+    /// The browser window's shortcuts for the same things, as customized
+    /// (Settings › Shortcuts): "Open Peek in New Tab" (⌘O) opens the page in
+    /// Ombre, as it does for Peek. Their menu items do nothing here (no
+    /// Peek, no address bar of a browser window): matched by Little Ombre.
+    static let shortcuts: [(key: LittleOmbreKey, shortcut: KeyboardShortcutDefinition)] = [
+        (.openInOmbre, KeyboardShortcuts.Navigation.openPeekInNewTab),
+        (.focusAddress, KeyboardShortcuts.Address.focus)
+    ]
+
+    /// The key `chord` is, with the shortcuts as they are now.
+    @MainActor
+    static func key(
+        for chord: KeyChord,
+        chord current: @MainActor (KeyboardShortcutDefinition) -> KeyChord = { $0.currentChord }
+    ) -> LittleOmbreKey? {
+        shortcuts.first { current($0.shortcut).isSameKeys(as: chord) }?.key
+    }
+}
+
+/// Little Ombre's window: "Open Peek in New Tab" (⌘O) opens its page in
+/// Ombre and "Focus Address Bar" (⌘L) goes to its address, with the browser
+/// window's shortcuts as customized.
 final class LittleOmbreNSWindow: NSWindow {
     weak var owner: LittleOmbreWindow?
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
-        if flags == .command, let key = event.charactersIgnoringModifiers?.lowercased() {
+        if let owner, let chord = KeyChord(fromEvent: event), let key = LittleOmbreKey.key(for: chord) {
             switch key {
-            case "o":
-                owner?.openInOmbre()
-                return true
-            case "l":
-                owner?.model.focusAddress()
-                return true
-            case "r":
-                owner?.reload()
-                return true
-            case "[":
-                owner?.goBack()
-                return true
-            case "]":
-                owner?.goForward()
-                return true
-            default:
-                break
+            case .openInOmbre: owner.openInOmbre()
+            case .focusAddress: owner.model.focusAddress()
             }
+            return true
         }
         return super.performKeyEquivalent(with: event)
     }

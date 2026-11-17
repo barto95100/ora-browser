@@ -1,11 +1,13 @@
 import SwiftUI
 
 /// Little Ombre's bar: the page's site (never hidden by a long address) and
-/// its lock, the address to type when clicked (⌘L), and "Open in Ombre"
-/// (⌘O) with the spaces to open it in.
+/// its lock, the address to type when clicked ("Focus Address Bar", ⌘L),
+/// and "Open in Ombre" ("Open Peek in New Tab", ⌘O) with the spaces to open it in.
 struct LittleOmbreBar: View {
     @ObservedObject var popup: PopupPage
     @ObservedObject var model: LittleOmbreModel
+    /// The tooltip shows the shortcut as customized, kept up to date.
+    @ObservedObject private var shortcuts = CustomKeyboardShortcutManager.shared
     @State private var text = ""
     @FocusState private var isEditing: Bool
 
@@ -96,7 +98,8 @@ struct LittleOmbreBar: View {
         .menuStyle(.borderlessButton)
         .fixedSize()
         .disabled(popup.address == nil || model.owner?.canOpenInOmbre != true)
-        .help("Open in Ombre (⌘O)")
+        // Its shortcut as customized (see `LittleOmbreKey`).
+        .help("Open in Ombre (\(KeyboardShortcuts.Navigation.openPeekInNewTab.currentChord.display))")
     }
 
     private var navigationButtons: some View {

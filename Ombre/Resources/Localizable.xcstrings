@@ -6506,12 +6506,12 @@
         }
       }
     },
-    "Open in Ombre (⌘O)" : {
+    "Open in Ombre (%@)" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ouvrir dans Ombre (⌘O)"
+            "value" : "Ouvrir dans Ombre (%@)"
           }
         }
       }

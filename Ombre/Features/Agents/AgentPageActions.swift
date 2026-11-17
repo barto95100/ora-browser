@@ -1,4 +1,5 @@
 import Foundation
+import WebKit
 
 /// What agents do in a web page once page actions are allowed: click an
 /// element, fill in a field, run JavaScript. In the agents' own script world
@@ -97,9 +98,17 @@ enum AgentPageActions {
     /// in the page: a huge one never comes to the app.
     static func runScript(_ code: String) -> String {
         """
-        const result = await (async () => {
+        let result;
+        try {
+            result = await (async () => {
         \(code)
-        })();
+            })();
+        } catch (error) {
+            // What the code threw, apart from WebKit's own errors.
+            let thrown;
+            try { thrown = String(error); } catch (e) { thrown = 'A value that has no text.'; }
+            return { thrown: thrown.slice(0, limit) };
+        }
         const text = JSON.stringify(result === undefined ? null : result);
         if (text === undefined) return { unsupported: true };
         if (text.length > limit) return { tooLong: true };
@@ -113,6 +122,7 @@ enum AgentPageActions {
         await call(runScript(code), ["limit": maxResultLength], on: page).flatMap { reply in
             let reply = value(of: reply) as? [String: Any]
             if let json = reply?["json"] as? String { return .success(json) }
+            if let thrown = reply?["thrown"] as? String { return .failure(.scriptFailed(thrown)) }
             return .failure(reply?["tooLong"] != nil ? .resultTooLong : .unsupportedResult)
         }
     }
@@ -160,11 +170,27 @@ enum AgentPageActions {
             page.callAgentJavaScript(body, arguments: arguments) { result in
                 deadline.cancel()
                 answer.resume(
-                    result.mapError { .scriptFailed(scriptError($0)) }
+                    result.mapError(failure)
                         .flatMap { json($0 ?? NSNull()).map { .success($0) } ?? .failure(.unsupportedResult) }
                 )
             }
         }
+    }
+
+    /// What WebKit says when it stops waiting for a script's promise: freed
+    /// by the page (nothing referenced it) or gone with its document.
+    static let droppedPromiseMessage = "Completion handler for function call is no longer reachable"
+
+    /// Why the call failed.
+    static func failure(_ error: Error) -> AgentError {
+        let nsError = error as NSError
+        if nsError.domain == WKError.errorDomain,
+           nsError.code == WKError.Code.javaScriptExceptionOccurred.rawValue,
+           nsError.userInfo["WKJavaScriptExceptionMessage"] as? String == droppedPromiseMessage // not shown
+        {
+            return .promiseDropped
+        }
+        return .scriptFailed(scriptError(error))
     }
 
     /// What the script threw, for the agent (never logged).

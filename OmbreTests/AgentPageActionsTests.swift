@@ -203,6 +203,50 @@ struct AgentPageActionsTests {
         #expect(await AgentPageActions.run("await new Promise(() => {})", on: page) == .failure(.timedOut))
     }
 
+    /// A promise nothing keeps (the page frees it, or its document goes):
+    /// WebKit gives up the call, said plainly to the agent.
+    @Test func aPromiseThePageDropsIsSaid() async throws {
+        let page = try await loadedPage()
+        defer { page.teardown() }
+
+        // A script throwing these words is its own error.
+        let words = AgentPageActions.droppedPromiseMessage
+        let thrown = [
+            "throw new Error('\(words)')": "Error: \(words)",
+            "throw '\(words)'": words,
+            "return Promise.reject('\(words)')": words,
+            "throw { toString() { throw '\(words)' } }": "A value that has no text."
+        ]
+        for (code, reason) in thrown {
+            #expect(await AgentPageActions.run(code, on: page) == .failure(.scriptFailed(reason)), "\(code)")
+        }
+        let saved = AgentPageActions.timeout
+        AgentPageActions.timeout = .seconds(5)
+        defer { AgentPageActions.timeout = saved }
+
+        let reply = Task { @MainActor in await AgentPageActions.run("await new Promise(() => {})", on: page) }
+        try await Task.sleep(for: .milliseconds(200))
+        page.extensionWebView.loadHTMLString("<p>Next</p>", baseURL: URL(string: "https://example.com/next"))
+        #expect(await reply.value == .failure(.promiseDropped))
+        #expect(AgentError.promiseDropped.mayHaveActed)
+    }
+
+    /// Only WebKit's own error is a dropped promise.
+    @Test func aDroppedPromiseIsWebKitsErrorOnly() {
+        func error(_ domain: String, _ code: WKError.Code, _ message: String) -> NSError {
+            NSError(domain: domain, code: code.rawValue, userInfo: ["WKJavaScriptExceptionMessage": message])
+        }
+        let words = AgentPageActions.droppedPromiseMessage
+        #expect(AgentPageActions
+            .failure(error(WKError.errorDomain, .javaScriptExceptionOccurred, words)) == .promiseDropped)
+        #expect(AgentPageActions.failure(error("Other", .javaScriptExceptionOccurred, words)) == .scriptFailed(words))
+        #expect(AgentPageActions.failure(error(WKError.errorDomain, .unknown, words)) == .scriptFailed(words))
+        #expect(
+            AgentPageActions.failure(error(WKError.errorDomain, .javaScriptExceptionOccurred, "Error: boom"))
+                == .scriptFailed("Error: boom")
+        )
+    }
+
     @Test func resultsAreJSONOnly() {
         #expect(AgentPageActions.json(NSNull()) == "null")
         #expect(AgentPageActions.json("a/b") == #""a/b""#)

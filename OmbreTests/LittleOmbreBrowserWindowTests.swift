@@ -34,7 +34,6 @@ extension TabManagerTests {
         @Test func onlyAWindowMadeForTheLinkIsHidden() {
             let made = BrowserWindowStandIn()
             let other = BrowserWindowStandIn()
-            let open: (NSWindow) -> Bool = { _ in true }
             func hiding(
                 _ elapsed: Duration, others: [NSWindow] = [], launched: TimeInterval = 600,
                 isOpen: @escaping (NSWindow) -> Bool = { _ in true }
@@ -52,8 +51,8 @@ extension TabManagerTests {
             #expect(hiding(.seconds(3)) == nil)
             // A window closed or hidden with the app isn't one to hide.
             #expect(hiding(.milliseconds(200), isOpen: { _ in false }) == nil)
-            // A minimized other window is still open.
-            #expect(hiding(.milliseconds(200), others: [other], isOpen: open) == nil)
+            // Another window closed: as if none.
+            #expect(hiding(.milliseconds(200), others: [other], isOpen: { $0 === made }) == .close)
         }
 
         /// Closed: the browser window it hid goes once no Little Ombre uses it.
@@ -79,6 +78,39 @@ extension TabManagerTests {
                 #expect(!browser.isClosed)
                 second.window.close()
                 await window.waitUntil("browser window closed") { browser.isClosed }
+            }
+        }
+
+        /// Opened from the hidden window without hiding it (⌥⌘N, a link
+        /// handed over): it holds the window too, which doesn't close under it.
+        @Test func aLittleOmbreFromTheHiddenWindowHoldsItToo() async throws {
+            try await TabManagerTestWindow.run { window in
+                let browser = BrowserWindowStandIn()
+                let first = try #require(LittleOmbreWindow.open(nil, from: window.tabManager, window: browser))
+                first.hideBrowserWindow(.close)
+                let second = try #require(LittleOmbreWindow.open(nil, from: window.tabManager, window: browser))
+                #expect(second.hiddenBrowserWindow == .close)
+                first.window.close()
+                await Task.yield()
+                #expect(!browser.isClosed)
+                #expect(LittleOmbreWindow.isLittleOmbreWindow(second.window))
+                second.window.close()
+                await window.waitUntil("browser window closed") { browser.isClosed }
+            }
+        }
+
+        /// The browser window closes for another reason (an extension): its
+        /// Little Ombres close with it, without closing or showing it again.
+        @Test func theHiddenWindowClosedElsewhereIsLeftAlone() async throws {
+            try await TabManagerTestWindow.run { window in
+                let browser = BrowserWindowStandIn()
+                let little = try #require(LittleOmbreWindow.open(nil, from: window.tabManager, window: browser))
+                little.hideBrowserWindow(.show)
+                LittleOmbreWindow.closeAll(from: window.tabManager)
+                #expect(!LittleOmbreWindow.isLittleOmbreWindow(little.window))
+                await Task.yield()
+                #expect(!browser.isVisible)
+                #expect(!browser.isClosed)
             }
         }
 

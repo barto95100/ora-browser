@@ -19,7 +19,8 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     let model: LittleOmbreModel
     /// The browser window it came from: its spaces, downloads and history.
     private weak var tabManager: TabManager?
-    private(set) weak var browserWindow: NSWindow?
+    /// Set through `attach(to:)`.
+    weak var browserWindow: NSWindow?
     /// What becomes of the browser window it hid (made only to hand over
     /// its link) when it closes; see `LittleOmbreWindow+BrowserWindow.swift`.
     var hiddenBrowserWindow: HiddenBrowserWindow?
@@ -36,6 +37,8 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     /// they use its spaces or its private session).
     static func closeAll(from tabManager: TabManager) {
         for little in openWindows where little.tabManager === tabManager || little.tabManager == nil {
+            // Its browser window is going anyway: not closed or shown again.
+            little.hiddenBrowserWindow = nil
             little.window.close()
         }
     }
@@ -73,7 +76,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         if !isPrivate { popup.history = (tabManager.historyManager, space) }
         popup.enablePasswords()
         let little = LittleOmbreWindow(popup: popup, tabManager: tabManager, space: space)
-        little.browserWindow = browserWindow
+        little.attach(to: browserWindow)
         little.show()
         if let url {
             page.load(URLRequest(url: url))

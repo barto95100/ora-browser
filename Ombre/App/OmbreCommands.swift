@@ -24,7 +24,9 @@ struct OmbreCommands: Commands {
 
             Button("New Little Ombre") {
                 // From the browser window in front (also from a Little Ombre).
+                // From a Little Ombre: its browser window, even hidden (see `hideBrowserWindow`).
                 let target = NSApp.keyWindow.flatMap { BrowserWindows.browsing.contains($0) ? $0 : nil }
+                    ?? LittleOmbreWindow.showing(NSApp.keyWindow)?.browserWindow
                     ?? NSApp.orderedWindows.first { BrowserWindows.browsing.contains($0) }
                 NotificationCenter.default.post(name: .newLittleOmbre, object: target)
             }

@@ -39,6 +39,14 @@ extension LittleOmbreWindow {
         return launch < launchDelay ? .show : .close
     }
 
+    /// Its browser window, known now or once SwiftUI gives it (a link
+    /// handed over before): one a Little Ombre holds hidden is held by this
+    /// one too, or it would close under it.
+    func attach(to browserWindow: NSWindow?) {
+        self.browserWindow = browserWindow
+        if let browserWindow, let held = Self.held(browserWindow) { hiddenBrowserWindow = held }
+    }
+
     /// Hides the browser window it came from, until "Open in Ombre" or its close.
     func hideBrowserWindow(_ fate: HiddenBrowserWindow) {
         guard let browserWindow else { return }
@@ -72,18 +80,27 @@ extension LittleOmbreWindow {
     func releaseHiddenBrowserWindow() {
         guard let fate = hiddenBrowserWindow, let browserWindow else { return }
         hiddenBrowserWindow = nil
-        guard Self.held(browserWindow) == nil, !Self.isOpen(browserWindow) else { return }
+        guard Self.held(browserWindow) == nil else { return }
+        // Shown meanwhile (settings, an extension): it stays, in the Window menu.
+        guard !Self.isOpen(browserWindow) else {
+            browserWindow.isExcludedFromWindowsMenu = false
+            return
+        }
         switch fate {
         case .close:
-            // Once Little Ombre is gone (the window closes the Little Ombres it has).
-            DispatchQueue.main.async { browserWindow.close() }
+            // Once Little Ombre is gone (the window closes the Little Ombres
+            // it has), unless a link meanwhile opened one from it.
+            DispatchQueue.main.async {
+                guard Self.held(browserWindow) == nil, !Self.isOpen(browserWindow) else { return }
+                browserWindow.close()
+            }
         case .show:
             Self.reveal(browserWindow)
         }
     }
 
     /// How another Little Ombre holds `browserWindow` hidden, if one does.
-    private static func held(_ browserWindow: NSWindow) -> HiddenBrowserWindow? {
+    static func held(_ browserWindow: NSWindow) -> HiddenBrowserWindow? {
         openWindows.lazy.filter { $0.browserWindow === browserWindow }.compactMap(\.hiddenBrowserWindow).first
     }
 

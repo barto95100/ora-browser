@@ -494,18 +494,20 @@ extension TabManagerTests {
             }
         }
 
-        /// Read right after open: its page is waited for, not "not loaded".
+        /// Read right after open: the end of its page's load is waited for,
+        /// even a failed one, not "not loaded".
         @Test func aTabJustOpenedIsWaitedFor() async throws {
             try await TabManagerTestWindow.run { window in
-                let saved = AgentPageActions.loadWait
-                AgentPageActions.loadWait = .seconds(3)
-                defer { AgentPageActions.loadWait = saved }
                 let control = control(window)
                 let address = TabManagerTestWindow.url("agent-load").absoluteString
                 let opened = try await control.run(.open(address), from: terminal).get()
                 let id = try #require(AgentPageActions.value(of: opened) as? [String: Any])["id"] as? String
+                let clock = ContinuousClock()
+                let start = clock.now
                 let read = await control.run(.read(id), from: terminal)
                 #expect((try? read.get()) != nil, "\(read)")
+                // Its load ended (it fails: a refusing port): not waited for till the limit.
+                #expect(clock.now - start < AgentPageActions.loadWait)
             }
         }
 

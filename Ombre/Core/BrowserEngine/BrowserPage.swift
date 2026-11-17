@@ -34,6 +34,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private(set) var isReadyForNavigation = false
     private var pendingLoadRequest: URLRequest?
     private var pendingReload = false
+    /// A load was given to WebKit: once it ends, even failed (no address
+    /// then), the page is as loaded as it gets.
+    private var hasStartedLoading = false
     private var observations: [NSKeyValueObservation] = []
     private nonisolated(unsafe) var inspectionObserver: NSObjectProtocol?
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.
@@ -307,10 +310,11 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.estimatedProgress
     }
 
-    /// Its page is there: an address, nothing loading nor waiting to load.
+    /// Its load is over (done or failed): nothing loading nor waiting to
+    /// load, and a page loaded or a load ended.
     var hasLoaded: Bool {
-        isReadyForNavigation && pendingLoadRequest == nil && !pendingReload && webView.url != nil
-            && !webView.isLoading
+        isReadyForNavigation && pendingLoadRequest == nil && !pendingReload
+            && (webView.url != nil || hasStartedLoading) && !webView.isLoading
     }
 
     func load(_ request: URLRequest) {
@@ -328,6 +332,7 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// user opened), or to its folder when the user allowed it (so the page's
     /// images and styles load), not with a plain request.
     private func perform(_ request: URLRequest) {
+        hasStartedLoading = true
         if let url = request.url, url.isFileURL {
             let readAccess = LocalFolderAccess.shared.folder(containing: url) ?? url
             webView.loadFileURL(url, allowingReadAccessTo: readAccess)

@@ -207,6 +207,22 @@ enum AgentPageActions {
         on page: BrowserPage,
         until deadline: ContinuousClock.Instant = deadline()
     ) async -> Result<String, AgentError> {
+        await answer(until: deadline) { reply in
+            page.callAgentJavaScript(body, arguments: arguments) { result in
+                reply(
+                    result.mapError(failure)
+                        .flatMap { json($0 ?? NSNull()).map { .success($0) } ?? .failure(.unsupportedResult) }
+                )
+            }
+        }
+    }
+
+    /// What `start` gives to its reply, or `timedOut` at `deadline`: the
+    /// first one only.
+    static func answer<Value: Sendable>(
+        until deadline: ContinuousClock.Instant,
+        _ start: (@escaping @MainActor (Result<Value, AgentError>) -> Void) -> Void
+    ) async -> Result<Value, AgentError> {
         await withCheckedContinuation { continuation in
             let answer = Once(continuation)
             let timer = Task { @MainActor in
@@ -214,12 +230,9 @@ enum AgentPageActions {
                 guard !Task.isCancelled else { return }
                 answer.resume(.failure(.timedOut))
             }
-            page.callAgentJavaScript(body, arguments: arguments) { result in
+            start { result in
                 timer.cancel()
-                answer.resume(
-                    result.mapError(failure)
-                        .flatMap { json($0 ?? NSNull()).map { .success($0) } ?? .failure(.unsupportedResult) }
-                )
+                answer.resume(result)
             }
         }
     }
@@ -265,14 +278,14 @@ enum AgentPageActions {
     }
 
     /// Resumes its continuation once.
-    private final class Once {
-        private var continuation: CheckedContinuation<Result<String, AgentError>, Never>?
+    private final class Once<Value: Sendable> {
+        private var continuation: CheckedContinuation<Result<Value, AgentError>, Never>?
 
-        init(_ continuation: CheckedContinuation<Result<String, AgentError>, Never>) {
+        init(_ continuation: CheckedContinuation<Result<Value, AgentError>, Never>) {
             self.continuation = continuation
         }
 
-        func resume(_ result: Result<String, AgentError>) {
+        func resume(_ result: Result<Value, AgentError>) {
             continuation?.resume(returning: result)
             continuation = nil
         }

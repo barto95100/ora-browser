@@ -308,6 +308,18 @@ struct AgentPageActionsTests {
         try await Task.sleep(for: .milliseconds(200))
         page.extensionWebView.loadHTMLString("<p>Next</p>", baseURL: URL(string: "https://example.com/next"))
         #expect(await reply.value == .failure(.pageChanged))
+        #expect(!AgentError.pageChanged.mayHaveActed)
+    }
+
+    /// read and capture answer by the command's deadline too.
+    @Test func anAnswerNeverGivenTimesOut() async {
+        let never: Result<Int, AgentError> = await AgentPageActions.answer(until: .now + .milliseconds(100)) { _ in }
+        #expect(never == .failure(.timedOut))
+        let given: Result<Int, AgentError> = await AgentPageActions.answer(until: .now + .seconds(5)) { reply in
+            reply(.success(1))
+            reply(.success(2))
+        }
+        #expect(given == .success(1))
     }
 
     @Test func resultsAreJSONOnly() {

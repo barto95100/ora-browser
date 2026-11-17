@@ -42,21 +42,32 @@ struct TopicGroupingTests {
         #expect(TopicGrouping.validated([TopicSuggestion(name: "Notes", tabIDs: ["t1", "t2"])], tabs: local).count == 1)
     }
 
-    /// The model gets an id, the title (cut) and the site of each tab, never
-    /// its address.
-    @Test func theModelGetsIDsTitlesAndSitesOnly() throws {
+    /// The model gets an id, the title, the site and the page's description
+    /// (cut, on one line) of each tab, never its address.
+    @Test func theModelGetsIDsTitlesSitesAndDescriptionsOnly() throws {
         let tabs = try TopicGrouping.topicTabs([
-            (
+            TopicSource(
                 title: String(repeating: "t", count: 200),
                 url: #require(URL(string: "https://mail.example.com/inbox?id=42"))
             ),
-            (title: "Second\nline", url: #require(URL(string: "https://a.org/page")))
+            TopicSource(title: "Second\nline", url: #require(URL(string: "https://a.org/page")), summary: " "),
+            TopicSource(
+                title: "Grafana",
+                url: #require(URL(string: "https://grafana.com/")),
+                summary: " Dashboards\nfor monitoring " + String(repeating: "d", count: 300)
+            )
         ])
         #expect(tabs == [
             TopicTab(id: "t1", title: String(repeating: "t", count: 80), site: "example.com"),
-            TopicTab(id: "t2", title: "Second line", site: "a.org")
+            TopicTab(id: "t2", title: "Second line", site: "a.org"),
+            TopicTab(
+                id: "t3", title: "Grafana", site: "grafana.com",
+                summary: String(("Dashboards for monitoring " + String(repeating: "d", count: 300)).prefix(160))
+            )
         ])
-        #expect(TopicGrouping.request(tabs).hasSuffix("\nt2: Second line (a.org)"))
+        let lines = TopicGrouping.request(tabs).split(separator: "\n")
+        #expect(lines[1] == "t2: Second line (a.org)")
+        #expect(lines[2].hasPrefix("t3: Grafana (grafana.com) — Dashboards for monitoring ddd"))
     }
 
     @Test func theFinalMessageSaysWhatWasDone() async {
@@ -244,6 +255,41 @@ extension TabManagerTests {
                 await window.tabManager.tidyTabs(in: space)?.value
 
                 #expect(window.tabManager.tabGroups(in: space).isEmpty)
+            }
+        }
+
+        /// A vague title (Grafana's) with a page that says its subject: the
+        /// model gets the page's description and groups it.
+        @Test func aPagesDescriptionTellsItsSubject() async throws {
+            try await TabManagerTestWindow.run { window in
+                let space = try window.activeSpace
+                let grafana = try await window.openSettled("grafana")
+                let page = try #require(grafana.browserPage)
+                page.extensionWebView.loadHTMLString(
+                    "<head><meta name=\"Description\" content=\"Dashboards for monitoring\n your systems\"></head>",
+                    baseURL: URL(string: "https://grafana.example/")
+                )
+                let pages = TopicPageSummaries.pages(of: [grafana])
+                let clock = ContinuousClock()
+                let deadline = clock.now + .seconds(10)
+                while await TopicPageSummaries.read(pages).isEmpty, clock.now < deadline {
+                    try await Task.sleep(for: .milliseconds(50))
+                }
+                let summaries = await TopicPageSummaries.read(pages)
+                #expect(summaries == [grafana.id: "Dashboards for monitoring\n your systems"])
+                grafana.title = "Full-stack observability for the agentic era"
+                let others = try makeTabs(window, Array(recipesAndMonitoring[4 ..< 6]))
+                // A tab without its page: no description, nothing waited for.
+                #expect(TopicPageSummaries.pages(of: others).isEmpty)
+                let saved = TabManager.topicGrouper
+                TabManager.topicGrouper = { KeywordGrouper(subjects: [(name: "Supervision", word: "monitoring")]) }
+                defer { TabManager.topicGrouper = saved }
+
+                await window.tabManager.tidyTabs(in: space)?.value
+
+                let groups = window.tabManager.tabGroups(in: space)
+                #expect(groups.map(\.name) == ["Supervision"])
+                #expect(Set(groups.first?.tabIDs ?? []) == Set([grafana.id] + others.map(\.id)))
             }
         }
 

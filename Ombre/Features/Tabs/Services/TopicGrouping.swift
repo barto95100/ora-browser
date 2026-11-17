@@ -4,18 +4,30 @@ import Foundation
 #endif
 
 /// A tab given to the subject grouping: a short id of its own ("t1", "t2"…),
-/// its title and its site only (never its address, its page or anything typed).
+/// its title, its site and the description its page gives of itself, if
+/// loaded (never its address, its text or anything typed).
 /// The model answers with these ids, never with positions: a reply counted
 /// from 0 or from 1 can't take one tab for another.
 struct TopicTab: Equatable, Sendable {
     let id: String
     let title: String
     let site: String
+    /// The page's description (its meta description), if any: a vague title
+    /// ("Full-stack observability…") says its subject there.
+    var summary = ""
 
     /// The line the model reads for this tab.
     var line: String {
-        "\(id): \(title) (\(site))"
+        let line = "\(id): \(title) (\(site))"
+        return summary.isEmpty ? line : line + " — " + summary
     }
+}
+
+/// What a tab gives the subject grouping, before it is cut to one line.
+struct TopicSource {
+    let title: String
+    let url: URL
+    var summary = ""
 }
 
 /// A group of tabs on one subject, as the model suggests it (tab ids).
@@ -46,6 +58,8 @@ enum TopicGrouping {
     static let maxTabs = 50
     /// Titles are cut there: enough to tell a subject.
     static let maxTitleLength = 80
+    /// Descriptions are cut there (search engines show about as much).
+    static let maxSummaryLength = 160
     /// The model's answer is no longer waited for after that.
     static let deadline: Duration = .seconds(60)
 
@@ -77,15 +91,20 @@ enum TopicGrouping {
     }
 
     /// The tabs as the model gets them, numbered from "t1".
-    static func topicTabs(_ tabs: [(title: String, url: URL)]) -> [TopicTab] {
+    static func topicTabs(_ tabs: [TopicSource]) -> [TopicTab] {
         tabs.enumerated().map { index, tab in
             TopicTab(
                 id: "t\(index + 1)",
-                // One line per tab, whatever the title holds.
-                title: String(tab.title.replacing(/\s+/, with: " ").prefix(maxTitleLength)),
-                site: TabGrouping.site(of: tab.url) ?? ""
+                title: oneLine(tab.title, maxTitleLength),
+                site: TabGrouping.site(of: tab.url) ?? "",
+                summary: oneLine(tab.summary, maxSummaryLength)
             )
         }
+    }
+
+    /// One line per tab, whatever the page wrote.
+    private static func oneLine(_ text: String, _ length: Int) -> String {
+        String(text.replacing(/\s+/, with: " ").trimmingCharacters(in: .whitespaces).prefix(length))
     }
 
     /// What the model reads: one tab per line.
@@ -132,7 +151,8 @@ enum TopicGrouping {
             // For the model, never shown.
             let instructions = [
                 "You sort a web browser's tabs into groups by subject.", // no translation
-                "Each line is a tab: its id, a colon, its title and its site.", // no translation
+                "Each line is a tab: its id, a colon, its title and its site,", // no translation
+                "sometimes followed by a dash and the page's description.", // no translation
                 "Each group holds at least \(TopicGrouping.threshold) tabs about one subject.", // no translation
                 "Give the tabs by their ids, exactly as written.", // no translation
                 "Name each group in the language whose code is \(language)." // no translation

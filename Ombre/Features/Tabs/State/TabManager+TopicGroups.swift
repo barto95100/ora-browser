@@ -56,7 +56,7 @@ extension TabManager {
     }
 
     /// The space's tabs in no group, given to the subject grouping (their
-    /// titles and sites only, each with its id); groups made from what it
+    /// titles, sites and loaded pages' descriptions, each with an id); groups made from what it
     /// suggests, if those tabs are still free once it answers. "Tidying
     /// tabs…" is shown meanwhile, then what was done.
     func groupBySubject(in container: TabContainer, bySite: Int) -> Task<Void, Never>? {
@@ -65,14 +65,11 @@ extension TabManager {
         // The first ones only: the model reads a few thousand words at most.
         let tabs = Array(groupableTabs(in: container).filter { !grouped.contains($0.id) }.prefix(TopicGrouping.maxTabs))
         guard tabs.count >= TopicGrouping.threshold else { return nil }
-        let input = TopicGrouping.topicTabs(tabs.map { (title: $0.title, url: $0.url) })
-        let tabIDs = Dictionary(uniqueKeysWithValues: zip(input.map(\.id), tabs.map(\.id)))
         // The app's language (the group names sit among its texts).
         let language = Bundle.main.preferredLocalizations.first ?? "en"
         let spaceID = container.id
         // Titles in a log: never a private window's.
         let logs = !isPrivateWindow
-        if logs { PageLog.debug("tabs by subject: request\n\(TopicGrouping.request(input))") }
 
         tidyingSpaceIDs.insert(spaceID)
         let progress = ToastManager.shared.show(
@@ -91,7 +88,12 @@ extension TabManager {
             self?.tidyingSpaceIDs.remove(spaceID)
             if let outcome { TidyMessage.show(bySite: bySite, bySubject: outcome) }
         }
+        // Read now: a tab closed meanwhile is gone from the database.
+        let (sources, ids) = (tabs.map { TopicSource(title: $0.title, url: $0.url) }, tabs.map(\.id))
+        let pages = TopicPageSummaries.pages(of: tabs)
         let work = Task { @MainActor [weak self] in
+            let (input, tabIDs) = await Self.topicInput(sources, ids: ids, pages: pages)
+            if logs { PageLog.debug("tabs by subject: request\n\(TopicGrouping.request(input))") }
             let reply: TopicReply
             do {
                 reply = try await grouper.suggestions(for: input, language: language)
@@ -115,6 +117,20 @@ extension TabManager {
             finish(.failed(String(localized: "the model took too long")))
         }
         return work
+    }
+
+    /// The tabs as the model gets them, with their pages' descriptions, and
+    /// the tab each id stands for.
+    private static func topicInput(
+        _ sources: [TopicSource],
+        ids: [UUID],
+        pages: [(id: UUID, page: BrowserPage)]
+    ) async -> ([TopicTab], [String: UUID]) {
+        let summaries = await TopicPageSummaries.read(pages)
+        let input = TopicGrouping.topicTabs(zip(sources, ids).map { source, id in
+            TopicSource(title: source.title, url: source.url, summary: summaries[id] ?? "")
+        })
+        return (input, Dictionary(uniqueKeysWithValues: zip(input.map(\.id), ids)))
     }
 
     /// Makes the groups the model suggests, from tabs still free; returns how

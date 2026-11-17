@@ -44,6 +44,10 @@ private struct BrowserWindowRoot: View {
 
     private let modelContext: ModelContext
     @State private var window: NSWindow?
+    /// When the window appeared: a link right after made it (see `LittleOmbreWindow.hiding`).
+    @State private var windowAppearance: ContinuousClock.Instant?
+    /// A Little Ombre opened for a link before the window was known.
+    @State private var littleAwaitingWindow: LittleOmbreWindow?
 
     init(session: WindowSession) {
         modelContext = session.modelContext
@@ -112,10 +116,17 @@ private struct BrowserWindowRoot: View {
                 guard !privacyMode.isPrivate else { return }
                 // Like Arc: in a small window of its own, unless turned off.
                 if SettingsStore.shared.opensLinksInLittleOmbre,
-                   LittleOmbreWindow.open(url, from: tabManager, window: window) != nil
+                   let little = LittleOmbreWindow.open(url, from: tabManager, window: window)
                 {
+                    if let window, let appeared = windowAppearance {
+                        hideIfMadeForTheLink(window, by: little, appearedFor: .now - appeared)
+                    } else {
+                        littleAwaitingWindow = little
+                    }
                     return
                 }
+                // In a tab: the window shows, even one a Little Ombre hid.
+                if let window { LittleOmbreWindow.browserWindowNeeded(window) }
                 tabManager.openTab(
                     url: url,
                     historyManager: historyManager,
@@ -136,6 +147,12 @@ private struct BrowserWindowRoot: View {
                     newWindow.title = String(localized: "Private Browsing")
                 }
                 if let newWindow {
+                    windowAppearance = .now
+                    if let little = littleAwaitingWindow {
+                        littleAwaitingWindow = nil
+                        little.attach(to: newWindow)
+                        hideIfMadeForTheLink(newWindow, by: little, appearedFor: .zero)
+                    }
                     // ⌘Q asks for confirmation in a browser window, normal or private.
                     BrowserWindows.browsing.add(newWindow)
                     WebExtensionsHub.registerWindow(
@@ -247,5 +264,21 @@ private struct BrowserWindowRoot: View {
                     return true
                 }
             }
+    }
+}
+
+extension BrowserWindowRoot {
+    /// Made only to hand over the link Little Ombre opened: hidden, Little
+    /// Ombre opens alone (see `LittleOmbreWindow.hiding`).
+    private func hideIfMadeForTheLink(_ window: NSWindow, by little: LittleOmbreWindow, appearedFor elapsed: Duration) {
+        guard LittleOmbreWindow.isLittleOmbreWindow(little.window),
+              let fate = LittleOmbreWindow.hiding(
+                  window,
+                  appearedFor: elapsed,
+                  otherWindows: BrowserWindows.normal.allObjects,
+                  launchedFor: -(NSRunningApplication.current.launchDate ?? .distantPast).timeIntervalSinceNow
+              )
+        else { return }
+        little.hideBrowserWindow(fate)
     }
 }

@@ -494,6 +494,21 @@ extension TabManagerTests {
             }
         }
 
+        /// Read right after open: its page is waited for, not "not loaded".
+        @Test func aTabJustOpenedIsWaitedFor() async throws {
+            try await TabManagerTestWindow.run { window in
+                let saved = AgentPageActions.loadWait
+                AgentPageActions.loadWait = .seconds(3)
+                defer { AgentPageActions.loadWait = saved }
+                let control = control(window)
+                let address = TabManagerTestWindow.url("agent-load").absoluteString
+                let opened = try await control.run(.open(address), from: terminal).get()
+                let id = try #require(AgentPageActions.value(of: opened) as? [String: Any])["id"] as? String
+                let read = await control.run(.read(id), from: terminal)
+                #expect((try? read.get()) != nil, "\(read)")
+            }
+        }
+
         @Test func aTabWithoutItsPageIsNotRead() async throws {
             try await TabManagerTestWindow.run { window in
                 let space = try window.activeSpace

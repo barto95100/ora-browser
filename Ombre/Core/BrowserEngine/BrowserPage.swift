@@ -307,6 +307,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.estimatedProgress
     }
 
+    /// Its page is there: an address, nothing loading nor waiting to load.
+    var hasLoaded: Bool {
+        isReadyForNavigation && pendingLoadRequest == nil && !pendingReload && webView.url != nil
+            && !webView.isLoading
+    }
+
     func load(_ request: URLRequest) {
         guard isReadyForNavigation else {
             pendingLoadRequest = request

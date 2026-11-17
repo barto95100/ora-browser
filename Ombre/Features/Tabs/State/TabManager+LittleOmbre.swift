@@ -1,4 +1,6 @@
 import Foundation
+import SwiftData
+@preconcurrency import WebKit
 
 /// Little Ombre's page going to a tab of this window ("Open in Ombre", ⌘O).
 extension TabManager {
@@ -74,5 +76,66 @@ extension TabManager {
         container.lastAccessedAt = Date()
         modelContext.saveOrLog("adopt Little Ombre page")
         return true
+    }
+
+    /// A page Little Ombre's page opens in a new window (`target="_blank"`,
+    /// `window.open` without a size, ⌘-click): a tab of Little Ombre's space
+    /// in this window, as a tab's link would. With `configuration`, linked
+    /// to its opener (`window.opener`, sign-in pages); else loading `url`.
+    /// None when the space is gone or the window's privacy differs.
+    @discardableResult
+    func openLittleOmbreLink(
+        _ url: URL?,
+        from popup: PopupPage,
+        configuration: WKWebViewConfiguration?,
+        disposition: BrowserNewTabDisposition
+    ) -> Tab? {
+        let spaceID = popup.context.spaceID
+        let isPrivate = popup.context.isPrivate
+        guard isPrivate == isPrivateWindow,
+              let container = try? modelContext.fetch(FetchDescriptor<TabContainer>(
+                  predicate: #Predicate { $0.id == spaceID }
+              )).first
+        else { return nil }
+        let address = url ?? URL(string: "about:blank")!
+        let placeholder = Self.initialTitleAndFavicon(for: address)
+        let tab = makeTab(
+            url: address,
+            title: placeholder?.title ?? address.absoluteString,
+            favicon: isPrivate ? nil : placeholder?.favicon,
+            in: container,
+            isPrivate: isPrivate,
+            historyManager: historyManager,
+            downloadManager: downloadManager
+        )
+        if let configuration {
+            // WebKit loads it.
+            let page = tab.makeLinkedBrowserPage(configuration: configuration, opener: popup.page)
+            tab.adopt(
+                page,
+                historyManager: historyManager,
+                downloadManager: downloadManager,
+                tabManager: self,
+                recordsVisit: false
+            )
+        } else {
+            tab.restoreTransientState(
+                historyManager: historyManager,
+                downloadManager: downloadManager,
+                tabManager: self,
+                isPrivate: isPrivate
+            )
+        }
+        // Little Ombre has no split view: a tab in front instead.
+        if disposition != .background {
+            if activeContainer?.id != container.id {
+                activateContainer(container, activateLastAccessedTab: false)
+            }
+            activateTab(tab)
+        }
+        container.lastAccessedAt = Date()
+        modelContext.saveOrLog("open Little Ombre link")
+        tab.openerURL = popup.shownURL
+        return tab
     }
 }

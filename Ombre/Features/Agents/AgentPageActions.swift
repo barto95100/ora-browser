@@ -186,7 +186,7 @@ enum AgentPageActions {
         let nsError = error as NSError
         if nsError.domain == WKError.errorDomain,
            nsError.code == WKError.Code.javaScriptExceptionOccurred.rawValue,
-           nsError.userInfo["WKJavaScriptExceptionMessage"] as? String == droppedPromiseMessage
+           nsError.userInfo["WKJavaScriptExceptionMessage"] as? String == droppedPromiseMessage // not shown
         {
             return .promiseDropped
         }

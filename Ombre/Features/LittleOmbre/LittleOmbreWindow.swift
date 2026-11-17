@@ -19,7 +19,10 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     let model: LittleOmbreModel
     /// The browser window it came from: its spaces, downloads and history.
     private weak var tabManager: TabManager?
-    private weak var browserWindow: NSWindow?
+    private(set) weak var browserWindow: NSWindow?
+    /// What becomes of the browser window it hid (made only to hand over
+    /// its link) when it closes; see `LittleOmbreWindow+BrowserWindow.swift`.
+    var hiddenBrowserWindow: HiddenBrowserWindow?
     /// The page went to a tab: not torn down with the window.
     private var isMovedToTab = false
     private var isClosed = false
@@ -202,8 +205,10 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
             popup.page.log(adopted ? "moved from Little Ombre to a tab" : "Little Ombre opened again in a tab")
             // The page's popups ("Sign in with…") go on with it, in the tab's window.
             if adopted { BrowserPopupWindow.movePopups(openedFrom: window, to: browserWindow) }
+            // Before closing: a browser window it hid stays, shown.
+            showBrowserWindow()
             window.close()
-            browserWindow?.makeKeyAndOrderFront(nil)
+            if !TestHost.isActive { browserWindow?.makeKeyAndOrderFront(nil) }
         }
     }
 
@@ -250,6 +255,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         }
         Self.openWindows.remove(self)
         BrowserPopupWindow.closePopups(openedFrom: window)
+        releaseHiddenBrowserWindow()
     }
 }
 

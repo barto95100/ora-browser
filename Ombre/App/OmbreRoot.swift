@@ -44,6 +44,8 @@ private struct BrowserWindowRoot: View {
 
     private let modelContext: ModelContext
     @State private var window: NSWindow?
+    /// When the window appeared: a link right after made it (see `LittleOmbreWindow.hiding`).
+    @State private var windowAppearance: ContinuousClock.Instant?
 
     init(session: WindowSession) {
         modelContext = session.modelContext
@@ -112,10 +114,21 @@ private struct BrowserWindowRoot: View {
                 guard !privacyMode.isPrivate else { return }
                 // Like Arc: in a small window of its own, unless turned off.
                 if SettingsStore.shared.opensLinksInLittleOmbre,
-                   LittleOmbreWindow.open(url, from: tabManager, window: window) != nil
+                   let little = LittleOmbreWindow.open(url, from: tabManager, window: window)
                 {
+                    // Made only to hand over the link: Little Ombre opens alone.
+                    if let window, let appeared = windowAppearance, let fate = LittleOmbreWindow.hiding(
+                        window,
+                        appearedFor: .now - appeared,
+                        otherWindows: BrowserWindows.normal.allObjects,
+                        launchedFor: -(NSRunningApplication.current.launchDate ?? .distantPast).timeIntervalSinceNow
+                    ) {
+                        little.hideBrowserWindow(fate)
+                    }
                     return
                 }
+                // In a tab: the window shows, even one a Little Ombre hid.
+                if let window { LittleOmbreWindow.browserWindowNeeded(window) }
                 tabManager.openTab(
                     url: url,
                     historyManager: historyManager,
@@ -136,6 +149,7 @@ private struct BrowserWindowRoot: View {
                     newWindow.title = String(localized: "Private Browsing")
                 }
                 if let newWindow {
+                    windowAppearance = .now
                     // ⌘Q asks for confirmation in a browser window, normal or private.
                     BrowserWindows.browsing.add(newWindow)
                     WebExtensionsHub.registerWindow(

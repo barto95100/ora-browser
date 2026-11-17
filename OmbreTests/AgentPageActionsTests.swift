@@ -266,6 +266,26 @@ struct AgentPageActionsTests {
         #expect(await page.waitUntilLoaded(within: .zero))
     }
 
+    /// A failed load is kept until the next one starts (agents are told).
+    @Test func aFailedLoadIsKeptUntilTheNextLoad() async throws {
+        let page = makePage()
+        defer { page.teardown() }
+
+        page.load(URLRequest(url: TabManagerTestWindow.url("agent-load-error")))
+        #expect(await page.waitUntilLoaded(within: .seconds(10)))
+        let error = try #require(page.lastLoadFailure as? NSError)
+        #expect(error.domain == NSURLErrorDomain)
+        page.extensionWebView.loadHTMLString("<p>Next</p>", baseURL: URL(string: "https://example.com/"))
+        // The failed page counts as loaded already: wait for the next one's text.
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(10)
+        while await inPage(page, "document.body?.innerText") as? String != "Next", clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        #expect(await page.waitUntilLoaded(within: .seconds(10)))
+        #expect(page.lastLoadFailure == nil)
+    }
+
     /// Click and fill wait for an element the page adds later.
     @Test func anElementAddedLaterIsWaitedFor() async throws {
         let page = try await loadedPage()

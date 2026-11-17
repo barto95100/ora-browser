@@ -37,6 +37,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// A load was given to WebKit: once it ends, even failed (no address
     /// then), the page is as loaded as it gets.
     private var hasStartedLoading = false
+    /// Why the last load failed (an error page shows), until the next load
+    /// starts; told to agents (`AgentCommands`).
+    var lastLoadFailure: Error?
     private var observations: [NSKeyValueObservation] = []
     private nonisolated(unsafe) var inspectionObserver: NSObjectProtocol?
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.

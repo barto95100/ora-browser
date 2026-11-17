@@ -86,12 +86,30 @@ struct AgentError: Error, Equatable {
     /// The page may have been changed although the command failed: the
     /// agent's script ran (it threw, took too long or gave no JSON).
     var mayHaveActed: Bool {
-        logged != nil || [.timedOut, .promiseDropped, .resultTooLong, .unsupportedResult].contains(self)
+        let ranTheScript: [AgentError] = [.timedOut, .promiseDropped, .resultTooLong, .unsupportedResult]
+        return logged != nil || ranTheScript.map(\.message).contains(message)
     }
 
     /// The script's own error goes to the agent, not into the log.
     static func scriptFailed(_ reason: String) -> AgentError {
         AgentError(message: "The script failed: \(reason)", logged: "The script failed.") // not shown
+    }
+
+    /// Why the page's last load failed, told to the agent after `message`
+    /// (never in the log).
+    var loadError: String?
+
+    /// What the agent gets.
+    var reply: String {
+        guard let loadError else { return message }
+        return message + " The page's last load failed: \(loadError)" // not shown
+    }
+
+    /// The same error, telling why the page's last load failed.
+    func afterFailedLoad(_ loadError: String) -> AgentError {
+        var error = self
+        error.loadError = loadError
+        return error
     }
 
     static func failed(_ reason: String) -> AgentError {
@@ -123,6 +141,8 @@ struct AgentAction: Codable, Equatable {
     let address: String
     /// Its tag, id and text, shortened.
     let element: String
+    /// Why the page's last load failed (it shows an error), if it did.
+    var loadError: String?
 }
 
 /// A page's image: a PNG, in base64.
@@ -133,6 +153,8 @@ struct AgentCapture: Codable, Equatable {
     let width: Int
     let height: Int
     let png: String
+    /// Why the page's last load failed (it shows an error), if it did.
+    var loadError: String?
 }
 
 struct AgentPage: Codable, Equatable {
@@ -141,6 +163,8 @@ struct AgentPage: Codable, Equatable {
     let address: String
     let text: String
     let truncated: Bool
+    /// Why the page's last load failed (it shows an error), if it did.
+    var loadError: String?
 }
 
 /// The commands, done in one window (its `TabManager`): its normal tabs only,
@@ -298,7 +322,12 @@ enum AgentCommands {
         _ = await page.waitUntilLoaded(within: AgentPageActions.loadWait)
         // Unloaded or replaced meanwhile.
         guard tab.browserPage === page, tab.isWebViewReady else { return .failure(.notLoaded) }
-        return await action(page, deadline)
+        let result = await action(page, deadline)
+        // No element on an error page: the reason is the failed load.
+        if case let .failure(error) = result, let loadError = loadError(of: tab) {
+            return .failure(error.afterFailedLoad(loadError))
+        }
+        return result
     }
 
     /// `action` on the tab's loaded page.
@@ -311,7 +340,21 @@ enum AgentCommands {
     }
 
     static func action(_ element: String, in tab: Tab) -> String {
-        json(AgentAction(id: tab.id.uuidString, title: tab.title, address: tab.url.absoluteString, element: element))
+        json(AgentAction(
+            id: tab.id.uuidString,
+            title: tab.title,
+            address: tab.url.absoluteString,
+            element: element,
+            loadError: loadError(of: tab)
+        ))
+    }
+
+    /// Why the tab's last load failed, so that an empty page isn't taken for
+    /// one: the system's words (in Ombre's language) and the error's code.
+    static func loadError(of tab: Tab) -> String? {
+        guard let error = tab.browserPage?.lastLoadFailure else { return nil }
+        let nsError = error as NSError
+        return "\(nsError.localizedDescription) (\(PageLog.describe(error)))"
     }
 
     /// The tab and the script's result (JSON text, any value), as JSON.
@@ -357,7 +400,8 @@ enum AgentCommands {
                 title: tab.title,
                 address: tab.url.absoluteString,
                 text: text,
-                truncated: truncated
+                truncated: truncated,
+                loadError: loadError(of: tab)
             ))
         }
     }
@@ -388,7 +432,8 @@ enum AgentCommands {
             address: tab.url.absoluteString,
             width: png.width,
             height: png.height,
-            png: png.data.base64EncodedString()
+            png: png.data.base64EncodedString(),
+            loadError: loadError(of: tab)
         )))
     }
 

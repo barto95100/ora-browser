@@ -271,7 +271,9 @@ extension TabManagerTests {
                 )
                 let clock = ContinuousClock()
                 let deadline = clock.now + .seconds(10)
-                while await TopicPageSummaries.read([grafana]).isEmpty, clock.now < deadline {
+                while await TopicPageSummaries.read(TopicPageSummaries.pages(of: [grafana])).isEmpty,
+                      clock.now < deadline
+                {
                     try await Task.sleep(for: .milliseconds(50))
                 }
                 #expect(await TopicPageSummaries
@@ -279,7 +281,7 @@ extension TabManagerTests {
                 grafana.title = "Full-stack observability for the agentic era"
                 let others = try makeTabs(window, Array(recipesAndMonitoring[4 ..< 6]))
                 // A tab without its page: no description, nothing waited for.
-                #expect(await TopicPageSummaries.read(others).isEmpty)
+                #expect(TopicPageSummaries.pages(of: others).isEmpty)
                 let saved = TabManager.topicGrouper
                 TabManager.topicGrouper = { KeywordGrouper(subjects: [(name: "Supervision", word: "monitoring")]) }
                 defer { TabManager.topicGrouper = saved }

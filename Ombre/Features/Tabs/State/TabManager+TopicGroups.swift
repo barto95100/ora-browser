@@ -88,8 +88,11 @@ extension TabManager {
             self?.tidyingSpaceIDs.remove(spaceID)
             if let outcome { TidyMessage.show(bySite: bySite, bySubject: outcome) }
         }
+        // Read now: a tab closed meanwhile is gone from the database.
+        let (sources, ids) = (tabs.map { TopicSource(title: $0.title, url: $0.url) }, tabs.map(\.id))
+        let pages = TopicPageSummaries.pages(of: tabs)
         let work = Task { @MainActor [weak self] in
-            let (input, tabIDs) = await Self.topicInput(tabs)
+            let (input, tabIDs) = await Self.topicInput(sources, ids: ids, pages: pages)
             if logs { PageLog.debug("tabs by subject: request\n\(TopicGrouping.request(input))") }
             let reply: TopicReply
             do {
@@ -116,14 +119,18 @@ extension TabManager {
         return work
     }
 
-    /// The tabs as the model gets them (with their pages' descriptions), and
+    /// The tabs as the model gets them, with their pages' descriptions, and
     /// the tab each id stands for.
-    private static func topicInput(_ tabs: [Tab]) async -> ([TopicTab], [String: UUID]) {
-        let summaries = await TopicPageSummaries.read(tabs)
-        let input = TopicGrouping.topicTabs(tabs.map {
-            TopicSource(title: $0.title, url: $0.url, summary: summaries[$0.id] ?? "")
+    private static func topicInput(
+        _ sources: [TopicSource],
+        ids: [UUID],
+        pages: [(id: UUID, page: BrowserPage)]
+    ) async -> ([TopicTab], [String: UUID]) {
+        let summaries = await TopicPageSummaries.read(pages)
+        let input = TopicGrouping.topicTabs(zip(sources, ids).map { source, id in
+            TopicSource(title: source.title, url: source.url, summary: summaries[id] ?? "")
         })
-        return (input, Dictionary(uniqueKeysWithValues: zip(input.map(\.id), tabs.map(\.id))))
+        return (input, Dictionary(uniqueKeysWithValues: zip(input.map(\.id), ids)))
     }
 
     /// Makes the groups the model suggests, from tabs still free; returns how

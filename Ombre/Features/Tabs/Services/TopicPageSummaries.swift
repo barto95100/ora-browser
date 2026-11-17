@@ -6,24 +6,32 @@ import Foundation
 @MainActor
 enum TopicPageSummaries {
     /// All the pages' answers are waited for that long at most.
-    static var wait: Duration = .seconds(1)
+    static let wait: Duration = .seconds(1)
 
+    /// Cut in the page too: a huge one never comes to the app.
     private static let script = """
     (() => {
-        const meta = document.querySelector('meta[name="description" i]')
-            || document.querySelector('meta[property="og:description" i]');
-        return meta ? String(meta.content || '') : '';
+        const content = (selector) => {
+            const meta = document.querySelector(selector);
+            return meta ? String(meta.content || '').trim() : '';
+        };
+        return (content('meta[name="description" i]') || content('meta[property="og:description" i]'))
+            .slice(0, 1000);
     })()
     """ // not shown
 
-    /// The descriptions of `tabs`' web pages, by tab, empty ones left out.
-    static func read(_ tabs: [Tab]) async -> [UUID: String] {
-        let pages = tabs.compactMap { tab -> (UUID, BrowserPage)? in
+    /// The loaded web pages of `tabs`, by tab: what `read` reads.
+    static func pages(of tabs: [Tab]) -> [(id: UUID, page: BrowserPage)] {
+        tabs.compactMap { tab in
             guard let page = tab.browserPage, tab.isWebViewReady,
                   ["http", "https"].contains(tab.url.scheme?.lowercased() ?? "")
             else { return nil }
             return (tab.id, page)
         }
+    }
+
+    /// The descriptions of `pages`, by tab, empty ones left out.
+    static func read(_ pages: [(id: UUID, page: BrowserPage)]) async -> [UUID: String] {
         guard !pages.isEmpty else { return [:] }
         return await withCheckedContinuation { continuation in
             let gathering = Gathering(continuation, expected: pages.count)

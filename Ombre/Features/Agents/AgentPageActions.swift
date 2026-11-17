@@ -1,4 +1,5 @@
 import Foundation
+import WebKit
 
 /// What agents do in a web page once page actions are allowed: click an
 /// element, fill in a field, run JavaScript. In the agents' own script world
@@ -160,11 +161,27 @@ enum AgentPageActions {
             page.callAgentJavaScript(body, arguments: arguments) { result in
                 deadline.cancel()
                 answer.resume(
-                    result.mapError { .scriptFailed(scriptError($0)) }
+                    result.mapError(failure)
                         .flatMap { json($0 ?? NSNull()).map { .success($0) } ?? .failure(.unsupportedResult) }
                 )
             }
         }
+    }
+
+    /// What WebKit says when it stops waiting for a script's promise: freed
+    /// by the page (nothing referenced it) or gone with its document.
+    static let droppedPromiseMessage = "Completion handler for function call is no longer reachable"
+
+    /// Why the call failed.
+    static func failure(_ error: Error) -> AgentError {
+        let nsError = error as NSError
+        if nsError.domain == WKError.errorDomain,
+           nsError.code == WKError.Code.javaScriptExceptionOccurred.rawValue,
+           nsError.userInfo["WKJavaScriptExceptionMessage"] as? String == droppedPromiseMessage
+        {
+            return .promiseDropped
+        }
+        return .scriptFailed(scriptError(error))
     }
 
     /// What the script threw, for the agent (never logged).

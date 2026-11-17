@@ -203,6 +203,25 @@ struct AgentPageActionsTests {
         #expect(await AgentPageActions.run("await new Promise(() => {})", on: page) == .failure(.timedOut))
     }
 
+    /// A promise nothing keeps (the page frees it, or its document goes):
+    /// WebKit gives up the call, said plainly to the agent.
+    @Test func aPromiseThePageDropsIsSaid() async throws {
+        let page = try await loadedPage()
+        defer { page.teardown() }
+
+        // A script throwing these words is its own error.
+        let thrown = await AgentPageActions.run(
+            "throw new Error('Completion handler for function call is no longer reachable')", on: page
+        )
+        #expect(thrown != .failure(.promiseDropped))
+
+        let reply = Task { @MainActor in await AgentPageActions.run("await new Promise(() => {})", on: page) }
+        try await Task.sleep(for: .milliseconds(200))
+        page.extensionWebView.loadHTMLString("<p>Next</p>", baseURL: URL(string: "https://example.com/next"))
+        #expect(await reply.value == .failure(.promiseDropped))
+        #expect(AgentError.promiseDropped.mayHaveActed)
+    }
+
     @Test func resultsAreJSONOnly() {
         #expect(AgentPageActions.json(NSNull()) == "null")
         #expect(AgentPageActions.json("a/b") == #""a/b""#)

@@ -73,6 +73,9 @@ struct AgentError: Error, Equatable {
     static let valueRefused =
         AgentError(message: "The field refused this text: it expects another format.") // not shown
     static let timedOut = AgentError(message: "The page didn't answer in 15 seconds.") // not shown
+    /// WebKit gave up waiting: the script's promise was freed, or its page left.
+    static let promiseDropped =
+        AgentError(message: "The script's promise was dropped by the page before it answered.") // not shown
     static let unsupportedResult = AgentError(
         message: "The script's result isn't JSON (strings, numbers, booleans, arrays, objects, null)." // not shown
     )
@@ -80,7 +83,7 @@ struct AgentError: Error, Equatable {
     /// The page may have been changed although the command failed: the
     /// agent's script ran (it threw, took too long or gave no JSON).
     var mayHaveActed: Bool {
-        logged != nil || [.timedOut, .resultTooLong, .unsupportedResult].contains(self)
+        logged != nil || [.timedOut, .promiseDropped, .resultTooLong, .unsupportedResult].contains(self)
     }
 
     /// The script's own error goes to the agent, not into the log.

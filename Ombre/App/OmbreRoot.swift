@@ -113,11 +113,19 @@ private struct BrowserWindowRoot: View {
                 allowing: privacyMode.isPrivate ? [] : ["*"]
             )
             .onOpenURL { url in
-                guard !privacyMode.isPrivate else { return }
+                let site = PageLog.site(url, isPrivate: privacyMode.isPrivate)
+                let when = LittleOmbreWindow.launchedRecently ? "at launch" : "while running"
+                let since = LinkLog.sinceLaunch(LittleOmbreWindow.secondsSinceLaunch)
+                let known = window == nil ? "not yet known" : "known"
+                LinkLog.notice("link received (\(site)) \(when), \(since); window \(known)")
+                guard !privacyMode.isPrivate else {
+                    LinkLog.notice("link ignored: private window")
+                    return
+                }
                 // Like Arc: in a small window of its own, unless turned off.
-                if SettingsStore.shared.opensLinksInLittleOmbre,
-                   let little = LittleOmbreWindow.open(url, from: tabManager, window: window)
-                {
+                let inLittleOmbre = SettingsStore.shared.opensLinksInLittleOmbre
+                if inLittleOmbre, let little = LittleOmbreWindow.open(url, from: tabManager, window: window) {
+                    LinkLog.notice("link opened in Little Ombre")
                     if let window, let appeared = windowAppearance {
                         hideIfMadeForTheLink(window, by: little, appearedFor: .now - appeared)
                     } else {
@@ -125,15 +133,19 @@ private struct BrowserWindowRoot: View {
                     }
                     return
                 }
+                let why = inLittleOmbre ? "Little Ombre couldn't open (no space)" : "Little Ombre off"
+                LinkLog.notice("link opened in a tab: \(why)")
                 // In a tab: the window shows, even one a Little Ombre hid.
                 if let window { LittleOmbreWindow.browserWindowNeeded(window) }
-                tabManager.openTab(
+                if tabManager.openTab(
                     url: url,
                     historyManager: historyManager,
                     downloadManager: downloadManager,
                     focusAfterOpening: true,
                     isPrivate: false
-                )
+                ) == nil {
+                    LinkLog.notice("link lost: no tab could open (no space)")
+                }
             }
             // The window's undo manager (⌘Z reopens a closed tab), and files
             // from Finder that open in this window (see `ExternalFileOpener`),
@@ -269,16 +281,43 @@ private struct BrowserWindowRoot: View {
 
 extension BrowserWindowRoot {
     /// Made only to hand over the link Little Ombre opened: hidden, Little
-    /// Ombre opens alone (see `LittleOmbreWindow.hiding`).
+    /// Ombre opens alone (see `LittleOmbreWindow.hiding`). Decided once the
+    /// window is on screen: at launch, SwiftUI may give it before showing
+    /// it, and a window hidden then would come in front of Little Ombre.
     private func hideIfMadeForTheLink(_ window: NSWindow, by little: LittleOmbreWindow, appearedFor elapsed: Duration) {
-        guard LittleOmbreWindow.isLittleOmbreWindow(little.window),
-              let fate = LittleOmbreWindow.hiding(
-                  window,
-                  appearedFor: elapsed,
-                  otherWindows: BrowserWindows.normal.allObjects,
-                  launchedFor: -(NSRunningApplication.current.launchDate ?? .distantPast).timeIntervalSinceNow
-              )
-        else { return }
-        little.hideBrowserWindow(fate)
+        // Hidden by another Little Ombre: held by this one too (`attach`), at once.
+        if let held = LittleOmbreWindow.held(window) {
+            little.hideBrowserWindow(held)
+            LinkLog.notice("browser window already hidden by another Little Ombre")
+            return
+        }
+        if !LittleOmbreWindow.isOpen(window) {
+            LinkLog.notice("browser window not on screen yet: decided once it shows")
+        }
+        LittleOmbreWindow.whenOnScreen(window) {
+            guard LittleOmbreWindow.isLittleOmbreWindow(little.window) else {
+                LinkLog.notice("browser window kept: Little Ombre already closed")
+                return
+            }
+            guard !LittleOmbreWindow.shownForATab.contains(window) else {
+                LinkLog.notice("browser window kept: shown for a tab meanwhile")
+                return
+            }
+            let decision = LittleOmbreWindow.hidingDecision(
+                window,
+                appearedFor: elapsed,
+                otherWindows: BrowserWindows.normal.allObjects,
+                launchedFor: LittleOmbreWindow.secondsSinceLaunch
+            )
+            switch decision {
+            case let .hide(fate):
+                LinkLog.notice("browser window hidden; \(fate == .show ? "shown" : "closed") with Little Ombre")
+                little.hideBrowserWindow(fate)
+            case let .keep(reason):
+                LinkLog.notice("browser window kept: \(reason)")
+            }
+        } expired: {
+            LinkLog.notice("browser window kept: not on screen within the wait")
+        }
     }
 }

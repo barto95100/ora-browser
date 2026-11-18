@@ -21,6 +21,15 @@ extension LittleOmbreWindow {
     /// Ombre launched less than this before: the link launched it.
     static let launchDelay: TimeInterval = 5
 
+    static var secondsSinceLaunch: TimeInterval {
+        -(NSRunningApplication.current.launchDate ?? .distantPast).timeIntervalSinceNow
+    }
+
+    /// Ombre launched less than `launchDelay` ago.
+    static var launchedRecently: Bool {
+        secondsSinceLaunch < launchDelay
+    }
+
     /// What to do with `browserWindow`, which handed over a link Little Ombre
     /// opened: nothing when another browser window is open (or it was there
     /// before the link), else hide it.
@@ -31,12 +40,86 @@ extension LittleOmbreWindow {
         launchedFor launch: TimeInterval,
         isOpen: (NSWindow) -> Bool = { $0.isVisible || $0.isMiniaturized }
     ) -> HiddenBrowserWindow? {
+        let decision = hidingDecision(
+            browserWindow, appearedFor: elapsed, otherWindows: otherWindows, launchedFor: launch, isOpen: isOpen
+        )
+        guard case let .hide(fate) = decision else { return nil }
+        return fate
+    }
+
+    /// `hiding`, with why a window is kept (for the log).
+    enum HidingDecision: Equatable {
+        case hide(HiddenBrowserWindow)
+        case keep(reason: String)
+    }
+
+    static func hidingDecision(
+        _ browserWindow: NSWindow,
+        appearedFor elapsed: Duration,
+        otherWindows: [NSWindow],
+        launchedFor launch: TimeInterval,
+        isOpen: (NSWindow) -> Bool = { $0.isVisible || $0.isMiniaturized }
+    ) -> HidingDecision {
         // Already hidden by another Little Ombre: kept hidden for this one too.
-        if let held = held(browserWindow) { return held }
-        guard isOpen(browserWindow), elapsed < windowForLinkDelay,
-              !otherWindows.contains(where: { $0 !== browserWindow && isOpen($0) })
-        else { return nil }
-        return launch < launchDelay ? .show : .close
+        if let held = held(browserWindow) { return .hide(held) }
+        guard isOpen(browserWindow) else { return .keep(reason: "not on screen") }
+        guard elapsed < windowForLinkDelay else {
+            return .keep(reason: "there before the link (\(elapsed.formatted(.units(allowed: [.seconds]))))")
+        }
+        let others = otherWindows.count(where: { $0 !== browserWindow && isOpen($0) })
+        guard others == 0 else { return .keep(reason: "\(others) other browser window(s) open") }
+        return .hide(launch < launchDelay ? .show : .close)
+    }
+
+    /// How long a window handed over before it shows is waited for (longer
+    /// while Ombre launches: restoring its windows takes a while).
+    static var onScreenWait: Duration {
+        launchedRecently ? .seconds(launchDelay) : .seconds(2)
+    }
+
+    /// Browser windows shown for a tab of Little Ombre: the user's now,
+    /// never hidden by a decision that was waiting for them.
+    static let shownForATab = NSHashTable<NSWindow>.weakObjects()
+
+    /// Runs `action` once `window` is on screen: SwiftUI may hand a window
+    /// over before ordering it in (at launch, a link can come first).
+    /// `expired` instead if it isn't within `limit` (or closes before): a
+    /// window shown later is the user's, never hidden.
+    static func whenOnScreen(
+        _ window: NSWindow,
+        within limit: Duration = onScreenWait,
+        _ action: @escaping @MainActor () -> Void,
+        expired: @escaping @MainActor () -> Void = {}
+    ) {
+        if isOpen(window) {
+            action()
+            return
+        }
+        let wait = OnScreenWait(action: action, expired: expired)
+        let center = NotificationCenter.default
+        // Ordered in: its occlusion changes; a launch window also becomes key.
+        let names = [
+            NSWindow.didChangeOcclusionStateNotification,
+            NSWindow.didBecomeKeyNotification,
+            NSWindow.didBecomeMainNotification
+        ]
+        for name in names {
+            wait.observers.append(center.addObserver(forName: name, object: window, queue: .main) { _ in
+                MainActor.assumeIsolated {
+                    guard isOpen(window), wait.end() else { return }
+                    wait.action()
+                }
+            })
+        }
+        wait.observers.append(center.addObserver(
+            forName: NSWindow.willCloseNotification, object: window, queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { if wait.end() { wait.expired() } }
+        })
+        Task { @MainActor in
+            try? await Task.sleep(for: limit)
+            if wait.end() { wait.expired() }
+        }
     }
 
     /// Its browser window, known now or once SwiftUI gives it (a link
@@ -59,6 +142,7 @@ extension LittleOmbreWindow {
     /// Ombre that hid it.
     func showBrowserWindow() {
         guard let browserWindow else { return }
+        Self.shownForATab.add(browserWindow)
         for little in Self.openWindows where little.browserWindow === browserWindow {
             little.hiddenBrowserWindow = nil
         }
@@ -70,6 +154,7 @@ extension LittleOmbreWindow {
     /// Little Ombre (one it hid is kept, and no longer closed with it).
     func showBrowserWindowBehind() {
         guard let browserWindow else { return }
+        Self.shownForATab.add(browserWindow)
         for little in Self.openWindows where little.browserWindow === browserWindow {
             little.hiddenBrowserWindow = nil
         }
@@ -85,6 +170,7 @@ extension LittleOmbreWindow {
     /// `browserWindow` is needed (a link opens in it as a tab): shown if a
     /// Little Ombre hid it.
     static func browserWindowNeeded(_ browserWindow: NSWindow) {
+        shownForATab.add(browserWindow)
         guard held(browserWindow) != nil else { return }
         for little in openWindows where little.browserWindow === browserWindow {
             little.hiddenBrowserWindow = nil
@@ -120,7 +206,7 @@ extension LittleOmbreWindow {
         openWindows.lazy.filter { $0.browserWindow === browserWindow }.compactMap(\.hiddenBrowserWindow).first
     }
 
-    private static func isOpen(_ window: NSWindow) -> Bool {
+    static func isOpen(_ window: NSWindow) -> Bool {
         window.isVisible || window.isMiniaturized
     }
 
@@ -131,5 +217,30 @@ extension LittleOmbreWindow {
         } else {
             browserWindow.makeKeyAndOrderFront(nil)
         }
+    }
+}
+
+/// The observers of a window `whenOnScreen` waits for, removed once done.
+@MainActor
+private final class OnScreenWait {
+    let action: @MainActor () -> Void
+    let expired: @MainActor () -> Void
+    var observers: [NSObjectProtocol] = []
+    private var isOver = false
+
+    init(action: @escaping @MainActor () -> Void, expired: @escaping @MainActor () -> Void) {
+        self.action = action
+        self.expired = expired
+    }
+
+    /// Ends the wait: true the first time only.
+    func end() -> Bool {
+        guard !isOver else { return false }
+        isOver = true
+        for observer in observers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        observers = []
+        return true
     }
 }

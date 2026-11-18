@@ -55,6 +55,103 @@ extension TabManagerTests {
             #expect(hiding(.milliseconds(200), others: [other], isOpen: { $0 === made }) == .close)
         }
 
+        /// Why a window is kept, for the log.
+        @Test func aKeptWindowSaysWhy() {
+            let made = BrowserWindowStandIn()
+            let other = BrowserWindowStandIn()
+            func decision(_ elapsed: Duration, others: [NSWindow] = [], open: Bool = true) -> LittleOmbreWindow
+                .HidingDecision
+            {
+                LittleOmbreWindow.hidingDecision(
+                    made, appearedFor: elapsed, otherWindows: others, launchedFor: longAgo, isOpen: { _ in open }
+                )
+            }
+            #expect(decision(.milliseconds(200)) == .hide(.close))
+            #expect(decision(.milliseconds(200), open: false) == .keep(reason: "not on screen"))
+            #expect(decision(.milliseconds(200), others: [other]) == .keep(reason: "1 other browser window(s) open"))
+            guard case let .keep(reason) = decision(.seconds(3)) else {
+                Issue.record("A window there before the link is kept")
+                return
+            }
+            #expect(reason.hasPrefix("there before the link"))
+        }
+
+        /// At launch, SwiftUI may give the window before it is on screen: the
+        /// decision waits for it (taken before, it kept the window, which
+        /// then came in front of Little Ombre).
+        @Test func theDecisionWaitsForTheWindowOnScreen() {
+            let window = BrowserWindowStandIn()
+            defer { window.orderOut(nil) }
+            var decided = 0
+            LittleOmbreWindow.whenOnScreen(window) { decided += 1 }
+            #expect(decided == 0)
+
+            window.orderBack(nil)
+            NotificationCenter.default.post(name: NSWindow.didChangeOcclusionStateNotification, object: window)
+            #expect(decided == 1)
+            // Once only.
+            NotificationCenter.default.post(name: NSWindow.didChangeOcclusionStateNotification, object: window)
+            #expect(decided == 1)
+            // On screen already: at once.
+            LittleOmbreWindow.whenOnScreen(window) { decided += 1 }
+            #expect(decided == 2)
+        }
+
+        /// Closed before it showed: never decided, the wait is over.
+        @Test func aWindowClosedBeforeItShowsIsNeverDecided() {
+            let window = BrowserWindowStandIn()
+            var decided = false
+            var expired = false
+            LittleOmbreWindow.whenOnScreen(window) {
+                decided = true
+            } expired: {
+                expired = true
+            }
+            window.close()
+            #expect(expired)
+            window.orderBack(nil)
+            NotificationCenter.default.post(name: NSWindow.didChangeOcclusionStateNotification, object: window)
+            window.orderOut(nil)
+            #expect(!decided)
+        }
+
+        /// Shown only after the wait: the user's window, never decided (it
+        /// could be hidden under them).
+        @Test func aWindowShownAfterTheWaitIsNeverDecided() async throws {
+            let window = BrowserWindowStandIn()
+            defer { window.orderOut(nil) }
+            var decided = false
+            var expired = false
+            LittleOmbreWindow.whenOnScreen(
+                window, within: .milliseconds(20)
+            ) {
+                decided = true
+            } expired: {
+                expired = true
+            }
+            try await Task.sleep(for: .milliseconds(200))
+            #expect(expired)
+            window.orderBack(nil)
+            NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: window)
+            #expect(!decided)
+        }
+
+        /// Shown for a tab (in front or behind): the user's now, a decision
+        /// still waiting for it leaves it.
+        @Test func aWindowShownForATabIsMarked() async throws {
+            try await TabManagerTestWindow.run { window in
+                let browser = BrowserWindowStandIn()
+                defer { browser.orderOut(nil) }
+                let little = try #require(LittleOmbreWindow.open(
+                    TabManagerTestWindow.url("little"), from: window.tabManager, window: browser
+                ))
+                defer { little.window.close() }
+                #expect(!LittleOmbreWindow.shownForATab.contains(browser))
+                little.showBrowserWindowBehind()
+                #expect(LittleOmbreWindow.shownForATab.contains(browser))
+            }
+        }
+
         /// Closed: the browser window it hid goes once no Little Ombre uses it.
         @Test func theHiddenWindowClosesWithTheLastLittleOmbre() async throws {
             try await TabManagerTestWindow.run { window in

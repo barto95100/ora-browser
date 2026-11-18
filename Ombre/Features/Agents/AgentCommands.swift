@@ -350,7 +350,8 @@ enum AgentCommands {
     }
 
     /// Why the tab's last load failed, so that an empty page isn't taken for
-    /// one: the system's words (in Ombre's language) and the error's code.
+    /// one: the error's description as WebKit gives it (in English, like the
+    /// commands' other errors) and the error's code.
     static func loadError(of tab: Tab) -> String? {
         guard let error = tab.browserPage?.lastLoadFailure else { return nil }
         let nsError = error as NSError

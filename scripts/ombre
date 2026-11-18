@@ -23,7 +23,7 @@
 #   Allow agents to act in pages.
 #   read, capture, click and fill wait for the page to load (10 s at most); click and
 #   fill wait up to 5 s for an element to match (15 s in all). js doesn't wait.
-#   When the page's last load failed, their reply has a loadError (why).
+#   When the page's last load failed, their reply has a loadError (why, in English).
 #
 # First allow it in Ombre › Settings › General › Allow agents to control Ombre.
 # macOS then asks once to let this terminal control Ombre (Automation), and

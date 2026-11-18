@@ -301,6 +301,21 @@ private final class PopupPageDelegate: BrowserPageDelegate {
         return browserPage(page, openPopupWith: configuration, windowFeatures: WKWindowFeatures(), openerOrigin: nil)
     }
 
+    /// Little Ombre: ⌘-click opens the link in a background tab, ⌘⇧-click in
+    /// front, like Safari. Opened here and the navigation cancelled: allowed,
+    /// WebKit would ask for a new window, opened in front.
+    func browserPage(
+        _ page: BrowserPage,
+        decidePolicyFor navigationAction: BrowserNavigationAction
+    ) -> BrowserNavigationActionDisposition {
+        guard let open = popup?.opensLinkTab, navigationAction.modifierFlags.contains(.command),
+              let url = navigationAction.request.url
+        else { return .allow }
+        let inFront = navigationAction.modifierFlags.contains(.shift)
+        // No tab (its space gone): WebKit goes on, a popup window as before.
+        return open(url, nil, inFront ? .foreground : .background) == nil ? .allow : .cancel
+    }
+
     /// ⌘-click and the like: a tab beside the opener tab, if it is still there.
     func browserPage(_ page: BrowserPage, didRequestOpenInNewTab url: URL, disposition: BrowserNewTabDisposition) {
         if let open = popup?.opensLinkTab {

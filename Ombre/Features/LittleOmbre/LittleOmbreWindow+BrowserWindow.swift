@@ -62,12 +62,13 @@ extension LittleOmbreWindow {
     ) -> HidingDecision {
         // Already hidden by another Little Ombre: kept hidden for this one too.
         if let held = held(browserWindow) { return .hide(held) }
-        guard isOpen(browserWindow) else { return .keep(reason: "not on screen") }
+        guard isOpen(browserWindow) else { return .keep(reason: "not on screen") } // not shown
         guard elapsed < windowForLinkDelay else {
-            return .keep(reason: "there before the link (\(elapsed.formatted(.units(allowed: [.seconds]))))")
+            let since = elapsed.formatted(.units(allowed: [.seconds]))
+            return .keep(reason: "there before the link (\(since))") // not shown
         }
         let others = otherWindows.count(where: { $0 !== browserWindow && isOpen($0) })
-        guard others == 0 else { return .keep(reason: "\(others) other browser window(s) open") }
+        guard others == 0 else { return .keep(reason: "\(others) other browser window(s) open") } // not shown
         return .hide(launch < launchDelay ? .show : .close)
     }
 

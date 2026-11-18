@@ -13,6 +13,6 @@ enum LinkLog {
 
     /// `seconds` since Ombre launched, as the log says them.
     static func sinceLaunch(_ seconds: TimeInterval) -> String {
-        String(format: "%.1f s after launch", seconds)
+        String(format: "%.1f s after launch", seconds) // not shown
     }
 }

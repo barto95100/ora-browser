@@ -4220,6 +4220,26 @@
         }
       }
     },
+    "Go to Active Tab, Above" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aller à l’onglet actif, plus haut"
+          }
+        }
+      }
+    },
+    "Go to Active Tab, Below" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aller à l’onglet actif, plus bas"
+          }
+        }
+      }
+    },
     "Go to playing tab" : {
       "localizations" : {
         "fr" : {

@@ -17,12 +17,21 @@
 #   ombre js <code> [-t <tab id>]
 #                           runs JavaScript in the page (an async function's body:
 #                           return gives the result, as JSON)
+#   ombre back [-t <tab id>], ombre forward [-t <tab id>], ombre reload [-t <tab id>]
+#                           goes back, forward or reloads (never a page that would
+#                           send a form again), then waits for the page to load
+#   ombre wait [<css selector>] [-t <tab id>] [--timeout <seconds>]
+#                           waits for the load started since the last command on
+#                           the tab, or starting within a second (after a click on a
+#                           link); then, with a selector, for an element to match.
+#                           10 s at most, --timeout up to 60. Reads the page only.
 #   For fill and js, - reads the text or the code from the standard input
 #   (for fill, without its last newline).
 #   Without -t: the active tab. click, fill and js also need Settings › General ›
 #   Allow agents to act in pages.
-#   read, capture, click and fill wait for the page to load (10 s at most); click and
-#   fill wait up to 5 s for an element to match (15 s in all). js doesn't wait.
+#   read, capture, click, fill, back, forward and reload wait for the page to load
+#   (10 s at most); click and fill wait up to 5 s for an element to match (15 s in
+#   all). js doesn't wait.
 #   When the page's last load failed, their reply has a loadError (why, in English).
 #
 # First allow it in Ombre › Settings › General › Allow agents to control Ombre.
@@ -37,7 +46,7 @@ app_id=${OMBRE_APP_ID:-com.barto95100.ora}
 script=$0
 
 usage() {
-    sed -n '4,26p' "$script" | sed 's/^# \{0,1\}//' >&2
+    sed -n '4,35p' "$script" | sed 's/^# \{0,1\}//' >&2
     exit "${1:-2}"
 }
 
@@ -90,6 +99,43 @@ case $1 in
         # The selector or the code, then the text to fill in, then the tab.
         set -- "$command" "${words[1]}" "${words[2]-}" "$tab"
         ;;
+    back|forward|reload)
+        command=$1
+        shift
+        tab=""
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                -t) [[ $# -ge 2 && -z $tab ]] || usage; tab=$2; shift 2 ;;
+                *) usage ;;
+            esac
+        done
+        case $command in
+            back) code=GoBk ;;
+            forward) code=GoFw ;;
+            reload) code=Rlod ;;
+        esac
+        set -- "$command" "$tab"
+        ;;
+    wait)
+        code=Wait
+        shift
+        tab=""
+        selector=""
+        timeout=""
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                -t) [[ $# -ge 2 && -z $tab ]] || usage; tab=$2; shift 2 ;;
+                --timeout) [[ $# -ge 2 && -z $timeout ]] || usage; timeout=$2; shift 2 ;;
+                *) [[ -z $selector ]] || usage; selector=$1; shift ;;
+            esac
+        done
+        if [[ -n $timeout && ! ( $timeout == <-> && $timeout -ge 1 && $timeout -le 60 ) ]]; then
+            print -r -- "The timeout must be a whole number of seconds, 1 to 60." >&2
+            exit 2
+        fi
+        # The selector, the timeout, then the tab.
+        set -- wait "$selector" "$timeout" "$tab"
+        ;;
     -h|--help|help) usage 0 ;;
     *) usage ;;
 esac
@@ -104,7 +150,25 @@ on run argv
     set argument to item 3 of argv
     set value to item 4 of argv
     set tabID to item 5 of argv
+    -- A wait can last a minute, after the user's question (100 s at most).
+    with timeout of 180 seconds
     tell application id appID
+        if eventCode is "Wait" then
+            if value is "" then return «event OmbrWait» argument given «class OmTb»:tabID
+            return «event OmbrWait» argument given «class OmTb»:tabID, «class OmTO»:(value as integer)
+        end if
+        if eventCode is "GoBk" then
+            if argument is "" then return «event OmbrGoBk»
+            return «event OmbrGoBk» argument
+        end if
+        if eventCode is "GoFw" then
+            if argument is "" then return «event OmbrGoFw»
+            return «event OmbrGoFw» argument
+        end if
+        if eventCode is "Rlod" then
+            if argument is "" then return «event OmbrRlod»
+            return «event OmbrRlod» argument
+        end if
         if eventCode is "Clik" then
             if tabID is "" then return «event OmbrClik» argument
             return «event OmbrClik» argument given «class OmTb»:tabID
@@ -128,6 +192,7 @@ on run argv
         if argument is "" then return «event OmbrRdTb»
         return «event OmbrRdTb» argument
     end tell
+    end timeout
 end run
 APPLESCRIPT
 ); then

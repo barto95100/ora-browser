@@ -109,6 +109,11 @@ enum AgentPageActions {
     return { element: describe(el) };
     """ // not shown
 
+    /// Waits for an element `selector` matches: it only reads the page.
+    static let waitScript = describe + find + """
+    return { element: describe(el) };
+    """ // not shown
+
     /// When a command started now must have answered.
     static func deadline() -> ContinuousClock.Instant {
         .now + timeout
@@ -129,6 +134,16 @@ enum AgentPageActions {
         until deadline: ContinuousClock.Instant = deadline()
     ) async -> Result<String, AgentError> {
         await element(fillScript, ["selector": selector, "value": value], on: page, until: deadline)
+    }
+
+    /// The first element `selector` matches, waited for as long as the
+    /// deadline lets (a second before it, to answer).
+    static func waitFor(
+        _ selector: String,
+        on page: BrowserPage,
+        until deadline: ContinuousClock.Instant
+    ) async -> Result<String, AgentError> {
+        await element(waitScript, ["selector": selector], on: page, until: deadline, longest: nil)
     }
 
     /// The agent's code, as an async function's body, its result made JSON
@@ -169,11 +184,12 @@ enum AgentPageActions {
         _ script: String,
         _ arguments: [String: Any],
         on page: BrowserPage,
-        until deadline: ContinuousClock.Instant
+        until deadline: ContinuousClock.Instant,
+        longest: Duration? = elementWait
     ) async -> Result<String, AgentError> {
         // A second left to say no element matched, rather than time out.
         let left = deadline - .now - .seconds(1)
-        let wait = max(.zero, min(elementWait, left))
+        let wait = max(.zero, longest.map { min($0, left) } ?? left)
         var arguments = arguments
         arguments["wait"] = Int(wait / .milliseconds(1))
         switch await call(script, arguments, on: page, until: deadline) {

@@ -14,6 +14,13 @@ enum AgentCommand: Equatable, Sendable {
     case click(tab: String?, selector: String)
     case fill(tab: String?, selector: String, value: String)
     case runScript(tab: String?, code: String)
+    /// Navigation in a tab, the active one without an id (see `AgentNavigation`).
+    case goBack(String?)
+    case goForward(String?)
+    case reload(String?)
+    /// Waits for the page's load, then for an element if a selector is given;
+    /// `timeout` in seconds (10 without one).
+    case wait(tab: String?, selector: String?, timeout: Int?)
 
     /// Acts in a page: allowed only with page actions on.
     var isPageAction: Bool {
@@ -35,6 +42,10 @@ enum AgentCommand: Equatable, Sendable {
         case .click: "click element" // not shown
         case .fill: "fill field" // not shown
         case .runScript: "run javascript" // not shown
+        case .goBack: "go back" // not shown
+        case .goForward: "go forward" // not shown
+        case .reload: "reload tab" // not shown
+        case .wait: "wait" // not shown
         }
     }
 }
@@ -83,6 +94,25 @@ struct AgentError: Error, Equatable {
         message: "The script's result isn't JSON (strings, numbers, booleans, arrays, objects, null)." // not shown
     )
     static let resultTooLong = AgentError(message: "The script's result is over 100,000 characters.") // not shown
+    static let nothingBack = AgentError(message: "Nothing to go back to.") // not shown
+    static let nothingForward = AgentError(message: "Nothing to go forward to.") // not shown
+    static let notWebDestination =
+        AgentError(message: "The page to go to isn't a web page (http, https): not done.") // not shown
+    static let formResubmission = AgentError(
+        message: "This page is the answer to a form sent with POST: " // not shown
+            + "reloading it would send the form again, so it wasn't reloaded." // not shown
+    )
+    static let badTimeout = AgentError(message: "The timeout must be between 1 and 60 seconds.") // not shown
+
+    /// A wait with a selector, given up.
+    static func nothingMatched(in seconds: Int) -> AgentError {
+        AgentError(message: "Nothing matched in \(AgentNavigation.duration(seconds)).") // not shown
+    }
+
+    /// A wait without a selector, given up.
+    static func stillLoading(after seconds: Int) -> AgentError {
+        AgentError(message: "The page was still loading after \(AgentNavigation.duration(seconds)).") // not shown
+    }
     /// The page may have been changed although the command failed: the
     /// agent's script ran (it threw, took too long or gave no JSON).
     var mayHaveActed: Bool {
@@ -223,6 +253,19 @@ enum AgentCommands {
             return await onWebPage(id, in: tabManager) { tab in
                 await onPage(tab) { await AgentPageActions.run(code, on: $0) }.flatMap { scriptResult($0, in: tab) }
             }
+        case let .goBack(id):
+            return await onWebPage(id, in: tabManager) { await AgentNavigation.go(.back, in: $0) }
+        case let .goForward(id):
+            return await onWebPage(id, in: tabManager) { await AgentNavigation.go(.forward, in: $0) }
+        case let .reload(id):
+            return await onWebPage(id, in: tabManager) { await AgentNavigation.go(.reload, in: $0) }
+        case let .wait(id, selector, timeout):
+            // Reads the page only: no badge.
+            var done = await onWebPage(id, in: tabManager) {
+                await AgentNavigation.wait(for: selector, in: $0, timeout: timeout)
+            }
+            done.tabID = nil
+            return done
         }
     }
 
@@ -278,6 +321,8 @@ enum AgentCommands {
     }
 
     /// Reads or captures the web page of `id` (the active tab without one).
+    /// The page is then marked: a load starting after the command is told
+    /// from one before (see `AgentNavigation.wait`).
     private static func onWebPage(
         _ id: String?,
         in tabManager: TabManager,
@@ -289,7 +334,9 @@ enum AgentCommands {
         guard isWebPage(tab) else { return Done(result: .failure(.notWebPage), host: nil) }
         // Before the action: a click may lead elsewhere.
         let host = tab.url.host()
-        return await Done(result: action(tab), host: host, tabID: tab.id)
+        let result = await action(tab)
+        tab.browserPage?.agentMark = tab.browserPage?.navigationMark
+        return Done(result: result, host: host, tabID: tab.id)
     }
 
     /// Read or captured: a web page only, never an extension's page (a
@@ -313,7 +360,7 @@ enum AgentCommands {
     /// `action` on the tab's page once it has loaded (`AgentPageActions.loadWait`
     /// at most: then as it is), before the command's deadline. A tab just
     /// opened is waited for too.
-    private static func onLoadedPage<Value>(
+    static func onLoadedPage<Value>(
         _ tab: Tab,
         _ action: @MainActor (BrowserPage, ContinuousClock.Instant) async -> Result<Value, AgentError>
     ) async -> Result<Value, AgentError> {

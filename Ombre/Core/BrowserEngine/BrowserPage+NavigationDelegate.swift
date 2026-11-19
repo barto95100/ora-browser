@@ -44,6 +44,10 @@ extension BrowserPage: WKNavigationDelegate {
 
         switch delegate?.browserPage(self, decidePolicyFor: action) ?? .allow {
         case .allow:
+            if navigationAction.targetFrame?.isMainFrame ?? true {
+                isPostNavigation = navigationAction.request.httpMethod?.uppercased() == "POST" // not shown
+                    || navigationAction.navigationType == .formResubmitted
+            }
             // A page on a port browsers never open: WebKit would show a blank
             // page without a word; an error page says why, like Safari. Here,
             // once the app kept the link in this page (not a new tab, Peek).
@@ -94,6 +98,7 @@ extension BrowserPage: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         log("load started", webView.url)
         hasProvisionalNavigation = true
+        loadStarts += 1
         lastLoadFailure = nil
         delegate?.browserPageDidChangeSecurity(self)
         if !isDownloadNavigation {
@@ -108,8 +113,15 @@ extension BrowserPage: WKNavigationDelegate {
         }
     }
 
+    /// A form's answer redirected (303, 302): its page is asked for with GET,
+    /// and reloads without sending the form again.
+    func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
+        isPostNavigation = false
+    }
+
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         hasProvisionalNavigation = false
+        showsFormResult = isPostNavigation
         delegate?.browserPageDidChangeSecurity(self)
         httpsUpgrade.navigationCommitted()
         if !isDownloadNavigation {

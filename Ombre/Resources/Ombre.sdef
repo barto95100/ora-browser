@@ -66,5 +66,31 @@
             </parameter>
             <result type="text" description="JSON: id, title, address, result (any JSON value)."/>
         </command>
+        <command name="go back" code="OmbrGoBk" description="Goes back in a tab's history, then waits for the page to load (10 seconds at most).">
+            <cocoa class="OmbreGoBackCommand"/>
+            <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
+            <result type="text" description="JSON: id, title, address; loadError when the load failed."/>
+        </command>
+        <command name="go forward" code="OmbrGoFw" description="Goes forward in a tab's history, then waits for the page to load (10 seconds at most).">
+            <cocoa class="OmbreGoForwardCommand"/>
+            <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
+            <result type="text" description="JSON: id, title, address; loadError when the load failed."/>
+        </command>
+        <command name="reload tab" code="OmbrRlod" description="Reloads a tab's page (never one that would send a form again), then waits for it to load (10 seconds at most).">
+            <cocoa class="OmbreReloadTabCommand"/>
+            <direct-parameter type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one."/>
+            <result type="text" description="JSON: id, title, address; loadError when the load failed."/>
+        </command>
+        <command name="wait" code="OmbrWait" description="Waits for the end of the load started since the last command on the tab, or starting within a second (a link clicked); then, with a CSS selector, for an element to match it. Reads the page only.">
+            <cocoa class="OmbreWaitCommand"/>
+            <direct-parameter type="text" optional="yes" description="The CSS selector; none to wait for the load only."/>
+            <parameter name="in tab" code="OmTb" type="text" optional="yes" description="The tab's id, from list tabs; the active tab without one.">
+                <cocoa key="tab"/>
+            </parameter>
+            <parameter name="timeout" code="OmTO" type="integer" optional="yes" description="Seconds, 1 to 60; 10 without one.">
+                <cocoa key="timeout"/>
+            </parameter>
+            <result type="text" description="JSON: id, title, address, and element with a selector; loadError when the last load failed."/>
+        </command>
     </suite>
 </dictionary>

@@ -109,7 +109,7 @@ struct GeneralSettingsView: View {
                         if !isOn { AgentControl.shared.stop() }
                     }
                 Text(
-                    "Apps and scripts (the ombre command) can list, open, show, close, read and capture tabs. Each app asks first, once per session. Never private windows, Little Ombre or passwords."
+                    "Apps and scripts (the ombre command) can list, open, show, close, reload, read and capture tabs, and move through their history. Each app asks first, once per session. Never private windows, Little Ombre or passwords."
                 )
                 .font(.caption)
                 .foregroundColor(.secondary)

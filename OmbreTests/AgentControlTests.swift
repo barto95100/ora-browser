@@ -125,7 +125,11 @@ struct AgentScriptingDefinitionTests {
             ("CpTb", CaptureTabScriptCommand.self),
             ("Clik", ClickElementScriptCommand.self),
             ("Fill", FillFieldScriptCommand.self),
-            ("RnJS", RunJavaScriptScriptCommand.self)
+            ("RnJS", RunJavaScriptScriptCommand.self),
+            ("GoBk", GoBackScriptCommand.self),
+            ("GoFw", GoForwardScriptCommand.self),
+            ("Rlod", ReloadTabScriptCommand.self),
+            ("Wait", WaitScriptCommand.self)
         ]
         for command in commands {
             let description = registry.commandDescription(
@@ -135,7 +139,7 @@ struct AgentScriptingDefinitionTests {
             #expect(description?.commandClassName == NSStringFromClass(command.type), "\(command.code)")
         }
         // Their parameters reach the commands under these keys.
-        for code in ["Clik", "Fill", "RnJS"] {
+        for code in ["Clik", "Fill", "RnJS", "Wait"] {
             let description = registry.commandDescription(
                 withAppleEventClass: Self.code("Ombr"),
                 andAppleEventCode: Self.code(code)
@@ -148,6 +152,12 @@ struct AgentScriptingDefinitionTests {
         )
         #expect(fill?.appleEventCodeForArgument(withName: "value") == Self.code("OmVl"))
         #expect(fill?.isOptionalArgument(withName: "value") == false)
+        let wait = registry.commandDescription(
+            withAppleEventClass: Self.code("Ombr"),
+            andAppleEventCode: Self.code("Wait")
+        )
+        #expect(wait?.appleEventCodeForArgument(withName: "timeout") == Self.code("OmTO"))
+        #expect(wait?.isOptionalArgument(withName: "timeout") == true)
     }
 
     private static func code(_ text: String) -> FourCharCode {

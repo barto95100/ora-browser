@@ -40,6 +40,17 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Why the last load failed (an error page shows), until the next load
     /// starts; told to agents (`AgentCommands`).
     var lastLoadFailure: Error?
+    /// Loads started so far (main frame): tells agents a new load from the
+    /// one before (see `NavigationMark`).
+    var loadStarts = 0
+    /// The page shown is the answer to a form sent with POST: reloading it
+    /// would send the form again.
+    var showsFormResult = false
+    /// Whether the main-frame navigation last allowed sends a form with POST
+    /// (taken as the page's at its commit).
+    var isPostNavigation = false
+    /// The page as agents' last command on it found it.
+    var agentMark: NavigationMark?
     private var observations: [NSKeyValueObservation] = []
     private nonisolated(unsafe) var inspectionObserver: NSObjectProtocol?
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.

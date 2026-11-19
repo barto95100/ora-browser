@@ -119,3 +119,42 @@ final class RunJavaScriptScriptCommand: AgentScriptCommand {
         text.map { .runScript(tab: tab, code: $0) }
     }
 }
+
+private extension AgentScriptCommand {
+    /// The tab's id given as the direct parameter; empty: none (the active tab).
+    var tabID: String? {
+        text.flatMap { $0.isEmpty ? nil : $0 }
+    }
+}
+
+@objc(OmbreGoBackCommand)
+final class GoBackScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        .goBack(tabID)
+    }
+}
+
+@objc(OmbreGoForwardCommand)
+final class GoForwardScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        .goForward(tabID)
+    }
+}
+
+@objc(OmbreReloadTabCommand)
+final class ReloadTabScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        .reload(tabID)
+    }
+}
+
+@objc(OmbreWaitCommand)
+final class WaitScriptCommand: AgentScriptCommand {
+    override var agentCommand: AgentCommand? {
+        // Empty: none (the ombre command always sends them).
+        let selector = text.flatMap { $0.isEmpty ? nil : $0 }
+        let tab = tab.flatMap { $0.isEmpty ? nil : $0 }
+        let timeout = (evaluatedArguments?["timeout"] as? NSNumber)?.intValue
+        return .wait(tab: tab, selector: selector, timeout: timeout)
+    }
+}

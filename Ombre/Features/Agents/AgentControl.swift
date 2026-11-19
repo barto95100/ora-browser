@@ -167,10 +167,10 @@ final class AgentControl: ObservableObject {
         alert.messageText = String(localized: "\(sender.name) wants to control Ombre")
         let can = allowsPageActions()
             ? String(
-                localized: "It will be able to list, open, show, close, read and capture your tabs, and to click, fill in fields and run JavaScript in web pages (which sees everything they hold, what you type or autofill included), until you quit Ombre or an hour passes without a command. Never private windows or Little Ombre."
+                localized: "It will be able to list, open, show, close, reload, read and capture your tabs, move through their history, and to click, fill in fields and run JavaScript in web pages (which sees everything they hold, what you type or autofill included), until you quit Ombre or an hour passes without a command. Never private windows or Little Ombre."
             )
             : String(
-                localized: "It will be able to list, open, show, close, read and capture your tabs until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords."
+                localized: "It will be able to list, open, show, close, reload, read and capture your tabs and move through their history until you quit Ombre or an hour passes without a command. Never private windows, Little Ombre or passwords."
             )
         alert.informativeText = can + "\n\n" + sender.key
         alert.addButton(withTitle: String(localized: "Allow for This Session"))

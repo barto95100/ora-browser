@@ -16,6 +16,7 @@ struct TabGroupSection<Row: View>: View {
     var body: some View {
         VStack(spacing: 8) {
             TabGroupRow(group: group, tabs: tabs)
+                .activeTabMarkerRow([group.id])
             if !shownTabs.isEmpty {
                 VStack(spacing: 8) {
                     ForEach(shownTabs) { tab in

@@ -108,6 +108,7 @@ struct NormalTabsList: View {
     /// middle click.
     private func decoratedRow(for tab: Tab, split: (left: Tab, right: Tab)?, inGroup: Bool) -> some View {
         row(for: tab, split: split, inGroup: inGroup)
+            .activeTabMarkerRow(split.map { [$0.left.id, $0.right.id] } ?? [tab.id])
             .onDrag { onDrag(tab.id) }
             .onDrop(
                 of: [.text, .fileURL],

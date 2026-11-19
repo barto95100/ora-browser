@@ -71,6 +71,7 @@ struct PinnedTabsList: View {
             onMoveToContainer: { onMoveToContainer(tab, $0) },
             availableContainers: containers
         )
+        .activeTabMarkerRow([tab.id])
         .onDrag { onDrag(tab.id) }
         .onDrop(
             of: [.text, .fileURL],
@@ -89,6 +90,7 @@ struct PinnedTabsList: View {
         AnyView(
             VStack(spacing: 8) {
                 FolderItem(folder: folder, isDragging: draggedItem == folder.id)
+                    .activeTabMarkerRow([folder.id])
                     .onDrag { onDrag(folder.id) }
                     .onDrop(
                         of: [.text, .fileURL],

@@ -24,6 +24,8 @@ struct ContainerView: View {
     /// Scroll changes are noted once the list is back where it was (its
     /// first ones, at the top, would erase it).
     @State private var isScrollRestored = false
+    /// The pill pointing to the active tab when its row is out of view.
+    @State private var marker = ActiveTabMarkerState()
     /// The double click zooms the window it happened in.
     @Environment(\.window) private var window: NSWindow?
 
@@ -80,6 +82,7 @@ struct ContainerView: View {
             }
 
             GeometryReader { scrollArea in
+                let target = markerTarget
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
                         VStack(alignment: .leading, spacing: 16) {
@@ -129,6 +132,10 @@ struct ContainerView: View {
                                 delegate: TabListEndDropDelegate(container: container, draggedItem: $draggedItem)
                             )
                     }
+                    // The rows' frames, the same however far the list is scrolled.
+                    .coordinateSpace(.named(ActiveTabMarker.coordinateSpace))
+                    .environment(\.activeTabMarkerTarget, target)
+                    .environment(\.activeTabMarkerState, marker)
                     // The empty space is part of the scrolled content, which
                     // takes the clicks there: it gets the window drag and the
                     // double click to zoom too.
@@ -143,6 +150,16 @@ struct ContainerView: View {
                     guard isScrollRestored else { return }
                     tabManager.sidebarScroll.note(offset, for: container.id)
                 }
+                .onScrollGeometryChange(for: ActiveTabMarker.Viewport.self) { geometry in
+                    ActiveTabMarker.Viewport(visible: geometry.visibleRect, contentHeight: geometry.contentSize.height)
+                } action: { _, viewport in
+                    marker.viewport = viewport
+                }
+                .onChange(of: target, initial: true) { _, target in
+                    marker.target = target
+                }
+                .overlay(alignment: .top) { markerPill(.top) }
+                .overlay(alignment: .bottom) { markerPill(.bottom) }
                 .onAppear {
                     if let offset = tabManager.sidebarScroll.offset(for: container.id) {
                         scrollPosition.scrollTo(y: offset)
@@ -165,6 +182,40 @@ struct ContainerView: View {
             tabManager.draggingTabID = item
         }
         .modifier(OmbreWindowDragGesture())
+    }
+
+    /// The rows the pill follows: the active tab of this space, and the
+    /// closed folder or folded group it is in, if any.
+    private var markerTarget: ActiveTabMarker.Target? {
+        guard let tab = tabManager.activeTab, tab.container.id == container.id else { return nil }
+        var enclosing: [ActiveTabMarker.Enclosing] = []
+        var folder = container.folder(of: tab)
+        var seen: Set<UUID> = []
+        while let current = folder, seen.insert(current.id).inserted {
+            enclosing.append(.init(id: current.id, isFolded: !current.isOpened))
+            folder = container.parent(of: current)
+        }
+        // A tab in a split leaves its group's rows (see `shownGroups`).
+        if tabManager.splitPartner(of: tab) == nil, let group = tabManager.tabGroup(of: tab) {
+            enclosing.append(.init(id: group.id, isFolded: group.isCollapsed))
+        }
+        return ActiveTabMarker.target(tabID: tab.id, isFavorite: tab.type == .fav, enclosing: enclosing)
+    }
+
+    /// Not while a tab is dragged: the list's edges take the drop.
+    @ViewBuilder
+    private func markerPill(_ edge: ActiveTabMarker.Edge) -> some View {
+        if draggedItem == nil {
+            ActiveTabMarkerPill(state: marker, edge: edge, tab: tabManager.activeTab, action: scrollToActiveTab)
+        }
+    }
+
+    /// Brings the pill's row to the middle of the list.
+    private func scrollToActiveTab() {
+        guard let offset = marker.destinationOffset else { return }
+        withAnimation(.easeInOut(duration: 0.35)) {
+            scrollPosition.scrollTo(y: offset)
+        }
     }
 
     /// Empty favorites and pinned sections stay hidden, like Arc (upstream

@@ -197,6 +197,22 @@
         }
       }
     },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$@"
+          }
+        }
+      }
+    },
     "%@." : {},
     "%lld" : {},
     "%lld %%" : {
@@ -477,6 +493,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld h"
+          }
+        }
+      }
+    },
+    "%lld hours" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld hour"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld hours"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld heure"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld heures"
+                }
+              }
+            }
           }
         }
       }
@@ -811,6 +867,46 @@
         }
       }
     },
+    "%lld weeks" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld week"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld weeks"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld semaine"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld semaines"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld%%" : {
       "localizations" : {
         "fr" : {
@@ -852,12 +948,12 @@
         }
       }
     },
-    "1 week" : {
+    "1 month" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 semaine"
+            "value" : "1 mois"
           }
         }
       }
@@ -2700,6 +2796,16 @@
         }
       }
     },
+    "Close tabs not shown after:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer les onglets non affichés après :"
+          }
+        }
+      }
+    },
     "Close Window" : {
       "localizations" : {
         "fr" : {
@@ -3088,6 +3194,16 @@
         }
       }
     },
+    "Custom…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personnalisé…"
+          }
+        }
+      }
+    },
     "Daily focus goal:" : {
       "localizations" : {
         "fr" : {
@@ -3114,6 +3230,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Jour"
+          }
+        }
+      }
+    },
+    "days" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jours"
           }
         }
       }
@@ -3559,6 +3685,16 @@
         }
       }
     },
+    "Each site asks again the next time it needs a permission." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque site redemandera la prochaine fois qu’il aura besoin d’une autorisation."
+          }
+        }
+      }
+    },
     "Edit" : {
       "localizations" : {
         "fr" : {
@@ -3615,6 +3751,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier l’espace…"
+          }
+        }
+      }
+    },
+    "Edit…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier…"
           }
         }
       }
@@ -4005,6 +4151,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oublier (la question sera reposée la prochaine fois)"
+          }
+        }
+      }
+    },
+    "Forget All" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout oublier"
+          }
+        }
+      }
+    },
+    "Forget all sites in %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier tous les sites de %@ ?"
+          }
+        }
+      }
+    },
+    "Forget All…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout oublier…"
           }
         }
       }
@@ -4484,6 +4660,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maison"
+          }
+        }
+      }
+    },
+    "hours" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heures"
           }
         }
       }
@@ -4975,6 +5161,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clair"
+          }
+        }
+      }
+    },
+    "Like General (%@)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comme le réglage général (%@)"
           }
         }
       }
@@ -5607,6 +5803,16 @@
         }
       }
     },
+    "New Space or Import" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel espace ou importation"
+          }
+        }
+      }
+    },
     "New Space…" : {
       "localizations" : {
         "fr" : {
@@ -5907,6 +6113,16 @@
         }
       }
     },
+    "No site matches." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun site ne correspond."
+          }
+        }
+      }
+    },
     "No spaces found" : {
       "localizations" : {
         "fr" : {
@@ -6153,6 +6369,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "Number" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre"
           }
         }
       }
@@ -7949,6 +8175,16 @@
         }
       }
     },
+    "Search Sites" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher un site"
+          }
+        }
+      }
+    },
     "Search the web or enter URL..." : {
       "localizations" : {
         "fr" : {
@@ -9264,6 +9500,16 @@
         }
       }
     },
+    "The shorter of this delay and the general one applies." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le plus court de ce délai et du délai général s’applique."
+          }
+        }
+      }
+    },
     "The site says: “%@”" : {
       "localizations" : {
         "fr" : {
@@ -9980,6 +10226,16 @@
         }
       }
     },
+    "Unit" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unité"
+          }
+        }
+      }
+    },
     "Unlock Passwords" : {
       "localizations" : {
         "fr" : {
@@ -10442,6 +10698,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Semaine"
+          }
+        }
+      }
+    },
+    "weeks" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "semaines"
           }
         }
       }

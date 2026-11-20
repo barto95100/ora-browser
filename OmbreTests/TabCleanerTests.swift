@@ -42,7 +42,7 @@ struct TabCleanerTests {
         try await TabManagerTestWindow.run { window in
             let space = try window.activeSpace
             window.remember(space)
-            SettingsStore.shared.setAutoClearTabsAfter(.oneHour, for: space.id)
+            SettingsStore.shared.setSpaceClosingDelay(TabClosingDelay.hour, for: space.id)
             let old = window.addUnloadedTab("old", order: 1, in: space)
 
             // Two hours later: the space's auto-clear, not the general removal.

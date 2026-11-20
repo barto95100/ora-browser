@@ -58,7 +58,7 @@ enum SettingsWindow {
     /// (from a drag of its edge) between launches: that state is dropped.
     static func forgetFoldedSections(in defaults: UserDefaults = .standard) {
         for key in defaults.dictionaryRepresentation().keys
-            where key.hasPrefix("NSSplitView Subview Frames settings")
+            where key.hasPrefix("NSSplitView Subview Frames settings") // no translation
         {
             defaults.removeObject(forKey: key)
         }

@@ -3,18 +3,11 @@ import SwiftUI
 
 // swiftlint:disable type_body_length large_tuple
 struct SpacesSettingsView: View {
-    private enum ClearDataAction: Hashable {
-        case cache(UUID)
-        case cookies(UUID)
-        case history(UUID)
-    }
-
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @ObservedObject private var settings = SettingsStore.shared
     @StateObject private var searchService = SearchEngineService()
     @State private var selectedContainerId: UUID?
-    @State private var completedClearActions: Set<ClearDataAction> = []
     @State private var newCustomFilterListURL = ""
     @State private var spacePendingDeletion: TabContainer?
     /// New Space… was clicked: the space that appears next is selected.
@@ -131,67 +124,9 @@ struct SpacesSettingsView: View {
                         SitePermissionsSettingsCard(container: container)
                         adBlockingSettingsCard(for: container)
 
-                        SettingsCard(header: String(localized: "Clear Data")) {
-                            VStack(spacing: 8) {
-                                Button(
-                                    clearDataButtonTitle(
-                                        for: .cache(container.id),
-                                        defaultTitle: String(localized: "Clear Cache"),
-                                        completedTitle: String(localized: "Cache Cleared")
-                                    )
-                                ) {
-                                    PrivacyService.clearCache(container) {
-                                        DispatchQueue.main.async {
-                                            completedClearActions.insert(.cache(container.id))
-                                            toastManager.show(
-                                                String(localized: "Cache cleared"),
-                                                icon: .system("trash")
-                                            )
-                                        }
-                                    }
-                                }
-                                .disabled(completedClearActions.contains(.cache(container.id)))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                                Button(
-                                    clearDataButtonTitle(
-                                        for: .cookies(container.id),
-                                        defaultTitle: String(localized: "Clear Cookies"),
-                                        completedTitle: String(localized: "Cookies Cleared")
-                                    )
-                                ) {
-                                    PrivacyService.clearCookies(container) {
-                                        DispatchQueue.main.async {
-                                            completedClearActions.insert(.cookies(container.id))
-                                            toastManager.show(
-                                                String(localized: "Cookies cleared"),
-                                                icon: .system("trash")
-                                            )
-                                        }
-                                    }
-                                }
-                                .disabled(completedClearActions.contains(.cookies(container.id)))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                                Button(
-                                    clearDataButtonTitle(
-                                        for: .history(container.id),
-                                        defaultTitle: String(localized: "Clear History"),
-                                        completedTitle: String(localized: "History Cleared")
-                                    )
-                                ) {
-                                    if clearHistory(for: container) {
-                                        completedClearActions.insert(.history(container.id))
-                                        toastManager.show(String(localized: "History cleared"), icon: .system("trash"))
-                                    }
-                                }
-                                .disabled(completedClearActions.contains(.history(container.id)))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .buttonStyle(.bordered)
+                        SpaceDangerZoneCard(container: container, canDelete: containers.count > 1) {
+                            spacePendingDeletion = container
                         }
-
-                        deleteSpaceCard(for: container)
                     } else {
                         Text("No spaces found")
                             .foregroundStyle(.secondary)
@@ -255,23 +190,6 @@ struct SpacesSettingsView: View {
         .fixedSize()
     }
 
-    private func deleteSpaceCard(for container: TabContainer) -> some View {
-        SettingsCard(header: String(localized: "Delete Space")) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(
-                    containers.count <= 1
-                        ? "The last space can't be deleted."
-                        : "Removes the space with its tabs, folders and website data."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
-                    .disabled(containers.count <= 1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
     /// The browser window deletes it, like from the sidebar (see `BrowserWindows`).
     private func delete(_ container: TabContainer) {
         if selectedContainerId == container.id {
@@ -279,19 +197,6 @@ struct SpacesSettingsView: View {
         }
         BrowserWindows.deleteSpace(container.id)
         spacePendingDeletion = nil
-    }
-
-    private func clearHistory(for container: TabContainer) -> Bool {
-        HistoryManager(modelContainer: modelContext.container, modelContext: modelContext)
-            .clearContainerHistory(container)
-    }
-
-    private func clearDataButtonTitle(
-        for action: ClearDataAction,
-        defaultTitle: String,
-        completedTitle: String
-    ) -> String {
-        completedClearActions.contains(action) ? completedTitle : defaultTitle
     }
 
     private func privacySettingsCard(for container: TabContainer) -> some View {

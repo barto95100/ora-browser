@@ -48,8 +48,18 @@ private extension View {
 }
 
 extension View {
-    /// The background of a settings card.
+    /// The background of a settings card: glass on macOS 26, over the
+    /// page's background; before, a plain card.
+    @ViewBuilder
     func settingsCardBackground() -> some View {
+        if #available(macOS 26, *) {
+            ombreGlass(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        } else {
+            plainCardBackground()
+        }
+    }
+
+    private func plainCardBackground() -> some View {
         background {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Self.settingsCardFill)

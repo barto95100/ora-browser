@@ -98,13 +98,7 @@ struct SettingsContentView: View {
     /// view, which could fold the list (and keep it folded, with no way back).
     var body: some View {
         HStack(spacing: 0) {
-            List(SettingsTab.allCases, id: \.self, selection: selection) { tab in
-                SettingsSidebarRow(tab: tab)
-                    .tag(tab)
-            }
-            .listStyle(.sidebar)
-            .frame(width: SettingsWindow.sidebarWidth)
-            Divider()
+            sectionsList
             SettingsDetailView(tab: selectedTab)
                 .frame(
                     minWidth: SettingsWindow.minimumDetailWidth,
@@ -119,6 +113,28 @@ struct SettingsContentView: View {
         .navigationTitle(selectedTab.title)
         .navigationSubtitle(selectedTab.subtitle)
         .tint(theme.accent)
+    }
+
+    /// On macOS 26, a glass panel floating over the page's background, like
+    /// Apple's sidebars; before, the sidebar material and a line.
+    @ViewBuilder
+    private var sectionsList: some View {
+        let list = List(SettingsTab.allCases, id: \.self, selection: selection) { tab in
+            SettingsSidebarRow(tab: tab)
+                .tag(tab)
+        }
+        .listStyle(.sidebar)
+        .frame(width: SettingsWindow.sidebarWidth)
+        if #available(macOS 26, *) {
+            list
+                .scrollContentBackground(.hidden)
+                .ombreGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .padding(SettingsWindow.sidebarInset)
+                .background(Color(nsColor: .windowBackgroundColor))
+        } else {
+            list
+            Divider()
+        }
     }
 }
 

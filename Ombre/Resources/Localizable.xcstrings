@@ -4,6 +4,46 @@
     "" : {},
     " — %@" : {},
     " / %@" : {},
+    "Clear All" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout effacer"
+          }
+        }
+      }
+    },
+    "Clear data of “%@”?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer les données de « %@ » ?"
+          }
+        }
+      }
+    },
+    "Clear Data…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer les données…"
+          }
+        }
+      }
+    },
+    "Danger Zone" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zone sensible"
+          }
+        }
+      }
+    },
     "Did “%@” appear in the site’s field or results?" : {
       "localizations" : {
         "fr" : {
@@ -50,6 +90,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le site reçoit la question dans l’adresse"
+          }
+        }
+      }
+    },
+    "This can’t be undone." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette action est irréversible."
+          }
+        }
+      }
+    },
+    "This space’s cache, cookies or history. Its tabs stay; sites may sign you out." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le cache, les cookies ou l’historique de cet espace. Ses onglets restent ; les sites peuvent vous déconnecter."
           }
         }
       }
@@ -2336,16 +2396,6 @@
         }
       }
     },
-    "Cache Cleared" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cache vidé"
-          }
-        }
-      }
-    },
     "Cache cleared for %@" : {
       "localizations" : {
         "fr" : {
@@ -3024,16 +3074,6 @@
       }
     },
     "Cookies cleared" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cookies supprimés"
-          }
-        }
-      }
-    },
-    "Cookies Cleared" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -4627,16 +4667,6 @@
       }
     },
     "History cleared" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Historique effacé"
-          }
-        }
-      }
-    },
-    "History Cleared" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {

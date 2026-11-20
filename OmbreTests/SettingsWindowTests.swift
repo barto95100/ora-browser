@@ -149,7 +149,7 @@ struct SettingsSectionsListTests {
         let scroll = try #require(sections.enclosingScrollView)
         let frame = scroll.convert(scroll.bounds, to: host)
         #expect(frame.width >= SettingsWindow.sidebarWidth - 1, "\(frame)")
-        #expect(frame.minX < 1)
+        #expect(frame.minX < SettingsWindow.sidebarInset + 1)
         // The content cannot be narrower than the list plus the page's room.
         #expect(host.fittingSize.width >= SettingsWindow.sidebarWidth + SettingsWindow.minimumDetailWidth)
     }

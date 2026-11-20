@@ -17,7 +17,16 @@ enum SettingsWindow {
     static let sidebarWidth: CGFloat = 210
     /// The section's page at the window's smallest size.
     static let minimumDetailWidth: CGFloat = 560
-    static let minimumSize = CGSize(width: sidebarWidth + 1 + minimumDetailWidth, height: 480)
+    /// Room around the list: on macOS 26 it floats, a glass panel inset
+    /// from the window's edges; before, it fills its side.
+    static var sidebarInset: CGFloat {
+        if #available(macOS 26, *) { return 8 }
+        return 0
+    }
+
+    static var minimumSize: CGSize {
+        CGSize(width: sidebarWidth + 2 * sidebarInset + 1 + minimumDetailWidth, height: 480)
+    }
 
     /// The window, while it is open.
     private(set) weak static var window: NSWindow?

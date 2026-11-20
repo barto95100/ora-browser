@@ -9,9 +9,10 @@ enum SettingsBackdrop: String, CaseIterable, Identifiable {
     case plain
     /// The desktop picture, blurred, like Finder's sidebar.
     case translucent
-    /// A soft evening gradient, the first-launch assistant's colors.
+    /// macOS's gray window with a faint evening tint at the top, the
+    /// first-launch assistant's colors.
     case gradient
-    /// Translucent, tinted with that gradient.
+    /// Translucent, with that same faint tint.
     case tintedTranslucent
 
     static let defaultsKey = "settings.backdrop"
@@ -109,25 +110,37 @@ struct BackdropRGB: Equatable {
     }
 }
 
-/// The gradient's colors, top to bottom: violet to peach (a dusky rose in
-/// dark mode), never white nor black. Secondary text stays as legible as on
-/// macOS's own window in light mode, and passes WCAG AA in dark mode.
+/// The gradient: macOS's own gray window, with only a faint evening tint
+/// at the top (violet at the left, peach at the right) that fades out
+/// before the middle. Never a flat violet.
 enum SettingsBackdropPalette {
-    static let darkStops = ["#251B50", "#342764", "#482E62", "#52314C"].map(BackdropRGB.init(hex:))
-    static let lightStops = ["#ECE5F8", "#F0E6F4", "#F6E8EC", "#FBEBE0"].map(BackdropRGB.init(hex:))
-    /// What a space's color is mixed with to stay this soft.
-    static let darkBase = BackdropRGB(hex: "#1A1230")
-    static let lightBase = BackdropRGB(hex: "#FBF6F2")
+    /// The tint's colors, left to right.
+    static let ombreTint = ["#6A4BC4", "#F09C82"].map(BackdropRGB.init(hex:))
+    /// How much of the tint shows, at the very top: 8 to 12 %.
+    static let tintOpacity = 0.1
+    static let spaceTintOpacity = 0.12
+    /// macOS's window background, which the tint lies on (in the window,
+    /// the system's own color is used).
+    static let darkWindow = BackdropRGB(hex: "#1E1E1E")
+    static let lightWindow = BackdropRGB(hex: "#ECECEC")
 
-    /// The stops; with `spaceHex`, they lean to that space's color.
-    static func stops(isDark: Bool, spaceHex: String? = nil) -> [BackdropRGB] {
-        let stops = isDark ? darkStops : lightStops
-        guard let spaceHex else { return stops }
+    /// The tint's colors: the evening's, or with `spaceHex` that space's.
+    static func tint(spaceHex: String? = nil) -> [BackdropRGB] {
+        guard let spaceHex else { return ombreTint }
         let space = BackdropRGB(hex: spaceHex)
-        let base = isDark ? darkBase : lightBase
-        // Its color at the top, fading into the evening's peach below.
-        let top = space.mixed(with: base, by: isDark ? 0.78 : 0.84)
-        return [top, top.mixed(with: stops[2], by: 0.5), stops[2], stops[3]]
+        return [space, space.mixed(with: ombreTint[1], by: 0.35)]
+    }
+
+    static func opacity(followingSpace: Bool) -> Double {
+        followingSpace ? spaceTintOpacity : tintOpacity
+    }
+
+    /// The tint's colors as they show over the window, where it is
+    /// strongest: what text must stay legible on.
+    static func strongest(isDark: Bool, spaceHex: String? = nil) -> [BackdropRGB] {
+        let window = isDark ? darkWindow : lightWindow
+        let opacity = opacity(followingSpace: spaceHex != nil)
+        return tint(spaceHex: spaceHex).map { window.mixed(with: $0, by: opacity) }
     }
 }
 
@@ -145,7 +158,6 @@ struct SettingsBackdropView: View {
     let backdrop: SettingsBackdrop
     /// The selected space's color (`#RRGGBB`), if the gradient follows it.
     var spaceHex: String?
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack {
@@ -155,19 +167,24 @@ struct SettingsBackdropView: View {
             case .translucent:
                 DesktopBlur()
             case .gradient:
-                gradient
+                Color(nsColor: .windowBackgroundColor)
+                tint
             case .tintedTranslucent:
                 DesktopBlur()
-                gradient.opacity(0.55)
+                tint
             }
         }
         .animation(.easeInOut(duration: 0.35), value: spaceHex)
         .ignoresSafeArea()
     }
 
-    private var gradient: LinearGradient {
-        let stops = SettingsBackdropPalette.stops(isDark: colorScheme == .dark, spaceHex: spaceHex)
-        return LinearGradient(colors: stops.map(\.color), startPoint: .topLeading, endPoint: .bottomTrailing)
+    /// The faint tint along the top, fading out before the middle.
+    private var tint: some View {
+        let colors = SettingsBackdropPalette.tint(spaceHex: spaceHex).map(\.color)
+        return LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
+            .mask(LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.55)))
+            .opacity(SettingsBackdropPalette.opacity(followingSpace: spaceHex != nil))
+            .allowsHitTesting(false)
     }
 }
 

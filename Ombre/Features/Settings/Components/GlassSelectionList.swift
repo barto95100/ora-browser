@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// A list to pick one item from, in a glass panel (macOS 26): the selected
-/// row is a pill of glass tinted with the accent color, not a filled bar.
-/// The arrow keys move the selection, like a list's.
+/// row is a pill tinted with the accent color, not a filled bar. The arrow
+/// keys move the selection, like a list's.
 @available(macOS 26, *)
 struct GlassSelectionList<ID: Hashable, Row: View>: View {
     let ids: [ID]
@@ -12,20 +12,14 @@ struct GlassSelectionList<ID: Hashable, Row: View>: View {
     @Environment(\.theme) private var theme
     @FocusState private var isFocused: Bool
 
-    private static var pill: RoundedRectangle {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-    }
-
     var body: some View {
         ScrollView {
-            GlassEffectContainer(spacing: 2) {
-                VStack(spacing: 2) {
-                    ForEach(ids, id: \.self) { id in
-                        rowButton(id)
-                    }
+            VStack(spacing: 2) {
+                ForEach(ids, id: \.self) { id in
+                    rowButton(id)
                 }
-                .padding(8)
             }
+            .padding(8)
         }
         .focusable()
         .focused($isFocused)
@@ -40,19 +34,11 @@ struct GlassSelectionList<ID: Hashable, Row: View>: View {
             selection = id
             isFocused = true
         } label: {
-            row(id)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .contentShape(Self.pill)
-        }
-        .buttonStyle(.plain)
-        .background {
-            if isSelected {
-                Color.clear
-                    .glassEffect(.regular.tint(theme.accent.opacity(0.42)), in: Self.pill)
+            SelectionPillRow(isSelected: isSelected, tint: theme.accent) {
+                row(id)
             }
         }
+        .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -71,5 +57,54 @@ enum GlassSelection {
         guard !ids.isEmpty else { return nil }
         guard let current, let index = ids.firstIndex(of: current) else { return ids[0] }
         return ids[min(max(index + step, 0), ids.count - 1)]
+    }
+}
+
+/// A row of `GlassSelectionList`. Selected, its pill is drawn behind its
+/// icon and name, which stay sharp on top: not glass, which the panel's
+/// glass would draw over them.
+struct SelectionPillRow<Content: View>: View {
+    let isSelected: Bool
+    let tint: Color
+    @ViewBuilder let content: () -> Content
+
+    static var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+    }
+
+    var body: some View {
+        content()
+            .fontWeight(isSelected ? .semibold : nil)
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background {
+                if isSelected { pill }
+            }
+            .contentShape(Self.shape)
+    }
+
+    /// Tinted, lighter at the top, with a light edge: glass-like.
+    private var pill: some View {
+        Self.shape
+            .fill(tint.opacity(0.32))
+            .overlay {
+                Self.shape.fill(LinearGradient(
+                    colors: [.white.opacity(0.16), .clear],
+                    startPoint: .top,
+                    endPoint: .center
+                ))
+            }
+            .overlay {
+                Self.shape.strokeBorder(
+                    LinearGradient(
+                        colors: [.white.opacity(0.4), tint.opacity(0.5)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 0.75
+                )
+            }
     }
 }

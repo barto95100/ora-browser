@@ -154,6 +154,7 @@ private struct ExtensionMenuItems: View {
     let record: ExtensionRecord
     let context: WKWebExtensionContext
     let tab: Tab?
+    @Environment(\.openWindow) private var openWindow
 
     private var manager: WebExtensionsManager {
         WebExtensionsManager.shared
@@ -186,7 +187,7 @@ private struct ExtensionMenuItems: View {
             manager.setPinned(!record.isPinned, id: record.id)
         }
         Divider()
-        Button("Manage Extension…") { SettingsWindow.show(.extensions) }
+        Button("Manage Extension…") { SettingsWindow.show(.extensions, opening: openWindow) }
         Button("Remove…", role: .destructive) { manager.confirmRemove(id: record.id) }
     }
 
@@ -240,6 +241,7 @@ private struct ExtensionOverflowMenu: View {
     let tab: Tab?
     let foregroundColor: Color
     @State private var anchor = AnchorView()
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Menu {
@@ -256,7 +258,7 @@ private struct ExtensionOverflowMenu: View {
                 }
             }
             Divider()
-            Button("Manage Extensions…") { SettingsWindow.show(.extensions) }
+            Button("Manage Extensions…") { SettingsWindow.show(.extensions, opening: openWindow) }
         } label: {
             Image(systemName: "puzzlepiece.extension")
                 .font(.system(size: 13, weight: .medium))

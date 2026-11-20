@@ -43,8 +43,6 @@ extension Notification.Name {
     static let toggleToolbar = Notification.Name("ToggleToolbar")
     static let selectTabAtIndex = Notification.Name("SelectTabAtIndex") // userInfo: ["index": Int]
 
-    // Per-window settings/events
-
     /// AppDelegate → UI routing
     static let openURL = Notification.Name("OpenURL") // userInfo: ["url": URL]
 

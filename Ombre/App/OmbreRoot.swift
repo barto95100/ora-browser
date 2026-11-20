@@ -44,7 +44,6 @@ private struct BrowserWindowRoot: View {
 
     private let modelContext: ModelContext
     @State private var window: NSWindow?
-    @Environment(\.openWindow) private var openWindow
     /// When the window appeared: a link right after made it (see `LittleOmbreWindow.hiding`).
     @State private var windowAppearance: ContinuousClock.Instant?
     /// A Little Ombre opened for a link before the window was known.
@@ -208,8 +207,6 @@ private struct BrowserWindowRoot: View {
             )
             .onAppear {
                 downloadManager.toastManager = toastManager
-                // Code without a window of its own opens the settings through it.
-                SettingsWindow.opener = openWindow
                 // The first-launch assistant's choices, before the spaces are read below.
                 if !privacyMode.isPrivate, let onboarding = OnboardingHandoff.take() {
                     OnboardingApplier.apply(onboarding, tabManager: tabManager)

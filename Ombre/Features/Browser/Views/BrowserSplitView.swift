@@ -2,11 +2,9 @@ import SwiftUI
 
 struct BrowserSplitView: View {
     @EnvironmentObject var tabManager: TabManager
-    @EnvironmentObject var appState: AppState
     @EnvironmentObject var toolbarManager: ToolbarManager
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toastManager: ToastManager
-    @EnvironmentObject var privacyMode: PrivacyMode
 
     private var targetSide: SplitSide {
         sidebarManager.sidebarPosition == .primary ? .primary : .secondary

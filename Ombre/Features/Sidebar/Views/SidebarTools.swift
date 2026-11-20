@@ -4,11 +4,12 @@ import SwiftUI
 /// Sidebar bottom button: the settings window (see `SettingsWindow`).
 struct SidebarSettingsButton: View {
     @Environment(\.theme) private var theme
+    @Environment(\.openWindow) private var openWindow
     @State private var isHovering = false
 
     var body: some View {
         Button {
-            SettingsWindow.show()
+            SettingsWindow.show(opening: openWindow)
         } label: {
             Image(systemName: "gearshape")
                 .font(.system(size: 13, weight: .medium))

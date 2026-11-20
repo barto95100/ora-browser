@@ -68,7 +68,11 @@ struct PasswordsSettingsView: View {
 
     private var passwordsOverview: some View {
         SettingsCard {
-            SettingsRow(title: String(localized: "Password manager"), detail: selectedProvider.summary) {
+            SettingsRow(
+                title: String(localized: "Password manager"),
+                detail: selectedProvider.summary,
+                detailIsWarning: !selectedProvider.isAvailable
+            ) {
                 Picker("", selection: $settings.passwordManagerProvider) {
                     ForEach(providers.providers) { provider in
                         Text(provider.title).tag(provider.kind)

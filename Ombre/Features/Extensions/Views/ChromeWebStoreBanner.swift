@@ -18,6 +18,7 @@ struct ChromeWebStoreBanner: View {
 private struct ChromeWebStoreBannerContent: View {
     let storeID: String
     @ObservedObject private var manager = WebExtensionsManager.shared
+    @Environment(\.openWindow) private var openWindow
     @State private var isDismissed = false
     @State private var isDownloading = false
     @State private var review: WebExtensionsManager.Review?
@@ -35,7 +36,7 @@ private struct ChromeWebStoreBannerContent: View {
                 if let record = manager.installed(storeID: storeID) {
                     Text("“\(record.name)” is in Ombre.")
                         .font(.subheadline)
-                    Button("Manage…") { SettingsWindow.show(.extensions) }
+                    Button("Manage…") { SettingsWindow.show(.extensions, opening: openWindow) }
                         .controlSize(.small)
                         .pointerStyle(.link)
                 } else if let failure {

@@ -16,14 +16,12 @@ enum SettingsWindow {
 
     /// The window, while it is open.
     private(set) weak static var window: NSWindow?
-    /// Opens the scene, from code that has no `openWindow` of its own: set
-    /// by the browser windows and the menu.
-    static var opener: OpenWindowAction?
 
-    /// Shows the settings, at `section` if given.
-    static func show(_ section: SettingsTab? = nil, opening open: OpenWindowAction? = nil) {
+    /// Shows the settings, at `section` if given; `open` is the caller's
+    /// `openWindow`, which makes the window when there is none.
+    static func show(_ section: SettingsTab? = nil, opening open: OpenWindowAction) {
         show(section, existing: window) {
-            (open ?? opener)?(id: sceneID)
+            open(id: sceneID)
         }
     }
 
@@ -60,6 +58,9 @@ enum SettingsWindow {
     /// size and position under `frameName`.
     static func adopt(_ newWindow: NSWindow) {
         guard newWindow !== window else { return }
+        // A window closed but not freed yet keeps the name: the new one
+        // could not save its frame under it.
+        window?.setFrameAutosaveName("")
         window = newWindow
         newWindow.setFrameUsingName(frameName)
         newWindow.setFrameAutosaveName(frameName)

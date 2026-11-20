@@ -66,6 +66,8 @@ extension View {
 struct SettingsRow<Control: View>: View {
     let title: String
     var detail: String?
+    /// The explanation is a warning (in orange).
+    var detailIsWarning = false
     @ViewBuilder var control: () -> Control
 
     var body: some View {
@@ -75,12 +77,14 @@ struct SettingsRow<Control: View>: View {
                 if let detail {
                     Text(detail)
                         .font(.system(size: 11.5))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(detailIsWarning ? Color.orange : .secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer(minLength: 8)
+            // Its label is hidden: VoiceOver names it after the row.
             control()
+                .accessibilityLabel(Text(title))
         }
     }
 }

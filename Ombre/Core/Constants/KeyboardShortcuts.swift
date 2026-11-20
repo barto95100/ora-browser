@@ -214,6 +214,13 @@ enum KeyboardShortcuts {
             category: String(localized: "Address"),
             defaultChord: KeyChord(keyEquivalent: .init("l"), modifiers: [.command])
         )
+        /// Sends what is typed in the address bar to the space's AI.
+        static let askAI = KeyboardShortcutDefinition(
+            id: "address.askAI",
+            name: String(localized: "Ask the Space’s AI"),
+            category: String(localized: "Address"),
+            defaultChord: KeyChord(keyEquivalent: .return, modifiers: [.command])
+        )
     }
 
     // MARK: - Edit
@@ -348,7 +355,7 @@ enum KeyboardShortcuts {
         Window.new, Window.newPrivate, Window.newLittleOmbre, Window.close, Window.fullscreen,
 
         // Address
-        Address.copyURL, Address.focus,
+        Address.copyURL, Address.focus, Address.askAI,
 
         // Edit
         Edit.find, Edit.findNext, Edit.findPrevious,

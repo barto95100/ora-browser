@@ -50,7 +50,8 @@ struct LauncherMain: View {
                         viewModel.moveFocusedElement(.down)
                     },
                     cursorColor: match?.color ?? theme.foreground,
-                    placeholder: getPlaceholder(match: match)
+                    placeholder: getPlaceholder(match: match),
+                    onKeyEquivalent: viewModel.handleKeyEquivalent
                 )
                 .onChange(of: text) { _, newValue in
                     viewModel.currentText = newValue

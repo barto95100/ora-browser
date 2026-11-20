@@ -39,7 +39,9 @@ final class ShortcutOverrideMonitor {
     /// Never forced: quitting or hiding Ombre by accident.
     private static let excludedShortcutIDs: Set<String> = [
         KeyboardShortcuts.App.quit.id,
-        KeyboardShortcuts.App.hide.id
+        KeyboardShortcuts.App.hide.id,
+        // Not a menu item: only while typing in the address bar.
+        KeyboardShortcuts.Address.askAI.id
     ]
 
     private var detector = ShortcutDoublePressDetector()

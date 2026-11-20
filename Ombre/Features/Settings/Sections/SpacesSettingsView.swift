@@ -93,87 +93,52 @@ struct SpacesSettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     if let container = selectedContainer {
-                        SettingsCard(header: String(localized: "Defaults")) {
-                            Grid(alignment: .leading, verticalSpacing: 12) {
-                                GridRow {
-                                    Text("Search Engine")
-                                        .frame(width: 140, alignment: .leading)
-                                    Picker(
-                                        "",
-                                        selection: Binding(
-                                            get: {
-                                                settings.defaultSearchEngineId(for: container.id)
-                                            },
-                                            set: { settings.setDefaultSearchEngineId($0, for: container.id) }
-                                        )
-                                    ) {
-                                        Text("Use Global Default").tag(nil as String?)
-                                        Divider()
-                                        ForEach(
-                                            searchService.searchEngines.filter { !$0.isAIChat },
-                                            id: \.name
-                                        ) { engine in
-                                            Text(engine.name).tag(Optional(engine.name))
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .labelsHidden()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-
-                                GridRow {
-                                    Text("AI Chat")
-                                        .frame(width: 140, alignment: .leading)
-                                    Picker(
-                                        "",
-                                        selection: Binding(
-                                            get: {
-                                                settings.defaultAIEngineId(for: container.id)
-                                            },
-                                            set: { settings.setDefaultAIEngineId($0, for: container.id) }
-                                        )
-                                    ) {
-                                        Text("Use Global Default").tag(nil as String?)
-                                        Divider()
-                                        ForEach(
-                                            searchService.searchEngines.filter(\.isAIChat),
-                                            id: \.name
-                                        ) { engine in
-                                            Text(engine.name).tag(Optional(engine.name))
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .labelsHidden()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-
-                                GridRow {
-                                    Text("Auto Clear Tabs")
-                                        .frame(width: 140, alignment: .leading)
-                                    Picker(
-                                        "",
-                                        selection: Binding(
-                                            get: { settings.autoClearTabsAfter(for: container.id) },
-                                            set: { settings.setAutoClearTabsAfter($0, for: container.id) }
-                                        )
-                                    ) {
-                                        ForEach(AutoClearTabsAfter.allCases) { value in
-                                            Text(value.title).tag(value)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .labelsHidden()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                }
+                        SettingsCard(
+                            header: String(localized: "Search and AI"),
+                            description: String(
+                                localized: "This space’s address bar searches with this engine and asks this AI, with the space’s own cookies."
+                            )
+                        ) {
+                            SettingsRow(title: String(localized: "Search Engine")) {
+                                enginePicker(for: container, isAI: false)
                             }
+                            Divider()
+                            SettingsRow(title: String(localized: "settings.search.ai", defaultValue: "AI")) {
+                                enginePicker(for: container, isAI: true)
+                            }
+                        }
 
-                            Toggle("Group tabs automatically", isOn: Binding(
-                                get: { settings.autoGroupsTabs(for: container.id) },
-                                set: { settings.setAutoGroupsTabs($0, for: container.id) }
-                            ))
-                            Text("By site, from three tabs of a site. Tabs › Tidy Tabs Now groups them at any time.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                        SettingsCard(header: String(localized: "Tabs")) {
+                            SettingsRow(title: String(localized: "Auto Clear Tabs")) {
+                                Picker(
+                                    "",
+                                    selection: Binding(
+                                        get: { settings.autoClearTabsAfter(for: container.id) },
+                                        set: { settings.setAutoClearTabsAfter($0, for: container.id) }
+                                    )
+                                ) {
+                                    ForEach(AutoClearTabsAfter.allCases) { value in
+                                        Text(value.title).tag(value)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                                .fixedSize()
+                            }
+                            Divider()
+                            SettingsRow(
+                                title: String(localized: "Group tabs automatically"),
+                                detail: String(
+                                    localized: "By site, from three tabs of a site. Tabs › Tidy Tabs Now groups them at any time."
+                                )
+                            ) {
+                                Toggle("", isOn: Binding(
+                                    get: { settings.autoGroupsTabs(for: container.id) },
+                                    set: { settings.setAutoGroupsTabs($0, for: container.id) }
+                                ))
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                            }
                         }
 
                         privacySettingsCard(for: container)
@@ -276,6 +241,32 @@ struct SpacesSettingsView: View {
                 }
             }
         }
+    }
+
+    /// The space's engine or AI: « Use Global Choice » (the default) or one
+    /// engine; a chosen engine shows (see `SearchEngineService.choose`).
+    private func enginePicker(for container: TabContainer, isAI: Bool) -> some View {
+        let rules = searchService.rules
+        let global = isAI ? rules.defaultAIName : rules.defaultSearchName
+        return Picker(
+            "",
+            selection: Binding(
+                get: {
+                    isAI ? settings.defaultAIEngineId(for: container.id)
+                        : settings.defaultSearchEngineId(for: container.id)
+                },
+                set: { searchService.choose($0, isAI: isAI, for: container.id) }
+            )
+        ) {
+            Text("Use Global Choice (\(global))").tag(nil as String?)
+            Divider()
+            ForEach(rules.engines.filter { $0.isAIChat == isAI }, id: \.name) { engine in
+                Text(engine.name).tag(Optional(engine.name))
+            }
+        }
+        .pickerStyle(.menu)
+        .labelsHidden()
+        .fixedSize()
     }
 
     private func deleteSpaceCard(for container: TabContainer) -> some View {

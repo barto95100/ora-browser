@@ -22,6 +22,8 @@ struct URLBar: View {
     // Inline launcher state
     @StateObject private var launcherViewModel = LauncherViewModel()
     @State private var launcherInput = ""
+    /// The engine of a keyword typed then Tab: the search goes to it.
+    @State private var keywordMatch: LauncherMatch?
     @FocusState private var isLauncherFocused: Bool
     @State private var mouseHasMoved = false
     @State private var mouseMonitor = MouseMovedMonitor()
@@ -153,6 +155,7 @@ struct URLBar: View {
             mouseHasMoved = false
             suppressInitialSearch = false
             launcherInput = ""
+            keywordMatch = nil
             launcherViewModel.reset()
         }
     }
@@ -164,25 +167,6 @@ struct URLBar: View {
                 appState.isURLBarEditing = false
             }
         }
-    }
-
-    private func onLauncherSubmit(_ newInput: String? = nil) {
-        let correctInput = newInput ?? launcherInput
-
-        if let defaultEngine = launcherViewModel.searchEngineService.getDefaultSearchEngine(
-            for: tabManager.activeContainer?.id
-        ) {
-            let customEngine = launcherViewModel.searchEngineService.settings.customSearchEngines
-                .first { $0.searchURL == defaultEngine.searchURL }
-            let match = defaultEngine.toLauncherMatch(
-                originalAlias: correctInput,
-                customEngine: customEngine
-            )
-            if let url = launcherViewModel.searchEngineService.createSearchURL(for: match, query: correctInput) {
-                tabManager.activeTab?.loadURL(url.absoluteString)
-            }
-        }
-        dismissEditing()
     }
 
     // MARK: - Body
@@ -491,14 +475,34 @@ struct URLBar: View {
                 .foregroundColor(buttonForegroundColor)
                 .frame(width: 16, height: 16)
 
+            if let keywordMatch {
+                SearchEngineCapsule(
+                    text: keywordMatch.text,
+                    color: keywordMatch.color,
+                    foregroundColor: keywordMatch.foregroundColor,
+                    icon: keywordMatch.icon
+                )
+                .scaleEffect(0.85)
+            }
+
             LauncherTextField(
                 text: $launcherInput,
                 font: NSFont.systemFont(ofSize: 14, weight: .regular),
-                onTab: {},
+                onTab: matchKeyword,
                 onSubmit: {
-                    launcherViewModel.executeCommand()
+                    if keywordMatch != nil {
+                        onLauncherSubmit()
+                    } else {
+                        launcherViewModel.executeCommand()
+                    }
                 },
-                onDelete: { false },
+                onDelete: {
+                    // Back over the engine: its keyword again.
+                    guard launcherInput.isEmpty, let match = keywordMatch else { return false }
+                    launcherInput = match.originalAlias
+                    keywordMatch = nil
+                    return true
+                },
                 onMoveUp: {
                     launcherViewModel.moveFocusedElement(.up)
                 },
@@ -508,7 +512,8 @@ struct URLBar: View {
                 cursorColor: foreground(tab).primary,
                 textColor: foreground(tab).primary,
                 placeholder: String(localized: "Search the web or enter URL..."),
-                placeholderColor: foreground(tab).secondary
+                placeholderColor: foreground(tab).secondary,
+                onKeyEquivalent: launcherViewModel.handleKeyEquivalent
             )
             .textFieldStyle(PlainTextFieldStyle())
             .focused($isLauncherFocused)
@@ -548,7 +553,7 @@ struct URLBar: View {
 
     @ViewBuilder
     private func suggestionsOverlay() -> some View {
-        if !launcherViewModel.suggestions.isEmpty {
+        if keywordMatch == nil, !launcherViewModel.suggestions.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(launcherViewModel.suggestions) { suggestion in
                     LauncherSuggestionItem(
@@ -574,5 +579,46 @@ struct URLBar: View {
             .onDisappear { suggestionsFrame = .zero }
             .environment(\.launcherMouseHasMoved, mouseHasMoved)
         }
+    }
+}
+
+// MARK: - Searching from the address bar
+
+private extension URLBar {
+    func onLauncherSubmit(_ newInput: String? = nil) {
+        let correctInput = newInput ?? launcherInput
+
+        if let keywordMatch {
+            // Nothing typed after the keyword: nothing to search yet.
+            guard !correctInput.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+            if let url = launcherViewModel.searchEngineService.createSearchURL(for: keywordMatch, query: correctInput) {
+                tabManager.activeTab?.loadURL(url.absoluteString)
+            }
+        } else if let defaultEngine = launcherViewModel.searchEngineService.getDefaultSearchEngine(
+            for: tabManager.activeContainer?.id
+        ) {
+            let customEngine = launcherViewModel.searchEngineService.settings.customSearchEngines
+                .first { $0.searchURL == defaultEngine.searchURL }
+            let match = defaultEngine.toLauncherMatch(
+                originalAlias: correctInput,
+                customEngine: customEngine
+            )
+            if let url = launcherViewModel.searchEngineService.createSearchURL(for: match, query: correctInput) {
+                tabManager.activeTab?.loadURL(url.absoluteString)
+            }
+        }
+        dismissEditing()
+    }
+
+    /// A keyword then Tab (« yt », « cl »…): the search goes to its engine,
+    /// like in the launcher. Hidden engines' keywords do nothing.
+    func matchKeyword() {
+        let typed = launcherInput.trimmingCharacters(in: .whitespaces)
+        guard !typed.isEmpty, let engine = launcherViewModel.searchEngineService.findSearchEngine(for: typed)
+        else { return }
+        let custom = launcherViewModel.searchEngineService.settings.customSearchEngines
+            .first { $0.searchURL == engine.searchURL }
+        keywordMatch = engine.toLauncherMatch(originalAlias: typed, customEngine: custom)
+        launcherInput = ""
     }
 }

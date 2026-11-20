@@ -3,23 +3,6 @@ import SwiftUI
 
 private let logger = Logger(category: "SearchEngineService")
 
-enum SearchEngineID: String, CaseIterable {
-    case youtube = "YouTube"
-    case chatgpt = "ChatGPT"
-    case claude = "Claude"
-    case google = "Google"
-    case grok = "Grok"
-    case perplexity = "Perplexity"
-    case reddit = "Reddit"
-    case t3chat = "T3Chat"
-    // swiftlint:disable:next identifier_name
-    case x = "X"
-    case gemini = "Gemini"
-    case copilot = "Copilot"
-    case githubCopilot = "GitHub Copilot"
-    case metaAI = "Meta AI"
-}
-
 struct SuggestResponse: Decodable {
     let query: String
     let suggestions: [String]
@@ -38,6 +21,11 @@ struct SuggestResponse: Decodable {
 class SearchEngineService: ObservableObject {
     private var theme: Theme?
     private let settingsStore = SettingsStore.shared
+    let preferences: SearchEnginePreferences
+
+    init(preferences: SearchEnginePreferences = .shared) {
+        self.preferences = preferences
+    }
 
     func setTheme(_ theme: Theme) {
         self.theme = theme
@@ -45,21 +33,6 @@ class SearchEngineService: ObservableObject {
 
     var settings: SettingsStore {
         return settingsStore
-    }
-
-    /// All built-in search engine IDs derived from the built-in engines
-    var builtInEngineIDs: [SearchEngineID] {
-        return builtInSearchEngines.compactMap { SearchEngineID(rawValue: $0.name) }
-    }
-
-    /// Check if a name corresponds to a built-in search engine
-    func isBuiltInEngine(_ name: String) -> Bool {
-        return builtInSearchEngines.contains { $0.name == name }
-    }
-
-    /// Get SearchEngineID from engine name if it exists
-    func getSearchEngineID(from name: String) -> SearchEngineID? {
-        return SearchEngineID(rawValue: name)
     }
 
     var builtInSearchEngines: [SearchEngine] {
@@ -77,7 +50,7 @@ class SearchEngineService: ObservableObject {
                 color: theme?.foreground ?? .white,
                 icon: "openai-capsule-logo",
                 aliases: ["chat", "chatgpt", "gpt", "cgpt", "openai", "cha"],
-                searchURL: "https://chatgpt.com?q={query}",
+                searchURL: "https://chatgpt.com/?q={query}",
                 isAIChat: true,
                 foregroundColor: theme?.background ?? .black
             ),
@@ -86,7 +59,7 @@ class SearchEngineService: ObservableObject {
                 color: Color(hex: "#DE7C4C"),
                 icon: "claude-capsule-logo",
                 aliases: ["claude", "cl", "cla", "anthropic"],
-                searchURL: "https://claude.ai?q={query}",
+                searchURL: "https://claude.ai/new?q={query}",
                 isAIChat: true
             ),
             SearchEngine(
@@ -128,7 +101,7 @@ class SearchEngineService: ObservableObject {
                 color: theme?.foreground ?? .white,
                 icon: "grok-capsule-logo",
                 aliases: ["grok", "gr", "gro"],
-                searchURL: "https://grok.com?q={query}",
+                searchURL: "https://grok.com/?q={query}",
                 isAIChat: true,
                 foregroundColor: theme?.background ?? .black
             ),
@@ -137,7 +110,7 @@ class SearchEngineService: ObservableObject {
                 color: Color(hex: "#20808D"),
                 icon: "perplexity-capsule-logo",
                 aliases: ["perplexity", "perplex", "pplx", "ppl", "per"],
-                searchURL: "https://www.perplexity.ai/search?q={query}",
+                searchURL: "https://www.perplexity.ai/search/new?q={query}",
                 isAIChat: true
             ),
             SearchEngine(
@@ -161,7 +134,7 @@ class SearchEngineService: ObservableObject {
                 color: theme?.foreground ?? .white,
                 icon: "x-capsule-logo",
                 aliases: ["x", "x.com", "twitter", "tw", "twtr", "twit", "twitt", "twitte"],
-                searchURL: "https://twitter.com/search?q={query}",
+                searchURL: "https://x.com/search?q={query}",
                 isAIChat: false,
                 foregroundColor: theme?.background ?? .black
             ),
@@ -177,7 +150,7 @@ class SearchEngineService: ObservableObject {
                 name: "Copilot", // no translation
                 color: Color(hex: "#0078D4"),
                 icon: "copilot-color-capsule-logo",
-                aliases: ["copilot", "microsoft copilot", "bing chat", "bing", "ms copilot"], // no translation
+                aliases: ["copilot", "microsoft copilot", "bing chat", "ms copilot"], // no translation
                 searchURL: "https://copilot.microsoft.com/?q={query}",
                 isAIChat: true
             ),
@@ -201,8 +174,11 @@ class SearchEngineService: ObservableObject {
         ]
     }
 
+    /// Every engine, built-in (with the keywords chosen for it) then custom.
     var searchEngines: [SearchEngine] {
-        var engines = builtInSearchEngines
+        var engines = builtInSearchEngines.map { engine in
+            engine.with(aliases: preferences.keywords(of: engine.name, own: engine.aliases))
+        }
 
         let customEngines = settingsStore.customSearchEngines.map { custom in
             SearchEngine(
@@ -219,9 +195,36 @@ class SearchEngineService: ObservableObject {
         return engines
     }
 
+    /// What decides which engines show and which AI a space asks.
+    var rules: SearchEngineRules {
+        SearchEngineRules(
+            engines: searchEngines,
+            isChosenShown: { [preferences] in preferences.isChosenShown($0) },
+            globalSearch: settingsStore.globalDefaultSearchEngine,
+            globalAI: preferences.globalAI,
+            spaceChoices: settingsStore.spaceEngineChoices
+        )
+    }
+
+    /// The shown engine a keyword opens: a hidden one's keywords do nothing.
     func findSearchEngine(for alias: String) -> SearchEngine? {
-        let textLowercased = alias.lowercased()
-        return searchEngines.first(where: { $0.aliases.contains(textLowercased) })
+        rules.engine(forKeyword: alias)
+    }
+
+    /// The engines offered: built-in and custom, hidden ones left out.
+    var shownEngines: [SearchEngine] {
+        let rules = rules
+        return rules.engines.filter { rules.isShown($0.name) }
+    }
+
+    /// Chooses the engine (`isAI` false) or AI for a space; nil: the choice
+    /// for all spaces. A chosen engine shows (it cannot be hidden).
+    func choose(_ name: String?, isAI: Bool, for containerId: UUID) {
+        if isAI {
+            settingsStore.setDefaultAIEngineId(name, for: containerId)
+        } else {
+            settingsStore.setDefaultSearchEngineId(name, for: containerId)
+        }
     }
 
     func getDefaultSearchEngine(for containerId: UUID? = nil) -> SearchEngine? {
@@ -285,36 +288,13 @@ class SearchEngineService: ObservableObject {
         return url
     }
 
+    /// The AI a space asks: its own, else the one for all spaces, else ChatGPT.
     func getDefaultAIChat(for containerId: UUID? = nil) -> SearchEngine? {
-        if let containerId,
-           let defaultId = settingsStore.defaultAIEngineId(for: containerId),
-           let engine = searchEngines.first(where: { $0.name == defaultId && $0.isAIChat })
-        {
-            return engine
-        }
-
-        // Fallback to ChatGPT if no custom default is set
-        return searchEngines.first(where: { $0.isAIChat && $0.name == "ChatGPT" }) // no translation
-    }
-
-    func getSearchEngine(_ engineName: SearchEngineID) -> SearchEngine? {
-        return searchEngines.first(where: { $0.name == engineName.rawValue })
+        rules.aiEngine(spaceChoice: containerId.flatMap(settingsStore.defaultAIEngineId(for:)))
     }
 
     func getSearchEngine(byName name: String) -> SearchEngine? {
         return searchEngines.first(where: { $0.name == name })
-    }
-
-    func getSearchURLForEngine(engineName: SearchEngineID, query: String) -> URL? {
-        if let engine = getSearchEngine(engineName) {
-            if let url = createSearchURL(
-                for: engine,
-                query: query
-            ) {
-                return url
-            }
-        }
-        return nil
     }
 
     func createSearchURL(for engine: SearchEngine, query: String) -> URL? {

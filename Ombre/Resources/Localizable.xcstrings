@@ -5,6 +5,16 @@
     " — %@" : {},
     " / %@" : {},
     "·" : {},
+    "“%@” is already a keyword of %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » est déjà un mot-clé de %2$@."
+          }
+        }
+      }
+    },
     "“%@” is in Ombre." : {
       "localizations" : {
         "fr" : {
@@ -1092,6 +1102,16 @@
         }
       }
     },
+    "Add Custom Engine…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un moteur personnalisé…"
+          }
+        }
+      }
+    },
     "Add Extension" : {
       "localizations" : {
         "fr" : {
@@ -1118,16 +1138,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter des éléments aux menus contextuels"
-          }
-        }
-      }
-    },
-    "Add New Search Engine" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter un moteur de recherche"
           }
         }
       }
@@ -1242,56 +1252,6 @@
         }
       }
     },
-    "AI" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IA"
-          }
-        }
-      }
-    },
-    "AI Chat" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discussion IA"
-          }
-        }
-      }
-    },
-    "AI Chat Engine" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moteur de discussion IA"
-          }
-        }
-      }
-    },
-    "AI Search Engines" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moteurs de recherche IA"
-          }
-        }
-      }
-    },
-    "Aliases:" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alias :"
-          }
-        }
-      }
-    },
     "All done" : {
       "localizations" : {
         "fr" : {
@@ -1362,16 +1322,6 @@
         }
       }
     },
-    "Allow agents to act in pages" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autoriser les agents à agir dans les pages"
-          }
-        }
-      }
-    },
     "Allow “%@” on %@?" : {
       "localizations" : {
         "en" : {
@@ -1424,6 +1374,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autoriser l’accès à « %@ »…"
+          }
+        }
+      }
+    },
+    "Allow agents to act in pages" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les agents à agir dans les pages"
           }
         }
       }
@@ -1610,6 +1570,16 @@
         }
       }
     },
+    "Another engine already has this name." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un autre moteur porte déjà ce nom."
+          }
+        }
+      }
+    },
     "App" : {
       "localizations" : {
         "fr" : {
@@ -1690,12 +1660,12 @@
         }
       }
     },
-    "Ask %@  ↩" : {
+    "Ask %@  %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demander à %@  ↩"
+            "value" : "Demander à %1$@  %2$@"
           }
         }
       }
@@ -1706,6 +1676,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Demander sur chaque site web"
+          }
+        }
+      }
+    },
+    "Ask the Space’s AI" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander à l’IA de l’espace"
           }
         }
       }
@@ -2857,16 +2837,6 @@
         }
       }
     },
-    "Conventional Search Engines" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moteurs de recherche classiques"
-          }
-        }
-      }
-    },
     "Cookies" : {
       "localizations" : {
         "fr" : {
@@ -3068,6 +3038,16 @@
         }
       }
     },
+    "Custom" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personnalisé"
+          }
+        }
+      }
+    },
     "Custom Filter List" : {
       "localizations" : {
         "fr" : {
@@ -3104,16 +3084,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Liste de filtres personnalisée hébergée en ligne."
-          }
-        }
-      }
-    },
-    "Custom Search Engines" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moteurs de recherche personnalisés"
           }
         }
       }
@@ -3175,16 +3145,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Par défaut"
-          }
-        }
-      }
-    },
-    "Default Engines" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moteurs par défaut"
           }
         }
       }
@@ -3599,16 +3559,6 @@
         }
       }
     },
-    "e.g., ddg, duck" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ex. : ddg, duck"
-          }
-        }
-      }
-    },
     "Edit" : {
       "localizations" : {
         "fr" : {
@@ -3619,12 +3569,32 @@
         }
       }
     },
-    "Edit Search Engine" : {
+    "Edit Engine" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Modifier le moteur de recherche"
+            "value" : "Modifier le moteur"
+          }
+        }
+      }
+    },
+    "Edit Engine…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le moteur…"
+          }
+        }
+      }
+    },
+    "Edit Keywords…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier les mots-clés…"
           }
         }
       }
@@ -4015,6 +3985,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour les sites réglés sur « Par défaut » dans les autorisations des sites de chaque espace."
+          }
+        }
+      }
+    },
+    "For spaces that don’t choose their own, in Settings › Spaces." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour les espaces qui n’ont pas fait leur propre choix, dans Réglages › Espaces."
           }
         }
       }
@@ -4519,7 +4499,6 @@
       }
     },
     "https://example.com/filter.txt" : {},
-    "https://example.com/search?q={query}" : {},
     "Icon" : {
       "localizations" : {
         "fr" : {
@@ -4846,6 +4825,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erreur du trousseau (%d)."
+          }
+        }
+      }
+    },
+    "Keywords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots-clés"
+          }
+        }
+      }
+    },
+    "Keywords: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots-clés : %@"
           }
         }
       }
@@ -5342,6 +5341,16 @@
         }
       }
     },
+    "Mistral" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mistral"
+          }
+        }
+      }
+    },
     "Mocha" : {
       "localizations" : {
         "fr" : {
@@ -5494,16 +5503,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nom (travail, streaming, finances…)"
-          }
-        }
-      }
-    },
-    "Name:" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nom :"
           }
         }
       }
@@ -5804,6 +5803,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun historique pour l’instant"
+          }
+        }
+      }
+    },
+    "No keyword" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun mot-clé"
           }
         }
       }
@@ -6596,6 +6605,16 @@
         }
       }
     },
+    "Opens a test search in a browser window." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre une recherche d’essai dans une fenêtre de navigation."
+          }
+        }
+      }
+    },
     "Options…" : {
       "localizations" : {
         "fr" : {
@@ -7098,6 +7117,16 @@
         }
       }
     },
+    "Put %@ (or %@) where the search goes. For example:" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettez %1$@ (ou %2$@) à la place de la recherche. Par exemple :"
+          }
+        }
+      }
+    },
     "Quit" : {
       "localizations" : {
         "fr" : {
@@ -7574,6 +7603,16 @@
         }
       }
     },
+    "Restore Keywords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir les mots-clés"
+          }
+        }
+      }
+    },
     "Resume Camera" : {
       "localizations" : {
         "fr" : {
@@ -7820,6 +7859,16 @@
         }
       }
     },
+    "Search and AI" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche et IA"
+          }
+        }
+      }
+    },
     "Search Engine" : {
       "localizations" : {
         "fr" : {
@@ -7830,22 +7879,12 @@
         }
       }
     },
-    "Search Engine Library" : {
+    "Search Engines" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bibliothèque de moteurs de recherche"
-          }
-        }
-      }
-    },
-    "Search Engine Name" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nom du moteur de recherche"
+            "value" : "Moteurs de recherche"
           }
         }
       }
@@ -7916,23 +7955,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher ou saisir une adresse"
-          }
-        }
-      }
-    },
-    "searchEngine.save" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Update"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enregistrer"
           }
         }
       }
@@ -8017,6 +8039,16 @@
         }
       }
     },
+    "Separated by commas. Type one then Tab in the address bar." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séparés par des virgules. Tapez-en un puis Tab dans la barre d’adresse."
+          }
+        }
+      }
+    },
     "Set as Default" : {
       "localizations" : {
         "fr" : {
@@ -8070,6 +8102,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recherche"
+          }
+        }
+      }
+    },
+    "settings.search.ai" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA"
           }
         }
       }
@@ -8151,6 +8200,16 @@
         }
       }
     },
+    "Show %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher %@"
+          }
+        }
+      }
+    },
     "Show All Downloads" : {
       "localizations" : {
         "fr" : {
@@ -8217,6 +8276,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher dans le Finder"
+          }
+        }
+      }
+    },
+    "Show in the address bar, with its keywords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher dans la barre d’adresse, avec ses mots-clés."
           }
         }
       }
@@ -8475,6 +8544,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Espaces"
+          }
+        }
+      }
+    },
+    "Spaces that use it go back to the global choice." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les espaces qui l’utilisent reviennent au choix global."
           }
         }
       }
@@ -8941,6 +9020,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Turquoise"
+          }
+        }
+      }
+    },
+    "Test" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tester"
+          }
+        }
+      }
+    },
+    "The address must start with https:// or http:// and contain %@ or %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’adresse doit commencer par https:// ou http:// et contenir %1$@ ou %2$@."
           }
         }
       }
@@ -9492,6 +9591,16 @@
         }
       }
     },
+    "This space’s address bar searches with this engine and asks this AI, with the space’s own cookies." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barre d’adresse de cet espace cherche avec ce moteur et interroge cette IA, avec les cookies propres à l’espace."
+          }
+        }
+      }
+    },
     "This version asks for more than what you allowed:" : {
       "localizations" : {
         "fr" : {
@@ -9821,12 +9930,22 @@
         }
       }
     },
-    "Type:" : {
+    "Type" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Type :"
+            "value" : "Type"
+          }
+        }
+      }
+    },
+    "Type a keyword then Tab in the address bar to search that site directly or ask that AI." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tapez un mot-clé puis Tab dans la barre d’adresse pour chercher directement sur ce site ou demander à cette IA."
           }
         }
       }
@@ -10107,26 +10226,6 @@
         }
       }
     },
-    "URL must contain {query} and start with https:// or http://" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’adresse doit contenir {query} et commencer par https:// ou http://"
-          }
-        }
-      }
-    },
-    "URL:" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adresse :"
-          }
-        }
-      }
-    },
     "Use email from %@" : {
       "localizations" : {
         "fr" : {
@@ -10137,12 +10236,12 @@
         }
       }
     },
-    "Use Global Default" : {
+    "Use Global Choice (%@)" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utiliser le réglage général"
+            "value" : "Utiliser le choix global (%@)"
           }
         }
       }
@@ -10173,6 +10272,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utilisé par un agent"
+          }
+        }
+      }
+    },
+    "Used by default or by a space: always shown." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisé par défaut ou par un espace : toujours affiché."
           }
         }
       }
@@ -10353,6 +10462,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quand"
+          }
+        }
+      }
+    },
+    "Wikipedia" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wikipédia"
           }
         }
       }

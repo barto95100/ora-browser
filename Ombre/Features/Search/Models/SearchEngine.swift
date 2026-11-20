@@ -32,6 +32,20 @@ struct SearchEngine: Sendable {
 }
 
 extension SearchEngine {
+    /// The same engine with other keywords (chosen in the settings).
+    func with(aliases: [String]) -> SearchEngine {
+        SearchEngine(
+            name: name,
+            color: color,
+            icon: icon,
+            aliases: aliases,
+            searchURL: searchURL,
+            isAIChat: isAIChat,
+            foregroundColor: foregroundColor,
+            autoSuggestions: autoSuggestions
+        )
+    }
+
     func toLauncherMatch(
         originalAlias: String,
         customEngine: CustomSearchEngine? = nil

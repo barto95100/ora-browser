@@ -63,11 +63,21 @@ struct LauncherSuggestionItem: View {
         }
     }
 
+    /// « Ask Claude ↩ », with the space's AI shortcut when it is that one
+    /// (« Ask Claude ⌘↩ » while another suggestion is chosen).
+    private var askLabel: String {
+        let name = suggestion.name ?? ""
+        let key = suggestion.isSpaceAI && focusedElement != suggestion.id
+            ? KeyboardShortcuts.Address.askAI.currentChord.display
+            : "↩"
+        return String(localized: "Ask \(name)  \(key)")
+    }
+
     @ViewBuilder
     var actionLabel: some View {
         if isAIChat {
             HStack(alignment: .center, spacing: 10) {
-                Text("Ask \(suggestion.name ?? "")  ↩")
+                Text(askLabel)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(
                         isFocusedOrHovered ? theme.foreground : .secondary

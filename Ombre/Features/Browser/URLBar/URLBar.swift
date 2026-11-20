@@ -103,6 +103,7 @@ struct URLBar: View {
             onDismiss: dismissEditing,
             navigateInCurrentTab: true
         )
+        launcherViewModel.onChooseEngine = { engine, typed in choose(engine, typed: typed) }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             isLauncherFocused = true
@@ -610,12 +611,15 @@ private extension URLBar {
         dismissEditing()
     }
 
-    /// A keyword then Tab (« yt », « cl »…): the search goes to its engine,
-    /// like in the launcher. Hidden engines' keywords do nothing.
+    /// A keyword (or its start, « youtu ») then Tab: the search goes to its
+    /// engine, like in the launcher. Hidden engines' keywords do nothing.
     func matchKeyword() {
-        let typed = launcherInput.trimmingCharacters(in: .whitespaces)
-        guard !typed.isEmpty, let engine = launcherViewModel.searchEngineService.findSearchEngine(for: typed)
-        else { return }
+        guard !launcherInput.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        launcherViewModel.takeKeyword()
+    }
+
+    /// Its capsule; what is typed next goes to it.
+    func choose(_ engine: SearchEngine, typed: String) {
         let custom = launcherViewModel.searchEngineService.settings.customSearchEngines
             .first { $0.searchURL == engine.searchURL }
         keywordMatch = engine.toLauncherMatch(originalAlias: typed, customEngine: custom)

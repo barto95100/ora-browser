@@ -209,6 +209,50 @@ struct SearchEngineRulesTests {
         #expect(preferences.globalAI == nil)
     }
 
+    // MARK: - Keywords begun
+
+    @Test func theStartOfAKeywordOffersItsEngine() {
+        let rules = rules()
+        #expect(rules.keywordMatches(for: "yt").map(\.engine.name) == ["YouTube"])
+        #expect(rules.keywordMatches(for: "goo").map(\.engine.name) == ["Google"])
+        #expect(rules.keywordMatches(for: "GOO").first?.keyword == "google")
+        #expect(rules.keywordMatches(for: "nothing").isEmpty)
+        #expect(rules.keywordMatches(for: "  ").isEmpty)
+    }
+
+    /// One letter offers nothing, unless it is a keyword.
+    @Test func oneLetterOffersOnlyAnExactKeyword() {
+        let rules = rules()
+        #expect(rules.keywordMatches(for: "g").map(\.engine.name) == ["Google"])
+        #expect(rules.keywordMatches(for: "y").isEmpty)
+    }
+
+    /// A hidden engine is never offered.
+    @Test func aHiddenEngineIsNotOffered() {
+        #expect(rules().keywordMatches(for: "gr").isEmpty)
+        #expect(rules().keywordMatches(for: "tw").isEmpty)
+    }
+
+    /// An exact keyword first, then the shortest, two at most.
+    @Test func theBestTwoComeFirst() {
+        let rules = SearchEngineRules(
+            engines: [
+                engine("Long", ["chatbot"]),
+                engine("Short", ["chat"]),
+                engine("Exact", ["ch", "chx"]),
+                engine("Other", ["cha"])
+            ],
+            isChosenShown: { _ in true },
+            globalSearch: "Long",
+            globalAI: nil
+        )
+        #expect(rules.keywordMatches(for: "ch").map(\.engine.name) == ["Exact", "Other"])
+        #expect(rules.keywordMatches(for: "cha").map(\.engine.name) == ["Other", "Short"])
+        #expect(rules.keywordMatches(for: "chat", limit: 3).map(\.engine.name) == ["Short", "Long"])
+        #expect(rules.keywordMatches(for: "ch").first?.isExact == true)
+        #expect(rules.keywordMatches(for: "cha").last?.isExact == false)
+    }
+
     // MARK: - Built-in engines
 
     @Test func everyBuiltInEngineMakesAWebAddress() {

@@ -25,6 +25,9 @@ class LauncherViewModel: ObservableObject {
     private(set) var onSubmit: ((String?) -> Void)?
     private(set) var onDismiss: (() -> Void)?
     var navigateInCurrentTab: Bool = false
+    /// The view's way to take an engine for the search (its capsule), with
+    /// the keyword typed, set by the launcher and the address bar.
+    var onChooseEngine: ((SearchEngine, String) -> Void)?
 
     func configure(
         tabManager: TabManager,
@@ -72,6 +75,8 @@ class LauncherViewModel: ObservableObject {
         let tabs = tabManager.search(text).filter { $0.id != activeTabId }
 
         suggestions = []
+        // First, but not chosen: ↩ still does what it did; Tab takes it.
+        appendKeywordSuggestions(text)
 
         var itemsCount = 0
         // A URL typed or pasted by the user is the most likely intent, so it
@@ -91,7 +96,44 @@ class LauncherViewModel: ObservableObject {
         appendHistorySuggestions(histories, itemsCount: &itemsCount)
         appendAISuggestionsIfNeeded(text)
 
-        focusedElement = suggestions.first?.id ?? UUID()
+        focusedElement = (suggestions.first { $0.type != .keywordEngine } ?? suggestions.first)?.id ?? UUID()
+    }
+
+    /// « Search on YouTube » when what is typed begins one of its keywords
+    /// (two engines at most, the best first). Nothing is replaced until
+    /// Tab, or ↩ on it: « you » may also begin a search.
+    private func appendKeywordSuggestions(_ text: String) {
+        let typed = text.trimmingCharacters(in: .whitespaces)
+        for match in searchEngineService.rules.keywordMatches(for: typed) {
+            let engine = match.engine
+            suggestions.append(LauncherSuggestion(
+                type: .keywordEngine,
+                title: engine.isAIChat
+                    ? String(localized: "Ask \(engine.name)")
+                    : String(localized: "Search on \(engine.name)"),
+                name: engine.name,
+                icon: engine.icon.isEmpty ? nil : engine.icon,
+                color: engine.color,
+                engineForegroundColor: engine.foregroundColor,
+                dismisses: false,
+                action: { [weak self] in self?.onChooseEngine?(engine, typed) }
+            ))
+        }
+    }
+
+    /// Tab: the keyword suggestion chosen, else the first one; else what is
+    /// typed if it is a keyword. True when an engine was taken.
+    @discardableResult
+    func takeKeyword() -> Bool {
+        let offered = suggestions.filter { $0.type == .keywordEngine }
+        if let chosen = offered.first(where: { $0.id == focusedElement }) ?? offered.first {
+            chosen.action()
+            return true
+        }
+        let typed = currentText.trimmingCharacters(in: .whitespaces)
+        guard !typed.isEmpty, let engine = searchEngineService.findSearchEngine(for: typed) else { return false }
+        onChooseEngine?(engine, typed)
+        return true
     }
 
     func reset() {
@@ -154,7 +196,7 @@ class LauncherViewModel: ObservableObject {
     func executeCommand() {
         if let suggestion = suggestions.first(where: { $0.id == focusedElement }) {
             suggestion.action()
-            onDismiss?()
+            if suggestion.dismisses { onDismiss?() }
         }
     }
 

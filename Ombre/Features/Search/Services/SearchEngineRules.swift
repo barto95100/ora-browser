@@ -48,6 +48,38 @@ struct SearchEngineRules {
         return engines.first { isShown($0.name) && $0.aliases.contains(word) }
     }
 
+    /// An engine offered for what is typed: the start of one of its keywords.
+    struct KeywordMatch {
+        let engine: SearchEngine
+        /// Its keyword that begins with what is typed (the shortest one).
+        let keyword: String
+        let isExact: Bool
+    }
+
+    /// The shown engines one of whose keywords begins with `typed`, best
+    /// first (an exact keyword, then the shortest one), `limit` at most.
+    /// Two letters at least, unless a keyword is exactly that.
+    func keywordMatches(for typed: String, limit: Int = 2) -> [KeywordMatch] {
+        let text = typed.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !text.isEmpty else { return [] }
+        let matches = engines.enumerated().compactMap { index, engine -> (KeywordMatch, Int)? in
+            guard isShown(engine.name) else { return nil }
+            let candidates = engine.aliases.filter { $0.hasPrefix(text) }
+            guard let best = candidates.min(by: { $0.count < $1.count }) else { return nil }
+            let isExact = best == text
+            guard isExact || text.count >= 2 else { return nil }
+            return (KeywordMatch(engine: engine, keyword: best, isExact: isExact), index)
+        }
+        return matches
+            .sorted { lhs, rhs in
+                if lhs.0.isExact != rhs.0.isExact { return lhs.0.isExact }
+                if lhs.0.keyword.count != rhs.0.keyword.count { return lhs.0.keyword.count < rhs.0.keyword.count }
+                return lhs.1 < rhs.1
+            }
+            .prefix(limit)
+            .map(\.0)
+    }
+
     /// The AI a space asks: its own, else the one for all spaces, else
     /// ChatGPT. A choice that is gone, or not an AI, is passed over.
     func aiEngine(spaceChoice: String?) -> SearchEngine? {

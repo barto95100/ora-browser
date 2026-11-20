@@ -20,17 +20,18 @@ struct LauncherView: View {
 
     var clearOverlay: Bool? = false
 
+    /// Tab: the engine offered for what is typed, or whose keyword it is.
     private func onTabPress() {
         guard !input.isEmpty else { return }
-        if let searchEngine = viewModel.searchEngineService.findSearchEngine(for: input) {
-            let customEngine = viewModel.searchEngineService.settings.customSearchEngines
-                .first { $0.searchURL == searchEngine.searchURL }
-            match = searchEngine.toLauncherMatch(
-                originalAlias: input,
-                customEngine: customEngine
-            )
-            input = ""
-        }
+        viewModel.takeKeyword()
+    }
+
+    /// Its capsule; what is typed next goes to it.
+    private func choose(_ engine: SearchEngine, typed: String) {
+        let customEngine = viewModel.searchEngineService.settings.customSearchEngines
+            .first { $0.searchURL == engine.searchURL }
+        match = engine.toLauncherMatch(originalAlias: typed, customEngine: customEngine)
+        input = ""
     }
 
     private func onSubmit(_ newInput: String? = nil) {
@@ -114,6 +115,7 @@ struct LauncherView: View {
                     onSubmit: onSubmit,
                     onDismiss: { appState.showLauncher = false }
                 )
+                viewModel.onChooseEngine = { engine, typed in choose(engine, typed: typed) }
                 mouseHasMoved = false
                 mouseMonitor.start { mouseHasMoved = true }
             }

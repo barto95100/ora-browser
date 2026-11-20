@@ -2,6 +2,9 @@ import SwiftUI
 
 enum LauncherSuggestionType {
     case openedTab, suggestedQuery, suggestedLink, aiChat
+    /// « Search on YouTube »: what is typed begins a keyword of the engine;
+    /// Tab (or ↩ on it) picks the engine, like its keyword then Tab.
+    case keywordEngine
 }
 
 struct LauncherSuggestion: Identifiable {
@@ -17,6 +20,9 @@ struct LauncherSuggestion: Identifiable {
     let faviconLocalFile: URL?
     /// The active space's AI: its shortcut is shown (⌘↩ by default).
     let isSpaceAI: Bool
+    /// Done, it closes the launcher or the address being typed (not a
+    /// keyword suggestion: the search is still to type).
+    let dismisses: Bool
     let action: () -> Void
 
     init(
@@ -30,6 +36,7 @@ struct LauncherSuggestion: Identifiable {
         faviconURL: URL? = nil,
         faviconLocalFile: URL? = nil,
         isSpaceAI: Bool = false,
+        dismisses: Bool = true,
         action: @escaping () -> Void
     ) {
         self.type = type
@@ -42,6 +49,7 @@ struct LauncherSuggestion: Identifiable {
         self.faviconURL = faviconURL
         self.faviconLocalFile = faviconLocalFile
         self.isSpaceAI = isSpaceAI
+        self.dismisses = dismisses
         self.action = action
     }
 }

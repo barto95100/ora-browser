@@ -8944,6 +8944,16 @@
         }
       }
     },
+    "Tab to choose" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab pour choisir"
+          }
+        }
+      }
+    },
     "Tabs" : {
       "localizations" : {
         "fr" : {

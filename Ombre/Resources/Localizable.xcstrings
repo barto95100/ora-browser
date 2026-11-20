@@ -2710,26 +2710,6 @@
         }
       }
     },
-    "Close Settings" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermer les réglages"
-          }
-        }
-      }
-    },
-    "Close Settings (⌘,)" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermer les réglages (⌘,)"
-          }
-        }
-      }
-    },
     "Close Tab" : {
       "localizations" : {
         "fr" : {

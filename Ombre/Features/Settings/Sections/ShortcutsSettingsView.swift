@@ -12,10 +12,11 @@ struct ShortcutsSettingsView: View {
     }
 
     var body: some View {
-        List {
+        SettingsSection {
             ForEach(sections, id: \.category) { section in
-                Section(section.category) {
-                    ForEach(section.items) { item in
+                SettingsCard(header: section.category) {
+                    ForEach(Array(section.items.enumerated()), id: \.element.id) { index, item in
+                        if index > 0 { Divider() }
                         ShortcutRowView(
                             item: item,
                             isOverriden: shortcutManager.hasCustomShortcut(for: item),
@@ -36,7 +37,6 @@ struct ShortcutsSettingsView: View {
                 }
             }
         }
-        .scrollContentBackground(.hidden)
         .alert(
             "Shortcut Already Used",
             isPresented: Binding(get: { conflictMessage != nil }, set: { if !$0 { conflictMessage = nil } })
@@ -101,7 +101,7 @@ struct ShortcutRowView: View {
     var body: some View {
         HStack(spacing: 16) {
             Text(item.name)
-                .font(.system(size: 14))
+                .font(.system(size: 13))
                 .foregroundColor(.primary)
 
             Spacer()
@@ -145,7 +145,7 @@ struct ShortcutRowView: View {
             .scaleEffect(isEditing ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isEditing)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 1)
     }
 }
 

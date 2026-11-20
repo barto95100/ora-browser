@@ -248,8 +248,10 @@ struct SpacesSettingsView: View {
                     }
                     Spacer(minLength: 0)
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 24)
+                .frame(maxWidth: 720, alignment: .topLeading)
+                .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()

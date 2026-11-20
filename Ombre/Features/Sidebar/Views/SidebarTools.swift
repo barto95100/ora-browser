@@ -1,19 +1,19 @@
 import AppKit
 import SwiftUI
 
-/// Sidebar bottom button: the settings, in the window (see `InWindowSettingsView`).
+/// Sidebar bottom button: the settings window (see `SettingsWindow`).
 struct SidebarSettingsButton: View {
-    @EnvironmentObject var appState: AppState
     @Environment(\.theme) private var theme
+    @Environment(\.openWindow) private var openWindow
     @State private var isHovering = false
 
     var body: some View {
         Button {
-            appState.showSettings.toggle()
+            SettingsWindow.show(opening: openWindow)
         } label: {
             Image(systemName: "gearshape")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(appState.showSettings ? theme.accent : .secondary)
+                .foregroundColor(.secondary)
                 .frame(width: 28, height: 32)
                 .background(isHovering ? theme.invertedSolidWindowBackgroundColor.opacity(0.1) : .clear)
                 .cornerRadius(8)
@@ -24,8 +24,7 @@ struct SidebarSettingsButton: View {
     }
 }
 
-/// Normal browser windows: ⌘, shows the settings in them; elsewhere
-/// (private window, settings or passwords window) it opens the settings window.
+/// The browser windows, normal and private.
 @MainActor
 enum BrowserWindows {
     static let normal = NSHashTable<NSWindow>.weakObjects()
@@ -66,15 +65,6 @@ enum BrowserWindows {
     static var front: NSWindow? {
         if isNormal(NSApp.keyWindow) { return NSApp.keyWindow }
         return NSApp.orderedWindows.first { isNormal($0) }
-    }
-
-    /// Opens the settings at a section, in the front normal window.
-    static func showSettings(_ tab: SettingsTab) {
-        UserDefaults.standard.set(tab.rawValue, forKey: SettingsContentView.selectedTabDefaultsKey)
-        if let window = front {
-            window.makeKeyAndOrderFront(nil)
-            NotificationCenter.default.post(name: .showSettings, object: window, userInfo: ["open": true])
-        }
     }
 
     /// Asks the front normal window to delete a space (from the settings).

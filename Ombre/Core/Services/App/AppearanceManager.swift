@@ -23,6 +23,8 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 class AppearanceManager: ObservableObject {
     static let shared = AppearanceManager()
     @AppStorage("ui.app.appearance") var appearance: AppAppearance = .system {
+        // The menu and the settings both show it.
+        willSet { objectWillChange.send() }
         didSet {
             updateAppearance()
         }

@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct OmbreCommands: Commands {
-    @AppStorage("AppAppearance") private var appearanceRaw: String = AppAppearance.system.rawValue
+    /// The same appearance as Settings › General, from any window.
+    @ObservedObject private var appearance = AppearanceManager.shared
     @AppStorage(SidebarPosition.defaultsKey) private var sidebarPosition: SidebarPosition = .primary
     @AppStorage("ui.toolbar.hidden") private var isToolbarHidden: Bool = false
     @AppStorage("ui.toolbar.showfullurl") private var showFullURL: Bool = false
@@ -78,17 +79,7 @@ struct OmbreCommands: Commands {
 
         CommandGroup(replacing: .sidebar) {
             // APPEARANCE
-            Picker("Appearance", selection: Binding(
-                get: { AppAppearance(rawValue: appearanceRaw) ?? .system },
-                set: { newValue in
-                    appearanceRaw = newValue.rawValue
-                    NotificationCenter.default.post(
-                        name: .setAppearance,
-                        object: NSApp.keyWindow,
-                        userInfo: ["appearance": newValue.rawValue]
-                    )
-                }
-            )) {
+            Picker("Appearance", selection: $appearance.appearance) {
                 ForEach(AppAppearance.allCases) { mode in
                     Text(mode.title).tag(mode)
                 }
@@ -288,14 +279,9 @@ struct OmbreCommands: Commands {
         }
 
         CommandGroup(replacing: .appSettings) {
-            // In the browser window, like the rest; the settings window
-            // from a private window or another window.
+            // Their own window, from any window (see `SettingsWindow`).
             Button("Settings...") {
-                if BrowserWindows.isNormal(NSApp.keyWindow) {
-                    NotificationCenter.default.post(name: .showSettings, object: NSApp.keyWindow)
-                } else {
-                    openWindow(id: "settings")
-                }
+                SettingsWindow.show(opening: openWindow)
             }
             .keyboardShortcut(KeyboardShortcuts.App.preferences.keyboardShortcut)
         }

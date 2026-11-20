@@ -9,121 +9,133 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         SettingsSection {
-            SettingsCard {
-                HStack {
+            HStack(spacing: 14) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 52, height: 52)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Ombre")
-                        .font(.headline)
-                    Spacer()
-                    Text(getAppVersion())
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("Fast, secure, and beautiful browser built for macOS")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
-
-                Text("Fast, secure, and beautiful browser built for macOS")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Spacer()
+                Text(getAppVersion())
+                    .font(.system(size: 12).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .settingsCardBackground()
 
             if !defaultBrowserManager.isDefault {
                 SettingsCard {
-                    HStack {
-                        Text("Born for your Mac. Make Ombre your default browser.")
-                        Spacer()
+                    SettingsRow(title: String(localized: "Born for your Mac. Make Ombre your default browser.")) {
                         Button("Set as Default") { defaultBrowserManager.requestSetAsDefault() }
                     }
                 }
             }
 
-            AppearanceSelector(selection: $appearanceManager.appearance)
+            SettingsCard(header: String(localized: "Appearance")) {
+                AppearanceSelector(selection: $appearanceManager.appearance)
+            }
 
             SettingsCard(header: String(localized: "Tab Management")) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Suspend inactive tabs after:")
-                        Spacer()
-                        Picker("", selection: $settings.tabAliveTimeout) {
-                            Text("1 hour").tag(TimeInterval(60 * 60))
-                            Text("6 hours").tag(TimeInterval(6 * 60 * 60))
-                            Text("12 hours").tag(TimeInterval(12 * 60 * 60))
-                            Text("1 day").tag(TimeInterval(24 * 60 * 60))
-                            Text("2 days").tag(TimeInterval(2 * 24 * 60 * 60))
-                            Text("Never").tag(TimeInterval(365 * 24 * 60 * 60))
-                        }
-                        .frame(width: 120)
-                    }
-
-                    HStack {
-                        Text("Remove tabs after:")
-                        Spacer()
-                        Picker("", selection: $settings.tabRemovalTimeout) {
-                            Text("1 hour").tag(TimeInterval(60 * 60))
-                            Text("6 hours").tag(TimeInterval(6 * 60 * 60))
-                            Text("12 hours").tag(TimeInterval(12 * 60 * 60))
-                            Text("1 day").tag(TimeInterval(24 * 60 * 60))
-                            Text("2 days").tag(TimeInterval(2 * 24 * 60 * 60))
-                            Text("Never").tag(TimeInterval(365 * 24 * 60 * 60))
-                        }
-                        .frame(width: 120)
-                    }
-
-                    HStack {
-                        Text("Max recent tabs:")
-                        Spacer()
-                        Picker("", selection: $settings.maxRecentTabs) {
-                            ForEach(1 ... 10, id: \.self) { num in
-                                Text("\(num)").tag(num)
-                            }
-                        }
-                        .frame(width: 80)
-                    }
+                SettingsRow(title: String(localized: "Suspend inactive tabs after:")) {
+                    Picker("", selection: $settings.tabAliveTimeout) { durationChoices }
+                        .labelsHidden()
+                        .fixedSize()
                 }
-
-                Toggle("Auto Picture-in-Picture on tab switch", isOn: $settings.autoPiPEnabled)
-
-                Toggle("Open links from other apps in Little Ombre", isOn: $settings.opensLinksInLittleOmbre)
-
-                Picker("Links from pinned tabs to other sites", selection: $settings.pinnedLinkBehavior) {
-                    ForEach(PinnedLinkBehavior.allCases) { behavior in
-                        Text(behavior.title).tag(behavior)
+                Divider()
+                SettingsRow(title: String(localized: "Remove tabs after:")) {
+                    Picker("", selection: $settings.tabRemovalTimeout) { durationChoices }
+                        .labelsHidden()
+                        .fixedSize()
+                }
+                Divider()
+                SettingsRow(title: String(localized: "Max recent tabs:")) {
+                    Picker("", selection: $settings.maxRecentTabs) {
+                        ForEach(1 ... 10, id: \.self) { num in
+                            Text("\(num)").tag(num)
+                        }
                     }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                Divider()
+                SettingsRow(title: String(localized: "Links from pinned tabs to other sites")) {
+                    Picker("", selection: $settings.pinnedLinkBehavior) {
+                        ForEach(PinnedLinkBehavior.allCases) { behavior in
+                            Text(behavior.title).tag(behavior)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                Divider()
+                SettingsRow(title: String(localized: "Auto Picture-in-Picture on tab switch")) {
+                    Toggle("", isOn: $settings.autoPiPEnabled).labelsHidden().toggleStyle(.switch)
+                }
+                Divider()
+                SettingsRow(title: String(localized: "Open links from other apps in Little Ombre")) {
+                    Toggle("", isOn: $settings.opensLinksInLittleOmbre).labelsHidden().toggleStyle(.switch)
                 }
             }
 
             SettingsCard(header: String(localized: "Downloads")) {
-                Picker("Downloads from websites", selection: $settings.allowsDownloadsByDefault) {
-                    Text("Ask").tag(false)
-                    Text("Allow").tag(true)
+                SettingsRow(
+                    title: String(localized: "Downloads from websites"),
+                    detail: String(localized: "For sites set to Default in each space's site permissions.")
+                ) {
+                    Picker("", selection: $settings.allowsDownloadsByDefault) {
+                        Text("Ask").tag(false)
+                        Text("Allow").tag(true)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                Text("For sites set to Default in each space's site permissions.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
 
             SettingsCard(header: String(localized: "Developer")) {
-                Toggle("Allow Web Inspector", isOn: $settings.developerToolsEnabled)
-                Text("Inspect pages from Safari's Develop menu (Safari › Settings › Advanced).")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Toggle("Allow agents to control Ombre", isOn: $settings.allowsAgentControl)
-                    .onChange(of: settings.allowsAgentControl) { _, isOn in
-                        if !isOn { AgentControl.shared.stop() }
-                    }
-                Text(
-                    "Apps and scripts (the ombre command) can list, open, show, close, reload, read and capture tabs, and move through their history. Each app asks first, once per session. Never private windows, Little Ombre or passwords."
-                )
-                .font(.caption)
-                .foregroundColor(.secondary)
-                Toggle("Allow agents to act in pages", isOn: $settings.allowsAgentPageActions)
-                    .disabled(!settings.allowsAgentControl)
-                    .onChange(of: settings.allowsAgentPageActions) { _, isOn in
-                        // Each app asks again, told what it may now do.
-                        if isOn { AgentControl.shared.stop() }
-                    }
-                Text(
-                    "They can also click, fill in fields (never password fields) and run JavaScript in web pages. JavaScript sees everything a page holds, what you type or autofill in it included: turn this on only for agents you trust."
-                )
-                .font(.caption)
-                .foregroundColor(.secondary)
+                SettingsRow(
+                    title: String(localized: "Allow Web Inspector"),
+                    detail: String(
+                        localized: "Inspect pages from Safari's Develop menu (Safari › Settings › Advanced)."
+                    )
+                ) {
+                    Toggle("", isOn: $settings.developerToolsEnabled).labelsHidden().toggleStyle(.switch)
+                }
+                Divider()
+                SettingsRow(
+                    title: String(localized: "Allow agents to control Ombre"),
+                    detail: String(
+                        // swiftlint:disable:next line_length
+                        localized: "Apps and scripts (the ombre command) can list, open, show, close, reload, read and capture tabs, and move through their history. Each app asks first, once per session. Never private windows, Little Ombre or passwords."
+                    )
+                ) {
+                    Toggle("", isOn: $settings.allowsAgentControl).labelsHidden().toggleStyle(.switch)
+                        .onChange(of: settings.allowsAgentControl) { _, isOn in
+                            if !isOn { AgentControl.shared.stop() }
+                        }
+                }
+                Divider()
+                SettingsRow(
+                    title: String(localized: "Allow agents to act in pages"),
+                    detail: String(
+                        // swiftlint:disable:next line_length
+                        localized: "They can also click, fill in fields (never password fields) and run JavaScript in web pages. JavaScript sees everything a page holds, what you type or autofill in it included: turn this on only for agents you trust."
+                    )
+                ) {
+                    Toggle("", isOn: $settings.allowsAgentPageActions).labelsHidden().toggleStyle(.switch)
+                        .disabled(!settings.allowsAgentControl)
+                        .onChange(of: settings.allowsAgentPageActions) { _, isOn in
+                            // Each app asks again, told what it may now do.
+                            if isOn { AgentControl.shared.stop() }
+                        }
+                }
             }
 
             if UpdateService.isAvailable {
@@ -165,6 +177,15 @@ struct GeneralSettingsView: View {
             }
         }
         .onAppear { defaultBrowserManager.refresh() }
+    }
+
+    @ViewBuilder private var durationChoices: some View {
+        Text("1 hour").tag(TimeInterval(60 * 60))
+        Text("6 hours").tag(TimeInterval(6 * 60 * 60))
+        Text("12 hours").tag(TimeInterval(12 * 60 * 60))
+        Text("1 day").tag(TimeInterval(24 * 60 * 60))
+        Text("2 days").tag(TimeInterval(2 * 24 * 60 * 60))
+        Text("Never").tag(TimeInterval(365 * 24 * 60 * 60))
     }
 
     private func getAppVersion() -> String {

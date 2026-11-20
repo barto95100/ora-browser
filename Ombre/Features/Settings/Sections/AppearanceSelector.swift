@@ -1,10 +1,14 @@
 import SwiftUI
 
+/// Light, dark or like the Mac: three thumbnails, the chosen one outlined
+/// in the accent color, like System Settings › Appearance.
 struct AppearanceSelector: View {
     @Binding var selection: AppAppearance
 
     private struct Option: Identifiable {
-        let id = UUID()
+        var id: AppAppearance {
+            appearance
+        }
         let appearance: AppAppearance
         let imageName: String
         let title: String
@@ -19,33 +23,36 @@ struct AppearanceSelector: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Appearance").foregroundStyle(.secondary)
-            HStack(spacing: 16) {
-                ForEach(options) { opt in
-                    let isSelected = selection == opt.appearance
-                    Button {
-                        selection = opt.appearance
-                    } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Image(opt.imageName)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 105, height: 68)
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            Text(opt.title)
-                                .fontWeight(isSelected ? .semibold : .regular)
-                        }
-                        .padding(6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(isSelected ? Color(.controlColor) : Color.clear)
-                        )
+        HStack(spacing: 20) {
+            ForEach(options) { opt in
+                let isSelected = selection == opt.appearance
+                Button {
+                    selection = opt.appearance
+                } label: {
+                    VStack(spacing: 6) {
+                        Image(opt.imageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 96, height: 62)
+                            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                            .padding(3)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .strokeBorder(
+                                        isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.clear),
+                                        lineWidth: 2.5
+                                    )
+                            )
+                        Text(opt.title)
+                            .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                            .foregroundStyle(isSelected ? .primary : .secondary)
                     }
-                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }

@@ -33,7 +33,7 @@ extension TabManager {
         let settings = SettingsStore.shared
         let removalCutoff = now.addingTimeInterval(-settings.tabRemovalTimeout)
         for container in fetchContainers() {
-            let cutoff = settings.autoClearTabsAfter(for: container.id).seconds
+            let cutoff = settings.spaceClosingDelay(for: container.id)
                 .map { max(now.addingTimeInterval(-$0), removalCutoff) } ?? removalCutoff
             for tab in container.tabs {
                 if let lastAccessed = tab.lastAccessedAt, lastAccessed < cutoff,

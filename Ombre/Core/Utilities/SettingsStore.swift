@@ -2,35 +2,6 @@ import AppKit
 import Foundation
 import SwiftUI
 
-enum AutoClearTabsAfter: String, CaseIterable, Identifiable, Codable {
-    case never = "Never"
-    case oneHour = "1 Hour"
-    case oneDay = "1 Day"
-    case oneWeek = "1 Week"
-    var id: String {
-        rawValue
-    }
-
-    /// Shown in the interface (the raw value is what is saved).
-    var title: String {
-        switch self {
-        case .never: String(localized: "Never")
-        case .oneHour: String(localized: "1 hour")
-        case .oneDay: String(localized: "1 day")
-        case .oneWeek: String(localized: "1 week")
-        }
-    }
-
-    var seconds: TimeInterval? {
-        switch self {
-        case .never: return nil
-        case .oneHour: return 3600
-        case .oneDay: return 86400
-        case .oneWeek: return 604_800
-        }
-    }
-}
-
 struct CustomSearchEngine: Codable, Identifiable, Hashable {
     let id: String
     let name: String
@@ -192,8 +163,13 @@ class SettingsStore: ObservableObject {
         "settings.container.\(containerId.uuidString).autoGroupTabs"
     }
 
+    /// Before any delay could be chosen: "1 Hour", "1 Day", "1 Week" or "Never".
     private func keyForAutoClear(for containerId: UUID) -> String {
         "settings.container.\(containerId.uuidString).autoClearTabsAfter"
+    }
+
+    private func keyForClosingDelay(for containerId: UUID) -> String {
+        "settings.container.\(containerId.uuidString).closingDelay"
     }
 
     private func keyForPrivacySettings(for containerId: UUID) -> String {
@@ -369,11 +345,8 @@ class SettingsStore: ObservableObject {
         tabAliveTimeout = normalizedAlive
 
         let removalTimeoutValue = defaults.double(forKey: tabRemovalTimeoutKey)
-        let normalizedRemoval = Self.normalizeTimeout(
-            removalTimeoutValue,
-            defaultSeconds: 24 * 60 * 60,
-            supported: supportedTimeouts
-        )
+        // Any delay from an hour (Settings › General offers a custom one).
+        let normalizedRemoval = TabClosingDelay.normalized(removalTimeoutValue)
         defaults.set(normalizedRemoval, forKey: tabRemovalTimeoutKey)
         tabRemovalTimeout = normalizedRemoval
 
@@ -427,17 +400,22 @@ class SettingsStore: ObservableObject {
         objectWillChange.send()
     }
 
-    func autoClearTabsAfter(for containerId: UUID) -> AutoClearTabsAfter {
-        if let raw = defaults.string(forKey: keyForAutoClear(for: containerId)),
-           let value = AutoClearTabsAfter(rawValue: raw)
-        {
-            return value
-        }
-        return .never
+    /// The space's own delay before closing its tabs not shown, in seconds;
+    /// nil: the general one (Settings › General). The shorter one applies.
+    func spaceClosingDelay(for containerId: UUID) -> TimeInterval? {
+        let seconds = defaults.double(forKey: keyForClosingDelay(for: containerId))
+        if seconds > 0 { return seconds }
+        return defaults.string(forKey: keyForAutoClear(for: containerId))
+            .flatMap(TabClosingDelay.spaceDelay(fromLegacy:))
     }
 
-    func setAutoClearTabsAfter(_ value: AutoClearTabsAfter, for containerId: UUID) {
-        defaults.set(value.rawValue, forKey: keyForAutoClear(for: containerId))
+    func setSpaceClosingDelay(_ seconds: TimeInterval?, for containerId: UUID) {
+        if let seconds {
+            defaults.set(seconds, forKey: keyForClosingDelay(for: containerId))
+        } else {
+            defaults.removeObject(forKey: keyForClosingDelay(for: containerId))
+        }
+        defaults.removeObject(forKey: keyForAutoClear(for: containerId))
         objectWillChange.send()
     }
 
@@ -473,6 +451,7 @@ class SettingsStore: ObservableObject {
         defaults.removeObject(forKey: keyForDefaultSearch(for: containerId))
         defaults.removeObject(forKey: keyForDefaultAI(for: containerId))
         defaults.removeObject(forKey: keyForAutoClear(for: containerId))
+        defaults.removeObject(forKey: keyForClosingDelay(for: containerId))
         defaults.removeObject(forKey: keyForAutoGroup(for: containerId))
         defaults.removeObject(forKey: keyForPrivacySettings(for: containerId))
         SitePermissionStore.shared.removeAll(in: containerId)

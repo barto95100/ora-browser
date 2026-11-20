@@ -44,40 +44,28 @@ struct SpacesSettingsView: View {
                     }
                 }
                 Divider()
-                Button {
-                    awaitsNewSpace = true
-                    BrowserWindows.newSpace()
-                } label: {
-                    Label("New Space…", systemImage: "plus")
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                HStack {
+                    Menu {
+                        Button("New Space…") {
+                            awaitsNewSpace = true
+                            BrowserWindows.newSpace()
+                        }
+                        Divider()
+                        Button("Import from Safari…") { BrowserWindows.showImport(from: .safari) }
+                        Button("Import from Arc…") { BrowserWindows.showImport(from: .arc) }
+                        Button("Import from Zen…") { BrowserWindows.showImport(from: .zen) }
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help(String(localized: "New Space or Import"))
+                    .accessibilityLabel(String(localized: "New Space or Import"))
+                    Spacer()
                 }
-                .buttonStyle(.borderless)
                 .padding(.horizontal, 10)
-                .padding(.top, 10)
-                Button {
-                    BrowserWindows.showImport(from: .safari)
-                } label: {
-                    Label("Import from Safari…", systemImage: "square.and.arrow.down")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.borderless)
-                .padding(10)
-                Button {
-                    BrowserWindows.showImport(from: .arc)
-                } label: {
-                    Label("Import from Arc…", systemImage: "square.and.arrow.down")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.borderless)
-                .padding(10)
-                Button {
-                    BrowserWindows.showImport(from: .zen)
-                } label: {
-                    Label("Import from Zen…", systemImage: "square.and.arrow.down")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.borderless)
-                .padding(10)
+                .padding(.vertical, 8)
             }
             .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
             // A space just made with New Space… is shown at once.
@@ -109,21 +97,19 @@ struct SpacesSettingsView: View {
                         }
 
                         SettingsCard(header: String(localized: "Tabs")) {
-                            SettingsRow(title: String(localized: "Auto Clear Tabs")) {
-                                Picker(
-                                    "",
-                                    selection: Binding(
-                                        get: { settings.autoClearTabsAfter(for: container.id) },
-                                        set: { settings.setAutoClearTabsAfter($0, for: container.id) }
+                            SettingsRow(
+                                title: String(localized: "Auto Clear Tabs"),
+                                detail: String(localized: "The shorter of this delay and the general one applies.")
+                            ) {
+                                ClosingDelayPicker(
+                                    seconds: Binding(
+                                        get: { settings.spaceClosingDelay(for: container.id) },
+                                        set: { settings.setSpaceClosingDelay($0, for: container.id) }
+                                    ),
+                                    generalTitle: String(
+                                        localized: "Like General (\(TabClosingDelay.title(settings.tabRemovalTimeout)))"
                                     )
-                                ) {
-                                    ForEach(AutoClearTabsAfter.allCases) { value in
-                                        Text(value.title).tag(value)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                                .labelsHidden()
-                                .fixedSize()
+                                )
                             }
                             Divider()
                             SettingsRow(

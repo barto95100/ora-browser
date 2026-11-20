@@ -4,6 +4,66 @@
     "" : {},
     " — %@" : {},
     " / %@" : {},
+    "Did “%@” appear in the site’s field or results?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » est-il apparu dans le champ ou les résultats du site ?"
+          }
+        }
+      }
+    },
+    "No" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non"
+          }
+        }
+      }
+    },
+    "Otherwise, Ombre opens the site and copies the question: paste it with ⌘V." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinon, Ombre ouvre le site et copie la question : collez-la avec ⌘V."
+          }
+        }
+      }
+    },
+    "Question copied: paste it with ⌘V" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Question copiée : collez-la avec ⌘V"
+          }
+        }
+      }
+    },
+    "The site receives the question from the address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le site reçoit la question dans l’adresse"
+          }
+        }
+      }
+    },
+    "Yes" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oui"
+          }
+        }
+      }
+    },
     "·" : {},
     "“%@” is already a keyword of %@." : {
       "localizations" : {

@@ -52,7 +52,9 @@ struct LauncherView: View {
         }
 
         if let engine = engineToUse,
-           let url = viewModel.searchEngineService.createSearchURL(for: engine, query: correctInput)
+           let url = viewModel.searchEngineService.urlToOpen(
+               for: engine, query: correctInput, isPrivate: privacyMode.isPrivate
+           )
         {
             tabManager
                 .openTab(

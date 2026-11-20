@@ -7,6 +7,9 @@ struct SearchEngine: Sendable {
     let aliases: [String]
     let searchURL: String
     let isAIChat: Bool
+    /// False when the site ignores the search in its address (Gemini):
+    /// Ombre opens the page and puts the question on the clipboard.
+    let acceptsQueryInAddress: Bool
     let foregroundColor: Color?
     let autoSuggestions: (@Sendable (String) async -> [String])?
 
@@ -17,6 +20,7 @@ struct SearchEngine: Sendable {
         aliases: [String],
         searchURL: String,
         isAIChat: Bool,
+        acceptsQueryInAddress: Bool = true,
         foregroundColor: Color? = nil,
         autoSuggestions: (@Sendable (String) async -> [String])? = nil
     ) {
@@ -26,6 +30,7 @@ struct SearchEngine: Sendable {
         self.aliases = aliases
         self.searchURL = searchURL
         self.isAIChat = isAIChat
+        self.acceptsQueryInAddress = acceptsQueryInAddress
         self.foregroundColor = foregroundColor
         self.autoSuggestions = autoSuggestions
     }
@@ -41,6 +46,7 @@ extension SearchEngine {
             aliases: aliases,
             searchURL: searchURL,
             isAIChat: isAIChat,
+            acceptsQueryInAddress: acceptsQueryInAddress,
             foregroundColor: foregroundColor,
             autoSuggestions: autoSuggestions
         )
@@ -56,7 +62,8 @@ extension SearchEngine {
             foregroundColor: foregroundColor ?? .white,
             icon: icon,
             originalAlias: originalAlias,
-            searchURL: searchURL
+            searchURL: searchURL,
+            acceptsQueryInAddress: acceptsQueryInAddress
         )
     }
 }

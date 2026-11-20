@@ -15,6 +15,8 @@ struct LauncherSuggestion: Identifiable {
     let engineForegroundColor: Color?
     let faviconURL: URL?
     let faviconLocalFile: URL?
+    /// The active space's AI: its shortcut is shown (⌘↩ by default).
+    let isSpaceAI: Bool
     let action: () -> Void
 
     init(
@@ -27,6 +29,7 @@ struct LauncherSuggestion: Identifiable {
         engineForegroundColor: Color? = nil,
         faviconURL: URL? = nil,
         faviconLocalFile: URL? = nil,
+        isSpaceAI: Bool = false,
         action: @escaping () -> Void
     ) {
         self.type = type
@@ -38,6 +41,7 @@ struct LauncherSuggestion: Identifiable {
         self.engineForegroundColor = engineForegroundColor
         self.faviconURL = faviconURL
         self.faviconLocalFile = faviconLocalFile
+        self.isSpaceAI = isSpaceAI
         self.action = action
     }
 }

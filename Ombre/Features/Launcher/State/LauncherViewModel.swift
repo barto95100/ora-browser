@@ -110,12 +110,45 @@ class LauncherViewModel: ObservableObject {
             LauncherSuggestion(
                 type: .suggestedQuery, title: String(localized: "Search on \(engineName)"),
                 action: { [weak self] in self?.onSubmit?(nil) }
-            ),
-            createAISuggestion(engineName: .grok),
-            createAISuggestion(engineName: .chatgpt),
-            createAISuggestion(engineName: .claude),
-            createAISuggestion(engineName: .gemini)
-        ]
+            )
+        ] + startingAISuggestions()
+    }
+
+    /// The space's AI first, then the other AIs shown, a few at most.
+    private func startingAISuggestions() -> [LauncherSuggestion] {
+        let spaceAI = spaceAIEngine
+        let others = searchEngineService.shownEngines.filter { $0.isAIChat && $0.name != spaceAI?.name }
+        return ([spaceAI].compactMap(\.self) + others)
+            .prefix(Self.maxStartingAIs)
+            .map { createAISuggestion(engine: $0) }
+    }
+
+    static let maxStartingAIs = 4
+
+    /// The AI of the active space (see `SearchEngineService.getDefaultAIChat`).
+    var spaceAIEngine: SearchEngine? {
+        searchEngineService.getDefaultAIChat(for: tabManager?.activeContainer?.id)
+    }
+
+    /// The space's AI asked when `event` is its shortcut (⌘↩ by default).
+    func handleKeyEquivalent(_ event: NSEvent) -> Bool {
+        guard let chord = KeyChord(fromEvent: event),
+              chord.isSameKeys(as: KeyboardShortcuts.Address.askAI.currentChord)
+        else { return false }
+        return askSpaceAI()
+    }
+
+    /// Sends what is typed to the space's AI (⌘↩ by default, see
+    /// `KeyboardShortcuts.Address.askAI`). Nothing typed: nothing sent.
+    @discardableResult
+    func askSpaceAI() -> Bool {
+        let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        // The address bar opens with the page's address: not a question.
+        let isPageAddress = navigateInCurrentTab && text == tabManager?.activeTab?.url.absoluteString
+        guard !text.isEmpty, !isPageAddress, let engine = spaceAIEngine else { return false }
+        open(engine, query: text)
+        onDismiss?()
+        return true
     }
 
     func executeCommand() {
@@ -134,47 +167,35 @@ class LauncherViewModel: ObservableObject {
 
     // MARK: - Private Helpers
 
-    private func createAISuggestion(engineName: SearchEngineID, query: String? = nil)
+    private func createAISuggestion(engine: SearchEngine, query: String? = nil, isSpaceAI: Bool = false)
         -> LauncherSuggestion
     {
-        guard let engine = searchEngineService.getSearchEngine(engineName) else {
-            return LauncherSuggestion(
-                type: .aiChat,
-                title: query ?? engineName.rawValue, // no translation
-                name: engineName.rawValue,
-                action: {}
-            )
-        }
-
-        return LauncherSuggestion(
+        LauncherSuggestion(
             type: .aiChat,
             title: query ?? engine.name,
             name: engine.name,
             icon: engine.icon.isEmpty ? nil : engine.icon,
             color: engine.color,
             engineForegroundColor: engine.foregroundColor,
+            isSpaceAI: isSpaceAI,
             action: { [weak self] in
-                guard let self, let tabManager = self.tabManager,
-                      let historyManager = self.historyManager,
-                      let privacyMode = self.privacyMode
-                else { return }
-                if self.navigateInCurrentTab, let tab = tabManager.activeTab {
-                    if let url = self.searchEngineService.getSearchURLForEngine(
-                        engineName: engineName,
-                        query: query ?? self.currentText
-                    ) {
-                        tab.loadURL(url.absoluteString)
-                    }
-                } else {
-                    tabManager.openFromEngine(
-                        engineName: engineName,
-                        query: query ?? self.currentText,
-                        historyManager: historyManager,
-                        isPrivate: privacyMode.isPrivate
-                    )
-                }
+                guard let self else { return }
+                self.open(engine, query: query ?? self.currentText)
             }
         )
+    }
+
+    /// `query` asked to an engine: in the tab whose address is edited, or
+    /// in a new tab of the active space (with its cookies).
+    private func open(_ engine: SearchEngine, query: String) {
+        guard let tabManager, let historyManager, let privacyMode,
+              let url = searchEngineService.createSearchURL(for: engine, query: query)
+        else { return }
+        if navigateInCurrentTab, let tab = tabManager.activeTab {
+            tab.loadURL(url.absoluteString)
+        } else {
+            tabManager.openTab(url: url, historyManager: historyManager, isPrivate: privacyMode.isPrivate)
+        }
     }
 
     private func appendOpenTabs(_ tabs: [Tab], itemsCount: inout Int) {
@@ -350,15 +371,15 @@ class LauncherViewModel: ObservableObject {
         }
     }
 
+    /// A question: « Ask <the space's AI> ».
     private func appendAISuggestionsIfNeeded(_ text: String) {
-        guard isAISuitableQuery(text) else { return }
-        suggestions.append(createAISuggestion(engineName: .grok, query: text))
-        suggestions.append(createAISuggestion(engineName: .chatgpt, query: text))
-        suggestions.append(createAISuggestion(engineName: .claude, query: text))
-        suggestions.append(createAISuggestion(engineName: .gemini, query: text))
+        guard Self.isAISuitableQuery(text), let engine = spaceAIEngine else { return }
+        suggestions.append(createAISuggestion(engine: engine, query: text, isSpaceAI: true))
     }
 
-    private func isAISuitableQuery(_ query: String) -> Bool {
+    /// Text that reads like a question or a request to an AI, in English
+    /// or French.
+    nonisolated static func isAISuitableQuery(_ query: String) -> Bool {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         let lowercased = trimmed.lowercased()
         let words = lowercased.split(separator: " ")
@@ -371,7 +392,10 @@ class LauncherViewModel: ObservableObject {
         let questionPrefixes = [
             "who ", "what ", "where ", "when ", "how ", "why ", "which ", // no translation
             "is ", "are ", "can ", "does ", "do ", "should ", "would ", // no translation
-            "could ", "will ", "was ", "were ", "has ", "have " // no translation
+            "could ", "will ", "was ", "were ", "has ", "have ", // no translation
+            "comment ", "pourquoi ", "quand ", "où ", "qui ", "quel ", "quelle ", // no translation
+            "quels ", "quelles ", "combien ", "est-ce ", "peux-tu ", "pouvez-vous ", // no translation
+            "que ", "qu'", "qu’" // no translation
         ]
         if questionPrefixes.contains(where: { lowercased.hasPrefix($0) }) {
             return true
@@ -386,7 +410,9 @@ class LauncherViewModel: ObservableObject {
         let imperativePhrases = [
             "write me", "help me", "create a", "give me", "list of", // no translation
             "make a", "tell me", "show me", "find me", "build a", // no translation
-            "design a", "plan a", "write a", "make me", "help with" // no translation
+            "design a", "plan a", "write a", "make me", "help with", // no translation
+            "écris", "rédige", "explique", "résume", "traduis", "aide-moi", // no translation
+            "donne-moi", "dis-moi", "propose", "compare", "corrige", "reformule" // no translation
         ]
         if imperativePhrases.contains(where: { lowercased.contains($0) }) {
             return true

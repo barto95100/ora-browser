@@ -113,20 +113,6 @@ class TabManager: ObservableObject {
         )
     }
 
-    func openFromEngine(
-        engineName: SearchEngineID,
-        query: String,
-        historyManager: HistoryManager,
-        isPrivate: Bool
-    ) {
-        if let url = SearchEngineService().getSearchURLForEngine(
-            engineName: engineName,
-            query: query
-        ) {
-            openTab(url: url, historyManager: historyManager, isPrivate: isPrivate)
-        }
-    }
-
     func isActive(_ tab: Tab) -> Bool {
         if let activeTab = self.activeTab {
             return activeTab.id == tab.id

@@ -171,6 +171,15 @@ class SettingsStore: ObservableObject {
 
     // MARK: - Per-Container
 
+    /// The engines and AIs chosen by any space.
+    var spaceEngineChoices: Set<String> {
+        let suffixes = [".defaultSearch", ".defaultAI"]
+        return Set(defaults.dictionaryRepresentation().compactMap { key, value in
+            guard key.hasPrefix("settings.container."), suffixes.contains(where: key.hasSuffix) else { return nil }
+            return value as? String
+        })
+    }
+
     private func keyForDefaultSearch(for containerId: UUID) -> String {
         "settings.container.\(containerId.uuidString).defaultSearch"
     }

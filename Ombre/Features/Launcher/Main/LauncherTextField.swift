@@ -14,9 +14,19 @@ struct LauncherTextField: NSViewRepresentable {
     /// The placeholder's color (AppKit's own otherwise, which can vanish
     /// over a page's header color).
     var placeholderColor: Color?
+    /// A key with ⌘ (or another modifier) while typing: true if handled
+    /// (⌘↩ asks the space's AI, see `KeyboardShortcuts.Address.askAI`).
+    var onKeyEquivalent: ((NSEvent) -> Bool)?
 
     class CustomTextField: NSTextField {
         var cursorColor: NSColor?
+        var keyEquivalentHandler: ((NSEvent) -> Bool)?
+
+        /// Only while typing in it, before the menus see the key.
+        override func performKeyEquivalent(with event: NSEvent) -> Bool {
+            if currentEditor() != nil, keyEquivalentHandler?(event) == true { return true }
+            return super.performKeyEquivalent(with: event)
+        }
 
         private func configureEditorIfNeeded() {
             guard let textView = currentEditor() as? NSTextView else { return }
@@ -79,6 +89,7 @@ struct LauncherTextField: NSViewRepresentable {
 
     func makeNSView(context: Context) -> CustomTextField {
         let textField = CustomTextField()
+        textField.keyEquivalentHandler = onKeyEquivalent
         textField.delegate = context.coordinator
         textField.font = font
         textField.bezelStyle = .roundedBezel
@@ -106,6 +117,7 @@ struct LauncherTextField: NSViewRepresentable {
             context.coordinator.isProgrammaticUpdate = false
         }
         nsView.cursorColor = NSColor(cursorColor)
+        nsView.keyEquivalentHandler = onKeyEquivalent
         Self.setPlaceholder(placeholder, color: placeholderColor, font: font, on: nsView)
         if let textColor {
             nsView.textColor = NSColor(textColor)

@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 @testable import Ombre
 import Testing
 
@@ -71,9 +72,85 @@ struct SettingsWindowTests {
         #expect(SettingsWindow.selection(in: defaults) == .shortcuts)
     }
 
+    /// A folded list kept by the old split view is forgotten; nothing else.
+    @Test func aFoldedListKeptBeforeIsForgotten() throws {
+        let defaults = try defaults()
+        let folded = "NSSplitView Subview Frames settings, SidebarNavigationSplitView"
+        let restored = "NSSplitView Subview Frames settings-AppWindow-1, SidebarNavigationSplitView"
+        let browser = "NSSplitView Subview Frames normal-AppWindow-1, SidebarNavigationSplitView"
+        for key in [folded, restored, browser] {
+            defaults.set(["0.000000, 0.000000, 148.000000, 680.000000, YES, NO"], forKey: key)
+        }
+        defaults.set("searchEngines", forKey: SettingsWindow.selectionKey)
+        SettingsWindow.forgetFoldedSections(in: defaults)
+        #expect(defaults.object(forKey: folded) == nil)
+        #expect(defaults.object(forKey: restored) == nil)
+        #expect(defaults.object(forKey: browser) != nil)
+        #expect(SettingsWindow.selection(in: defaults) == .searchEngines)
+    }
+
     @Test func anUnknownSectionShowsGeneral() throws {
         let defaults = try defaults()
         defaults.set("gone", forKey: SettingsWindow.selectionKey)
         #expect(SettingsWindow.selection(in: defaults) == .general)
+    }
+}
+
+/// The list of sections is always there: nothing can fold it (a folded
+/// split view was kept between launches, with no way back), even at the
+/// window's smallest size.
+@MainActor
+struct SettingsSectionsListTests {
+    /// The window's content at a size, never shown on the screen.
+    private func layOut(width: CGFloat, height: CGFloat) -> (NSWindow, NSView) {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: width, height: height),
+            styleMask: [.titled, .closable, .resizable],
+            backing: .buffered,
+            defer: true
+        )
+        window.isReleasedWhenClosed = false
+        let host = NSHostingView(rootView: SettingsContentView()
+            .environmentObject(ToastManager.shared)
+            .environmentObject(AppearanceManager.shared)
+            .environmentObject(UpdateService.shared)
+            .environmentObject(DefaultBrowserManager.shared)
+            .modelContainer(DatabaseRecovery.mainContainer))
+        window.contentView = host
+        host.frame = window.contentRect(forFrameRect: window.frame)
+        host.layoutSubtreeIfNeeded()
+        return (window, host)
+    }
+
+    private func views(in view: NSView) -> [NSView] {
+        [view] + view.subviews.flatMap(views(in:))
+    }
+
+    @Test(arguments: [false, true])
+    func theSectionsListIsAlwaysThere(atMinimumSize: Bool) async throws {
+        let size = atMinimumSize ? SettingsWindow.minimumSize : CGSize(width: 1100, height: 760)
+        let (width, height) = (size.width, size.height)
+        let (window, host) = layOut(width: width, height: height)
+        defer {
+            window.contentView = nil
+            window.close()
+        }
+        // A list appears after its first layout passes.
+        var list: NSTableView?
+        for _ in 0 ..< 50 where list == nil {
+            try await Task.sleep(for: .milliseconds(30))
+            host.layoutSubtreeIfNeeded()
+            list = views(in: host).compactMap { $0 as? NSTableView }.first
+        }
+        // No split view: nothing to fold, nothing remembered folded.
+        #expect(!views(in: host).contains { $0 is NSSplitView })
+        let sections = try #require(list)
+        #expect(sections.numberOfRows == SettingsTab.allCases.count)
+        let scroll = try #require(sections.enclosingScrollView)
+        let frame = scroll.convert(scroll.bounds, to: host)
+        #expect(frame.width >= SettingsWindow.sidebarWidth - 1, "\(frame)")
+        #expect(frame.minX < 1)
+        // The content cannot be narrower than the list plus the page's room.
+        #expect(host.fittingSize.width >= SettingsWindow.sidebarWidth + SettingsWindow.minimumDetailWidth)
     }
 }

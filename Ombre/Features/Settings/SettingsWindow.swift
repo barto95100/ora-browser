@@ -13,6 +13,11 @@ enum SettingsWindow {
     static let selectionKey = "settings.selectedTab"
     /// Its size and position.
     static let frameName = "OmbreSettingsWindow"
+    /// The list of sections: always shown, this wide.
+    static let sidebarWidth: CGFloat = 210
+    /// The section's page at the window's smallest size.
+    static let minimumDetailWidth: CGFloat = 560
+    static let minimumSize = CGSize(width: sidebarWidth + 1 + minimumDetailWidth, height: 480)
 
     /// The window, while it is open.
     private(set) weak static var window: NSWindow?
@@ -49,6 +54,16 @@ enum SettingsWindow {
         NSApp.activate()
     }
 
+    /// The sections used to be in a split view, which kept its list folded
+    /// (from a drag of its edge) between launches: that state is dropped.
+    static func forgetFoldedSections(in defaults: UserDefaults = .standard) {
+        for key in defaults.dictionaryRepresentation().keys
+            where key.hasPrefix("NSSplitView Subview Frames settings") // no translation
+        {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
     /// The section to show.
     static func selection(in defaults: UserDefaults = .standard) -> SettingsTab {
         defaults.string(forKey: selectionKey).flatMap(SettingsTab.init(rawValue:)) ?? .general
@@ -62,6 +77,7 @@ enum SettingsWindow {
         // could not save its frame under it.
         window?.setFrameAutosaveName("")
         window = newWindow
+        forgetFoldedSections()
         newWindow.setFrameUsingName(frameName)
         newWindow.setFrameAutosaveName(frameName)
         newWindow.tabbingMode = .disallowed

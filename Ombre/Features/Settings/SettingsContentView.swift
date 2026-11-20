@@ -75,7 +75,7 @@ struct SettingsWindowRoot: View {
             .environmentObject(ToastManager.shared)
             .modifier(ThemeProvider())
             .background(SettingsWindowAdopter())
-            .frame(minWidth: 780, minHeight: 480)
+            .frame(minWidth: SettingsWindow.minimumSize.width, minHeight: SettingsWindow.minimumSize.height)
     }
 }
 
@@ -94,23 +94,30 @@ struct SettingsContentView: View {
         SettingsTab(rawValue: selectionRawValue) ?? .general
     }
 
+    /// The list of sections, then the page, side by side: not a split
+    /// view, which could fold the list (and keep it folded, with no way back).
     var body: some View {
-        NavigationSplitView {
+        HStack(spacing: 0) {
             List(SettingsTab.allCases, id: \.self, selection: selection) { tab in
                 SettingsSidebarRow(tab: tab)
                     .tag(tab)
             }
-            .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 260)
-            .toolbar(removing: .sidebarToggle)
-        } detail: {
+            .listStyle(.sidebar)
+            .frame(width: SettingsWindow.sidebarWidth)
+            Divider()
             SettingsDetailView(tab: selectedTab)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .frame(
+                    minWidth: SettingsWindow.minimumDetailWidth,
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: .topLeading
+                )
                 .background(Color(nsColor: .windowBackgroundColor))
-                .navigationTitle(selectedTab.title)
-                .navigationSubtitle(selectedTab.subtitle)
                 // A section shows from its top, not where the last one was.
                 .id(selectedTab)
         }
+        .navigationTitle(selectedTab.title)
+        .navigationSubtitle(selectedTab.subtitle)
         .tint(theme.accent)
     }
 }

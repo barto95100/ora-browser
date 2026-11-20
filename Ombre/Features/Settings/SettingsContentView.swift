@@ -82,6 +82,10 @@ struct SettingsWindowRoot: View {
 struct SettingsContentView: View {
     @AppStorage(SettingsWindow.selectionKey) private var selectionRawValue: String = SettingsTab.general.rawValue
     @Environment(\.theme) private var theme
+    @AppStorage(SettingsBackdrop.defaultsKey) private var backdrop = SettingsBackdrop.defaultValue
+    @AppStorage(SettingsBackdrop.followsSpaceKey) private var backdropFollowsSpace = true
+    /// The color of the space Settings › Spaces shows, if it has one.
+    @State private var shownSpaceHex: String?
 
     private var selection: Binding<SettingsTab?> {
         Binding(
@@ -106,33 +110,40 @@ struct SettingsContentView: View {
                     maxHeight: .infinity,
                     alignment: .topLeading
                 )
-                .background(Color(nsColor: .windowBackgroundColor))
                 // A section shows from its top, not where the last one was.
                 .id(selectedTab)
         }
+        .background {
+            SettingsBackdropView(
+                backdrop: backdrop,
+                spaceHex: backdropFollowsSpace && selectedTab == .spaces ? shownSpaceHex : nil
+            )
+        }
+        .onPreferenceChange(SettingsSpaceColorKey.self) { shownSpaceHex = $0 }
         .navigationTitle(selectedTab.title)
         .navigationSubtitle(selectedTab.subtitle)
         .tint(theme.accent)
     }
 
-    /// On macOS 26, a glass panel floating over the page's background, like
-    /// Apple's sidebars; before, the sidebar material and a line.
+    /// On macOS 26, a glass panel floating over the window's backdrop, its
+    /// selection a pill of tinted glass; before, the sidebar material and a
+    /// line.
     @ViewBuilder
     private var sectionsList: some View {
-        let list = List(SettingsTab.allCases, id: \.self, selection: selection) { tab in
-            SettingsSidebarRow(tab: tab)
-                .tag(tab)
-        }
-        .listStyle(.sidebar)
-        .frame(width: SettingsWindow.sidebarWidth)
         if #available(macOS 26, *) {
-            list
-                .scrollContentBackground(.hidden)
-                .ombreGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .padding(SettingsWindow.sidebarInset)
-                .background(Color(nsColor: .windowBackgroundColor))
+            GlassSelectionList(ids: SettingsTab.allCases, selection: selection) { tab in
+                SettingsSidebarRow(tab: tab)
+            }
+            .frame(width: SettingsWindow.sidebarWidth)
+            .ombreGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), rim: true)
+            .padding(SettingsWindow.sidebarInset)
         } else {
-            list
+            List(SettingsTab.allCases, id: \.self, selection: selection) { tab in
+                SettingsSidebarRow(tab: tab)
+                    .tag(tab)
+            }
+            .listStyle(.sidebar)
+            .frame(width: SettingsWindow.sidebarWidth)
             Divider()
         }
     }

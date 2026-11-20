@@ -19,19 +19,24 @@ enum SpaceColor: String, CaseIterable, Identifiable {
         rawValue
     }
 
-    var color: Color {
+    /// Its color as `#RRGGBB`.
+    var hex: String {
         switch self {
-        case .gray: Color(hex: "#9A9CA3")
-        case .blue: Color(hex: "#5BAEEF")
-        case .indigo: Color(hex: "#8B8FEA")
-        case .purple: Color(hex: "#B585DE")
-        case .pink: Color(hex: "#EE87B2")
-        case .red: Color(hex: "#EC6F6A")
-        case .orange: Color(hex: "#F5A05A")
-        case .yellow: Color(hex: "#E3BC57")
-        case .green: Color(hex: "#6FC17E")
-        case .teal: Color(hex: "#5ABFC6")
+        case .gray: "#9A9CA3"
+        case .blue: "#5BAEEF"
+        case .indigo: "#8B8FEA"
+        case .purple: "#B585DE"
+        case .pink: "#EE87B2"
+        case .red: "#EC6F6A"
+        case .orange: "#F5A05A"
+        case .yellow: "#E3BC57"
+        case .green: "#6FC17E"
+        case .teal: "#5ABFC6"
         }
+    }
+
+    var color: Color {
+        Color(hex: hex)
     }
 
     var title: String {

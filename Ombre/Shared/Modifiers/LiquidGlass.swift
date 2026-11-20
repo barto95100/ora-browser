@@ -5,18 +5,34 @@ import SwiftUI
 /// controls that ask for it.
 extension View {
     /// A glass surface shaped like `shape` (macOS 26); before, `fallback`.
+    /// `rim`: a light edge, brighter at the top left where the light comes
+    /// from, for panels over a colored backdrop.
     @ViewBuilder
     func ombreGlass(
         in shape: some Shape,
         tint: Color? = nil,
         isInteractive: Bool = false,
+        rim: Bool = false,
         fallback: Material = .regularMaterial
     ) -> some View {
         if #available(macOS 26, *) {
             glassEffect(.regular.tint(tint).interactive(isInteractive), in: shape)
+                .overlay {
+                    if rim {
+                        shape.stroke(Self.glassRim, lineWidth: 1).allowsHitTesting(false)
+                    }
+                }
         } else {
             background(fallback, in: shape)
         }
+    }
+
+    private static var glassRim: LinearGradient {
+        LinearGradient(
+            colors: [.white.opacity(0.5), .white.opacity(0.12), .white.opacity(0.28)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     /// Glass buttons (macOS 26); before, bordered ones. `prominent`: the

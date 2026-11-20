@@ -4,6 +4,36 @@
     "" : {},
     " — %@" : {},
     " / %@" : {},
+    "A · Translucent Window" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A · Fenêtre translucide"
+          }
+        }
+      }
+    },
+    "B · Ombre Gradient" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "B · Dégradé Ombre"
+          }
+        }
+      }
+    },
+    "C · Translucent with Ombre Tint" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C · Translucide teinté Ombre"
+          }
+        }
+      }
+    },
     "Clear All" : {
       "localizations" : {
         "fr" : {
@@ -74,12 +104,42 @@
         }
       }
     },
+    "Plain (Current)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uni (actuel)"
+          }
+        }
+      }
+    },
     "Question copied: paste it with ⌘V" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Question copiée : collez-la avec ⌘V"
+          }
+        }
+      }
+    },
+    "Settings Background" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fond des réglages"
+          }
+        }
+      }
+    },
+    "Space Color in Settings › Spaces" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur de l’espace dans Réglages › Espaces"
           }
         }
       }

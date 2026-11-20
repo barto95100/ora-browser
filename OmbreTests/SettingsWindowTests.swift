@@ -126,6 +126,14 @@ struct SettingsSectionsListTests {
         [view] + view.subviews.flatMap(views(in:))
     }
 
+    private func sectionsList(in host: NSView) -> NSScrollView? {
+        let scrolls = views(in: host).compactMap { $0 as? NSScrollView }
+        if #available(macOS 26, *) {
+            return scrolls.first { $0.convert($0.bounds, to: host).minX < SettingsWindow.sidebarInset + 1 }
+        }
+        return views(in: host).compactMap { $0 as? NSTableView }.first?.enclosingScrollView
+    }
+
     @Test(arguments: [false, true])
     func theSectionsListIsAlwaysThere(atMinimumSize: Bool) async throws {
         let size = atMinimumSize ? SettingsWindow.minimumSize : CGSize(width: 1100, height: 760)
@@ -135,18 +143,20 @@ struct SettingsSectionsListTests {
             window.contentView = nil
             window.close()
         }
-        // A list appears after its first layout passes.
-        var list: NSTableView?
+        // A list appears after its first layout passes: on macOS 26, the
+        // glass list (a scroll view at the window's left); before, a table.
+        var list: NSScrollView?
         for _ in 0 ..< 50 where list == nil {
             try await Task.sleep(for: .milliseconds(30))
             host.layoutSubtreeIfNeeded()
-            list = views(in: host).compactMap { $0 as? NSTableView }.first
+            list = sectionsList(in: host)
         }
         // No split view: nothing to fold, nothing remembered folded.
         #expect(!views(in: host).contains { $0 is NSSplitView })
-        let sections = try #require(list)
-        #expect(sections.numberOfRows == SettingsTab.allCases.count)
-        let scroll = try #require(sections.enclosingScrollView)
+        let scroll = try #require(list)
+        if let table = scroll.documentView as? NSTableView {
+            #expect(table.numberOfRows == SettingsTab.allCases.count)
+        }
         let frame = scroll.convert(scroll.bounds, to: host)
         #expect(frame.width >= SettingsWindow.sidebarWidth - 1, "\(frame)")
         #expect(frame.minX < SettingsWindow.sidebarInset + 1)

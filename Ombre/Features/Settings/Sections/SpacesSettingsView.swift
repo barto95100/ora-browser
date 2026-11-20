@@ -21,54 +21,16 @@ struct SpacesSettingsView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Left list
-            VStack(spacing: 0) {
-                List(selection: $selectedContainerId) {
-                    ForEach(containers) { container in
-                        HStack {
-                            Text(container.emoji)
-                            Text(container.name)
-                        }
-                        .tag(container.id)
-                        .contextMenu {
-                            Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
-                                .disabled(containers.count <= 1)
-                        }
-                    }
+            spacesColumn
+                // A space just made with New Space… is shown at once.
+                .onChange(of: containers.map(\.id)) { old, new in
+                    guard awaitsNewSpace, let added = new.first(where: { !old.contains($0) }) else { return }
+                    awaitsNewSpace = false
+                    selectedContainerId = added
                 }
-                Divider()
-                HStack {
-                    Menu {
-                        Button("New Space…") {
-                            awaitsNewSpace = true
-                            BrowserWindows.newSpace()
-                        }
-                        Divider()
-                        Button("Import from Safari…") { BrowserWindows.showImport(from: .safari) }
-                        Button("Import from Arc…") { BrowserWindows.showImport(from: .arc) }
-                        Button("Import from Zen…") { BrowserWindows.showImport(from: .zen) }
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                    .help(String(localized: "New Space or Import"))
-                    .accessibilityLabel(String(localized: "New Space or Import"))
-                    Spacer()
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-            }
-            .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
-            // A space just made with New Space… is shown at once.
-            .onChange(of: containers.map(\.id)) { old, new in
-                guard awaitsNewSpace, let added = new.first(where: { !old.contains($0) }) else { return }
-                awaitsNewSpace = false
-                selectedContainerId = added
-            }
+                .preference(key: SettingsSpaceColorKey.self, value: selectedContainer?.spaceColor?.hex)
 
-            Divider()
+            if #unavailable(macOS 26) { Divider() }
 
             // Right details
             ScrollView {
@@ -162,6 +124,73 @@ struct SpacesSettingsView: View {
                 }
             }
         }
+    }
+
+    /// The spaces, then New Space: on macOS 26 a glass panel like the list
+    /// of sections; before, a plain list.
+    @ViewBuilder
+    private var spacesColumn: some View {
+        if #available(macOS 26, *) {
+            VStack(spacing: 0) {
+                GlassSelectionList(ids: containers.map(\.id), selection: $selectedContainerId) { id in
+                    if let container = containers.first(where: { $0.id == id }) {
+                        spaceRow(container)
+                    }
+                }
+                newSpaceBar
+            }
+            .frame(width: 200)
+            .ombreGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), rim: true)
+            .padding(.vertical, SettingsWindow.sidebarInset)
+        } else {
+            VStack(spacing: 0) {
+                List(selection: $selectedContainerId) {
+                    ForEach(containers) { container in
+                        spaceRow(container)
+                            .tag(container.id)
+                    }
+                }
+                Divider()
+                newSpaceBar
+            }
+            .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
+        }
+    }
+
+    private func spaceRow(_ container: TabContainer) -> some View {
+        HStack {
+            Text(container.emoji)
+            Text(container.name)
+        }
+        .contextMenu {
+            Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
+                .disabled(containers.count <= 1)
+        }
+    }
+
+    private var newSpaceBar: some View {
+        HStack {
+            Menu {
+                Button("New Space…") {
+                    awaitsNewSpace = true
+                    BrowserWindows.newSpace()
+                }
+                Divider()
+                Button("Import from Safari…") { BrowserWindows.showImport(from: .safari) }
+                Button("Import from Arc…") { BrowserWindows.showImport(from: .arc) }
+                Button("Import from Zen…") { BrowserWindows.showImport(from: .zen) }
+            } label: {
+                Image(systemName: "plus")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help(String(localized: "New Space or Import"))
+            .accessibilityLabel(String(localized: "New Space or Import"))
+            Spacer()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
     }
 
     /// The space's engine or AI: « Use Global Choice » (the default) or one

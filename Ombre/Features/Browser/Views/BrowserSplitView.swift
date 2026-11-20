@@ -80,11 +80,7 @@ struct BrowserSplitView: View {
 
     private func contentView() -> some View {
         Group {
-            if appState.showSettings, !privacyMode.isPrivate {
-                BrowserContentContainer {
-                    InWindowSettingsView()
-                }
-            } else if let activeTab = tabManager.activeTab {
+            if let activeTab = tabManager.activeTab {
                 BrowserContentContainer {
                     BrowserWebContentView(tab: activeTab)
                 }
@@ -95,7 +91,5 @@ struct BrowserSplitView: View {
             }
         }
         .toast(manager: toastManager)
-        // Picking a tab leaves the settings.
-        .onChange(of: tabManager.activeTab?.id) { appState.showSettings = false }
     }
 }

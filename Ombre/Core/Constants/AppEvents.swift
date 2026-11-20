@@ -10,7 +10,6 @@ extension Notification.Name {
     static let showNotes = Notification.Name("ShowNotes")
     static let showTasks = Notification.Name("ShowTasks")
     static let showTime = Notification.Name("ShowTime")
-    static let showSettings = Notification.Name("ShowSettings")
     /// Import from another browser; the object is the browser window to import into.
     static let showImport = Notification.Name("ShowImport")
     /// Settings › Spaces asks the front browser window for a new space's editor.
@@ -44,8 +43,7 @@ extension Notification.Name {
     static let toggleToolbar = Notification.Name("ToggleToolbar")
     static let selectTabAtIndex = Notification.Name("SelectTabAtIndex") // userInfo: ["index": Int]
 
-    /// Per-window settings/events
-    static let setAppearance = Notification.Name("SetAppearance") // userInfo: ["appearance": String]
+    // Per-window settings/events
 
     /// AppDelegate → UI routing
     static let openURL = Notification.Name("OpenURL") // userInfo: ["url": URL]

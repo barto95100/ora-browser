@@ -1,10 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {},
-    " — %@" : {},
-    " / %@" : {},
-    "·" : {},
+    "" : {
+
+    },
+    " — %@" : {
+
+    },
+    " / %@" : {
+
+    },
+    "·" : {
+
+    },
     "“%@” is in Ombre." : {
       "localizations" : {
         "fr" : {
@@ -187,8 +195,12 @@
         }
       }
     },
-    "%@." : {},
-    "%lld" : {},
+    "%@." : {
+
+    },
+    "%lld" : {
+
+    },
     "%lld %%" : {
       "localizations" : {
         "fr" : {
@@ -811,7 +823,9 @@
         }
       }
     },
-    "•" : {},
+    "•" : {
+
+    },
     "⌘-click opens in the background" : {
       "localizations" : {
         "fr" : {
@@ -1362,16 +1376,6 @@
         }
       }
     },
-    "Allow agents to act in pages" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autoriser les agents à agir dans les pages"
-          }
-        }
-      }
-    },
     "Allow “%@” on %@?" : {
       "localizations" : {
         "en" : {
@@ -1424,6 +1428,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autoriser l’accès à « %@ »…"
+          }
+        }
+      }
+    },
+    "Allow agents to act in pages" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les agents à agir dans les pages"
           }
         }
       }
@@ -2706,26 +2720,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fermer le groupe"
-          }
-        }
-      }
-    },
-    "Close Settings" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermer les réglages"
-          }
-        }
-      }
-    },
-    "Close Settings (⌘,)" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermer les réglages (⌘,)"
           }
         }
       }
@@ -4189,7 +4183,9 @@
         }
       }
     },
-    "github.com/the-ora/browser" : {},
+    "github.com/the-ora/browser" : {
+
+    },
     "GNU General Public License v3.0" : {
       "localizations" : {
         "fr" : {
@@ -4538,8 +4534,12 @@
         }
       }
     },
-    "https://example.com/filter.txt" : {},
-    "https://example.com/search?q={query}" : {},
+    "https://example.com/filter.txt" : {
+
+    },
+    "https://example.com/search?q={query}" : {
+
+    },
     "Icon" : {
       "localizations" : {
         "fr" : {

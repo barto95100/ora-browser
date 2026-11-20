@@ -38,11 +38,12 @@ struct PasswordsSettingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 24) {
             passwordsOverview
             vaultSection
         }
-        .padding(16)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear {
             if selectedContainerId == nil {
@@ -67,35 +68,30 @@ struct PasswordsSettingsView: View {
 
     private var passwordsOverview: some View {
         SettingsCard {
-            HStack(alignment: .top) {
-                Text("Password manager")
-                Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
-                    Picker("", selection: $settings.passwordManagerProvider) {
-                        ForEach(providers.providers) { provider in
-                            Text(provider.title).tag(provider.kind)
-                        }
+            SettingsRow(title: String(localized: "Password manager"), detail: selectedProvider.summary) {
+                Picker("", selection: $settings.passwordManagerProvider) {
+                    ForEach(providers.providers) { provider in
+                        Text(provider.title).tag(provider.kind)
                     }
-                    .pickerStyle(.menu)
-                    .labelsHidden()
-                    .fixedSize()
-
-                    Text(selectedProvider.summary)
-                        .font(.caption)
-                        .foregroundStyle(selectedProvider.isAvailable ? Color.secondary : .orange)
                 }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .fixedSize()
             }
-
-            Toggle("Enable password manager", isOn: $settings.passwordsEnabled)
-            Toggle("Autofill on login forms", isOn: $settings.passwordAutofillEnabled)
+            Divider()
+            switchRow(String(localized: "Enable password manager"), isOn: $settings.passwordsEnabled)
+            Divider()
+            switchRow(String(localized: "Autofill on login forms"), isOn: $settings.passwordAutofillEnabled)
                 .disabled(!settings.passwordsEnabled)
-            Toggle("Auto-submit after autofill", isOn: $settings.passwordAutofillSubmitEnabled)
+            Divider()
+            switchRow(String(localized: "Auto-submit after autofill"), isOn: $settings.passwordAutofillSubmitEnabled)
                 .disabled(
                     !settings.passwordsEnabled
                         || !settings.passwordAutofillEnabled
                         || !selectedProvider.usesBuiltInOverlay
                 )
-            Toggle("Prompt to save passwords", isOn: $settings.passwordSavePromptsEnabled)
+            Divider()
+            switchRow(String(localized: "Prompt to save passwords"), isOn: $settings.passwordSavePromptsEnabled)
                 .disabled(!settings.passwordsEnabled || !selectedProvider.usesBuiltInVault)
 
             if !selectedProvider.isAvailable {
@@ -103,6 +99,12 @@ struct PasswordsSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private func switchRow(_ title: String, isOn: Binding<Bool>) -> some View {
+        SettingsRow(title: title) {
+            Toggle("", isOn: isOn).labelsHidden().toggleStyle(.switch)
         }
     }
 

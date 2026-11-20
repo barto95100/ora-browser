@@ -18,7 +18,9 @@ struct TimeFocusSettingsView: View {
                     localized: "Time on each site, counted while its tab is in front and you are using the Mac (or it plays media). Private windows are never counted. Stays on this Mac."
                 )
             ) {
-                Toggle("Count browsing time", isOn: $settings.isEnabled)
+                SettingsRow(title: String(localized: "Count browsing time")) {
+                    Toggle("", isOn: $settings.isEnabled).labelsHidden().toggleStyle(.switch)
+                }
                 HStack {
                     Text("Keep browsing time for:")
                     Spacer()
@@ -52,7 +54,9 @@ struct TimeFocusSettingsView: View {
                     selection: $focus.focusMinutes,
                     choices: FocusSettings.durationChoices
                 )
-                Toggle("Repeat focus with breaks", isOn: $focus.repeats)
+                SettingsRow(title: String(localized: "Repeat focus with breaks")) {
+                    Toggle("", isOn: $focus.repeats).labelsHidden().toggleStyle(.switch)
+                }
                 if focus.repeats {
                     minutesPicker(String(localized: "Break:"), selection: $focus.breakMinutes, choices: [3, 5, 10, 15])
                     minutesPicker(

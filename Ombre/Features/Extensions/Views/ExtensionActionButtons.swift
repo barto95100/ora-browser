@@ -186,7 +186,7 @@ private struct ExtensionMenuItems: View {
             manager.setPinned(!record.isPinned, id: record.id)
         }
         Divider()
-        Button("Manage Extension…") { BrowserWindows.showSettings(.extensions) }
+        Button("Manage Extension…") { SettingsWindow.show(.extensions) }
         Button("Remove…", role: .destructive) { manager.confirmRemove(id: record.id) }
     }
 
@@ -256,7 +256,7 @@ private struct ExtensionOverflowMenu: View {
                 }
             }
             Divider()
-            Button("Manage Extensions…") { BrowserWindows.showSettings(.extensions) }
+            Button("Manage Extensions…") { SettingsWindow.show(.extensions) }
         } label: {
             Image(systemName: "puzzlepiece.extension")
                 .font(.system(size: 13, weight: .medium))

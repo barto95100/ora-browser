@@ -35,7 +35,7 @@ private struct ChromeWebStoreBannerContent: View {
                 if let record = manager.installed(storeID: storeID) {
                     Text("“\(record.name)” is in Ombre.")
                         .font(.subheadline)
-                    Button("Manage…") { BrowserWindows.showSettings(.extensions) }
+                    Button("Manage…") { SettingsWindow.show(.extensions) }
                         .controlSize(.small)
                         .pointerStyle(.link)
                 } else if let failure {

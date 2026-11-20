@@ -1,41 +1,86 @@
 import SwiftUI
 
+/// A group of settings, like in System Settings: its title and explanation
+/// above a rounded card holding the settings.
 struct SettingsCard<Content: View>: View {
     var header: String?
     var description: String?
     @ViewBuilder var content: () -> Content
 
-    let cornerRadius: CGFloat = 16
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             if header != nil || description != nil {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 3) {
                     if let header {
                         Text(header)
-                            .font(.headline)
+                            .font(.system(size: 13, weight: .semibold))
                     }
                     if let description {
                         Text(description)
-                            .font(.caption)
+                            .font(.system(size: 11.5))
                             .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                .padding(.horizontal, 4)
             }
 
-            content()
+            VStack(alignment: .leading, spacing: 12) {
+                content()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .settingsCardBackground()
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            ConditionallyConcentricRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.72))
+    }
+}
+
+private extension View {
+    /// White on the light gray window, a lighter shade on the dark one.
+    static var settingsCardFill: Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                ? NSColor.white.withAlphaComponent(0.06)
+                : NSColor.white
+        })
+    }
+}
+
+extension View {
+    /// The background of a settings card.
+    func settingsCardBackground() -> some View {
+        background {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Self.settingsCardFill)
         }
         .overlay {
-            ConditionallyConcentricRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
         }
-        .clipShape(ConditionallyConcentricRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 6)
+    }
+}
+
+/// A setting on one line: its name and a short explanation at the left, its
+/// control at the right.
+struct SettingsRow<Control: View>: View {
+    let title: String
+    var detail: String?
+    @ViewBuilder var control: () -> Control
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                if let detail {
+                    Text(detail)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 8)
+            control()
+        }
     }
 }

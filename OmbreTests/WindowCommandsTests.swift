@@ -104,12 +104,12 @@ struct WindowCommandsTests {
     }
 
     /// Waits until the window's commands know their window (read after the
-    /// first render): a `.showSettings` for it then opens its settings.
+    /// first render): a `.showImport` for it then opens its import sheet.
     private func waitUntilKnown(_ window: NSWindow, _ survivors: Survivors) async -> Bool {
         await wait {
-            // `.showSettings` only acts on the exact window it names.
-            NotificationCenter.default.post(name: .showSettings, object: window, userInfo: ["open": true])
-            return survivors.appState?.showSettings == true
+            // `.showImport` only acts on the exact window it names.
+            NotificationCenter.default.post(name: .showImport, object: window, userInfo: ["source": ImportSource.zen])
+            return survivors.appState?.importSource != nil
         }
     }
 
@@ -144,13 +144,13 @@ struct WindowCommandsTests {
         let appState = try #require(survivors.appState)
         // Commands still on their way to it arrive first.
         try await Task.sleep(for: .milliseconds(100))
-        appState.showSettings = false
+        appState.importSource = nil
 
         let other = makeWindow()
         defer { other.close() }
-        NotificationCenter.default.post(name: .showSettings, object: other, userInfo: ["open": true])
+        NotificationCenter.default.post(name: .showImport, object: other, userInfo: ["source": ImportSource.zen])
         try await Task.sleep(for: .milliseconds(100))
-        #expect(!appState.showSettings)
+        #expect(appState.importSource == nil)
     }
 
     /// A closed window frees what its commands act on: nothing keeps it

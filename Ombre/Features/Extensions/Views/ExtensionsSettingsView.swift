@@ -8,12 +8,12 @@ struct ExtensionsSettingsView: View {
         if #available(macOS 15.4, *) {
             ExtensionsSettingsContent()
         } else {
-            SettingsCard(header: String(localized: "Extensions")) {
-                Text("Extensions need macOS 15.4 or later.")
-                    .foregroundStyle(.secondary)
+            SettingsSection {
+                SettingsCard(header: String(localized: "Extensions")) {
+                    Text("Extensions need macOS 15.4 or later.")
+                        .foregroundStyle(.secondary)
+                }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 }
@@ -27,94 +27,90 @@ private struct ExtensionsSettingsContent: View {
     @State private var fileError: String?
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                SettingsCard(header: String(localized: "Installed")) {
-                    if manager.installed.isEmpty {
-                        Text("No extensions yet. Add one from your apps below.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        VStack(alignment: .leading, spacing: 14) {
-                            ForEach(manager.installed) { item in
-                                InstalledExtensionRow(item: item) { pendingRemoval = item }
-                            }
-                        }
-                    }
-                }
-
-                SettingsCard(
-                    header: String(localized: "From Your Apps"),
-                    description: String(
-                        localized: "Apps from the App Store can bring Safari extensions. Ombre runs them like Safari."
-                    )
-                ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(manager.candidates) { candidate in
-                            HStack(spacing: 10) {
-                                Image(nsImage: NSWorkspace.shared.icon(forFile: candidate.appURL.path))
-                                    .resizable()
-                                    .frame(width: 28, height: 28)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(candidate.name)
-                                    Text("From \(candidate.appName)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Button("Add…") { open(candidate) }
-                            }
-                        }
-                        if manager.candidates.isEmpty {
-                            Text("No other extension found in your apps.")
-                                .foregroundStyle(.secondary)
-                        }
-                        if let reviewError {
-                            Label(reviewError, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.orange)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Button("More Extensions on the App Store…") {
-                            if let url = WebExtensionsManager.appStoreURL {
-                                NSWorkspace.shared.open(url)
-                            }
-                        }
-                    }
-                }
-
-                SettingsCard(
-                    header: String(localized: "Other Extensions"),
-                    description: String(
-                        // swiftlint:disable:next line_length
-                        localized: "On an extension's page in the Chrome Web Store, click “Add to Ombre”. Some Chrome extensions use features WebKit doesn't have: they may not work fully."
-                    )
-                ) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Button("Add from Folder or Zip…") { chooseFile() }
-                            Button(manager.isCheckingUpdates ? "Checking…" : "Check for Updates") {
-                                #if DEBUG
-                                    // ⌥-click: reinstalls the current versions (to test updates).
-                                    let reinstall = NSEvent.modifierFlags.contains(.option)
-                                #else
-                                    let reinstall = false
-                                #endif
-                                Task { await manager.checkForUpdates(reinstall: reinstall) }
-                            }
-                            .disabled(manager.isCheckingUpdates)
-                        }
-                        Text(manager.updateSummary)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        if let fileError {
-                            Label(fileError, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.orange)
-                                .fixedSize(horizontal: false, vertical: true)
+        SettingsSection {
+            SettingsCard(header: String(localized: "Installed")) {
+                if manager.installed.isEmpty {
+                    Text("No extensions yet. Add one from your apps below.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    VStack(alignment: .leading, spacing: 14) {
+                        ForEach(manager.installed) { item in
+                            InstalledExtensionRow(item: item) { pendingRemoval = item }
                         }
                     }
                 }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+
+            SettingsCard(
+                header: String(localized: "From Your Apps"),
+                description: String(
+                    localized: "Apps from the App Store can bring Safari extensions. Ombre runs them like Safari."
+                )
+            ) {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(manager.candidates) { candidate in
+                        HStack(spacing: 10) {
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: candidate.appURL.path))
+                                .resizable()
+                                .frame(width: 28, height: 28)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(candidate.name)
+                                Text("From \(candidate.appName)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Add…") { open(candidate) }
+                        }
+                    }
+                    if manager.candidates.isEmpty {
+                        Text("No other extension found in your apps.")
+                            .foregroundStyle(.secondary)
+                    }
+                    if let reviewError {
+                        Label(reviewError, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Button("More Extensions on the App Store…") {
+                        if let url = WebExtensionsManager.appStoreURL {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
+            }
+
+            SettingsCard(
+                header: String(localized: "Other Extensions"),
+                description: String(
+                    // swiftlint:disable:next line_length
+                    localized: "On an extension's page in the Chrome Web Store, click “Add to Ombre”. Some Chrome extensions use features WebKit doesn't have: they may not work fully."
+                )
+            ) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Button("Add from Folder or Zip…") { chooseFile() }
+                        Button(manager.isCheckingUpdates ? "Checking…" : "Check for Updates") {
+                            #if DEBUG
+                                // ⌥-click: reinstalls the current versions (to test updates).
+                                let reinstall = NSEvent.modifierFlags.contains(.option)
+                            #else
+                                let reinstall = false
+                            #endif
+                            Task { await manager.checkForUpdates(reinstall: reinstall) }
+                        }
+                        .disabled(manager.isCheckingUpdates)
+                    }
+                    Text(manager.updateSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if let fileError {
+                        Label(fileError, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
         }
         .onAppear { manager.candidatesAppeared() }
         .onDisappear { manager.candidatesDisappeared() }

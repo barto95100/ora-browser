@@ -102,13 +102,6 @@ private struct WindowAppCommands: ViewModifier {
                     appState.importSource = note.userInfo?["source"] as? ImportSource ?? .zen
                 }
             }
-            .onNotification(.showSettings) { note in
-                let opens = note.userInfo?["open"] as? Bool == true
-                Task { @MainActor in
-                    guard note.object as? NSWindow === window else { return }
-                    if opens { appState.showSettings = true } else { appState.showSettings.toggle() }
-                }
-            }
             .onNotification(.showTime) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow, !privacyMode.isPrivate
@@ -133,14 +126,6 @@ private struct WindowAppCommands: ViewModifier {
                     guard window === NSApp.keyWindow, !privacyMode.isPrivate else { return }
                     tabManager.showTasks(ofSpace: note.userInfo?["spaceID"] as? UUID)
                     appState.showTasks = tabManager.activeTab != nil
-                }
-            }
-            .onNotification(.setAppearance) { note in
-                guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                if let raw = note.userInfo?["appearance"] as? String,
-                   let mode = AppAppearance(rawValue: raw)
-                {
-                    AppearanceManager.shared.appearance = mode
                 }
             }
     }
@@ -186,13 +171,7 @@ private struct WindowTabCommands: ViewModifier {
             .onNotification(.closeActiveTab) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                    // The settings shown over the page close first, like
-                    // Peek: not the tab hidden behind them.
-                    if appState.showSettings {
-                        appState.showSettings = false
-                    } else {
-                        tabManager.closeActiveTab()
-                    }
+                    tabManager.closeActiveTab()
                 }
             }
             .onNotification(.restoreLastTab) { note in

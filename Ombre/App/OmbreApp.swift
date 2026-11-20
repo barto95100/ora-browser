@@ -67,8 +67,6 @@ class AppState: ObservableObject {
     @Published var showNotes: Bool = false
     /// The browsing time (⌥⌘Y), see `TimePanel`.
     @Published var showTime: Bool = false
-    /// The settings in place of the page, see `InWindowSettingsView`.
-    @Published var showSettings: Bool = false
     /// Import from another browser, see `BrowserImportSheet`.
     /// The browser to import from, while its sheet is shown.
     @Published var importSource: ImportSource?
@@ -157,7 +155,8 @@ struct OmbreApp: App {
         .handlesExternalEvents(matching: [])
         .restorationBehavior(TestHost.isActive ? .disabled : .automatic)
 
-        WindowGroup("Settings", id: "settings") {
+        // One window: opening it again brings it to the front (see `SettingsWindow`).
+        Window("Settings", id: SettingsWindow.sceneID) {
             // The browser windows' database (never missing, see `DatabaseRecovery`).
             SettingsWindowRoot()
                 .environmentObject(AppearanceManager.shared)
@@ -165,9 +164,9 @@ struct OmbreApp: App {
                 .environmentObject(DefaultBrowserManager.shared)
                 .modelContainer(DatabaseRecovery.mainContainer)
         }
-        .windowToolbarStyle(UnifiedCompactWindowToolbarStyle())
-        .windowResizability(.contentSize)
-        .defaultSize(width: 980, height: 640)
+        .windowToolbarStyle(.unified)
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 920, height: 680)
         .handlesExternalEvents(matching: [])
         .restorationBehavior(TestHost.isActive ? .disabled : .automatic)
         .commands { OmbreCommands() }

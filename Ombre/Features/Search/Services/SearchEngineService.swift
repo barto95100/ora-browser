@@ -144,7 +144,8 @@ class SearchEngineService: ObservableObject {
                 icon: "gemini-color-capsule-logo",
                 aliases: ["gemini", "gem", "bard", "google ai", "gai"], // no translation
                 searchURL: "https://gemini.google.com/app?q={query}",
-                isAIChat: true
+                isAIChat: true,
+                acceptsQueryInAddress: false
             ),
             SearchEngine(
                 name: "Copilot", // no translation
@@ -161,6 +162,7 @@ class SearchEngineService: ObservableObject {
                 aliases: ["github copilot", "gh copilot", "github ai", "ghc"], // no translation
                 searchURL: "https://github.com/copilot?q={query}",
                 isAIChat: true,
+                acceptsQueryInAddress: false,
                 foregroundColor: .white
             ),
             SearchEngine(
@@ -169,7 +171,8 @@ class SearchEngineService: ObservableObject {
                 icon: "",
                 aliases: ["meta ai", "meta", "llama", "facebook ai", "mai"], // no translation
                 searchURL: "https://www.meta.ai/?q={query}",
-                isAIChat: true
+                isAIChat: true,
+                acceptsQueryInAddress: false
             )
         ]
     }
@@ -187,7 +190,8 @@ class SearchEngineService: ObservableObject {
                 icon: "",
                 aliases: custom.aliases,
                 searchURL: custom.searchURL,
-                isAIChat: custom.isAIChat
+                isAIChat: custom.isAIChat,
+                acceptsQueryInAddress: custom.acceptsQueryInAddress
             )
         }
 
@@ -297,12 +301,45 @@ class SearchEngineService: ObservableObject {
         return searchEngines.first(where: { $0.name == name })
     }
 
-    func createSearchURL(for engine: SearchEngine, query: String) -> URL? {
-        Self.searchURL(template: engine.searchURL, query: query)
+    /// The address to open for `query`, to be opened at once. When the
+    /// engine ignores the search in its address: its page, and (a side
+    /// effect) the question put on the clipboard, with a message saying so.
+    /// Private: the copy is marked for clipboard managers not to keep it.
+    func urlToOpen(
+        for engine: SearchEngine, query: String, isPrivate: Bool, toasts: ToastManager = .shared
+    ) -> URL? {
+        urlToOpen(
+            SearchOpening.make(template: engine.searchURL, acceptsQuery: engine.acceptsQueryInAddress, query: query),
+            isPrivate: isPrivate,
+            toasts: toasts
+        )
     }
 
-    func createSearchURL(for match: LauncherMatch, query: String) -> URL? {
-        Self.searchURL(template: match.searchURL, query: query)
+    func urlToOpen(
+        for match: LauncherMatch, query: String, isPrivate: Bool, toasts: ToastManager = .shared
+    ) -> URL? {
+        urlToOpen(
+            SearchOpening.make(template: match.searchURL, acceptsQuery: match.acceptsQueryInAddress, query: query),
+            isPrivate: isPrivate,
+            toasts: toasts
+        )
+    }
+
+    private func urlToOpen(_ opening: SearchOpening?, isPrivate: Bool, toasts: ToastManager) -> URL? {
+        guard let opening else { return nil }
+        if let question = opening.questionToPaste {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(question, forType: .string)
+            if isPrivate {
+                // The nspasteboard.org markers clipboard histories respect.
+                for marker in ["org.nspasteboard.ConcealedType", "org.nspasteboard.TransientType"] {
+                    pasteboard.setString("", forType: NSPasteboard.PasteboardType(marker))
+                }
+            }
+            toasts.show(String(localized: "Question copied: paste it with ⌘V"), icon: .ombre(.copy))
+        }
+        return opening.url
     }
 
     func createSuggestionsURL(urlString: String, query: String) -> URL? {

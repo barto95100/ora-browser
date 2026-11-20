@@ -10,6 +10,9 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
     let faviconData: Data?
     let faviconBackgroundColorData: Data?
     let isAIChat: Bool
+    /// False when the site ignores the search in its address: Ombre opens
+    /// the page and puts the question on the clipboard.
+    let acceptsQueryInAddress: Bool
 
     init(
         id: String = UUID().uuidString,
@@ -18,7 +21,8 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
         aliases: [String] = [],
         faviconData: Data? = nil,
         faviconBackgroundColorData: Data? = nil,
-        isAIChat: Bool = false
+        isAIChat: Bool = false,
+        acceptsQueryInAddress: Bool = true
     ) {
         self.id = id
         self.name = name
@@ -27,6 +31,24 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
         self.faviconData = faviconData
         self.faviconBackgroundColorData = faviconBackgroundColorData
         self.isAIChat = isAIChat
+        self.acceptsQueryInAddress = acceptsQueryInAddress
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, searchURL, aliases, faviconData, faviconBackgroundColorData, isAIChat, acceptsQueryInAddress
+    }
+
+    /// Engines saved before `acceptsQueryInAddress` existed accept it.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(String.self, forKey: .id)
+        name = try values.decode(String.self, forKey: .name)
+        searchURL = try values.decode(String.self, forKey: .searchURL)
+        aliases = try values.decode([String].self, forKey: .aliases)
+        faviconData = try values.decodeIfPresent(Data.self, forKey: .faviconData)
+        faviconBackgroundColorData = try values.decodeIfPresent(Data.self, forKey: .faviconBackgroundColorData)
+        isAIChat = try values.decode(Bool.self, forKey: .isAIChat)
+        acceptsQueryInAddress = try values.decodeIfPresent(Bool.self, forKey: .acceptsQueryInAddress) ?? true
     }
 
     var favicon: NSImage? {
@@ -51,6 +73,7 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
         searchURL: String,
         aliases: [String] = [],
         isAIChat: Bool = false,
+        acceptsQueryInAddress: Bool = true,
         completion: @escaping @MainActor @Sendable (CustomSearchEngine) -> Void
     ) {
         let faviconService = FaviconService.shared
@@ -71,7 +94,8 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
                 aliases: aliases,
                 faviconData: faviconData,
                 faviconBackgroundColorData: colorData,
-                isAIChat: isAIChat
+                isAIChat: isAIChat,
+                acceptsQueryInAddress: acceptsQueryInAddress
             )
             completion(engine)
         } else {
@@ -97,7 +121,8 @@ struct CustomSearchEngine: Codable, Identifiable, Hashable {
                         aliases: aliases,
                         faviconData: faviconData,
                         faviconBackgroundColorData: colorData,
-                        isAIChat: isAIChat
+                        isAIChat: isAIChat,
+                        acceptsQueryInAddress: acceptsQueryInAddress
                     )
                     completion(engine)
                 }

@@ -7,6 +7,9 @@ struct TaskDetailView: View {
     @EnvironmentObject var tabManager: TabManager
     @Environment(\.theme) private var theme
     @State private var newSubtask = ""
+    /// The reminder just set goes off at once: its minute has come (said
+    /// only then, not for an old reminder seen later).
+    @State private var remindsNow = false
 
     private var hasDueDate: Binding<Bool> {
         Binding(
@@ -65,6 +68,12 @@ struct TaskDetailView: View {
                     displayedComponents: [.date, .hourAndMinute]
                 )
                 .labelsHidden()
+                if remindsNow {
+                    Label("This time has come: the reminder goes off now.", systemImage: "bell.badge")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Divider()
@@ -167,7 +176,8 @@ struct TaskDetailView: View {
     }
 
     private func reminderChanged() {
-        TaskReminders.update(task)
+        remindsNow = TaskReminders.isDueNow(task.reminderDate, isDone: task.isDone)
+        TaskReminders.update(task, isBeingSet: true)
         tabManager.saveTasks()
     }
 

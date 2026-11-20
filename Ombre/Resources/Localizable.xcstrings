@@ -54,6 +54,16 @@
         }
       }
     },
+    "This time has come: the reminder goes off now." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette heure est arrivée : le rappel part tout de suite."
+          }
+        }
+      }
+    },
     "Yes" : {
       "localizations" : {
         "fr" : {

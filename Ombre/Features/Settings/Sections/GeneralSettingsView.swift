@@ -51,9 +51,10 @@ struct GeneralSettingsView: View {
                 }
                 Divider()
                 SettingsRow(title: String(localized: "Remove tabs after:")) {
-                    Picker("", selection: $settings.tabRemovalTimeout) { durationChoices }
-                        .labelsHidden()
-                        .fixedSize()
+                    ClosingDelayPicker(seconds: Binding(
+                        get: { settings.tabRemovalTimeout },
+                        set: { settings.tabRemovalTimeout = $0 ?? TabClosingDelay.defaultDelay }
+                    ))
                 }
                 Divider()
                 SettingsRow(title: String(localized: "Max recent tabs:")) {

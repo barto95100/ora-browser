@@ -41,7 +41,9 @@ struct LauncherSuggestionItem: View {
 
     @ViewBuilder
     var icon: some View {
-        if isAIChat, let suggestionIcon = suggestion.icon, !suggestionIcon.isEmpty {
+        if suggestion.type == .keywordEngine {
+            KeywordEngineIcon(suggestion: suggestion)
+        } else if isAIChat, let suggestionIcon = suggestion.icon, !suggestionIcon.isEmpty {
             Image(suggestionIcon)
                 .resizable()
                 .frame(width: 14, height: 14)
@@ -75,7 +77,16 @@ struct LauncherSuggestionItem: View {
 
     @ViewBuilder
     var actionLabel: some View {
-        if isAIChat {
+        if suggestion.type == .keywordEngine {
+            Text(verbatim: "⇥ Tab")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(isFocusedOrHovered ? theme.foreground : .secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(theme.foreground.opacity(0.07))
+                .clipShape(ConditionallyConcentricRectangle(cornerRadius: 8, style: .continuous))
+                .accessibilityLabel(String(localized: "Tab to choose"))
+        } else if isAIChat {
             HStack(alignment: .center, spacing: 10) {
                 Text(askLabel)
                     .font(.system(size: 12, weight: .medium))
@@ -142,6 +153,8 @@ struct LauncherSuggestionItem: View {
         .clipShape(ConditionallyConcentricRectangle(cornerRadius: 12, style: .continuous))
         .onTapGesture {
             suggestion.action()
+            // An engine taken: the search is still to type.
+            guard suggestion.dismisses else { return }
             DispatchQueue.main.async {
                 appState.showLauncher = false
                 appState.isURLBarEditing = false
@@ -152,5 +165,29 @@ struct LauncherSuggestionItem: View {
                 focusedElement = suggestion.id
             }
         }
+    }
+}
+
+/// The engine's logo on its color, like its capsule.
+private struct KeywordEngineIcon: View {
+    let suggestion: LauncherSuggestion
+
+    var body: some View {
+        Group {
+            if let icon = suggestion.icon {
+                Image(icon)
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(3)
+            } else {
+                Text(String(suggestion.name?.first ?? "?"))
+                    .font(.system(size: 9, weight: .bold))
+            }
+        }
+        .foregroundStyle(suggestion.engineForegroundColor ?? .white)
+        .frame(width: 16, height: 16)
+        .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(suggestion.color ?? .gray))
+        .accessibilityHidden(true)
     }
 }

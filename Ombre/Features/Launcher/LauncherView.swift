@@ -122,11 +122,15 @@ struct LauncherView: View {
             .onDisappear {
                 mouseMonitor.stop()
                 viewModel.reset()
+                viewModel.onChooseEngine = nil
                 // New Split View is over once the launcher closes.
                 tabManager.pendingSplitLeftTabID = nil
                 input = ""
                 match = nil
                 isTextFieldFocused = false
+            }
+            .onChange(of: match?.text) { _, engine in
+                viewModel.hasChosenEngine = engine != nil
             }
             .onChange(of: appState.showLauncher) { _, newValue in
                 isVisible = newValue

@@ -80,12 +80,38 @@ struct KeywordSuggestionTests {
         }
     }
 
-    /// Two engines at most.
-    @Test func twoEnginesAtMost() async throws {
+    /// « go » begins Google's « goo » and Gemini's « google ai »: the
+    /// shorter keyword first.
+    @Test func twoEnginesTheShorterKeywordFirst() async throws {
         try await TabManagerTestWindow.run { window in
             let (model, _) = launcher(window)
-            type("g", in: model)
-            #expect(model.suggestions.filter { $0.type == .keywordEngine }.count <= 2)
+            type("go", in: model)
+            #expect(model.suggestions.filter { $0.type == .keywordEngine }.map(\.name) == ["Google", "Gemini"])
+        }
+    }
+
+    /// No suggestion yet (the address bar just opened): an exact keyword still works.
+    @Test func anExactKeywordWorksWithoutSuggestions() async throws {
+        try await TabManagerTestWindow.run { window in
+            let (model, chosen) = launcher(window)
+            model.currentText = "yt"
+            #expect(model.takeKeyword())
+            #expect(chosen.engines.map(\.0) == ["YouTube"])
+        }
+    }
+
+    /// With an engine taken, the start of another's keyword offers nothing
+    /// and Tab keeps it; an exact keyword still changes it, as before.
+    @Test func anEngineTakenIsKeptOnTheStartOfAnotherKeyword() async throws {
+        try await TabManagerTestWindow.run { window in
+            let (model, chosen) = launcher(window)
+            model.hasChosenEngine = true
+            type("clau", in: model)
+            #expect(!model.suggestions.contains { $0.type == .keywordEngine })
+            #expect(!model.takeKeyword())
+            type("gpt", in: model)
+            #expect(model.takeKeyword())
+            #expect(chosen.engines.map(\.0) == ["ChatGPT"])
         }
     }
 }

@@ -28,6 +28,9 @@ class LauncherViewModel: ObservableObject {
     /// The view's way to take an engine for the search (its capsule), with
     /// the keyword typed, set by the launcher and the address bar.
     var onChooseEngine: ((SearchEngine, String) -> Void)?
+    /// An engine is already taken (its capsule shows): no engine is offered
+    /// for what is typed, and Tab changes engine only on an exact keyword.
+    var hasChosenEngine = false
 
     func configure(
         tabManager: TabManager,
@@ -103,6 +106,7 @@ class LauncherViewModel: ObservableObject {
     /// (two engines at most, the best first). Nothing is replaced until
     /// Tab, or ↩ on it: « you » may also begin a search.
     private func appendKeywordSuggestions(_ text: String) {
+        guard !hasChosenEngine else { return }
         let typed = text.trimmingCharacters(in: .whitespaces)
         for match in searchEngineService.rules.keywordMatches(for: typed) {
             let engine = match.engine
@@ -125,7 +129,7 @@ class LauncherViewModel: ObservableObject {
     /// typed if it is a keyword. True when an engine was taken.
     @discardableResult
     func takeKeyword() -> Bool {
-        let offered = suggestions.filter { $0.type == .keywordEngine }
+        let offered = hasChosenEngine ? [] : suggestions.filter { $0.type == .keywordEngine }
         if let chosen = offered.first(where: { $0.id == focusedElement }) ?? offered.first {
             chosen.action()
             return true

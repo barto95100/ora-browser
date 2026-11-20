@@ -146,6 +146,7 @@ struct URLBar: View {
 
     private func cleanupInlineLauncher() {
         mouseMonitor.stop()
+        launcherViewModel.onChooseEngine = nil
         if let monitor = mouseDownMonitor {
             NSEvent.removeMonitor(monitor)
             mouseDownMonitor = nil
@@ -522,6 +523,9 @@ struct URLBar: View {
                 launcherViewModel.currentText = newValue
                 guard !suppressInitialSearch else { return }
                 launcherViewModel.searchHandler(newValue)
+            }
+            .onChange(of: keywordMatch?.text) { _, engine in
+                launcherViewModel.hasChosenEngine = engine != nil
             }
             .onKeyPress(.escape) {
                 dismissEditing()

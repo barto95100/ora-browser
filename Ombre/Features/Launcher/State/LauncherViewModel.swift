@@ -235,7 +235,7 @@ class LauncherViewModel: ObservableObject {
     /// in a new tab of the active space (with its cookies).
     private func open(_ engine: SearchEngine, query: String) {
         guard let tabManager, let historyManager, let privacyMode,
-              let url = searchEngineService.createSearchURL(for: engine, query: query)
+              let url = searchEngineService.urlToOpen(for: engine, query: query, isPrivate: privacyMode.isPrivate)
         else { return }
         if navigateInCurrentTab, let tab = tabManager.activeTab {
             tab.loadURL(url.absoluteString)

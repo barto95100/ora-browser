@@ -7,4 +7,5 @@ struct LauncherMatch {
     let icon: String
     let originalAlias: String
     let searchURL: String
+    var acceptsQueryInAddress = true
 }

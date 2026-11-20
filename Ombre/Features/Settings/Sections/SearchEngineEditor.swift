@@ -28,6 +28,9 @@ struct SearchEngineEditor: View {
     @State private var address = ""
     @State private var keywordsText = ""
     @State private var isAI = false
+    @State private var acceptsQuery = true
+    /// The address last opened by Test: its question shows until it changes.
+    @State private var testedTemplate: String?
     @State private var isConfirmingDelete = false
 
     /// What stands for the search in an address.
@@ -161,7 +164,41 @@ struct SearchEngineEditor: View {
                     .textSelection(.enabled)
                 error(addressError)
             }
+
+            queryInAddressField
         }
+    }
+
+    /// Whether the site reads the search from its address; after Test, a
+    /// question to set it from what the page showed.
+    private var queryInAddressField: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Toggle("The site receives the question from the address", isOn: $acceptsQuery)
+                .toggleStyle(.checkbox)
+                // Chosen by hand: the question after Test is answered.
+                .onChange(of: acceptsQuery) { testedTemplate = nil }
+            Text("Otherwise, Ombre opens the site and copies the question: paste it with ⌘V.")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+            if testedTemplate == template {
+                HStack(spacing: 8) {
+                    Text("Did “\(Self.testQuery)” appear in the site’s field or results?")
+                        .font(.system(size: 11, weight: .medium))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button("Yes") { answerTest(appeared: true) }
+                    Button("No") { answerTest(appeared: false) }
+                }
+                .controlSize(.small)
+                .padding(8)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
+            }
+        }
+    }
+
+    private func answerTest(appeared: Bool) {
+        acceptsQuery = appeared
+        testedTemplate = nil
     }
 
     private var keywordsField: some View {
@@ -223,6 +260,7 @@ struct SearchEngineEditor: View {
             address = engine.searchURL
             keywordsText = engine.aliases.joined(separator: ", ")
             isAI = engine.isAIChat
+            acceptsQuery = engine.acceptsQueryInAddress
         }
     }
 
@@ -232,6 +270,7 @@ struct SearchEngineEditor: View {
         else { return }
         NotificationCenter.default.post(name: .openURL, object: window, userInfo: ["url": url])
         window.makeKeyAndOrderFront(nil)
+        testedTemplate = template
     }
 
     private func save() {
@@ -247,7 +286,8 @@ struct SearchEngineEditor: View {
                 faviconData: existing.searchURL == template ? existing.faviconData : nil,
                 faviconBackgroundColorData: existing.searchURL == template
                     ? existing.faviconBackgroundColorData : nil,
-                isAIChat: isAI
+                isAIChat: isAI,
+                acceptsQueryInAddress: acceptsQuery
             )
             settings.updateCustomSearchEngine(changed)
             if existing.isAIChat != isAI { dropChoices(of: existing.name, asAI: existing.isAIChat) }
@@ -258,7 +298,8 @@ struct SearchEngineEditor: View {
                 name: trimmedName,
                 searchURL: template,
                 aliases: keywords,
-                isAIChat: isAI
+                isAIChat: isAI,
+                acceptsQueryInAddress: acceptsQuery
             ) { [weak settings] engine in
                 settings?.addCustomSearchEngine(engine)
             }
@@ -273,7 +314,8 @@ struct SearchEngineEditor: View {
             name: engine.name,
             searchURL: engine.searchURL,
             aliases: engine.aliases,
-            isAIChat: engine.isAIChat
+            isAIChat: engine.isAIChat,
+            acceptsQueryInAddress: engine.acceptsQueryInAddress
         ) { [weak settings] withIcon in
             // Unless changed again meanwhile.
             guard settings?.customSearchEngines.first(where: { $0.id == engine.id }) == engine else { return }

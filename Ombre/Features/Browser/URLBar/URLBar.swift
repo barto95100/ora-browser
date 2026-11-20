@@ -596,7 +596,9 @@ private extension URLBar {
         if let keywordMatch {
             // Nothing typed after the keyword: nothing to search yet.
             guard !correctInput.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-            if let url = launcherViewModel.searchEngineService.createSearchURL(for: keywordMatch, query: correctInput) {
+            if let url = launcherViewModel.searchEngineService.urlToOpen(
+                for: keywordMatch, query: correctInput, isPrivate: privacyMode.isPrivate
+            ) {
                 tabManager.activeTab?.loadURL(url.absoluteString)
             }
         } else if let defaultEngine = launcherViewModel.searchEngineService.getDefaultSearchEngine(
@@ -608,7 +610,9 @@ private extension URLBar {
                 originalAlias: correctInput,
                 customEngine: customEngine
             )
-            if let url = launcherViewModel.searchEngineService.createSearchURL(for: match, query: correctInput) {
+            if let url = launcherViewModel.searchEngineService.urlToOpen(
+                for: match, query: correctInput, isPrivate: privacyMode.isPrivate
+            ) {
                 tabManager.activeTab?.loadURL(url.absoluteString)
             }
         }

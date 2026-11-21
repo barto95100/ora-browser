@@ -14,6 +14,22 @@
         }
       }
     },
+    "%@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ → %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ → %2$@"
+          }
+        }
+      }
+    },
     "%lld windows" : {
       "localizations" : {
         "en" : {
@@ -50,6 +66,62 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Address Starting With" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse commençant par"
+          }
+        }
+      }
+    },
+    "Address Rules" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles d’adresses"
+          }
+        }
+      }
+    },
+    "*.example.com, example.com or example.com/page" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "*.exemple.fr, exemple.fr ou exemple.fr/page"
+          }
+        }
+      }
+    },
+    "Adds %@ (%@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adds %1$@ (%2$@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute %1$@ (%2$@)."
+          }
+        }
+      }
+    },
+    "Always Open %@ in This Space" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours ouvrir %@ dans cet espace"
           }
         }
       }
@@ -114,12 +186,42 @@
         }
       }
     },
+    "Delete Rule" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la règle"
+          }
+        }
+      }
+    },
     "Did “%@” appear in the site’s field or results?" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "« %@ » est-il apparu dans le champ ou les résultats du site ?"
+          }
+        }
+      }
+    },
+    "Domain" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domaine"
+          }
+        }
+      }
+    },
+    "Domain and Subdomains" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domaine et sous-domaines"
           }
         }
       }
@@ -225,6 +327,36 @@
         }
       }
     },
+    "Links from other apps, and the new tabs a page opens, go to the space of the rule for their address; the most precise rule wins. Not for addresses you type, links in the same tab, or private windows." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les liens venus d’autres apps, et les nouveaux onglets ouverts depuis une page, vont dans l’espace de la règle de leur adresse ; la règle la plus précise l’emporte. Sans effet sur les adresses saisies, les liens ouverts dans le même onglet et les fenêtres privées."
+          }
+        }
+      }
+    },
+    "Include Subdomains" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inclure les sous-domaines"
+          }
+        }
+      }
+    },
+    "https://…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https://…"
+          }
+        }
+      }
+    },
     "Needs macOS 26 or later." : {
       "localizations" : {
         "fr" : {
@@ -235,12 +367,52 @@
         }
       }
     },
+    "New Rule" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle règle"
+          }
+        }
+      }
+    },
     "No" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Non"
+          }
+        }
+      }
+    },
+    "No rules yet." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle pour l’instant."
+          }
+        }
+      }
+    },
+    "Not a web address." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n’est pas une adresse web."
+          }
+        }
+      }
+    },
+    "No rule: the link opens in the space it comes from." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune règle : le lien s’ouvre dans l’espace d’où il vient."
           }
         }
       }
@@ -281,6 +453,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitter directement"
+          }
+        }
+      }
+    },
+    "Test an Address" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tester une adresse"
           }
         }
       }
@@ -351,6 +533,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transparence"
+          }
+        }
+      }
+    },
+    "Which space the links to an address open in." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’espace où s’ouvrent les liens vers une adresse."
           }
         }
       }

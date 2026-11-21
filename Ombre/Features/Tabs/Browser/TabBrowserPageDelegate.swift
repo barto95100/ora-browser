@@ -72,6 +72,13 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
         return true
     }
 
+    /// Settings › Address Rules: a link for another space opens there.
+    func browserPage(_ page: BrowserPage, routesNewTabLink url: URL, disposition: BrowserNewTabDisposition) -> Bool {
+        guard let tab, let tabManager = tab.tabManager else { return false }
+        guard let space = tabManager.addressRuleSpace(for: url, from: tab.parentContainer) else { return false }
+        return tabManager.openRuledTab(url, from: tab, in: space, disposition: disposition) != nil
+    }
+
     func browserPage(
         _ page: BrowserPage,
         linkedPageWith configuration: WKWebViewConfiguration,

@@ -179,7 +179,15 @@ extension BrowserPage: WKUIDelegate {
         }
         // Else a tab linked to this page (`window.opener`, `postMessage`), like
         // Safari: sign-in and payment pages opened this way wait for an answer.
+        // "Open Link in New Tab…" from the context menu: a link too.
+        let isFromMenu = hasPendingNewTabDisposition
         let disposition = takeNewTabDisposition()
+        // A link clicked, for another space by an address rule: opened there.
+        if navigationAction.navigationType == .linkActivated || isFromMenu, let url = navigationAction.request.url,
+           delegate?.browserPage(self, routesNewTabLink: url, disposition: disposition) == true
+        {
+            return nil
+        }
         if let linked = delegate?.browserPage(
             self, linkedPageWith: configuration, for: navigationAction.request.url, disposition: disposition
         ) {

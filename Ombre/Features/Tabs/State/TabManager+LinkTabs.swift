@@ -66,6 +66,9 @@ extension TabManager {
         disposition: BrowserNewTabDisposition,
         openerURL: URL? = nil
     ) -> Tab? {
+        if let space = addressRuleSpace(for: url, from: opener.parentContainer) {
+            return openRuledTab(url, from: opener, in: space, disposition: disposition)
+        }
         let inFront = disposition == .foreground
         guard let newTab = openTab(
             url: url,
@@ -85,6 +88,28 @@ extension TabManager {
             openInSplitView(newTab)
         }
         return newTab
+    }
+}
+
+extension TabManager {
+    /// A link a page opens, in the space an address rule gives: in front
+    /// (that space shown) or in the background there.
+    @discardableResult
+    func openRuledTab(
+        _ url: URL, from opener: Tab, in space: TabContainer, disposition: BrowserNewTabDisposition
+    ) -> Tab? {
+        let inFront = disposition != .background
+        let tab = openTab(
+            url: url,
+            historyManager: opener.historyManager ?? historyManager,
+            downloadManager: opener.downloadManager ?? downloadManager,
+            focusAfterOpening: inFront,
+            isPrivate: false,
+            loadSilently: !inFront,
+            in: space
+        )
+        tab?.openerURL = opener.shownURL
+        return tab
     }
 }
 

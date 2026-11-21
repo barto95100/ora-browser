@@ -16,6 +16,7 @@ final class QuitController {
     /// The question is showing: another request waits for its answer.
     private var isAsking = false
     private var keyMonitor: Any?
+    private var heldKeyCode: UInt16 = 0
     private var resignObserver: NSObjectProtocol?
     private let hint = QuitHintPanel()
 
@@ -45,23 +46,27 @@ final class QuitController {
     // MARK: - Holding ⌘Q
 
     private func startHold(with event: NSEvent) {
-        guard let token = hold.pressed() else { return }
+        guard let token = hold.pressed(isRepeat: event.isARepeat) else { return }
         let keyCode = event.keyCode
-        hint.show(shortcut: KeyChord(fromEvent: event)?.display ?? "⌘Q")
-        // Releasing the key or ⌘ cancels; so does leaving Ombre.
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyUp, .flagsChanged]) { [weak self] event in
-            let isRelease = event.type == .keyUp
-                ? event.keyCode == keyCode
-                : !event.modifierFlags.contains(.command)
-            if isRelease {
-                MainActor.assumeIsolated { self?.release() }
+        heldKeyCode = keyCode
+        hint.show(shortcut: KeyChord(fromEvent: event)?.display ?? "⌘Q", filling: QuitHold.duration)
+        if keyMonitor == nil {
+            // The held key's repeats are absorbed: Ombre keeps them, none
+            // reaches the menu again or another app. Releasing the key or ⌘
+            // quits once the hint is full, and cancels before.
+            keyMonitor = NSEvent.addLocalMonitorForEvents(
+                matching: [.keyDown, .keyUp, .flagsChanged]
+            ) { [weak self] event in
+                let absorbs = MainActor.assumeIsolated { self?.absorbs(event) ?? false }
+                return absorbs ? nil : event
             }
-            return event
         }
-        resignObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.release() }
+        if resignObserver == nil {
+            resignObserver = NotificationCenter.default.addObserver(
+                forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.abandon() }
+            }
         }
         // One delay per press, not a timer that keeps running.
         DispatchQueue.main.asyncAfter(deadline: .now() + QuitHold.duration) { [weak self] in
@@ -69,15 +74,48 @@ final class QuitController {
         }
     }
 
-    private func release() {
-        guard hold.released() else { return }
-        stopWatching()
-        // The hint stays a moment, to be read.
-        hint.hide(after: 1.5)
+    /// The key events while holding: whether to absorb this one.
+    private func absorbs(_ event: NSEvent) -> Bool {
+        switch event.type {
+        case .keyDown:
+            return hold.absorbs(keyDownOf: event.keyCode, isRepeat: event.isARepeat, heldKeyCode: heldKeyCode)
+        case .keyUp where event.keyCode == heldKeyCode:
+            release()
+        case .flagsChanged where !event.modifierFlags.contains(.command):
+            release()
+        default:
+            break
+        }
+        return false
     }
 
-    /// Quits only if ⌘ and the key are still down (checked on the keyboard
-    /// itself: a release we did not see never quits).
+    private func release() {
+        switch hold.released() {
+        case .nothing:
+            return
+        case .cancelled:
+            stopWatching()
+            // The hint empties and stays a moment, to be read.
+            hint.cancel()
+        case .quit:
+            stopWatching()
+            hint.hide(after: 0)
+            isConfirmed = true
+            NSApp.terminate(nil)
+            // Back here only if quitting was stopped (a page or the system).
+            isConfirmed = false
+        }
+    }
+
+    /// Ombre left the front during the hold: the hint goes, nothing else.
+    private func abandon() {
+        guard hold.abandoned() else { return }
+        stopWatching()
+        hint.hide(after: 0)
+    }
+
+    /// The hint is full if ⌘ and the key are still down (checked on the
+    /// keyboard itself: a release we did not see never arms).
     private func holdEnded(_ token: Int, keyCode: UInt16) {
         let isStillHeld = NSEvent.modifierFlags.contains(.command)
             && CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(keyCode))
@@ -86,14 +124,9 @@ final class QuitController {
             return
         case .cancelled:
             stopWatching()
-            hint.hide(after: 1.5)
-        case .quit:
-            stopWatching()
-            hint.hide(after: 0)
-            isConfirmed = true
-            NSApp.terminate(nil)
-            // Back here only if quitting was stopped (a page or the system).
-            isConfirmed = false
+            hint.cancel()
+        case .armed:
+            hint.arm()
         }
     }
 
@@ -146,32 +179,60 @@ final class QuitController {
     }
 }
 
+/// What the hint shows: it fills while ⌘Q is held, then says to release.
+@MainActor
+private final class QuitHintModel: ObservableObject {
+    @Published var shortcut = "⌘Q"
+    /// How long the ring takes to fill.
+    @Published var duration: TimeInterval = 1
+    @Published var isArmed = false
+    /// Released before the ring was full: it empties.
+    @Published var isCancelled = false
+}
+
 /// « Hold ⌘Q to Quit », small and centered on the screen, over every window
-/// (a glass capsule on macOS 26). It never takes the keys or the mouse.
+/// (a glass capsule on macOS 26). It never takes the keys, the focus or the
+/// mouse.
 @MainActor
 private final class QuitHintPanel {
     private var panel: NSPanel?
+    private let model = QuitHintModel()
     private var hideWork: DispatchWorkItem?
     /// Each show; a fade from an earlier one does not hide this one.
     private var generation = 0
 
-    func show(shortcut: String) {
+    func show(shortcut: String, filling duration: TimeInterval) {
         hideWork?.cancel()
         generation += 1
+        model.shortcut = shortcut
+        model.duration = duration
+        model.isArmed = false
+        model.isCancelled = false
         let panel = panel ?? makePanel()
         self.panel = panel
-        let host = NSHostingView(rootView: QuitHintView(shortcut: shortcut))
+        // A new view each time: the ring starts empty, and the size is the
+        // one of this shortcut.
+        let host = NSHostingView(rootView: QuitHintView(model: model))
         panel.contentView = host
-        panel.setContentSize(host.fittingSize)
+        let size = host.fittingSize
+        panel.setContentSize(size)
         if let screen = NSApp.keyWindow?.screen ?? NSScreen.main {
             let frame = screen.visibleFrame
-            panel.setFrameOrigin(NSPoint(
-                x: frame.midX - host.fittingSize.width / 2,
-                y: frame.midY - host.fittingSize.height / 2
-            ))
+            panel.setFrameOrigin(NSPoint(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2))
         }
         panel.alphaValue = 1
         panel.orderFrontRegardless()
+    }
+
+    /// Full: « Release to Quit ».
+    func arm() {
+        withAnimation(.easeOut(duration: 0.15)) { model.isArmed = true }
+    }
+
+    /// Released too soon: the ring empties, the hint goes a moment later.
+    func cancel() {
+        model.isCancelled = true
+        hide(after: 1.5)
     }
 
     func hide(after delay: TimeInterval) {
@@ -213,15 +274,55 @@ private final class QuitHintPanel {
 }
 
 private struct QuitHintView: View {
-    let shortcut: String
+    @ObservedObject var model: QuitHintModel
 
     var body: some View {
-        Text("Hold \(shortcut) to Quit")
-            .font(.system(size: 15, weight: .medium))
-            .padding(.horizontal, 22)
-            .padding(.vertical, 12)
-            .modifier(QuitHintBackground())
-            .padding(20)
+        HStack(spacing: 10) {
+            QuitHintRing(duration: model.duration, isArmed: model.isArmed, isCancelled: model.isCancelled)
+            // Both texts take the same place: the capsule does not resize.
+            ZStack(alignment: .leading) {
+                Text("Hold \(model.shortcut) to Quit").opacity(model.isArmed ? 0 : 1)
+                Text("Release to Quit").opacity(model.isArmed ? 1 : 0)
+            }
+        }
+        .font(.system(size: 15, weight: .medium))
+        .padding(.leading, 14)
+        .padding(.trailing, 22)
+        .padding(.vertical, 12)
+        .modifier(QuitHintBackground())
+        .padding(20)
+    }
+}
+
+/// A ring that fills while ⌘Q is held (once, on appearing: no animation
+/// that keeps running), then shows a check; it empties when cancelled.
+private struct QuitHintRing: View {
+    let duration: TimeInterval
+    let isArmed: Bool
+    let isCancelled: Bool
+    @State private var progress: Double = 0
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Color.primary.opacity(0.15), lineWidth: 2.5)
+            Circle()
+                .trim(from: 0, to: isArmed ? 1 : progress)
+                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Image(systemName: "checkmark")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(Color.accentColor)
+                .opacity(isArmed ? 1 : 0)
+        }
+        .frame(width: 18, height: 18)
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.linear(duration: duration)) { progress = 1 }
+        }
+        .onChange(of: isCancelled) { _, cancelled in
+            guard cancelled else { return }
+            withAnimation(.easeOut(duration: 0.2)) { progress = 0 }
+        }
     }
 }
 

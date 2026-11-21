@@ -48,8 +48,7 @@ enum GlassTransparency: String, CaseIterable, Identifiable {
 
     static let defaultValue = GlassTransparency.medium
 
-    /// The setting's name and explanation (outside `#if DEBUG`, so that the
-    /// localization check, which reads the Release build, sees them).
+    /// The setting's name and explanation.
     static var settingTitle: String {
         String(localized: "Transparency")
     }

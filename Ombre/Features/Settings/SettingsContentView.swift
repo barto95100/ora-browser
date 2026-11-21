@@ -122,9 +122,8 @@ struct SettingsContentView: View {
         .tint(theme.accent)
     }
 
-    /// On macOS 26, a glass panel floating over the window's backdrop, its
-    /// selection a tinted pill; before, the sidebar material and a
-    /// line.
+    /// With glass, a panel floating over the window's backdrop, its
+    /// selection a tinted pill; without, the sidebar material and a line.
     @ViewBuilder
     private var sectionsList: some View {
         if #available(macOS 26, *), usesGlass {

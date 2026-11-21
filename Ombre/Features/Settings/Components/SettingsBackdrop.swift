@@ -97,8 +97,8 @@ struct SettingsSpaceColorKey: PreferenceKey {
 
 /// What the settings window shows behind its glass: macOS's gray window
 /// with a faint evening tint along the top (in Settings › Spaces, the
-/// selected space's color), so the glass has something to refract. Before
-/// macOS 26, without glass, the plain window as before.
+/// selected space's color), so the glass has something to refract. Without
+/// glass (macOS 15, Glass Effects off, Reduce Transparency), the plain window.
 struct SettingsBackdropView: View {
     /// The selected space's color (`#RRGGBB`), in Settings › Spaces.
     var spaceHex: String?

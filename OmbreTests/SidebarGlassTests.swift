@@ -258,6 +258,7 @@ struct SidebarRowBackgroundTests {
     @Test(arguments: [false, true])
     func onlyTheActiveTabShowsThePill(isActive: Bool) throws {
         let color = try centerColor(of: row(isActive: isActive, label: .clear), size: 44)
-        #expect((color.red > 0.1) == isActive, "\(color)")
+        // Any red at all: the pill may be faint (`SidebarGlassPalette`).
+        #expect((color.red > 0.03) == isActive, "\(color)")
     }
 }

@@ -41,7 +41,7 @@ enum SidebarGlassPalette {
             backdrop(isDark: isDark, spaceHex: spaceHex, theme: theme)
         }
         let text = BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
-        // Over the desktop it may go fainter than over the space's color.
+        // Over the desktop it may go fainter than over the page.
         let faintest = translucency == nil ? minimumDarkOpacity : minimumTranslucentOpacity
         var opacity = strongest
         while opacity > faintest + 0.001 {
@@ -90,9 +90,10 @@ enum SidebarGlassPalette {
         return color
     }
 
-    /// About what is under the pill: the top of the window's background (the
-    /// space's color, see `Theme.windowBackground`) on macOS's window. The
-    /// glass of the panel lightens it a little more.
+    /// What the floating sidebar's pill is judged on (`translucency` nil):
+    /// it is over the page, so the space's window background (the color it
+    /// would have without glass, `Theme.windowBackground`) stands in for it;
+    /// the glass, tinted with the space, adapts to the page itself.
     static func backdrop(isDark: Bool, spaceHex: String?, theme: SpaceTheme?) -> BackdropRGB {
         if let theme { return BackdropRGB(hex: theme.backgroundHex) }
         let window = BackdropRGB(hex: isDark ? "#1E1E1E" : "#ECECEC")

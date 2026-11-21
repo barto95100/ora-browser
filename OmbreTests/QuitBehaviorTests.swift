@@ -50,39 +50,77 @@ struct QuitDecisionTests {
     }
 }
 
-/// Holding ⌘Q about a second quits; releasing before does nothing.
+/// Holding ⌘Q fills the hint; Ombre quits on releasing after that, never
+/// while ⌘Q is still down (its repeats would quit the next app).
 struct QuitHoldTests {
-    @Test func heldUntilTheEndQuits() throws {
+    private static let qKey: UInt16 = 12
+
+    /// The delay ending with ⌘Q still down arms; it does not quit.
+    @Test func heldUntilTheEndArmsWithoutQuitting() throws {
         var hold = QuitHold()
         let tokenPress = hold.pressed()
         let token = try #require(tokenPress)
         let ending = hold.elapsed(token, isStillHeld: true)
-        #expect(ending == .quit)
+        #expect(ending == .armed)
+        #expect(hold.phase == .armed)
+    }
+
+    /// Held 3 seconds, then released: quits on the release, once.
+    @Test func releasingAfterTheHintIsFullQuits() throws {
+        var hold = QuitHold()
+        let tokenPress = hold.pressed()
+        let token = try #require(tokenPress)
+        _ = hold.elapsed(token, isStillHeld: true)
+        for _ in 0 ..< 30 {
+            let repeated = hold.pressed(isRepeat: true)
+            #expect(repeated == nil)
+        }
+        let release = hold.released()
+        let again = hold.released()
+        #expect(release == .quit)
+        #expect(again == .nothing)
         #expect(!hold.isHolding)
     }
 
-    @Test func releasedBeforeTheEndDoesNothing() throws {
+    @Test func releasedBeforeTheEndCancels() throws {
         var hold = QuitHold()
         let tokenPress = hold.pressed()
         let token = try #require(tokenPress)
-        let cancels = hold.released()
+        let release = hold.released()
         let ending = hold.elapsed(token, isStillHeld: true)
-        #expect(cancels)
+        #expect(release == .cancelled)
         #expect(ending == .stale)
+    }
+
+    /// The held key's repeats are absorbed, from the press until the
+    /// release: none reaches the menu or another app.
+    @Test func repeatsAreAbsorbedDuringTheWholeHold() throws {
+        var hold = QuitHold()
+        #expect(!hold.absorbs(keyDownOf: Self.qKey, isRepeat: true, heldKeyCode: Self.qKey))
+        let tokenPress = hold.pressed()
+        let token = try #require(tokenPress)
+        #expect(hold.absorbs(keyDownOf: Self.qKey, isRepeat: true, heldKeyCode: Self.qKey))
+        _ = hold.elapsed(token, isStillHeld: true)
+        #expect(hold.absorbs(keyDownOf: Self.qKey, isRepeat: true, heldKeyCode: Self.qKey))
+        // Another key, or a new press, goes through.
+        #expect(!hold.absorbs(keyDownOf: 0, isRepeat: true, heldKeyCode: Self.qKey))
+        #expect(!hold.absorbs(keyDownOf: Self.qKey, isRepeat: false, heldKeyCode: Self.qKey))
+        _ = hold.released()
+        #expect(!hold.absorbs(keyDownOf: Self.qKey, isRepeat: true, heldKeyCode: Self.qKey))
     }
 
     /// The held key repeats: no new delay.
     @Test func repeatsDoNotStartAgain() {
         var hold = QuitHold()
         let first = hold.pressed()
-        let repeated = hold.pressed()
+        let repeated = hold.pressed(isRepeat: true)
         #expect(first != nil)
         #expect(repeated == nil)
     }
 
     /// Pressed, released, pressed again: the first press's delay ending
-    /// does not quit, only the second one's.
-    @Test func anEarlierPressNeverQuits() throws {
+    /// does nothing, only the second one's arms.
+    @Test func anEarlierPressNeverArms() throws {
         var hold = QuitHold()
         let firstPress = hold.pressed()
         let first = try #require(firstPress)
@@ -92,12 +130,28 @@ struct QuitHoldTests {
         let firstEnding = hold.elapsed(first, isStillHeld: true)
         let secondEnding = hold.elapsed(second, isStillHeld: true)
         #expect(firstEnding == .stale)
-        #expect(secondEnding == .quit)
+        #expect(secondEnding == .armed)
     }
 
-    /// ⌘ or the key let go without us seeing it: no quit, the hold ends,
+    /// A new press (not a repeat) during a hold: a release we did not see.
+    /// It starts again, and the old delay does not arm.
+    @Test func aNewPressStartsAgain() throws {
+        var hold = QuitHold()
+        let firstPress = hold.pressed()
+        let first = try #require(firstPress)
+        _ = hold.elapsed(first, isStillHeld: true)
+        let secondPress = hold.pressed(isRepeat: false)
+        let second = try #require(secondPress)
+        #expect(hold.phase == .holding)
+        let firstEnding = hold.elapsed(first, isStillHeld: true)
+        let secondEnding = hold.elapsed(second, isStillHeld: true)
+        #expect(firstEnding == .stale)
+        #expect(secondEnding == .armed)
+    }
+
+    /// ⌘ or the key let go without us seeing it: no arming, the hold ends,
     /// and the next ⌘Q starts again.
-    @Test func keysNoLongerDownDoNotQuit() throws {
+    @Test func keysNoLongerDownDoNotArm() throws {
         var hold = QuitHold()
         let tokenPress = hold.pressed()
         let token = try #require(tokenPress)
@@ -108,10 +162,24 @@ struct QuitHoldTests {
         #expect(next != nil)
     }
 
+    /// Ombre leaves the front during the hold: nothing happens, even once
+    /// the hint is full, and releasing afterwards does not quit.
+    @Test(arguments: [false, true])
+    func leavingOmbreNeverQuits(isArmed: Bool) throws {
+        var hold = QuitHold()
+        let tokenPress = hold.pressed()
+        let token = try #require(tokenPress)
+        if isArmed { _ = hold.elapsed(token, isStillHeld: true) }
+        let abandoned = hold.abandoned()
+        let release = hold.released()
+        #expect(abandoned)
+        #expect(release == .nothing)
+    }
+
     @Test func releasingWithoutAHoldIsNothing() {
         var hold = QuitHold()
-        let cancels = hold.released()
-        #expect(!cancels)
+        let release = hold.released()
+        #expect(release == .nothing)
     }
 
     @Test func aboutASecond() {

@@ -2,8 +2,8 @@ import AppKit
 
 /// What ⌘Q does (Settings › General › To Quit).
 enum QuitBehavior: String, CaseIterable, Identifiable {
-    /// Quits once ⌘Q is held about a second, like Arc and Chrome; a short
-    /// press only says so.
+    /// Like Arc and Chrome: holding ⌘Q fills a ring for about a second,
+    /// then Ombre quits on the release; a short press only says so.
     case holdKey
     /// Asks first, with how many windows and tabs will close.
     case ask
@@ -55,29 +55,44 @@ enum QuitDecision: Equatable {
     }
 }
 
-/// Holding ⌘Q: quits only if the key is still held when the delay ends;
-/// releasing it before does nothing. Each press has its own token, so a
-/// delay from an earlier press never quits.
+/// Holding ⌘Q: the hint fills for about a second, then says « Release to
+/// Quit »; Ombre quits when ⌘ or the key is released after that, never
+/// while they are still down (the key's repeats would go on to the app
+/// that comes to the front and quit it too). Releasing before the hint is
+/// full, or leaving Ombre, does nothing. Each press has its own token, so a
+/// delay from an earlier press never arms.
 struct QuitHold {
     static let duration: TimeInterval = 1
 
-    private(set) var isHolding = false
+    enum Phase: Equatable {
+        case idle
+        /// The hint fills.
+        case holding
+        /// Full: releasing quits.
+        case armed
+    }
+
+    private(set) var phase = Phase.idle
     private var token = 0
 
-    /// A press: the token of the delay to start, nil while a hold goes on
-    /// (the held key repeats).
-    mutating func pressed() -> Int? {
-        guard !isHolding else { return nil }
-        isHolding = true
+    var isHolding: Bool {
+        phase != .idle
+    }
+
+    /// A press: the token of the delay to start, nil for a repeat of the
+    /// held key. A new press (not a repeat) while holding means a release
+    /// we did not see: it starts again.
+    mutating func pressed(isRepeat: Bool = false) -> Int? {
+        if isHolding, isRepeat { return nil }
+        phase = .holding
         token += 1
         return token
     }
 
-    /// The key or ⌘ was released, or Ombre went to the background: whether
-    /// a hold was going on (to cancel).
-    mutating func released() -> Bool {
-        defer { isHolding = false }
-        return isHolding
+    /// Whether a key event is a repeat of the held key, to absorb: no ⌘Q
+    /// reaches the menu again, nor another app.
+    func absorbs(keyDownOf keyCode: UInt16, isRepeat: Bool, heldKeyCode: UInt16) -> Bool {
+        isHolding && isRepeat && keyCode == heldKeyCode
     }
 
     /// How a delay ended.
@@ -86,14 +101,41 @@ struct QuitHold {
         case stale
         /// The hold is over, without quitting (the keys were let go).
         case cancelled
+        /// The hint is full: releasing now quits.
+        case armed
+    }
+
+    /// The delay of `token` ended: arm if ⌘ and the key are still held.
+    mutating func elapsed(_ token: Int, isStillHeld: Bool) -> Ending {
+        guard phase == .holding, token == self.token else { return .stale }
+        phase = isStillHeld ? .armed : .idle
+        return isStillHeld ? .armed : .cancelled
+    }
+
+    /// What releasing ⌘ or the key does.
+    enum Release: Equatable {
+        /// No hold.
+        case nothing
+        /// Released before the hint was full.
+        case cancelled
         case quit
     }
 
-    /// The delay of `token` ended: quit if ⌘ and the key are still held.
-    mutating func elapsed(_ token: Int, isStillHeld: Bool) -> Ending {
-        guard isHolding, token == self.token else { return .stale }
-        isHolding = false
-        return isStillHeld ? .quit : .cancelled
+    /// ⌘ or the key was released.
+    mutating func released() -> Release {
+        defer { phase = .idle }
+        switch phase {
+        case .idle: return .nothing
+        case .holding: return .cancelled
+        case .armed: return .quit
+        }
+    }
+
+    /// Ombre went to the background: whether a hold was going on. It never
+    /// quits, even when armed.
+    mutating func abandoned() -> Bool {
+        defer { phase = .idle }
+        return isHolding
     }
 }
 

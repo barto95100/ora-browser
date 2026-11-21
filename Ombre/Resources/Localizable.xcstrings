@@ -7753,6 +7753,16 @@
         }
       }
     },
+    "Release to Quit" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relâchez pour quitter"
+          }
+        }
+      }
+    },
     "Reload" : {
       "localizations" : {
         "fr" : {

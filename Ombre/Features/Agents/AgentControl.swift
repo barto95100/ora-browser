@@ -19,6 +19,11 @@ final class AgentControl: ObservableObject {
     @Published private(set) var drivingApp: String?
     /// The tabs agents touched meanwhile (badges in the sidebar).
     @Published private(set) var touchedTabIDs: Set<UUID> = []
+    /// The session's commands, newest last (Agent Actions panel): in memory
+    /// only, until Stop or the session's end. As the log: never a selector,
+    /// a text filled in, code nor a page's content.
+    @Published private(set) var actions: [AgentActionRecord] = []
+    static let maxActions = 500
 
     /// The question is given up after that, before the agent's Apple Event
     /// is (osascript waits 120 s): a late answer would run a command the
@@ -72,10 +77,28 @@ final class AgentControl: ObservableObject {
         let started = generation
         let done = await AgentCommands.run(command, in: tabManager)
         // Not after Stop meanwhile (a page read waits for its page).
-        if let tabID = done.tabID, started == generation, Self.touches(done.result) {
+        if started == generation { noteDone(command, sender, done, in: tabManager) }
+        return log(command, sender, done.host, done.result)
+    }
+
+    /// A command done in the session: its tab's badge, and a line in the
+    /// panel with the tab's title (the oldest go past the limit).
+    private func noteDone(
+        _ command: AgentCommand, _ sender: AgentSender, _ done: AgentCommands.Done, in tabManager: TabManager
+    ) {
+        if let tabID = done.tabID, Self.touches(done.result) {
             touchedTabIDs.insert(tabID)
         }
-        return log(command, sender, done.host, done.result)
+        let title = done.closedTabTitle ?? done.tabID.flatMap { id in
+            tabManager.fetchContainers().lazy.flatMap(\.tabs).first { $0.id == id }?.title
+        }
+        let action = AgentActionRecord(
+            app: sender.name, command: command.title, host: done.host,
+            // Kept when closed: a pinned or favorite tab stays in the sidebar.
+            tabID: done.tabID, tabTitle: title, result: done.result
+        )
+        actions.append(action)
+        if actions.count > Self.maxActions { actions.removeFirst(actions.count - Self.maxActions) }
     }
 
     /// Whether a command's tab gets its badge: done, or a script that ran.
@@ -102,6 +125,7 @@ final class AgentControl: ObservableObject {
         endWhenIdle?.cancel()
         drivingApp = nil
         touchedTabIDs = []
+        actions = []
     }
 
     /// The user's answer for `sender`'s session: asked once for commands

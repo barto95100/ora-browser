@@ -13,6 +13,7 @@ struct SplitTabItem: View {
     let onHoverTab: (Tab, Bool) -> Void
     @EnvironmentObject var tabManager: TabManager
     @Environment(\.theme) private var theme
+    @Environment(\.usesSidebarGlass) private var usesGlass
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovering = false
     @State private var hoveredTabID: UUID?
@@ -125,7 +126,7 @@ struct SplitTabItem: View {
 
     private func side(_ tab: Tab) -> some View {
         let isFocused = tabManager.isActive(tab)
-        let textColor = isFocused ? Color.white : theme.foreground
+        let textColor = isFocused && !usesGlass ? Color.white : theme.foreground
         return HStack(spacing: 6) {
             FavIcon(
                 isWebViewReady: tab.isWebViewReady,
@@ -139,7 +140,7 @@ struct SplitTabItem: View {
                 AgentTabBadge(tabID: tab.id).offset(x: -5, y: -5)
             }
             Text(tab.title)
-                .font(.system(size: 13))
+                .font(.system(size: 13, weight: usesGlass && isFocused ? .semibold : .regular))
                 .foregroundColor(textColor)
                 .lineLimit(1)
             Spacer(minLength: 0)
@@ -151,7 +152,7 @@ struct SplitTabItem: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
-        .background(sideBackground(tab, isFocused: isFocused), in: .rect(cornerRadius: 7))
+        .sidebarRowBackground(isActive: isFocused, color: sideBackground(tab, isFocused: isFocused), cornerRadius: 7)
         .overlay(SelectionRing(isShown: tabManager.isInSelection(tab), cornerRadius: 7))
         // Each side, a tab of its own for VoiceOver (the row's tap picks a
         // side by where it lands).
@@ -200,6 +201,9 @@ struct SplitTabItem: View {
     private var rowBackground: Color {
         if isDragging {
             return theme.activeTabBackground.opacity(0.1)
+        } else if isSelected, usesGlass {
+            // The active side has its pill: no second tint under it.
+            return isHovering ? theme.activeTabBackground.opacity(colorScheme == .dark ? 0.3 : 0.1) : .clear
         } else if isSelected || isHovering {
             return theme.activeTabBackground.opacity(colorScheme == .dark ? 0.3 : 0.1)
         }

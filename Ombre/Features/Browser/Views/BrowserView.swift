@@ -14,6 +14,7 @@ struct BrowserView: View {
     @EnvironmentObject private var toolbarManager: ToolbarManager
 
     @ObserveInjection var inject
+    @AppStorage(SidebarStyle.defaultsKey) private var sidebarStyle = SidebarStyle.defaultValue
 
     /// The theme with the color of the space shown (none in private windows).
     private var spaceTheme: Theme {
@@ -122,6 +123,7 @@ struct BrowserView: View {
         // A space with a theme is shown dark, like Arc (private windows are
         // made dark by `OmbreRoot`).
         .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)
+        .environment(\.usesSidebarGlass, sidebarStyle.usesGlass)
         .enableInjection()
         .animation(.easeOut(duration: 0.1), value: showFloatingSidebar)
         .onChange(of: showFloatingSidebar) { updateSidebarMouseShield() }

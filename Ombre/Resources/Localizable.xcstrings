@@ -54,12 +54,32 @@
         }
       }
     },
+    "After (Liquid Glass)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après (Liquid Glass)"
+          }
+        }
+      }
+    },
     "Ask for Confirmation" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Demander confirmation"
+          }
+        }
+      }
+    },
+    "Before" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avant"
           }
         }
       }
@@ -190,6 +210,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitter directement"
+          }
+        }
+      }
+    },
+    "Sidebar Style" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Style de la barre latérale"
           }
         }
       }

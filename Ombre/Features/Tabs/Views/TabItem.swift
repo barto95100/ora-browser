@@ -131,6 +131,7 @@ struct TabItem: View {
     @Environment(\.theme) private var theme
     /// Given by the list (no database read for each row).
     @Environment(\.isInTabGroup) private var isInTabGroup
+    @Environment(\.usesSidebarGlass) private var usesGlass
     @State private var isHovering = false
 
     var body: some View {
@@ -164,7 +165,7 @@ struct TabItem: View {
         }
         .padding(8)
         .opacity(isDragging ? 0.0 : 1.0)
-        .background(backgroundColor, in: .rect(cornerRadius: 10))
+        .sidebarRowBackground(isActive: isSelected && !isDragging, color: backgroundColor, cornerRadius: 10)
         .overlay(SelectionRing(isShown: tabManager.isInSelection(tab) && !isDragging))
         .overlay(
             isDragging ?
@@ -224,7 +225,7 @@ struct TabItem: View {
 
     private var tabTitle: some View {
         Text(tab.title)
-            .font(.system(size: 13))
+            .font(.system(size: 13, weight: usesGlass && isSelected ? .semibold : .regular))
             .foregroundColor(textColor)
             .lineLimit(1)
     }
@@ -247,7 +248,8 @@ struct TabItem: View {
     }
 
     private var textColor: Color {
-        isSelected ? .white : theme.foreground
+        // On the glass pill, the usual text color: the pill is faint.
+        isSelected && !usesGlass ? .white : theme.foreground
     }
 
     @ViewBuilder

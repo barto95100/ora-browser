@@ -71,6 +71,7 @@ struct BrowserSplitView: View {
     private func paneContent(isSidebarPane: Bool, isOtherPaneHidden: Bool) -> some View {
         if isSidebarPane, !isOtherPaneHidden {
             SidebarView()
+                .sidebarGlassPanel()
         } else {
             contentView()
         }

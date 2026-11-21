@@ -121,12 +121,12 @@ struct SettingsContentView: View {
     }
 
     /// On macOS 26, a glass panel floating over the window's backdrop, its
-    /// selection a pill of tinted glass; before, the sidebar material and a
+    /// selection a tinted pill; before, the sidebar material and a
     /// line.
     @ViewBuilder
     private var sectionsList: some View {
         if #available(macOS 26, *) {
-            GlassSelectionList(ids: SettingsTab.allCases, selection: selection) { tab in
+            GlassSelectionList(ids: SettingsTab.allCases, selection: selection, focusesFirst: true) { tab in
                 SettingsSidebarRow(tab: tab)
             }
             .frame(width: SettingsWindow.sidebarWidth)

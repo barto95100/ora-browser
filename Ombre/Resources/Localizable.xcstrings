@@ -44,6 +44,16 @@
         }
       }
     },
+    "Data cleared" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Données effacées"
+          }
+        }
+      }
+    },
     "Did “%@” appear in the site’s field or results?" : {
       "localizations" : {
         "fr" : {

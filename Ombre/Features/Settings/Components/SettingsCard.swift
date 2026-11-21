@@ -5,6 +5,8 @@ import SwiftUI
 struct SettingsCard<Content: View>: View {
     var header: String?
     var description: String?
+    /// An edge of this color around the card (red: what cannot be undone).
+    var border: Color?
     @ViewBuilder var content: () -> Content
 
     var body: some View {
@@ -31,7 +33,7 @@ struct SettingsCard<Content: View>: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .settingsCardBackground()
+            .settingsCardBackground(border: border)
         }
     }
 }
@@ -51,12 +53,26 @@ extension View {
     /// The background of a settings card: glass with a light edge on
     /// macOS 26, over the window's backdrop; before, a plain card.
     @ViewBuilder
-    func settingsCardBackground() -> some View {
-        if #available(macOS 26, *) {
-            ombreGlass(in: RoundedRectangle(cornerRadius: 16, style: .continuous), rim: true)
-        } else {
-            plainCardBackground()
+    func settingsCardBackground(border: Color? = nil) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Self.settingsCardRadius, style: .continuous)
+        Group {
+            if #available(macOS 26, *) {
+                ombreGlass(in: shape, rim: true)
+            } else {
+                plainCardBackground()
+            }
         }
+        .overlay {
+            if let border {
+                shape.strokeBorder(border, lineWidth: 1).allowsHitTesting(false)
+            }
+        }
+    }
+
+    /// Rounder with glass, like Apple's.
+    private static var settingsCardRadius: CGFloat {
+        if #available(macOS 26, *) { return 16 }
+        return 12
     }
 
     private func plainCardBackground() -> some View {

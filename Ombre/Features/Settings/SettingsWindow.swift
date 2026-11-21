@@ -24,8 +24,10 @@ enum SettingsWindow {
         return 0
     }
 
+    /// The list, its room and (before macOS 26) the line beside it, then the page.
     static var minimumSize: CGSize {
-        CGSize(width: sidebarWidth + 2 * sidebarInset + 1 + minimumDetailWidth, height: 480)
+        let line: CGFloat = sidebarInset > 0 ? 0 : 1
+        return CGSize(width: sidebarWidth + 2 * sidebarInset + line + minimumDetailWidth, height: 480)
     }
 
     /// The window, while it is open.

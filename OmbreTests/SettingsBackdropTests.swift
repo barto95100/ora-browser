@@ -13,6 +13,8 @@ struct SettingsBackdropTests {
     }
 
     /// Secondary text's contrast on macOS's own light window background.
+    /// The window's grays are approximated (`SettingsBackdropPalette`): the
+    /// view uses the system's color.
     private var systemLightSecondaryContrast: Double {
         let window = BackdropRGB(hex: "#ECECEC")
         return secondary(on: window, isDark: false).contrast(with: window)
@@ -77,7 +79,7 @@ struct SettingsBackdropTests {
         #expect(abs(darkText.contrast(with: darkText) - 1) < 0.001)
     }
 
-    @Test("the arrow keys move the selection inside the list") func arrowKeysMoveSelection() {
+    @Test("the next selection stays inside the list") func nextSelectionStaysInside() {
         let ids = [1, 2, 3]
         #expect(GlassSelection.next(after: nil, in: ids, by: 1) == 1)
         #expect(GlassSelection.next(after: 1, in: ids, by: 1) == 2)

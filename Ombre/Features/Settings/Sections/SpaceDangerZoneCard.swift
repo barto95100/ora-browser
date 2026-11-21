@@ -15,7 +15,8 @@ struct SpaceDangerZoneCard: View {
     @State private var isChoosingDataToClear = false
 
     var body: some View {
-        SettingsCard(header: String(localized: "Danger Zone")) {
+        // Red-edged: what is here cannot be undone.
+        SettingsCard(header: String(localized: "Danger Zone"), border: .red.opacity(0.35)) {
             row(
                 title: String(localized: "Clear Data"),
                 detail: String(
@@ -31,11 +32,7 @@ struct SpaceDangerZoneCard: View {
                         Button("Clear Cache", role: .destructive) { clearCache() }
                         Button("Clear Cookies", role: .destructive) { clearCookies() }
                         Button("Clear History", role: .destructive) { clearHistory() }
-                        Button("Clear All", role: .destructive) {
-                            clearCache()
-                            clearCookies()
-                            clearHistory()
-                        }
+                        Button("Clear All", role: .destructive) { clearAll() }
                     } message: {
                         Text("This can’t be undone.")
                     }
@@ -53,17 +50,7 @@ struct SpaceDangerZoneCard: View {
                     .disabled(!canDelete)
             }
         }
-        .overlay {
-            // Red-edged: what is here cannot be undone.
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.red.opacity(0.35), lineWidth: 1)
-                .padding(.top, Self.headerHeight)
-                .allowsHitTesting(false)
-        }
     }
-
-    /// The card's title above it, outside the red edge.
-    private static let headerHeight: CGFloat = 24
 
     private func row(title: String, detail: String, @ViewBuilder button: () -> some View) -> some View {
         HStack(alignment: .center, spacing: 16) {
@@ -91,9 +78,19 @@ struct SpaceDangerZoneCard: View {
         }
     }
 
-    private func clearHistory() {
+    /// One after the other, then a single toast.
+    private func clearAll() {
+        PrivacyService.clearCache(container) {
+            PrivacyService.clearCookies(container) {
+                clearHistory(announces: false)
+                toastManager.show(String(localized: "Data cleared"), icon: .system("trash"))
+            }
+        }
+    }
+
+    private func clearHistory(announces: Bool = true) {
         let history = HistoryManager(modelContainer: modelContext.container, modelContext: modelContext)
-        if history.clearContainerHistory(container) {
+        if history.clearContainerHistory(container), announces {
             toastManager.show(String(localized: "History cleared"), icon: .system("trash"))
         }
     }

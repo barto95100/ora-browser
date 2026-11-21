@@ -162,6 +162,9 @@ struct SpacesSettingsView: View {
             Text(container.emoji)
             Text(container.name)
         }
+        // The whole row opens its menu, not only its name.
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
         .contextMenu {
             Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
                 .disabled(containers.count <= 1)

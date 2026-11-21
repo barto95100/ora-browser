@@ -2,30 +2,42 @@ import SwiftUI
 
 /// A list to pick one item from, in a glass panel (macOS 26): the selected
 /// row is a pill tinted with the accent color, not a filled bar. The arrow
-/// keys move the selection, like a list's.
+/// keys move the selection, like a list's, and keep it in view; the list
+/// that has them shows its pill's edge in the accent color.
 @available(macOS 26, *)
 struct GlassSelectionList<ID: Hashable, Row: View>: View {
     let ids: [ID]
     @Binding var selection: ID?
+    /// Has the keys when its window opens (the window's main list).
+    var focusesFirst = false
     @ViewBuilder let row: (ID) -> Row
+
+    /// Each row's, for the tests.
+    static var rowIdentifier: String {
+        "glassSelectionList.row"
+    }
 
     @Environment(\.theme) private var theme
     @FocusState private var isFocused: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 2) {
-                ForEach(ids, id: \.self) { id in
-                    rowButton(id)
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 2) {
+                    ForEach(ids, id: \.self) { id in
+                        rowButton(id)
+                            .id(id)
+                    }
                 }
+                .padding(8)
             }
-            .padding(8)
+            .focusable()
+            .focused($isFocused)
+            .focusEffectDisabled()
+            .defaultFocus($isFocused, focusesFirst)
+            .onKeyPress(.upArrow) { move(by: -1, proxy: proxy) }
+            .onKeyPress(.downArrow) { move(by: 1, proxy: proxy) }
         }
-        .focusable()
-        .focused($isFocused)
-        .focusEffectDisabled()
-        .onKeyPress(.upArrow) { move(by: -1) }
-        .onKeyPress(.downArrow) { move(by: 1) }
     }
 
     private func rowButton(_ id: ID) -> some View {
@@ -34,17 +46,19 @@ struct GlassSelectionList<ID: Hashable, Row: View>: View {
             selection = id
             isFocused = true
         } label: {
-            SelectionPillRow(isSelected: isSelected, tint: theme.accent) {
+            SelectionPillRow(isSelected: isSelected, tint: theme.accent, hasKeys: isFocused) {
                 row(id)
             }
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier(Self.rowIdentifier)
     }
 
-    private func move(by step: Int) -> KeyPress.Result {
+    private func move(by step: Int, proxy: ScrollViewProxy) -> KeyPress.Result {
         guard let next = GlassSelection.next(after: selection, in: ids, by: step) else { return .ignored }
         selection = next
+        proxy.scrollTo(next)
         return .handled
     }
 }
@@ -66,6 +80,8 @@ enum GlassSelection {
 struct SelectionPillRow<Content: View>: View {
     let isSelected: Bool
     let tint: Color
+    /// Its list has the arrow keys: the pill's edge is the accent color.
+    var hasKeys = false
     @ViewBuilder let content: () -> Content
 
     static var shape: RoundedRectangle {
@@ -97,14 +113,18 @@ struct SelectionPillRow<Content: View>: View {
                 ))
             }
             .overlay {
-                Self.shape.strokeBorder(
-                    LinearGradient(
-                        colors: [.white.opacity(0.4), tint.opacity(0.5)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ),
-                    lineWidth: 0.75
-                )
+                if hasKeys {
+                    Self.shape.strokeBorder(tint, lineWidth: 1.5)
+                } else {
+                    Self.shape.strokeBorder(
+                        LinearGradient(
+                            colors: [.white.opacity(0.4), tint.opacity(0.5)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 0.75
+                    )
+                }
             }
     }
 }

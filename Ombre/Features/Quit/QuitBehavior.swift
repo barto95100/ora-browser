@@ -47,9 +47,10 @@ enum QuitDecision: Equatable {
     }
 
     /// Whether `event`, the one that asks to quit, is a key press with ⌘
-    /// (the menu's shortcut), not a click in the menu.
-    static func isQuitKey(_ event: NSEvent?) -> Bool {
-        guard let event, event.type == .keyDown else { return false }
+    /// (the menu's shortcut), not a click in the menu. `isAppleEvent`: the
+    /// Dock or logging out asks, whatever the last event was.
+    static func isQuitKey(_ event: NSEvent?, isAppleEvent: Bool = false) -> Bool {
+        guard !isAppleEvent, let event, event.type == .keyDown else { return false }
         return event.modifierFlags.contains(.command)
     }
 }
@@ -79,11 +80,20 @@ struct QuitHold {
         return isHolding
     }
 
-    /// The delay of `token` ended: whether to quit.
-    mutating func elapsed(_ token: Int, isCommandDown: Bool) -> Bool {
-        guard isHolding, token == self.token, isCommandDown else { return false }
+    /// How a delay ended.
+    enum Ending: Equatable {
+        /// From an earlier press: nothing to do.
+        case stale
+        /// The hold is over, without quitting (the keys were let go).
+        case cancelled
+        case quit
+    }
+
+    /// The delay of `token` ended: quit if ⌘ and the key are still held.
+    mutating func elapsed(_ token: Int, isStillHeld: Bool) -> Ending {
+        guard isHolding, token == self.token else { return .stale }
         isHolding = false
-        return true
+        return isStillHeld ? .quit : .cancelled
     }
 }
 

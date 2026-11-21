@@ -13,6 +13,8 @@ final class QuitController {
     private var hold = QuitHold()
     /// Quitting was confirmed (⌘Q held long enough, or Quit in the question).
     private var isConfirmed = false
+    /// The question is showing: another request waits for its answer.
+    private var isAsking = false
     private var keyMonitor: Any?
     private var resignObserver: NSObjectProtocol?
     private let hint = QuitHintPanel()
@@ -20,18 +22,24 @@ final class QuitController {
     func reply(to event: NSEvent?) -> NSApplication.TerminateReply {
         let decision = QuitDecision.decide(
             behavior: SettingsStore.shared.quitBehavior,
-            isQuitKey: QuitDecision.isQuitKey(event),
+            isQuitKey: QuitDecision.isQuitKey(event, isAppleEvent: isQuitAppleEvent),
             isConfirmed: isConfirmed
         )
         switch decision {
         case .quit:
             return .terminateNow
         case .ask:
+            guard !isAsking else { return .terminateCancel }
             return askToQuit() ? .terminateNow : .terminateCancel
         case .hold:
             if let event { startHold(with: event) }
             return .terminateCancel
         }
+    }
+
+    /// The Dock or logging out asks to quit (an Apple event).
+    private var isQuitAppleEvent: Bool {
+        NSAppleEventManager.shared().currentAppleEvent?.eventID == kAEQuitApplication
     }
 
     // MARK: - Holding ⌘Q
@@ -57,7 +65,7 @@ final class QuitController {
         }
         // One delay per press, not a timer that keeps running.
         DispatchQueue.main.asyncAfter(deadline: .now() + QuitHold.duration) { [weak self] in
-            MainActor.assumeIsolated { self?.holdEnded(token) }
+            MainActor.assumeIsolated { self?.holdEnded(token, keyCode: keyCode) }
         }
     }
 
@@ -68,12 +76,25 @@ final class QuitController {
         hint.hide(after: 1.5)
     }
 
-    private func holdEnded(_ token: Int) {
-        guard hold.elapsed(token, isCommandDown: NSEvent.modifierFlags.contains(.command)) else { return }
-        stopWatching()
-        hint.hide(after: 0)
-        isConfirmed = true
-        NSApp.terminate(nil)
+    /// Quits only if ⌘ and the key are still down (checked on the keyboard
+    /// itself: a release we did not see never quits).
+    private func holdEnded(_ token: Int, keyCode: UInt16) {
+        let isStillHeld = NSEvent.modifierFlags.contains(.command)
+            && CGEventSource.keyState(.combinedSessionState, key: CGKeyCode(keyCode))
+        switch hold.elapsed(token, isStillHeld: isStillHeld) {
+        case .stale:
+            return
+        case .cancelled:
+            stopWatching()
+            hint.hide(after: 1.5)
+        case .quit:
+            stopWatching()
+            hint.hide(after: 0)
+            isConfirmed = true
+            NSApp.terminate(nil)
+            // Back here only if quitting was stopped (a page or the system).
+            isConfirmed = false
+        }
     }
 
     private func stopWatching() {
@@ -96,6 +117,8 @@ final class QuitController {
         alert.showsSuppressionButton = true
         alert.suppressionButton?.title = String(localized: "Don’t Ask Again")
         NSApp.activate()
+        isAsking = true
+        defer { isAsking = false }
         let quits = alert.runModal() == .alertFirstButtonReturn
         if quits, alert.suppressionButton?.state == .on {
             SettingsStore.shared.quitBehavior = .immediately
@@ -110,11 +133,16 @@ final class QuitController {
         return browsers.count + LittleOmbreWindow.openWindows.count
     }
 
-    /// The tabs of every space (favorites and pinned included).
+    /// The tabs of every space, and those of private windows (each has its
+    /// own store; the normal windows share theirs).
     private var openTabCount: Int {
-        let manager = BrowserWindows.frontTabManager
-            ?? BrowserWindows.tabManagers.objectEnumerator()?.nextObject() as? TabManager
-        return (try? manager?.modelContext.fetchCount(FetchDescriptor<Tab>())) ?? 0
+        let managers = BrowserWindows.allTabManagers.objectEnumerator()?.allObjects as? [TabManager] ?? []
+        var counted = Set<ObjectIdentifier>()
+        return managers.reduce(0) { total, manager in
+            let context = manager.modelContext
+            guard counted.insert(ObjectIdentifier(context)).inserted else { return total }
+            return total + ((try? context.fetchCount(FetchDescriptor<Tab>())) ?? 0)
+        }
     }
 }
 
@@ -124,9 +152,12 @@ final class QuitController {
 private final class QuitHintPanel {
     private var panel: NSPanel?
     private var hideWork: DispatchWorkItem?
+    /// Each show; a fade from an earlier one does not hide this one.
+    private var generation = 0
 
     func show(shortcut: String) {
         hideWork?.cancel()
+        generation += 1
         let panel = panel ?? makePanel()
         self.panel = panel
         let host = NSHostingView(rootView: QuitHintView(shortcut: shortcut))
@@ -145,14 +176,17 @@ private final class QuitHintPanel {
 
     func hide(after delay: TimeInterval) {
         hideWork?.cancel()
+        let shown = generation
         let work = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
-                guard let panel = self?.panel else { return }
+                guard let self, let panel = self.panel else { return }
                 NSAnimationContext.runAnimationGroup { context in
                     context.duration = 0.2
                     panel.animator().alphaValue = 0
                 } completionHandler: {
-                    MainActor.assumeIsolated { panel.orderOut(nil) }
+                    MainActor.assumeIsolated {
+                        if self.generation == shown { panel.orderOut(nil) }
+                    }
                 }
             }
         }

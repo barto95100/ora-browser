@@ -165,8 +165,9 @@ private struct BrowserWindowRoot: View {
                         little.attach(to: newWindow)
                         hideIfMadeForTheLink(newWindow, by: little, appearedFor: .zero)
                     }
-                    // ⌘Q asks for confirmation in a browser window, normal or private.
+                    // Counted when asking to quit, normal or private.
                     BrowserWindows.browsing.add(newWindow)
+                    BrowserWindows.allTabManagers.setObject(tabManager, forKey: newWindow)
                     WebExtensionsHub.registerWindow(
                         newWindow, tabManager: tabManager, isPrivate: privacyMode.isPrivate
                     )

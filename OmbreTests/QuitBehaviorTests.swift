@@ -45,6 +45,8 @@ struct QuitDecisionTests {
         #expect(!QuitDecision.isQuitKey(click))
         #expect(!QuitDecision.isQuitKey(release))
         #expect(!QuitDecision.isQuitKey(nil))
+        // The Dock or logging out, while the last event was ⌘Q.
+        #expect(!QuitDecision.isQuitKey(quitKey, isAppleEvent: true))
     }
 }
 
@@ -54,8 +56,8 @@ struct QuitHoldTests {
         var hold = QuitHold()
         let tokenPress = hold.pressed()
         let token = try #require(tokenPress)
-        let quits = hold.elapsed(token, isCommandDown: true)
-        #expect(quits)
+        let ending = hold.elapsed(token, isStillHeld: true)
+        #expect(ending == .quit)
         #expect(!hold.isHolding)
     }
 
@@ -64,9 +66,9 @@ struct QuitHoldTests {
         let tokenPress = hold.pressed()
         let token = try #require(tokenPress)
         let cancels = hold.released()
-        let quits = hold.elapsed(token, isCommandDown: true)
+        let ending = hold.elapsed(token, isStillHeld: true)
         #expect(cancels)
-        #expect(!quits)
+        #expect(ending == .stale)
     }
 
     /// The held key repeats: no new delay.
@@ -87,19 +89,23 @@ struct QuitHoldTests {
         _ = hold.released()
         let secondPress = hold.pressed()
         let second = try #require(secondPress)
-        let firstQuits = hold.elapsed(first, isCommandDown: true)
-        let secondQuits = hold.elapsed(second, isCommandDown: true)
-        #expect(!firstQuits)
-        #expect(secondQuits)
+        let firstEnding = hold.elapsed(first, isStillHeld: true)
+        let secondEnding = hold.elapsed(second, isStillHeld: true)
+        #expect(firstEnding == .stale)
+        #expect(secondEnding == .quit)
     }
 
-    /// ⌘ let go without us seeing it: no quit.
-    @Test func commandNoLongerDownDoesNotQuit() throws {
+    /// ⌘ or the key let go without us seeing it: no quit, the hold ends,
+    /// and the next ⌘Q starts again.
+    @Test func keysNoLongerDownDoNotQuit() throws {
         var hold = QuitHold()
         let tokenPress = hold.pressed()
         let token = try #require(tokenPress)
-        let quits = hold.elapsed(token, isCommandDown: false)
-        #expect(!quits)
+        let ending = hold.elapsed(token, isStillHeld: false)
+        #expect(ending == .cancelled)
+        #expect(!hold.isHolding)
+        let next = hold.pressed()
+        #expect(next != nil)
     }
 
     @Test func releasingWithoutAHoldIsNothing() {
@@ -114,9 +120,17 @@ struct QuitHoldTests {
 }
 
 struct QuitConfirmationTextTests {
-    @Test func itSaysHowManyWindowsAndTabs() {
-        let text = QuitConfirmationText.message(windows: 2, tabs: 14)
-        #expect(text.contains("2"))
-        #expect(text.contains("14"))
+    @Test(arguments: [(2, 14), (1, 1), (1, 0)])
+    func itSaysHowManyWindowsAndTabs(windows: Int, tabs: Int) {
+        let text = QuitConfirmationText.message(windows: windows, tabs: tabs)
+        #expect(text.contains(String(localized: "\(windows) windows")))
+        #expect(text.contains(String(localized: "\(tabs) tabs")))
+    }
+
+    /// One of each: the singular.
+    @Test func oneWindowIsSingular() {
+        let one = String(localized: "\(1) windows")
+        let two = String(localized: "\(2) windows")
+        #expect(one.count < two.count)
     }
 }

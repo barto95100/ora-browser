@@ -32,6 +32,8 @@ enum BrowserWindows {
     static let tabManagers = NSMapTable<NSWindow, TabManager>.weakToWeakObjects()
     /// All browser windows, normal and private.
     static let browsing = NSHashTable<NSWindow>.weakObjects()
+    /// Each browser window's tab manager, normal and private.
+    static let allTabManagers = NSMapTable<NSWindow, TabManager>.weakToWeakObjects()
 
     /// The tab manager of the normal window in front.
     static var frontTabManager: TabManager? {

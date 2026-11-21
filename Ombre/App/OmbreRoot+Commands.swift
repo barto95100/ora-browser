@@ -44,26 +44,8 @@ private struct WindowAppCommands: ViewModifier {
         let appState = targets.appState
         let tabManager = targets.tabManager
         let privacyMode = targets.privacyMode
-        let dialogManager = targets.dialogManager
 
         content
-            // Cmd+Q quit confirmation
-            .onNotification(.quitRequested) { note in
-                guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                guard window != nil else {
-                    NSApp.reply(toApplicationShouldTerminate: true)
-                    return
-                }
-                dialogManager.confirm(
-                    title: String(localized: "Quit Ombre?"),
-                    message: String(localized: "Are you sure you want to quit?"),
-                    iconImage: Image(nsImage: NSApp.applicationIconImage),
-                    confirmLabel: String(localized: "Quit"),
-                    variant: .destructive,
-                    onConfirm: { NSApp.reply(toApplicationShouldTerminate: true) },
-                    onCancel: { NSApp.reply(toApplicationShouldTerminate: false) }
-                )
-            }
             .onNotification(.showLauncher) { note in
                 Task { @MainActor in
                     guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }

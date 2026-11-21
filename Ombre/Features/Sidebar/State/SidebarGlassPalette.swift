@@ -19,9 +19,9 @@ enum SidebarGlassPalette {
     /// white pill (light, like Arc) or a light gray one (dark). The tint is
     /// as strong as the title allows (AA, where the glass is brightest): a
     /// light color like yellow gets less in dark mode. `translucency`: over
-    /// the desktop (`SidebarBackground`) at this level, judged on the
-    /// hardest wallpaper that goes with the appearance and the most contrary
-    /// site color (macOS's vibrancy does the rest).
+    /// the desktop (`SpaceWindowBackground`) at this level, judged on the
+    /// hardest wallpaper that goes with the appearance (macOS's blur does
+    /// the rest).
     static func pill(
         isDark: Bool, spaceHex: String?, theme: SpaceTheme?, translucency: GlassTransparency? = nil
     ) -> Pill {
@@ -35,7 +35,7 @@ enum SidebarGlassPalette {
         let under = if let translucency {
             translucentBackdrop(
                 wallpaper: hardestWallpaper(isDark: isDark, level: translucency), isDark: isDark, spaceHex: spaceHex,
-                theme: theme, level: translucency, siteHex: isDark ? "#FFFFFF" : "#000000"
+                theme: theme, level: translucency
             )
         } else {
             backdrop(isDark: isDark, spaceHex: spaceHex, theme: theme)
@@ -63,9 +63,6 @@ enum SidebarGlassPalette {
     /// recognizable.
     static let translucentSpaceTint = 0.25
 
-    /// The active site's color over that (`SidebarBackground.siteTint`): light.
-    static let siteTint = 0.15
-
     /// The lightest wallpaper that still goes with dark mode, the darkest
     /// that goes with light mode: what the titles are sure to be legible on.
     static func hardestMatchingWallpaper(isDark: Bool) -> BackdropRGB {
@@ -79,27 +76,18 @@ enum SidebarGlassPalette {
 
     /// What shows under the sidebar over `wallpaper`: the scrim, then the
     /// space's color (with a theme, its background is the scrim and the
-    /// color only tints the pill, as without the translucent window), then
-    /// the site's. The system's blur, material and vibrancy are not counted.
+    /// color only tints the pill, as without the translucent window). The
+    /// system's blur and material are not counted.
     static func translucentBackdrop(
         wallpaper: BackdropRGB, isDark: Bool, spaceHex: String?, theme: SpaceTheme?,
-        level: GlassTransparency, siteHex: String? = nil
+        level: GlassTransparency
     ) -> BackdropRGB {
         let base = BackdropRGB(hex: theme?.backgroundHex ?? (isDark ? "#000000" : "#FFFFFF"))
         var color = wallpaper.mixed(with: base, by: level.scrim(isDark: isDark))
         if let spaceHex, theme == nil {
             color = color.mixed(with: BackdropRGB(hex: spaceHex), by: translucentSpaceTint)
         }
-        if let siteHex {
-            color = color.mixed(with: siteTintColor(siteHex, isDark: isDark), by: siteTint)
-        }
         return color
-    }
-
-    /// The site's color, half toward the appearance's base: its hue tints
-    /// the sidebar, not its brightness (a white header in dark mode).
-    static func siteTintColor(_ siteHex: String, isDark: Bool) -> BackdropRGB {
-        BackdropRGB(hex: siteHex).mixed(with: BackdropRGB(hex: isDark ? "#000000" : "#FFFFFF"), by: 0.5)
     }
 
     /// About what is under the pill: the top of the window's background (the

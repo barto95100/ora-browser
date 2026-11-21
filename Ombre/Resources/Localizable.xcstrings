@@ -285,36 +285,6 @@
         }
       }
     },
-    "Sidebar Background" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fond de la barre latérale"
-          }
-        }
-      }
-    },
-    "Site Tint" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Teinte du site"
-          }
-        }
-      }
-    },
-    "Space Color" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couleur de l’espace"
-          }
-        }
-      }
-    },
     "The sidebar and the settings in Liquid Glass. Off, Ombre looks as before." : {
       "localizations" : {
         "fr" : {
@@ -371,16 +341,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour quitter"
-          }
-        }
-      }
-    },
-    "Translucent Window" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fenêtre translucide"
           }
         }
       }

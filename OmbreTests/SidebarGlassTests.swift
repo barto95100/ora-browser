@@ -105,41 +105,34 @@ struct SidebarTranslucentWindowTests {
             .map(BackdropRGB.init(hex:)) + [SidebarGlassPalette.hardestMatchingWallpaper(isDark: isDark)]
     }
 
-    /// Any site color, the most contrary first.
-    private static let siteColors: [String?] = [nil, "#FFFFFF", "#000000", "#FF0000", "#FFE14D", "#2F6BFF"]
-
     private static var spaces: [(spaceHex: String?, theme: SpaceTheme?)] {
         let colors: [String?] = [nil] + SpaceColor.allCases.map(\.hex)
         let themes: [SpaceTheme?] = [nil] + SpaceTheme.allCases
         return themes.flatMap { theme in colors.map { (spaceHex: $0, theme: theme) } }
     }
 
-    private func check(
-        isDark: Bool, level: GlassTransparency, wallpapers: [BackdropRGB], siteColors: [String?]
-    ) {
+    private func check(isDark: Bool, level: GlassTransparency, wallpapers: [BackdropRGB]) {
         let text = BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
         for space in Self.spaces where space.theme == nil || isDark {
             let pill = SidebarGlassPalette.pill(
                 isDark: isDark, spaceHex: space.spaceHex, theme: space.theme, translucency: level
             )
             for wallpaper in wallpapers {
-                for site in siteColors {
-                    let under = SidebarGlassPalette.translucentBackdrop(
-                        wallpaper: wallpaper, isDark: isDark, spaceHex: space.spaceHex, theme: space.theme,
-                        level: level, siteHex: site
-                    )
-                    let glassy = isDark ? under.mixed(with: BackdropRGB(hex: "#FFFFFF"), by: 0.1) : under
-                    let label = "\(level) \(isDark ? "dark" : "light") \(space) \(wallpaper) site \(site ?? "-")"
-                    #expect(text.contrast(with: glassy) >= 4.5, "title, \(label)")
-                    let onPill = SidebarGlassPalette.pillColor(pill, on: under, lightened: isDark)
-                    #expect(text.contrast(with: onPill) >= 4.5, "active title, \(label)")
-                }
+                let under = SidebarGlassPalette.translucentBackdrop(
+                    wallpaper: wallpaper, isDark: isDark, spaceHex: space.spaceHex, theme: space.theme,
+                    level: level
+                )
+                let glassy = isDark ? under.mixed(with: BackdropRGB(hex: "#FFFFFF"), by: 0.1) : under
+                let label = "\(level) \(isDark ? "dark" : "light") \(space) \(wallpaper)"
+                #expect(text.contrast(with: glassy) >= 4.5, "title, \(label)")
+                let onPill = SidebarGlassPalette.pillColor(pill, on: under, lightened: isDark)
+                #expect(text.contrast(with: onPill) >= 4.5, "active title, \(label)")
             }
         }
     }
 
     @Test(
-        "every level: titles legible on a wallpaper that goes with the appearance, any site color (AA)",
+        "every level: titles legible on a wallpaper that goes with the appearance (AA)",
         arguments: GlassTransparency.allCases
     )
     func titlesAreLegibleOnMatchingWallpapers(level: GlassTransparency) {
@@ -147,8 +140,7 @@ struct SidebarTranslucentWindowTests {
             check(
                 isDark: isDark,
                 level: level,
-                wallpapers: Self.matchingWallpapers(isDark: isDark),
-                siteColors: Self.siteColors
+                wallpapers: Self.matchingWallpapers(isDark: isDark)
             )
         }
     }
@@ -156,7 +148,7 @@ struct SidebarTranslucentWindowTests {
     @Test("Light: legible on a mid-gray wallpaper too, in both appearances")
     func lightIsLegibleOnMidGray() {
         for isDark in [true, false] {
-            check(isDark: isDark, level: .light, wallpapers: [BackdropRGB(hex: "#808080")], siteColors: [nil])
+            check(isDark: isDark, level: .light, wallpapers: [BackdropRGB(hex: "#808080")])
         }
     }
 
@@ -170,20 +162,13 @@ struct SidebarTranslucentWindowTests {
         #expect((0.3 ... 0.4).contains(GlassTransparency.medium.scrim(isDark: true)))
         #expect((0.2 ... 0.3).contains(GlassTransparency.medium.scrim(isDark: false)))
         #expect(GlassTransparency.defaultValue == .medium)
-        // The space's color stays well recognizable, the site's light.
+        // The space's color stays well recognizable.
         #expect(SidebarGlassPalette.translucentSpaceTint >= 0.2)
-        #expect(SidebarGlassPalette.siteTint < SidebarGlassPalette.translucentSpaceTint)
     }
 
-    /// A site color saved with its alpha reads as its color, not shifted.
-    @Test func siteColorWithAlphaKeepsItsHue() {
+    /// A color saved with its alpha reads as its color, not shifted.
+    @Test func colorWithAlphaKeepsItsHue() {
         #expect(BackdropRGB(hex: "#FF000080") == BackdropRGB(hex: "#FF0000"))
-    }
-
-    @Test func translucentUntilChosen() {
-        #expect(SidebarBackground.defaultValue == .translucentWindow)
-        #expect(SidebarBackground.siteTint.isTranslucent)
-        #expect(!SidebarBackground.spaceColor.isTranslucent)
     }
 }
 

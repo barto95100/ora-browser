@@ -14,6 +14,9 @@ set -euo pipefail
 # It also installs the ombre command (scripts/ombre: agents and scripts
 # drive Ombre) in ~/.local/bin, and says how to add that folder to the PATH
 # when it isn't there.
+# Then it offers to install, or update, the Claude Code skill for ombre
+# (tools/claude-skill/ombre) in ~/.claude/skills/ombre: asked yes or no,
+# never done without asking (nor without a terminal to ask in).
 #
 # The installed version:
 #   /usr/libexec/PlistBuddy -c "Print :OmbreCommit" /Applications/Ombre.app/Contents/Info.plist
@@ -88,3 +91,27 @@ case ":${PATH}:" in
         echo "  export PATH=\"${BIN_DIR/#$HOME/\$HOME}:\$PATH\""
         ;;
 esac
+
+# The Claude Code skill for ombre: only when the user says yes.
+SKILL_SOURCE="tools/claude-skill/ombre/SKILL.md"
+SKILL_DIR="${OMBRE_SKILL_DIR:-$HOME/.claude/skills/ombre}"
+if [[ -f "$SKILL_DIR/SKILL.md" ]] && cmp -s "$SKILL_SOURCE" "$SKILL_DIR/SKILL.md"; then
+    green "Claude Code skill up to date: ${SKILL_DIR}"
+elif [[ ! -t 0 ]]; then
+    yellow "Claude Code skill not installed or updated (no terminal to ask): run this script from a terminal to be asked."
+else
+    if [[ -f "$SKILL_DIR/SKILL.md" ]]; then
+        question="Update the Claude Code skill for ombre in ${SKILL_DIR}? [y/N] "
+    else
+        question="Install the Claude Code skill for ombre in ${SKILL_DIR}? [y/N] "
+    fi
+    read -r -p "$question" answer || answer=""
+    case "$answer" in
+        [yY] | [yY][eE][sS] | [oO] | [oO][uU][iI])
+            mkdir -p "$SKILL_DIR"
+            install -m 644 "$SKILL_SOURCE" "$SKILL_DIR/SKILL.md"
+            green "Installed: ${SKILL_DIR}/SKILL.md"
+            ;;
+        *) echo "Claude Code skill left as it was." ;;
+    esac
+fi

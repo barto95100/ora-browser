@@ -14,7 +14,7 @@ struct SidebarView: View {
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toolbarManager: ToolbarManager
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.usesSidebarGlass) private var usesGlass
+    @Environment(\.usesGlassEffects) private var usesGlass
     @Environment(\.isInSidebarGlassPanel) private var isInGlassPanel
 
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]

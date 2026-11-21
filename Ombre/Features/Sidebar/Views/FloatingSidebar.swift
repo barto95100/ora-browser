@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FloatingSidebar: View {
     @Environment(\.theme) var theme
-    @Environment(\.usesSidebarGlass) private var usesGlass
+    @Environment(\.usesGlassEffects) private var usesGlass
 
     let sidebarCornerRadius: CGFloat = {
         if #available(macOS 26, *) {
@@ -23,6 +23,8 @@ struct FloatingSidebar: View {
             }
         }
         .padding(6)
+        // Its margins too: a click there never reaches the page under it.
+        .contentShape(Rectangle())
     }
 
     /// Glass over the page, faintly tinted with the space's color.
@@ -31,12 +33,7 @@ struct FloatingSidebar: View {
         if #available(macOS 26, *) {
             SidebarView()
                 .clipShape(SidebarGlass.panelShape)
-                .glassEffect(.regular.tint(theme.sidebarGlassTint), in: SidebarGlass.panelShape)
-                .overlay {
-                    SidebarGlass.panelShape
-                        .strokeBorder(.white.opacity(0.25), lineWidth: 1)
-                        .allowsHitTesting(false)
-                }
+                .sidebarGlassSurface(tint: theme.sidebarGlassTint)
         }
     }
 

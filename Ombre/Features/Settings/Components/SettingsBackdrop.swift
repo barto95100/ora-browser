@@ -101,11 +101,12 @@ struct SettingsSpaceColorKey: PreferenceKey {
 struct SettingsBackdropView: View {
     /// The selected space's color (`#RRGGBB`), in Settings › Spaces.
     var spaceHex: String?
+    @Environment(\.usesGlassEffects) private var usesGlass
 
     var body: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor)
-            if #available(macOS 26, *) {
+            if usesGlass {
                 tint
             }
         }

@@ -38,28 +38,34 @@ struct SettingsCard<Content: View>: View {
     }
 }
 
-private extension View {
-    /// White on the light gray window, a lighter shade on the dark one.
-    static var settingsCardFill: Color {
-        Color(nsColor: NSColor(name: nil) { appearance in
-            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-                ? NSColor.white.withAlphaComponent(0.06)
-                : NSColor.white
-        })
+extension View {
+    /// The background of a settings card: glass with a light edge (Liquid
+    /// Glass on), over the window's backdrop; else a plain card.
+    func settingsCardBackground(border: Color? = nil) -> some View {
+        modifier(SettingsCardBackground(border: border))
     }
 }
 
-extension View {
-    /// The background of a settings card: glass with a light edge on
-    /// macOS 26, over the window's backdrop; before, a plain card.
-    @ViewBuilder
-    func settingsCardBackground(border: Color? = nil) -> some View {
-        let shape = RoundedRectangle(cornerRadius: Self.settingsCardRadius, style: .continuous)
+private struct SettingsCardBackground: ViewModifier {
+    let border: Color?
+    @Environment(\.usesGlassEffects) private var usesGlass
+
+    /// Rounder with glass, like Apple's.
+    private var radius: CGFloat {
+        usesGlass ? 16 : 12
+    }
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         Group {
-            if #available(macOS 26, *) {
-                ombreGlass(in: shape, rim: true)
+            if usesGlass {
+                content.ombreGlass(in: shape, rim: true)
             } else {
-                plainCardBackground()
+                content
+                    .background { shape.fill(Self.cardFill) }
+                    .overlay {
+                        shape.strokeBorder(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
+                    }
             }
         }
         .overlay {
@@ -69,21 +75,13 @@ extension View {
         }
     }
 
-    /// Rounder with glass, like Apple's.
-    private static var settingsCardRadius: CGFloat {
-        if #available(macOS 26, *) { return 16 }
-        return 12
-    }
-
-    private func plainCardBackground() -> some View {
-        background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Self.settingsCardFill)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
-        }
+    /// White on the light gray window, a lighter shade on the dark one.
+    private static var cardFill: Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                ? NSColor.white.withAlphaComponent(0.06)
+                : NSColor.white
+        })
     }
 }
 

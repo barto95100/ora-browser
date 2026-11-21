@@ -51,6 +51,17 @@ struct MouseShieldTracker {
         return .leavePage
     }
 
+    /// The panel just showed, with the mouse at `windowX`: if it is under
+    /// the panel, the page is told at once that the mouse left, without
+    /// waiting for it to move (else the page keeps its hover and tooltip,
+    /// shown over the panel).
+    mutating func shieldShown(mouseAtX windowX: CGFloat, windowWidth: CGFloat?) -> Action {
+        guard isCovered(windowX: windowX, windowWidth: windowWidth) else { return .forward }
+        guard !isShielded else { return .ignore }
+        isShielded = true
+        return .leavePage
+    }
+
     func isCovered(windowX: CGFloat, windowWidth: CGFloat?) -> Bool {
         guard let shield, let windowWidth else { return false }
         return shield.covers(windowX: windowX, windowWidth: windowWidth)

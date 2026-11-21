@@ -131,7 +131,7 @@ struct TabItem: View {
     @Environment(\.theme) private var theme
     /// Given by the list (no database read for each row).
     @Environment(\.isInTabGroup) private var isInTabGroup
-    @Environment(\.usesSidebarGlass) private var usesGlass
+    @Environment(\.usesGlassEffects) private var usesGlass
     @State private var isHovering = false
 
     var body: some View {

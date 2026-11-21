@@ -4,7 +4,7 @@ import SwiftUI
 struct SidebarURLDisplay: View {
     @Environment(\.theme) private var theme
     @Environment(\.window) private var window
-    @Environment(\.usesSidebarGlass) private var usesGlass
+    @Environment(\.usesGlassEffects) private var usesGlass
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var tabManager: TabManager

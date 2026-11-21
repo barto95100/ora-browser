@@ -13,7 +13,7 @@ struct SplitTabItem: View {
     let onHoverTab: (Tab, Bool) -> Void
     @EnvironmentObject var tabManager: TabManager
     @Environment(\.theme) private var theme
-    @Environment(\.usesSidebarGlass) private var usesGlass
+    @Environment(\.usesGlassEffects) private var usesGlass
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovering = false
     @State private var hoveredTabID: UUID?

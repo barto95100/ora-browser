@@ -10,10 +10,6 @@ struct OmbreCommands: Commands {
     /// Customized shortcuts show in the menus at once.
     @ObservedObject private var shortcuts = CustomKeyboardShortcutManager.shared
     @FocusedValue(\.isPeekOpen) private var isPeekOpen
-    #if DEBUG
-        /// The sidebar's look, until one is chosen.
-        @AppStorage(SidebarStyle.defaultsKey) private var sidebarStyle = SidebarStyle.defaultValue
-    #endif
 
     var body: some Commands {
         // The system's File › Close (⌘W too) goes: ⌘W is "Close Tab" only,
@@ -206,11 +202,6 @@ struct OmbreCommands: Commands {
         #if DEBUG
             CommandMenu("Debug") {
                 Button("Show Onboarding Again") { openWindow(id: "onboarding") }
-                Picker(SidebarStyle.debugMenuTitle, selection: $sidebarStyle) {
-                    ForEach(SidebarStyle.allCases) { style in
-                        Text(style.title).tag(style)
-                    }
-                }
             }
         #endif
 

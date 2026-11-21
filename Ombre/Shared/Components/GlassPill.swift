@@ -9,6 +9,9 @@ struct GlassPill<PillShape: InsettableShape>: View {
     var fillOpacity = 0.32
     /// Its list has the arrow keys: the edge is the tint itself.
     var hasKeys = false
+    /// The reflection at its top, and its light edge.
+    var highlightOpacity = 0.16
+    var rimOpacity = 0.4
     let shape: PillShape
 
     var body: some View {
@@ -16,7 +19,7 @@ struct GlassPill<PillShape: InsettableShape>: View {
             .fill(tint.opacity(fillOpacity))
             .overlay {
                 shape.fill(LinearGradient(
-                    colors: [.white.opacity(0.16), .clear],
+                    colors: [.white.opacity(highlightOpacity), .clear],
                     startPoint: .top,
                     endPoint: .center
                 ))
@@ -27,7 +30,7 @@ struct GlassPill<PillShape: InsettableShape>: View {
                 } else {
                     shape.strokeBorder(
                         LinearGradient(
-                            colors: [.white.opacity(0.4), tint.opacity(0.5)],
+                            colors: [.white.opacity(rimOpacity), tint.opacity(0.5)],
                             startPoint: .top,
                             endPoint: .bottom
                         ),

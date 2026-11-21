@@ -54,32 +54,12 @@
         }
       }
     },
-    "After (Liquid Glass)" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Après (Liquid Glass)"
-          }
-        }
-      }
-    },
     "Ask for Confirmation" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Demander confirmation"
-          }
-        }
-      }
-    },
-    "Before" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avant"
           }
         }
       }
@@ -154,6 +134,16 @@
         }
       }
     },
+    "Glass Effects (Liquid Glass)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effets de verre (Liquid Glass)"
+          }
+        }
+      }
+    },
     "Hold %@ to Quit" : {
       "localizations" : {
         "fr" : {
@@ -174,12 +164,32 @@
         }
       }
     },
+    "Needs macOS 26 or later." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nécessite macOS 26 ou ultérieur."
+          }
+        }
+      }
+    },
     "No" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Non"
+          }
+        }
+      }
+    },
+    "Off while Reduce Transparency is on in System Settings › Accessibility › Display." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivés tant que « Réduire la transparence » est activé dans Réglages Système › Accessibilité › Affichage."
           }
         }
       }
@@ -214,12 +224,12 @@
         }
       }
     },
-    "Sidebar Style" : {
+    "The sidebar and the settings in Liquid Glass. Off, Ombre looks as before." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Style de la barre latérale"
+            "value" : "La barre latérale et les réglages en Liquid Glass. Désactivés, Ombre garde son apparence d’avant."
           }
         }
       }

@@ -115,6 +115,7 @@ struct SettingsSectionsListTests {
             .environmentObject(AppearanceManager.shared)
             .environmentObject(UpdateService.shared)
             .environmentObject(DefaultBrowserManager.shared)
+            .glassEffectsEnvironment()
             .modelContainer(DatabaseRecovery.mainContainer))
         window.contentView = host
         host.frame = window.contentRect(forFrameRect: window.frame)

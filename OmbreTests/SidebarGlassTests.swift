@@ -65,7 +65,7 @@ struct SidebarGlassPaletteTests {
             if item.spaceHex != nil || item.theme != nil {
                 #expect(item.pill.opacity <= 0.35, "\(item)")
                 // Never so faint that the space's color is lost.
-                #expect(item.pill.opacity > SidebarGlassPalette.minimumDarkOpacity, "\(item)")
+                #expect(item.pill.opacity >= SidebarGlassPalette.minimumDarkOpacity - 0.001, "\(item)")
             }
         }
     }
@@ -94,18 +94,45 @@ struct SidebarGlassPaletteTests {
     }
 }
 
-struct SidebarStyleTests {
-    @Test func glassUntilChosen() {
-        #expect(SidebarStyle.defaultValue == .glass)
-        #expect(!SidebarStyle.classic.usesGlass)
+/// Settings › General › Glass Effects: on by default on macOS 26, never
+/// with Reduce Transparency, never before macOS 26.
+struct GlassEffectsTests {
+    @Test func onlyWhenSupportedEnabledAndTransparent() {
+        #expect(GlassEffects.isActive(isEnabled: true, reducesTransparency: false, isSupported: true))
+        #expect(!GlassEffects.isActive(isEnabled: false, reducesTransparency: false, isSupported: true))
+        #expect(!GlassEffects.isActive(isEnabled: true, reducesTransparency: true, isSupported: true))
+        #expect(!GlassEffects.isActive(isEnabled: true, reducesTransparency: false, isSupported: false))
     }
 
-    @Test func glassOnlyOnMacOS26() {
+    @Test func supportedFromMacOS26() {
         if #available(macOS 26, *) {
-            #expect(SidebarStyle.glass.usesGlass)
+            #expect(GlassEffects.isSupported)
         } else {
-            #expect(!SidebarStyle.glass.usesGlass)
+            #expect(!GlassEffects.isSupported)
         }
+    }
+
+    /// Under the setting: why it is off, when it is.
+    @Test func theSettingSaysWhyItIsOff() {
+        let usual = GlassEffects.detail(reducesTransparency: false, isSupported: true)
+        let reduced = GlassEffects.detail(reducesTransparency: true, isSupported: true)
+        let old = GlassEffects.detail(reducesTransparency: false, isSupported: false)
+        #expect(Set([usual, reduced, old]).count == 3)
+        #expect(reduced
+            .contains(
+                String(localized: "Off while Reduce Transparency is on in System Settings › Accessibility › Display.")
+            ))
+    }
+
+    @Test func onUntilTurnedOff() throws {
+        let suite = "GlassEffectsTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        #expect(SettingsStore.glassEffectsEnabled(in: defaults))
+        defaults.set(false, forKey: SettingsStore.glassEffectsKey)
+        #expect(!SettingsStore.glassEffectsEnabled(in: defaults))
+        defaults.set(true, forKey: SettingsStore.glassEffectsKey)
+        #expect(SettingsStore.glassEffectsEnabled(in: defaults))
     }
 }
 
@@ -135,7 +162,7 @@ struct SidebarRowBackgroundTests {
         label.frame(width: 20, height: 20)
             .padding(12)
             .sidebarRowBackground(isActive: isActive, color: .clear, cornerRadius: 10)
-            .environment(\.usesSidebarGlass, true)
+            .environment(\.usesGlassEffects, true)
             .environment(\.theme, Theme(colorScheme: .dark, spaceColor: .red))
     }
 

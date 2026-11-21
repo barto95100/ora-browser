@@ -1,42 +1,6 @@
 import SwiftUI
 
-/// The sidebar's look: as before, or Liquid Glass (macOS 26). The Debug
-/// menu switches between them live, until one is chosen.
-enum SidebarStyle: String, CaseIterable, Identifiable {
-    case classic
-    case glass
-
-    static let defaultsKey = "debug.sidebarStyle"
-    static let defaultValue = SidebarStyle.glass
-
-    var id: String {
-        rawValue
-    }
-
-    /// Its name in the Debug menu (outside `#if DEBUG`, so that the
-    /// localization check, which reads the Release build, sees it).
-    var title: String {
-        switch self {
-        case .classic: String(localized: "Before")
-        case .glass: String(localized: "After (Liquid Glass)")
-        }
-    }
-
-    static var debugMenuTitle: String {
-        String(localized: "Sidebar Style")
-    }
-
-    /// Glass only exists from macOS 26.
-    var usesGlass: Bool {
-        guard self == .glass else { return false }
-        if #available(macOS 26, *) { return true }
-        return false
-    }
-}
-
 extension EnvironmentValues {
-    /// The sidebar is drawn in Liquid Glass (see `SidebarStyle`).
-    @Entry var usesSidebarGlass = false
     /// The fixed sidebar's glass panel is 6 pt in from the window: its
     /// header moves up as much, to stay level with the address bar.
     @Entry var isInSidebarGlassPanel = false
@@ -63,7 +27,7 @@ enum SidebarGlassPalette {
         let backdrop = backdrop(isDark: true, spaceHex: spaceHex, theme: theme)
         let white = BackdropRGB(hex: "#FFFFFF")
         var opacity = maximumDarkOpacity
-        while opacity > minimumDarkOpacity {
+        while opacity > minimumDarkOpacity + 0.001 {
             let candidate = Pill(tintHex: tintHex, opacity: opacity)
             if white.contrast(with: pillColor(candidate, on: backdrop, lightened: true)) >= 4.6 { break }
             opacity -= 0.02
@@ -72,7 +36,8 @@ enum SidebarGlassPalette {
     }
 
     static let maximumDarkOpacity = 0.26
-    static let minimumDarkOpacity = 0.1
+    /// The faintest tint: the pill's highlight and edge still show it.
+    static let minimumDarkOpacity = 0.08
 
     /// About what is under the pill: the top of the window's background (the
     /// space's color, see `Theme.windowBackground`) on macOS's window. The
@@ -88,8 +53,14 @@ enum SidebarGlassPalette {
         return window.mixed(with: top, by: 0.7)
     }
 
-    /// What the panel's glass and the pill's highlight add at most: white.
-    static let glassLightening = 0.1
+    /// The reflection at the top of the pill (`GlassPill`).
+    static let pillHighlight = 0.28
+
+    /// What the panel's glass and the pill's highlight add at most where
+    /// the title's letters are (a third down the pill), plus the end of the
+    /// panel's reflection (`GlassRim.reflection`, which stops above the
+    /// tabs): white.
+    static let glassLightening = 0.15
 
     /// The pill as it shows over `backdrop`; `lightened`: where the panel's
     /// glass and the pill's highlight (`GlassPill`) are brightest.

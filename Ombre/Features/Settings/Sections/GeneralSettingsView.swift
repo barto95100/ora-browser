@@ -3,9 +3,20 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var appearanceManager: AppearanceManager
+    @Environment(\.accessibilityReduceTransparency) private var reducesTransparency
     @EnvironmentObject var updateService: UpdateService
     @ObservedObject private var settings = SettingsStore.shared
     @ObservedObject private var defaultBrowserManager = DefaultBrowserManager.shared
+
+    /// Shown off where glass can't be drawn; the choice itself is kept.
+    private var glassEffectsBinding: Binding<Bool> {
+        Binding(
+            get: {
+                GlassEffects.isActive(isEnabled: settings.glassEffectsEnabled, reducesTransparency: reducesTransparency)
+            },
+            set: { settings.glassEffectsEnabled = $0 }
+        )
+    }
 
     var body: some View {
         SettingsSection {
@@ -41,6 +52,16 @@ struct GeneralSettingsView: View {
 
             SettingsCard(header: String(localized: "Appearance")) {
                 AppearanceSelector(selection: $appearanceManager.appearance)
+                Divider()
+                SettingsRow(
+                    title: String(localized: "Glass Effects (Liquid Glass)"),
+                    detail: GlassEffects.detail(reducesTransparency: reducesTransparency)
+                ) {
+                    Toggle("", isOn: glassEffectsBinding)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .disabled(!GlassEffects.isSupported || reducesTransparency)
+                }
             }
 
             SettingsCard(header: String(localized: "Tab Management")) {

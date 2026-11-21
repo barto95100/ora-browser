@@ -98,7 +98,7 @@ SKILL_DIR="${OMBRE_SKILL_DIR:-$HOME/.claude/skills/ombre}"
 if [[ -f "$SKILL_DIR/SKILL.md" ]] && cmp -s "$SKILL_SOURCE" "$SKILL_DIR/SKILL.md"; then
     green "Claude Code skill up to date: ${SKILL_DIR}"
 elif [[ ! -t 0 ]]; then
-    yellow "Claude Code skill not installed (no terminal to ask): run this script from a terminal to be asked."
+    yellow "Claude Code skill not installed or updated (no terminal to ask): run this script from a terminal to be asked."
 else
     if [[ -f "$SKILL_DIR/SKILL.md" ]]; then
         question="Update the Claude Code skill for ombre in ${SKILL_DIR}? [y/N] "

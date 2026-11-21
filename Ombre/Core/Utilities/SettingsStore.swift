@@ -156,6 +156,7 @@ class SettingsStore: ObservableObject {
     private let allowsAgentPageActionsKey = "settings.allowsAgentPageActions"
     private let peekEnabledKey = "settings.peekEnabled"
     private let pinnedLinkBehaviorKey = "settings.pinnedLinkBehavior"
+    private let quitBehaviorKey = "settings.quitBehavior"
     private let passwordsEnabledKey = "settings.passwords.enabled"
     private let passwordManagerProviderKey = "settings.passwords.provider"
     private let passwordAutofillEnabledKey = "settings.passwords.autofillEnabled"
@@ -277,6 +278,12 @@ class SettingsStore: ObservableObject {
         didSet { defaults.set(pinnedLinkBehavior.rawValue, forKey: pinnedLinkBehaviorKey) }
     }
 
+    /// What ⌘Q does: quit once held (the default, like Arc and Chrome), ask,
+    /// or quit at once. Ombre › Quit Ombre always quits at once.
+    @Published var quitBehavior: QuitBehavior {
+        didSet { defaults.set(quitBehavior.rawValue, forKey: quitBehaviorKey) }
+    }
+
     /// Downloads from sites without a choice of their own: asked the first
     /// time (like Safari, the default) or allowed.
     @Published var allowsDownloadsByDefault: Bool {
@@ -386,6 +393,8 @@ class SettingsStore: ObservableObject {
         let legacyPeekEnabled = defaults.object(forKey: peekEnabledKey) as? Bool ?? true
         pinnedLinkBehavior = defaults.string(forKey: pinnedLinkBehaviorKey).flatMap(PinnedLinkBehavior.init(rawValue:))
             ?? (legacyPeekEnabled ? .peek : .sameTab)
+        quitBehavior = defaults.string(forKey: quitBehaviorKey).flatMap(QuitBehavior.init(rawValue:))
+            ?? QuitBehavior.defaultValue
         allowsDownloadsByDefault = defaults.bool(forKey: allowsDownloadsByDefaultKey)
         passwordsEnabled = defaults.object(forKey: passwordsEnabledKey) as? Bool ?? true
         if let raw = defaults.string(forKey: passwordManagerProviderKey),

@@ -84,6 +84,19 @@ struct GeneralSettingsView: View {
                 SettingsRow(title: String(localized: "Open links from other apps in Little Ombre")) {
                     Toggle("", isOn: $settings.opensLinksInLittleOmbre).labelsHidden().toggleStyle(.switch)
                 }
+                Divider()
+                SettingsRow(
+                    title: String(localized: "To Quit"),
+                    detail: String(localized: "With ⌘Q. Ombre › Quit Ombre always quits at once.")
+                ) {
+                    Picker("", selection: $settings.quitBehavior) {
+                        ForEach(QuitBehavior.allCases) { behavior in
+                            Text(behavior.title).tag(behavior)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
             }
 
             SettingsCard(header: String(localized: "Downloads")) {

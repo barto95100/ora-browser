@@ -32,19 +32,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // Only a browser window shows the confirmation: from the settings or
-        // passwords window, nothing answered and the app never quit.
-        let targetWindow = BrowserWindows.quitTarget(
-            keyWindow: NSApp.keyWindow,
-            orderedWindows: NSApp.orderedWindows,
-            browserWindows: BrowserWindows.browsing.allObjects
-        )
-        guard let targetWindow else { return .terminateNow }
-        if !targetWindow.isKeyWindow {
-            targetWindow.makeKeyAndOrderFront(nil)
-        }
-        NotificationCenter.default.post(name: .quitRequested, object: targetWindow)
-        return .terminateLater
+        // ⌘Q held, asked or at once (Settings › General); the menu, the Dock
+        // and logging out quit at once.
+        QuitController.shared.reply(to: NSApp.currentEvent)
     }
 
     // Links opened from other apps are routed by SwiftUI to a browser window

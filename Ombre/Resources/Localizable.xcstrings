@@ -4,6 +4,66 @@
     "" : {},
     " — %@" : {},
     " / %@" : {},
+    "%@ and %@ will close." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ et %2$@ seront fermés."
+          }
+        }
+      }
+    },
+    "%lld windows" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld window"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld windows"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fenêtre"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fenêtres"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Ask for Confirmation" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander confirmation"
+          }
+        }
+      }
+    },
     "Clear All" : {
       "localizations" : {
         "fr" : {
@@ -64,6 +124,36 @@
         }
       }
     },
+    "Don’t Ask Again" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne plus demander"
+          }
+        }
+      }
+    },
+    "Hold %@ to Quit" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenez %@ pour quitter"
+          }
+        }
+      }
+    },
+    "Hold ⌘Q" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenir ⌘Q"
+          }
+        }
+      }
+    },
     "No" : {
       "localizations" : {
         "fr" : {
@@ -90,6 +180,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Question copiée : collez-la avec ⌘V"
+          }
+        }
+      }
+    },
+    "Quit Immediately" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter directement"
           }
         }
       }
@@ -130,6 +230,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette heure est arrivée : le rappel part tout de suite."
+          }
+        }
+      }
+    },
+    "To Quit" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour quitter"
+          }
+        }
+      }
+    },
+    "With ⌘Q. Ombre › Quit Ombre always quits at once." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avec ⌘Q. Ombre › Quitter Ombre quitte toujours directement."
           }
         }
       }
@@ -1862,16 +1982,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arc…"
-          }
-        }
-      }
-    },
-    "Are you sure you want to quit?" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Voulez-vous vraiment quitter ?"
           }
         }
       }

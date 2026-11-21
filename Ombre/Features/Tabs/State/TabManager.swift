@@ -129,9 +129,14 @@ class TabManager: ObservableObject {
         downloadManager: DownloadManager? = nil,
         focusAfterOpening: Bool = true,
         isPrivate: Bool,
-        loadSilently: Bool = false
+        loadSilently: Bool = false,
+        in space: TabContainer? = nil
     ) -> Tab? {
-        if let container = activeContainer {
+        // `space`: another space than the active one (an address rule).
+        if let container = space ?? activeContainer {
+            if focusAfterOpening, container.id != activeContainer?.id {
+                activateContainer(container, activateLastAccessedTab: false)
+            }
             if let (title, faviconURL) = Self.initialTitleAndFavicon(for: url) {
                 let newTab = makeTab(
                     url: url,

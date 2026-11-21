@@ -12,6 +12,11 @@ protocol BrowserPageDelegate: AnyObject {
     /// The user clicked a link that opens a new window (`target="_blank"`):
     /// true if the delegate opened it itself (Peek), else it opens in a new tab.
     func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
+    /// A click on a link opens a new tab (`target="_blank"`, "Open Link in
+    /// New Tab"): true when an address rule opened it in another space
+    /// itself (then not linked to the page). Never a script's `window.open`:
+    /// sign-in and payment pages keep their opener.
+    func browserPage(_ page: BrowserPage, routesNewTabLink url: URL, disposition: BrowserNewTabDisposition) -> Bool
     /// The page opens a window that isn't a popup (`window.open(url)`, a
     /// `target="_blank"` link): the web view of a tab linked to it, made with
     /// WebKit's `configuration`, which WebKit then loads; nil for a tab of
@@ -126,6 +131,10 @@ extension BrowserPageDelegate {
 
     func browserPage(_ page: BrowserPage, didChangeThemeColor color: NSColor?) {}
     func browserPage(_ page: BrowserPage, opensNewWindowLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool {
+        false
+    }
+
+    func browserPage(_ page: BrowserPage, routesNewTabLink url: URL, disposition: BrowserNewTabDisposition) -> Bool {
         false
     }
 

@@ -295,6 +295,20 @@ struct TabItem: View {
 
         CopyTabAddressButton(tab: tab)
 
+        if !privacyMode.isPrivate, let rule = AddressRule.quickRule(for: tab.url, spaceID: tab.container.id),
+           // Not when this space already has it.
+           !SettingsStore.shared.addressRules.contains(where: { $0.isSame(as: rule) })
+        {
+            Button {
+                SettingsStore.shared.addressRules = AddressRule.adding(rule, to: SettingsStore.shared.addressRules)
+            } label: {
+                Label(
+                    String(localized: "Always Open \(rule.pattern) in This Space"),
+                    systemImage: "arrow.triangle.branch"
+                )
+            }
+        }
+
         if tab.type == .normal, isInTabGroup {
             Button {
                 tabManager.removeFromGroup(tab)

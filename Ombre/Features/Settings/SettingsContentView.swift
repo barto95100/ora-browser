@@ -4,6 +4,7 @@ import SwiftUI
 enum SettingsTab: String, Hashable, CaseIterable {
     case general
     case spaces
+    case addressRules
     case searchEngines
     case passwords
     case extensions
@@ -14,6 +15,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
         switch self {
         case .general: return String(localized: "General")
         case .spaces: return String(localized: "Spaces")
+        case .addressRules: return String(localized: "Address Rules")
         case .passwords: return String(localized: "Passwords")
         case .extensions: return String(localized: "Extensions")
         case .timeFocus: return String(localized: "Time & Focus")
@@ -26,6 +28,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
         switch self {
         case .general: return "gearshape.fill"
         case .spaces: return "rectangle.3.group.fill"
+        case .addressRules: return "arrow.triangle.branch"
         case .passwords: return "key.fill"
         case .extensions: return "puzzlepiece.extension.fill"
         case .timeFocus: return "hourglass"
@@ -39,6 +42,7 @@ enum SettingsTab: String, Hashable, CaseIterable {
         switch self {
         case .general: return .gray
         case .spaces: return .indigo
+        case .addressRules: return .teal
         case .passwords: return Color(hex: "#5E9C76")
         case .extensions: return .blue
         case .timeFocus: return .purple
@@ -53,6 +57,8 @@ enum SettingsTab: String, Hashable, CaseIterable {
             return String(localized: "Browser defaults, app behavior, and software updates.")
         case .spaces:
             return String(localized: "Space-specific defaults and per-space data controls.")
+        case .addressRules:
+            return String(localized: "Which space the links to an address open in.")
         case .passwords:
             return String(localized: "Password manager integration, vault access, and autofill behavior.")
         case .extensions:
@@ -189,6 +195,8 @@ struct SettingsDetailView: View {
             GeneralSettingsView()
         case .spaces:
             SpacesSettingsView()
+        case .addressRules:
+            AddressRulesSettingsView()
         case .passwords:
             PasswordsSettingsView()
         case .extensions:

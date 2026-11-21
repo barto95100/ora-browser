@@ -58,10 +58,13 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     }
 
     /// Opens a Little Ombre for `url` (none: an empty one, its address to
-    /// type), in the active space of `tabManager`'s window.
+    /// type), in `space` (an address rule's: its cookies and logins), else
+    /// the active space of `tabManager`'s window.
     @discardableResult
-    static func open(_ url: URL?, from tabManager: TabManager, window browserWindow: NSWindow?) -> LittleOmbreWindow? {
-        guard let space = tabManager.activeContainer else { return nil }
+    static func open(
+        _ url: URL?, from tabManager: TabManager, window browserWindow: NSWindow?, in space: TabContainer? = nil
+    ) -> LittleOmbreWindow? {
+        guard let space = space ?? tabManager.activeContainer else { return nil }
         let isPrivate = tabManager.isPrivateWindow
         let page = Tab.makeSpacePage(
             spaceID: space.id,

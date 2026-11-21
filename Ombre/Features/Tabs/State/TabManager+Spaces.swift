@@ -65,6 +65,8 @@ extension TabManager {
             // Its popups too: same data store, and their tab goes.
             BrowserPopupWindow.closePopups(inSpace: containerId)
             LittleOmbreWindow.closeAll(inSpace: containerId)
+            // Its address rules go with it.
+            SettingsStore.shared.removeAddressRules(forSpace: containerId)
             let wasActiveContainer = activeContainer?.id == containerId
             prepareForContainerDeletion(isActiveContainer: wasActiveContainer)
             deleteContainerContents(persistedContainer)

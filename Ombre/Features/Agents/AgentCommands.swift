@@ -211,6 +211,8 @@ enum AgentCommands {
         let host: String?
         /// The tab it opened, showed, read or closed (for its badge).
         var tabID: UUID?
+        /// That tab's title when it's gone (closed): for the actions panel.
+        var closedTabTitle: String?
     }
 
     /// Runs `command`.
@@ -230,7 +232,7 @@ enum AgentCommands {
             let host = tab.url.host()
             tabManager.closeTab(tab: tab)
             // A pinned or favorite tab stays in the sidebar, with its badge.
-            return Done(result: .success(json(closed)), host: host, tabID: tab.id)
+            return Done(result: .success(json(closed)), host: host, tabID: tab.id, closedTabTitle: closed.title)
         case let .read(id):
             return await onWebPage(id, in: tabManager) { tab in
                 await onLoadedPage(tab) { await read(tab, $0, until: $1) }

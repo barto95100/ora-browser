@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// While agents drive Ombre (a session allowed): which app, and Stop Agent
-/// Control. At the top of the sidebar, in the address bar while the sidebar
+/// While agents drive Ombre (a session allowed): which app, its actions
+/// (`AgentActionsPanel`), and Stop Agent Control. At the top of the sidebar, in the address bar while the sidebar
 /// is hidden.
 struct AgentIndicator: View {
     @ObservedObject private var control = AgentControl.shared
@@ -14,6 +14,7 @@ struct AgentIndicator: View {
             if leadingSpace { Spacer(minLength: 4) }
             Menu {
                 Text("Controlled by \(app)")
+                Button("Show Actions…") { AgentActionsPanel.show() }
                 Button("Stop Agent Control") { control.stop() }
             } label: {
                 Image(systemName: AgentTabBadge.symbolName)

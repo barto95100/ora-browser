@@ -1,63 +1,4 @@
-import AppKit
 import SwiftUI
-
-/// What the settings window shows behind its glass (macOS 26): glass needs
-/// something to refract, a plain dark window leaves it gray on gray. Until
-/// one is chosen, the Debug menu switches between them live.
-enum SettingsBackdrop: String, CaseIterable, Identifiable {
-    /// The window's background color, as before.
-    case plain
-    /// The desktop picture, blurred, like Finder's sidebar.
-    case translucent
-    /// macOS's gray window with a faint evening tint at the top, the
-    /// first-launch assistant's colors.
-    case gradient
-    /// Translucent, with that same faint tint.
-    case tintedTranslucent
-
-    static let defaultsKey = "settings.backdrop"
-    /// The gradient takes the selected space's color in Settings › Spaces.
-    static let followsSpaceKey = "settings.backdrop.followsSpace"
-    static let defaultValue = SettingsBackdrop.gradient
-
-    var id: String {
-        rawValue
-    }
-
-    /// Glass only exists on macOS 26: before it, the window stays plain.
-    var effective: SettingsBackdrop {
-        if #available(macOS 26, *) { return self }
-        return .plain
-    }
-
-    var showsDesktop: Bool {
-        self == .translucent || self == .tintedTranslucent
-    }
-
-    var hasGradient: Bool {
-        self == .gradient || self == .tintedTranslucent
-    }
-
-    /// The Debug menu's names (the Release build sees them too, for the
-    /// translation check).
-    static var debugMenuTitle: String {
-        String(localized: "Settings Background")
-    }
-
-    static var debugFollowsSpaceTitle: String {
-        String(localized: "Space Color in Settings › Spaces")
-    }
-
-    /// Its name in the Debug menu.
-    var debugTitle: String {
-        switch self {
-        case .plain: String(localized: "Plain (Current)")
-        case .translucent: String(localized: "A · Translucent Window")
-        case .gradient: String(localized: "B · Ombre Gradient")
-        case .tintedTranslucent: String(localized: "C · Translucent with Ombre Tint")
-        }
-    }
-}
 
 /// A color as sRGB components from 0 to 1, to mix and measure the
 /// backdrop's colors (WCAG contrast).
@@ -153,24 +94,18 @@ struct SettingsSpaceColorKey: PreferenceKey {
     }
 }
 
-/// The backdrop itself, under the whole window (title bar included).
+/// What the settings window shows behind its glass: macOS's gray window
+/// with a faint evening tint along the top (in Settings › Spaces, the
+/// selected space's color), so the glass has something to refract. Before
+/// macOS 26, without glass, the plain window as before.
 struct SettingsBackdropView: View {
-    let backdrop: SettingsBackdrop
-    /// The selected space's color (`#RRGGBB`), if the gradient follows it.
+    /// The selected space's color (`#RRGGBB`), in Settings › Spaces.
     var spaceHex: String?
 
     var body: some View {
         ZStack {
-            switch backdrop.effective {
-            case .plain:
-                Color(nsColor: .windowBackgroundColor)
-            case .translucent:
-                DesktopBlur()
-            case .gradient:
-                Color(nsColor: .windowBackgroundColor)
-                tint
-            case .tintedTranslucent:
-                DesktopBlur()
+            Color(nsColor: .windowBackgroundColor)
+            if #available(macOS 26, *) {
                 tint
             }
         }
@@ -186,18 +121,4 @@ struct SettingsBackdropView: View {
             .opacity(SettingsBackdropPalette.opacity(followingSpace: spaceHex != nil))
             .allowsHitTesting(false)
     }
-}
-
-/// The desktop picture, blurred, behind the window: the sidebar material,
-/// which keeps text legible over any picture.
-private struct DesktopBlur: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .sidebar
-        view.blendingMode = .behindWindow
-        view.state = .followsWindowActiveState
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }

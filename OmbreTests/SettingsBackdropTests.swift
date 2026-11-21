@@ -77,16 +77,6 @@ struct SettingsBackdropTests {
         #expect(abs(darkText.contrast(with: darkText) - 1) < 0.001)
     }
 
-    @Test("glass only exists on macOS 26: before, the window stays plain") func plainBeforeMacOS26() {
-        for backdrop in SettingsBackdrop.allCases {
-            if #available(macOS 26, *) {
-                #expect(backdrop.effective == backdrop)
-            } else {
-                #expect(backdrop.effective == .plain)
-            }
-        }
-    }
-
     @Test("the arrow keys move the selection inside the list") func arrowKeysMoveSelection() {
         let ids = [1, 2, 3]
         #expect(GlassSelection.next(after: nil, in: ids, by: 1) == 1)

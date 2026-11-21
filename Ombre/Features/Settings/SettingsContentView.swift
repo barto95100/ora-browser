@@ -82,8 +82,6 @@ struct SettingsWindowRoot: View {
 struct SettingsContentView: View {
     @AppStorage(SettingsWindow.selectionKey) private var selectionRawValue: String = SettingsTab.general.rawValue
     @Environment(\.theme) private var theme
-    @AppStorage(SettingsBackdrop.defaultsKey) private var backdrop = SettingsBackdrop.defaultValue
-    @AppStorage(SettingsBackdrop.followsSpaceKey) private var backdropFollowsSpace = true
     /// The color of the space Settings › Spaces shows, if it has one.
     @State private var shownSpaceHex: String?
 
@@ -114,10 +112,7 @@ struct SettingsContentView: View {
                 .id(selectedTab)
         }
         .background {
-            SettingsBackdropView(
-                backdrop: backdrop,
-                spaceHex: backdropFollowsSpace && selectedTab == .spaces ? shownSpaceHex : nil
-            )
+            SettingsBackdropView(spaceHex: selectedTab == .spaces ? shownSpaceHex : nil)
         }
         .onPreferenceChange(SettingsSpaceColorKey.self) { shownSpaceHex = $0 }
         .navigationTitle(selectedTab.title)

@@ -10,11 +10,6 @@ struct OmbreCommands: Commands {
     /// Customized shortcuts show in the menus at once.
     @ObservedObject private var shortcuts = CustomKeyboardShortcutManager.shared
     @FocusedValue(\.isPeekOpen) private var isPeekOpen
-    #if DEBUG
-        /// The settings window's backdrop, until one is chosen.
-        @AppStorage(SettingsBackdrop.defaultsKey) private var settingsBackdrop = SettingsBackdrop.defaultValue
-        @AppStorage(SettingsBackdrop.followsSpaceKey) private var backdropFollowsSpace = true
-    #endif
 
     var body: some Commands {
         // The system's File › Close (⌘W too) goes: ⌘W is "Close Tab" only,
@@ -207,12 +202,6 @@ struct OmbreCommands: Commands {
         #if DEBUG
             CommandMenu("Debug") {
                 Button("Show Onboarding Again") { openWindow(id: "onboarding") }
-                Picker(SettingsBackdrop.debugMenuTitle, selection: $settingsBackdrop) {
-                    ForEach(SettingsBackdrop.allCases) { backdrop in
-                        Text(backdrop.debugTitle).tag(backdrop)
-                    }
-                }
-                Toggle(SettingsBackdrop.debugFollowsSpaceTitle, isOn: $backdropFollowsSpace)
             }
         #endif
 

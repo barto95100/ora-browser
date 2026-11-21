@@ -18,9 +18,13 @@ enum SidebarGlassPalette {
     /// The space's color or its theme's accent, faint; without either, a
     /// white pill (light, like Arc) or a light gray one (dark). The tint is
     /// as strong as the title allows (AA, where the glass is brightest): a
-    /// light color like yellow gets less in dark mode. `translucent`: over
-    /// the desktop (`SidebarBackground.translucentWindow`), whatever it shows.
-    static func pill(isDark: Bool, spaceHex: String?, theme: SpaceTheme?, translucent: Bool = false) -> Pill {
+    /// light color like yellow gets less in dark mode. `translucency`: over
+    /// the desktop (`SidebarBackground`) at this level, judged on the
+    /// hardest wallpaper that goes with the appearance and the most contrary
+    /// site color (macOS's vibrancy does the rest).
+    static func pill(
+        isDark: Bool, spaceHex: String?, theme: SpaceTheme?, translucency: GlassTransparency? = nil
+    ) -> Pill {
         let tintHex = spaceHex ?? theme?.accentHex
         let strongest = switch (tintHex == nil, isDark) {
         case (true, true): 0.14
@@ -28,17 +32,19 @@ enum SidebarGlassPalette {
         case (false, true): maximumDarkOpacity
         case (false, false): 0.32
         }
-        let under = translucent
-            ? translucentBackdrop(
-                wallpaper: worstWallpaper(isDark: isDark),
-                isDark: isDark,
-                spaceHex: spaceHex,
-                theme: theme
+        let under = if let translucency {
+            translucentBackdrop(
+                wallpaper: hardestWallpaper(isDark: isDark, level: translucency), isDark: isDark, spaceHex: spaceHex,
+                theme: theme, level: translucency, siteHex: isDark ? "#FFFFFF" : "#000000"
             )
-            : backdrop(isDark: isDark, spaceHex: spaceHex, theme: theme)
+        } else {
+            backdrop(isDark: isDark, spaceHex: spaceHex, theme: theme)
+        }
         let text = BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
+        // Over the desktop it may go fainter than over the space's color.
+        let faintest = translucency == nil ? minimumDarkOpacity : minimumTranslucentOpacity
         var opacity = strongest
-        while opacity > minimumDarkOpacity + 0.001 {
+        while opacity > faintest + 0.001 {
             let candidate = Pill(tintHex: tintHex ?? "#FFFFFF", opacity: opacity)
             if text.contrast(with: pillColor(candidate, on: under, lightened: isDark)) >= 4.6 { break }
             opacity -= 0.02
@@ -49,35 +55,51 @@ enum SidebarGlassPalette {
     static let maximumDarkOpacity = 0.26
     /// The faintest tint: the pill's highlight and edge still show it.
     static let minimumDarkOpacity = 0.08
+    static let minimumTranslucentOpacity = 0.06
 
     // MARK: - Over the desktop
 
-    /// How much of the scheme's base (or the theme's background) covers the
-    /// desktop under the sidebar: enough for the titles on any wallpaper,
-    /// even pure white (dark mode) or pure black (light mode).
-    static func translucentScrim(isDark: Bool) -> Double {
-        isDark ? 0.8 : 0.5
+    /// The space's color over the scrim (`GlassTransparency.scrim`): clearly
+    /// recognizable.
+    static let translucentSpaceTint = 0.25
+
+    /// The active site's color over that (`SidebarBackground.siteTint`): light.
+    static let siteTint = 0.15
+
+    /// The lightest wallpaper that still goes with dark mode, the darkest
+    /// that goes with light mode: what the titles are sure to be legible on.
+    static func hardestMatchingWallpaper(isDark: Bool) -> BackdropRGB {
+        BackdropRGB(hex: isDark ? "#3B3B3B" : "#C8C8C8")
     }
 
-    /// The space's color over it, faint: still recognizable.
-    static let translucentSpaceTint = 0.2
-
-    /// The wallpaper that leaves the least contrast to the titles.
-    static func worstWallpaper(isDark: Bool) -> BackdropRGB {
-        BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
+    /// What the pill is judged on: Light also promises a mid-gray wallpaper.
+    static func hardestWallpaper(isDark: Bool, level: GlassTransparency) -> BackdropRGB {
+        level == .light ? BackdropRGB(hex: "#808080") : hardestMatchingWallpaper(isDark: isDark)
     }
 
     /// What shows under the sidebar over `wallpaper`: the scrim, then the
     /// space's color (with a theme, its background is the scrim and the
-    /// color only tints the pill, as without the translucent window). The
-    /// system's blur and material only soften it more.
+    /// color only tints the pill, as without the translucent window), then
+    /// the site's. The system's blur, material and vibrancy are not counted.
     static func translucentBackdrop(
-        wallpaper: BackdropRGB, isDark: Bool, spaceHex: String?, theme: SpaceTheme?
+        wallpaper: BackdropRGB, isDark: Bool, spaceHex: String?, theme: SpaceTheme?,
+        level: GlassTransparency, siteHex: String? = nil
     ) -> BackdropRGB {
         let base = BackdropRGB(hex: theme?.backgroundHex ?? (isDark ? "#000000" : "#FFFFFF"))
-        let scrimmed = wallpaper.mixed(with: base, by: translucentScrim(isDark: isDark))
-        guard let spaceHex, theme == nil else { return scrimmed }
-        return scrimmed.mixed(with: BackdropRGB(hex: spaceHex), by: translucentSpaceTint)
+        var color = wallpaper.mixed(with: base, by: level.scrim(isDark: isDark))
+        if let spaceHex, theme == nil {
+            color = color.mixed(with: BackdropRGB(hex: spaceHex), by: translucentSpaceTint)
+        }
+        if let siteHex {
+            color = color.mixed(with: siteTintColor(siteHex, isDark: isDark), by: siteTint)
+        }
+        return color
+    }
+
+    /// The site's color, half toward the appearance's base: its hue tints
+    /// the sidebar, not its brightness (a white header in dark mode).
+    static func siteTintColor(_ siteHex: String, isDark: Bool) -> BackdropRGB {
+        BackdropRGB(hex: siteHex).mixed(with: BackdropRGB(hex: isDark ? "#000000" : "#FFFFFF"), by: 0.5)
     }
 
     /// About what is under the pill: the top of the window's background (the
@@ -119,12 +141,12 @@ enum SidebarGlassPalette {
 
 extension Theme {
     /// The glass sidebar's active tab pill.
-    func sidebarPill(translucent: Bool) -> SidebarGlassPalette.Pill {
+    func sidebarPill(translucency: GlassTransparency?) -> SidebarGlassPalette.Pill {
         SidebarGlassPalette.pill(
             isDark: colorScheme == .dark || spaceTheme != nil,
             spaceHex: spaceColor?.hex,
             theme: spaceTheme,
-            translucent: translucent
+            translucency: translucency
         )
     }
 

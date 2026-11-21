@@ -14,6 +14,7 @@ struct SplitTabItem: View {
     @EnvironmentObject var tabManager: TabManager
     @Environment(\.theme) private var theme
     @Environment(\.usesGlassEffects) private var usesGlass
+    @Environment(\.usesTranslucentWindow) private var isTranslucent
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovering = false
     @State private var hoveredTabID: UUID?
@@ -141,7 +142,7 @@ struct SplitTabItem: View {
             }
             Text(tab.title)
                 .font(.system(size: 13, weight: usesGlass && isFocused ? .semibold : .regular))
-                .foregroundColor(textColor)
+                .foregroundStyle(isTranslucent ? AnyShapeStyle(.primary) : AnyShapeStyle(textColor))
                 .lineLimit(1)
             Spacer(minLength: 0)
             if hoveredTabID == tab.id {

@@ -94,12 +94,19 @@ struct SidebarGlassPaletteTests {
     }
 }
 
-/// The translucent window: the desktop shows under the sidebar, and the
-/// titles stay legible over any wallpaper (very light, very dark, loud).
+/// The translucent window: the desktop shows under the sidebar. Its scrim
+/// is light (Settings › Transparency); macOS's vibrancy does the rest, so
+/// only what the scrim alone guarantees is tested.
 struct SidebarTranslucentWindowTests {
-    private static let wallpapers = [
-        "#FFFFFF", "#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#808080", "#F5E6C8"
-    ].map(BackdropRGB.init(hex:))
+    /// Wallpapers that go with the appearance: dark ones in dark mode,
+    /// light ones in light mode.
+    private static func matchingWallpapers(isDark: Bool) -> [BackdropRGB] {
+        (isDark ? ["#000000", "#1A2340", "#333333", "#3B2A1E"] : ["#FFFFFF", "#E8DCC8", "#CCCCCC", "#D6E6F5"])
+            .map(BackdropRGB.init(hex:)) + [SidebarGlassPalette.hardestMatchingWallpaper(isDark: isDark)]
+    }
+
+    /// Any site color, the most contrary first.
+    private static let siteColors: [String?] = [nil, "#FFFFFF", "#000000", "#FF0000", "#FFE14D", "#2F6BFF"]
 
     private static var spaces: [(spaceHex: String?, theme: SpaceTheme?)] {
         let colors: [String?] = [nil] + SpaceColor.allCases.map(\.hex)
@@ -107,20 +114,22 @@ struct SidebarTranslucentWindowTests {
         return themes.flatMap { theme in colors.map { (spaceHex: $0, theme: theme) } }
     }
 
-    @Test("titles are legible over any wallpaper, active or not (AA)")
-    func titlesAreLegibleOverAnyWallpaper() {
-        for isDark in [true, false] {
-            let text = BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
-            for space in Self.spaces where space.theme == nil || isDark {
-                let pill = SidebarGlassPalette.pill(
-                    isDark: isDark, spaceHex: space.spaceHex, theme: space.theme, translucent: true
-                )
-                for wallpaper in Self.wallpapers {
+    private func check(
+        isDark: Bool, level: GlassTransparency, wallpapers: [BackdropRGB], siteColors: [String?]
+    ) {
+        let text = BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
+        for space in Self.spaces where space.theme == nil || isDark {
+            let pill = SidebarGlassPalette.pill(
+                isDark: isDark, spaceHex: space.spaceHex, theme: space.theme, translucency: level
+            )
+            for wallpaper in wallpapers {
+                for site in siteColors {
                     let under = SidebarGlassPalette.translucentBackdrop(
-                        wallpaper: wallpaper, isDark: isDark, spaceHex: space.spaceHex, theme: space.theme
+                        wallpaper: wallpaper, isDark: isDark, spaceHex: space.spaceHex, theme: space.theme,
+                        level: level, siteHex: site
                     )
-                    let glassy = isDark ? under.mixed(with: BackdropRGB(hex: "#FFFFFF"), by: 0.15) : under
-                    let label = "\(isDark ? "dark" : "light") \(space) \(wallpaper)"
+                    let glassy = isDark ? under.mixed(with: BackdropRGB(hex: "#FFFFFF"), by: 0.1) : under
+                    let label = "\(level) \(isDark ? "dark" : "light") \(space) \(wallpaper) site \(site ?? "-")"
                     #expect(text.contrast(with: glassy) >= 4.5, "title, \(label)")
                     let onPill = SidebarGlassPalette.pillColor(pill, on: under, lightened: isDark)
                     #expect(text.contrast(with: onPill) >= 4.5, "active title, \(label)")
@@ -129,17 +138,52 @@ struct SidebarTranslucentWindowTests {
         }
     }
 
-    /// The desktop still shows: the scrim never covers it all.
-    @Test func theDesktopShowsThrough() {
+    @Test(
+        "every level: titles legible on a wallpaper that goes with the appearance, any site color (AA)",
+        arguments: GlassTransparency.allCases
+    )
+    func titlesAreLegibleOnMatchingWallpapers(level: GlassTransparency) {
         for isDark in [true, false] {
-            #expect(SidebarGlassPalette.translucentScrim(isDark: isDark) <= 0.8)
+            check(
+                isDark: isDark,
+                level: level,
+                wallpapers: Self.matchingWallpapers(isDark: isDark),
+                siteColors: Self.siteColors
+            )
         }
-        // The space's color stays recognizable.
-        #expect(SidebarGlassPalette.translucentSpaceTint >= 0.15)
+    }
+
+    @Test("Light: legible on a mid-gray wallpaper too, in both appearances")
+    func lightIsLegibleOnMidGray() {
+        for isDark in [true, false] {
+            check(isDark: isDark, level: .light, wallpapers: [BackdropRGB(hex: "#808080")], siteColors: [nil])
+        }
+    }
+
+    /// Light covers the most, Strong the least; Medium as asked (30–40 % in
+    /// dark mode, 20–30 % in light mode).
+    @Test func levelsGoFromSafeToClear() {
+        for isDark in [true, false] {
+            let scrims = GlassTransparency.allCases.map { $0.scrim(isDark: isDark) }
+            #expect(scrims == scrims.sorted(by: >))
+        }
+        #expect((0.3 ... 0.4).contains(GlassTransparency.medium.scrim(isDark: true)))
+        #expect((0.2 ... 0.3).contains(GlassTransparency.medium.scrim(isDark: false)))
+        #expect(GlassTransparency.defaultValue == .medium)
+        // The space's color stays well recognizable, the site's light.
+        #expect(SidebarGlassPalette.translucentSpaceTint >= 0.2)
+        #expect(SidebarGlassPalette.siteTint < SidebarGlassPalette.translucentSpaceTint)
+    }
+
+    /// A site color saved with its alpha reads as its color, not shifted.
+    @Test func siteColorWithAlphaKeepsItsHue() {
+        #expect(BackdropRGB(hex: "#FF000080") == BackdropRGB(hex: "#FF0000"))
     }
 
     @Test func translucentUntilChosen() {
         #expect(SidebarBackground.defaultValue == .translucentWindow)
+        #expect(SidebarBackground.siteTint.isTranslucent)
+        #expect(!SidebarBackground.spaceColor.isTranslucent)
     }
 }
 

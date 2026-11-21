@@ -132,6 +132,7 @@ struct TabItem: View {
     /// Given by the list (no database read for each row).
     @Environment(\.isInTabGroup) private var isInTabGroup
     @Environment(\.usesGlassEffects) private var usesGlass
+    @Environment(\.usesTranslucentWindow) private var isTranslucent
     @State private var isHovering = false
 
     var body: some View {
@@ -226,7 +227,8 @@ struct TabItem: View {
     private var tabTitle: some View {
         Text(tab.title)
             .font(.system(size: 13, weight: usesGlass && isSelected ? .semibold : .regular))
-            .foregroundColor(textColor)
+            // Over the desktop, macOS's vibrant label style keeps it legible.
+            .foregroundStyle(isTranslucent ? AnyShapeStyle(.primary) : AnyShapeStyle(textColor))
             .lineLimit(1)
     }
 

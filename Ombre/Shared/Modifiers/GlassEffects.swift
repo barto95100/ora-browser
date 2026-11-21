@@ -38,9 +38,52 @@ enum GlassEffects {
     }
 }
 
+/// How much of the desktop shows through the glass (Settings › General ›
+/// Appearance › Transparency): light keeps a thicker scrim, safer to read;
+/// strong lets the wallpaper show the most.
+enum GlassTransparency: String, CaseIterable, Identifiable {
+    case light
+    case medium
+    case strong
+
+    static let defaultValue = GlassTransparency.medium
+
+    /// The setting's name and explanation (outside `#if DEBUG`, so that the
+    /// localization check, which reads the Release build, sees them).
+    static var settingTitle: String {
+        String(localized: "Transparency")
+    }
+
+    static var settingDetail: String {
+        String(localized: "How much of the wallpaper shows through the sidebar. Light is easier to read.")
+    }
+
+    var id: String {
+        rawValue
+    }
+
+    var title: String {
+        switch self {
+        case .light: String(localized: "glass.transparency.light", defaultValue: "Light")
+        case .medium: String(localized: "glass.transparency.medium", defaultValue: "Medium")
+        case .strong: String(localized: "glass.transparency.strong", defaultValue: "Strong")
+        }
+    }
+
+    /// How much of the scheme's base covers the desktop under the sidebar.
+    func scrim(isDark: Bool) -> Double {
+        switch self {
+        case .light: isDark ? 0.6 : 0.4
+        case .medium: isDark ? 0.38 : 0.26
+        case .strong: isDark ? 0.28 : 0.18
+        }
+    }
+}
+
 extension EnvironmentValues {
     /// Liquid Glass is drawn (see `GlassEffects`). Set by each window's root.
     @Entry var usesGlassEffects = false
+    @Entry var glassTransparency = GlassTransparency.defaultValue
 }
 
 extension View {
@@ -56,9 +99,11 @@ private struct GlassEffectsEnvironment: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reducesTransparency
 
     func body(content: Content) -> some View {
-        content.environment(
-            \.usesGlassEffects,
-            GlassEffects.isActive(isEnabled: settings.glassEffectsEnabled, reducesTransparency: reducesTransparency)
-        )
+        content
+            .environment(
+                \.usesGlassEffects,
+                GlassEffects.isActive(isEnabled: settings.glassEffectsEnabled, reducesTransparency: reducesTransparency)
+            )
+            .environment(\.glassTransparency, settings.glassTransparency)
     }
 }

@@ -62,6 +62,21 @@ struct GeneralSettingsView: View {
                         .toggleStyle(.switch)
                         .disabled(!GlassEffects.isSupported || reducesTransparency)
                 }
+                // Only Ombre Dev has the translucent window for now (Debug ›
+                // Sidebar Background): elsewhere the setting would do nothing.
+                #if DEBUG
+                    SettingsRow(title: GlassTransparency.settingTitle, detail: GlassTransparency.settingDetail) {
+                        Picker("", selection: $settings.glassTransparency) {
+                            ForEach(GlassTransparency.allCases) { level in
+                                Text(level.title).tag(level)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .fixedSize()
+                        .disabled(!glassEffectsBinding.wrappedValue)
+                    }
+                #endif
             }
 
             SettingsCard(header: String(localized: "Tab Management")) {

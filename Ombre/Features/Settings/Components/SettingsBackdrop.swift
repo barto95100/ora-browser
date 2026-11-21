@@ -9,7 +9,8 @@ struct BackdropRGB: Equatable {
 
     /// From `#RRGGBB`; black if it can't be read.
     init(hex: String) {
-        let digits = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        // `#RRGGBBAA` too: its alpha is left out.
+        let digits = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")).prefix(6)
         let value = UInt32(digits, radix: 16) ?? 0
         red = Double((value >> 16) & 0xFF) / 255
         green = Double((value >> 8) & 0xFF) / 255

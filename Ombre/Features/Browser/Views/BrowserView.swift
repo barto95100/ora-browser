@@ -66,7 +66,11 @@ struct BrowserView: View {
                 .ignoresSafeArea(.all)
                 // The space's color, faded from one space to the next, over
                 // the desktop.
-                .background { SpaceWindowBackground(theme: spaceTheme, key: backgroundKey) }
+                .background { SpaceWindowBackground(
+                    theme: spaceTheme,
+                    key: backgroundKey,
+                    siteTab: privacyMode.isPrivate ? nil : tabManager.activeTab
+                ) }
                 .environment(\.theme, spaceTheme)
                 .overlay {
                     if appState.showLauncher, tabManager.activeTab != nil {

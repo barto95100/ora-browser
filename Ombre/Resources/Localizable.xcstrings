@@ -144,6 +144,57 @@
         }
       }
     },
+    "glass.transparency.light" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Light"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Légère"
+          }
+        }
+      }
+    },
+    "glass.transparency.medium" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Medium"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyenne"
+          }
+        }
+      }
+    },
+    "glass.transparency.strong" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Strong"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forte"
+          }
+        }
+      }
+    },
     "Hold %@ to Quit" : {
       "localizations" : {
         "fr" : {
@@ -160,6 +211,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maintenir ⌘Q"
+          }
+        }
+      }
+    },
+    "How much of the wallpaper shows through the sidebar. Light is easier to read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui transparaît du fond d’écran sous la barre latérale. « Légère » se lit le plus facilement."
           }
         }
       }
@@ -230,6 +291,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fond de la barre latérale"
+          }
+        }
+      }
+    },
+    "Site Tint" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teinte du site"
           }
         }
       }
@@ -310,6 +381,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre translucide"
+          }
+        }
+      }
+    },
+    "Transparency" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparence"
           }
         }
       }

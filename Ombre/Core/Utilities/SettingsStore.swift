@@ -159,6 +159,7 @@ class SettingsStore: ObservableObject {
     private let quitBehaviorKey = "settings.quitBehavior"
     private let glassEffectsEnabledKey = SettingsStore.glassEffectsKey
     nonisolated static let glassEffectsKey = "settings.glassEffects"
+    private let glassTransparencyKey = "settings.glassTransparency"
 
     /// On unless turned off.
     nonisolated static func glassEffectsEnabled(in defaults: UserDefaults) -> Bool {
@@ -297,6 +298,11 @@ class SettingsStore: ObservableObject {
         didSet { defaults.set(glassEffectsEnabled, forKey: glassEffectsEnabledKey) }
     }
 
+    /// How much of the desktop shows through the glass.
+    @Published var glassTransparency: GlassTransparency {
+        didSet { defaults.set(glassTransparency.rawValue, forKey: glassTransparencyKey) }
+    }
+
     /// Downloads from sites without a choice of their own: asked the first
     /// time (like Safari, the default) or allowed.
     @Published var allowsDownloadsByDefault: Bool {
@@ -409,6 +415,8 @@ class SettingsStore: ObservableObject {
         quitBehavior = defaults.string(forKey: quitBehaviorKey).flatMap(QuitBehavior.init(rawValue:))
             ?? QuitBehavior.defaultValue
         glassEffectsEnabled = Self.glassEffectsEnabled(in: defaults)
+        glassTransparency = defaults.string(forKey: glassTransparencyKey).flatMap(GlassTransparency.init(rawValue:))
+            ?? GlassTransparency.defaultValue
         allowsDownloadsByDefault = defaults.bool(forKey: allowsDownloadsByDefaultKey)
         passwordsEnabled = defaults.object(forKey: passwordsEnabledKey) as? Bool ?? true
         if let raw = defaults.string(forKey: passwordManagerProviderKey),

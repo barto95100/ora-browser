@@ -145,6 +145,7 @@ class SettingsStore: ObservableObject {
     private let cookiesPolicyKey = "settings.cookies.policy"
     private let adBlockFilterListsKey = "settings.adBlock.filterLists"
     private let customSearchEnginesKey = "settings.customSearchEngines"
+    private let addressRulesKey = "settings.addressRules"
     private let globalDefaultSearchEngineKey = "settings.globalDefaultSearchEngine"
     private let customKeyboardShortcutsKey = "settings.customKeyboardShortcuts"
     private let tabAliveTimeoutKey = "settings.tabAliveTimeout"
@@ -236,6 +237,16 @@ class SettingsStore: ObservableObject {
 
     @Published var customSearchEngines: [CustomSearchEngine] {
         didSet { saveCodable(customSearchEngines, forKey: customSearchEnginesKey) }
+    }
+
+    /// Settings › Address Rules: which space links to an address go to.
+    @Published var addressRules: [AddressRule] {
+        didSet { saveCodable(addressRules, forKey: addressRulesKey) }
+    }
+
+    /// A deleted space takes its rules with it.
+    func removeAddressRules(forSpace spaceID: UUID) {
+        addressRules.removeAll { $0.spaceID == spaceID }
     }
 
     @Published var globalDefaultSearchEngine: String? {
@@ -372,6 +383,7 @@ class SettingsStore: ObservableObject {
 
         customSearchEngines =
             Self.loadCodable([CustomSearchEngine].self, key: customSearchEnginesKey) ?? []
+        addressRules = Self.loadCodable([AddressRule].self, key: addressRulesKey) ?? []
 
         globalDefaultSearchEngine = defaults.string(forKey: globalDefaultSearchEngineKey)
 

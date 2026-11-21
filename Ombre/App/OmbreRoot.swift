@@ -122,9 +122,13 @@ private struct BrowserWindowRoot: View {
                     LinkLog.notice("link ignored: private window") // not shown
                     return
                 }
+                // An address rule's space, else the active one.
+                let ruleSpace = tabManager.addressRuleSpace(for: url, from: tabManager.activeContainer)
                 // Like Arc: in a small window of its own, unless turned off.
                 let inLittleOmbre = SettingsStore.shared.opensLinksInLittleOmbre
-                if inLittleOmbre, let little = LittleOmbreWindow.open(url, from: tabManager, window: window) {
+                if inLittleOmbre,
+                   let little = LittleOmbreWindow.open(url, from: tabManager, window: window, in: ruleSpace)
+                {
                     LinkLog.notice("link opened in Little Ombre") // not shown
                     if let window, let appeared = windowAppearance {
                         hideIfMadeForTheLink(window, by: little, appearedFor: .now - appeared)
@@ -142,7 +146,8 @@ private struct BrowserWindowRoot: View {
                     historyManager: historyManager,
                     downloadManager: downloadManager,
                     focusAfterOpening: true,
-                    isPrivate: false
+                    isPrivate: false,
+                    in: ruleSpace
                 ) == nil {
                     LinkLog.notice("link lost: no tab could open (no space)") // not shown
                 }

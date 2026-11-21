@@ -34,6 +34,8 @@ struct FloatingSidebar: View {
             SidebarView()
                 .clipShape(SidebarGlass.panelShape)
                 .sidebarGlassSurface(tint: theme.sidebarGlassTint)
+                // Over the page, not the desktop.
+                .environment(\.usesTranslucentWindow, false)
         }
     }
 

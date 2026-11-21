@@ -109,12 +109,13 @@ private struct SidebarRowBackground: ViewModifier {
     let cornerRadius: CGFloat
     @Environment(\.usesGlassEffects) private var usesGlass
     @Environment(\.theme) private var theme
+    @Environment(\.usesTranslucentWindow) private var isTranslucent
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         content.background {
             if usesGlass, isActive {
-                let pill = theme.sidebarPill
+                let pill = theme.sidebarPill(translucent: isTranslucent)
                 GlassPill(
                     tint: Color(hex: pill.tintHex),
                     fillOpacity: pill.opacity,

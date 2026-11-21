@@ -94,6 +94,55 @@ struct SidebarGlassPaletteTests {
     }
 }
 
+/// The translucent window: the desktop shows under the sidebar, and the
+/// titles stay legible over any wallpaper (very light, very dark, loud).
+struct SidebarTranslucentWindowTests {
+    private static let wallpapers = [
+        "#FFFFFF", "#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#808080", "#F5E6C8"
+    ].map(BackdropRGB.init(hex:))
+
+    private static var spaces: [(spaceHex: String?, theme: SpaceTheme?)] {
+        let colors: [String?] = [nil] + SpaceColor.allCases.map(\.hex)
+        let themes: [SpaceTheme?] = [nil] + SpaceTheme.allCases
+        return themes.flatMap { theme in colors.map { (spaceHex: $0, theme: theme) } }
+    }
+
+    @Test("titles are legible over any wallpaper, active or not (AA)")
+    func titlesAreLegibleOverAnyWallpaper() {
+        for isDark in [true, false] {
+            let text = BackdropRGB(hex: isDark ? "#FFFFFF" : "#000000")
+            for space in Self.spaces where space.theme == nil || isDark {
+                let pill = SidebarGlassPalette.pill(
+                    isDark: isDark, spaceHex: space.spaceHex, theme: space.theme, translucent: true
+                )
+                for wallpaper in Self.wallpapers {
+                    let under = SidebarGlassPalette.translucentBackdrop(
+                        wallpaper: wallpaper, isDark: isDark, spaceHex: space.spaceHex, theme: space.theme
+                    )
+                    let glassy = isDark ? under.mixed(with: BackdropRGB(hex: "#FFFFFF"), by: 0.15) : under
+                    let label = "\(isDark ? "dark" : "light") \(space) \(wallpaper)"
+                    #expect(text.contrast(with: glassy) >= 4.5, "title, \(label)")
+                    let onPill = SidebarGlassPalette.pillColor(pill, on: under, lightened: isDark)
+                    #expect(text.contrast(with: onPill) >= 4.5, "active title, \(label)")
+                }
+            }
+        }
+    }
+
+    /// The desktop still shows: the scrim never covers it all.
+    @Test func theDesktopShowsThrough() {
+        for isDark in [true, false] {
+            #expect(SidebarGlassPalette.translucentScrim(isDark: isDark) <= 0.8)
+        }
+        // The space's color stays recognizable.
+        #expect(SidebarGlassPalette.translucentSpaceTint >= 0.15)
+    }
+
+    @Test func translucentUntilChosen() {
+        #expect(SidebarBackground.defaultValue == .translucentWindow)
+    }
+}
+
 /// Settings › General › Glass Effects: on by default on macOS 26, never
 /// with Reduce Transparency, never before macOS 26.
 struct GlassEffectsTests {

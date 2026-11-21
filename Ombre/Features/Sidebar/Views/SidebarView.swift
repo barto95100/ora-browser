@@ -14,6 +14,8 @@ struct SidebarView: View {
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var toolbarManager: ToolbarManager
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.usesGlassEffects) private var usesGlass
+    @Environment(\.isInSidebarGlassPanel) private var isInGlassPanel
 
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
@@ -255,13 +257,17 @@ struct SidebarView: View {
                         .padding(.horizontal, 4)
                     NewContainerButton()
                 }
+                // On glass, the buttons sit in a bar of their own.
+                .padding(.horizontal, usesGlass ? 4 : 0)
+                .padding(.vertical, usesGlass ? 2 : 0)
+                .sidebarGlassField(cornerRadius: 12)
                 .padding(.horizontal, 10)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(
             EdgeInsets(
-                top: 4,
+                top: isInGlassPanel ? 0 : 4,
                 leading: 0,
                 bottom: 10,
                 trailing: 0

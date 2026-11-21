@@ -101,30 +101,7 @@ struct SelectionPillRow<Content: View>: View {
             .contentShape(Self.shape)
     }
 
-    /// Tinted, lighter at the top, with a light edge: glass-like.
     private var pill: some View {
-        Self.shape
-            .fill(tint.opacity(0.32))
-            .overlay {
-                Self.shape.fill(LinearGradient(
-                    colors: [.white.opacity(0.16), .clear],
-                    startPoint: .top,
-                    endPoint: .center
-                ))
-            }
-            .overlay {
-                if hasKeys {
-                    Self.shape.strokeBorder(tint, lineWidth: 1.5)
-                } else {
-                    Self.shape.strokeBorder(
-                        LinearGradient(
-                            colors: [.white.opacity(0.4), tint.opacity(0.5)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        lineWidth: 0.75
-                    )
-                }
-            }
+        GlassPill(tint: tint, hasKeys: hasKeys, shape: Self.shape)
     }
 }

@@ -102,38 +102,48 @@ enum SpaceTheme: String, CaseIterable, Identifiable {
         }
     }
 
-    var background: Color {
+    /// Its background, `#RRGGBB`.
+    var backgroundHex: String {
         switch self {
-        case .graphite: Color(hex: "#1E1F22")
-        case .midnight: Color(hex: "#15182B")
-        case .mocha: Color(hex: "#2A211C")
-        case .slate: Color(hex: "#262B33")
-        case .plum: Color(hex: "#251C2E")
-        case .lavender: Color(hex: "#2A2836")
-        case .ember: Color(hex: "#2B1D19")
-        case .rose: Color(hex: "#2B1E25")
-        case .solarized: Color(hex: "#12313A")
-        case .indigo: Color(hex: "#1C1D33")
-        case .sage: Color(hex: "#222823")
-        case .ocean: Color(hex: "#0F1C2B")
+        case .graphite: "#1E1F22"
+        case .midnight: "#15182B"
+        case .mocha: "#2A211C"
+        case .slate: "#262B33"
+        case .plum: "#251C2E"
+        case .lavender: "#2A2836"
+        case .ember: "#2B1D19"
+        case .rose: "#2B1E25"
+        case .solarized: "#12313A"
+        case .indigo: "#1C1D33"
+        case .sage: "#222823"
+        case .ocean: "#0F1C2B"
+        }
+    }
+
+    var background: Color {
+        Color(hex: backgroundHex)
+    }
+
+    /// Its accent, `#RRGGBB`.
+    var accentHex: String {
+        switch self {
+        case .graphite: "#E8E8E8"
+        case .midnight: "#7C8CF8"
+        case .mocha: "#E0975F"
+        case .slate: "#7FC4D8"
+        case .plum: "#C58BE8"
+        case .lavender: "#B9A6F2"
+        case .ember: "#F07A3C"
+        case .rose: "#F2A1B6"
+        case .solarized: "#268BD2"
+        case .indigo: "#8C9EFF"
+        case .sage: "#A9C48A"
+        case .ocean: "#4D9BF0"
         }
     }
 
     var accent: Color {
-        switch self {
-        case .graphite: Color(hex: "#E8E8E8")
-        case .midnight: Color(hex: "#7C8CF8")
-        case .mocha: Color(hex: "#E0975F")
-        case .slate: Color(hex: "#7FC4D8")
-        case .plum: Color(hex: "#C58BE8")
-        case .lavender: Color(hex: "#B9A6F2")
-        case .ember: Color(hex: "#F07A3C")
-        case .rose: Color(hex: "#F2A1B6")
-        case .solarized: Color(hex: "#268BD2")
-        case .indigo: Color(hex: "#8C9EFF")
-        case .sage: Color(hex: "#A9C48A")
-        case .ocean: Color(hex: "#4D9BF0")
-        }
+        Color(hex: accentHex)
     }
 }
 

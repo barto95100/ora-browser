@@ -9,7 +9,8 @@ struct BackdropRGB: Equatable {
 
     /// From `#RRGGBB`; black if it can't be read.
     init(hex: String) {
-        let digits = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        // `#RRGGBBAA` too: its alpha is left out.
+        let digits = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")).prefix(6)
         let value = UInt32(digits, radix: 16) ?? 0
         red = Double((value >> 16) & 0xFF) / 255
         green = Double((value >> 8) & 0xFF) / 255
@@ -96,16 +97,17 @@ struct SettingsSpaceColorKey: PreferenceKey {
 
 /// What the settings window shows behind its glass: macOS's gray window
 /// with a faint evening tint along the top (in Settings › Spaces, the
-/// selected space's color), so the glass has something to refract. Before
-/// macOS 26, without glass, the plain window as before.
+/// selected space's color), so the glass has something to refract. Without
+/// glass (macOS 15, Glass Effects off, Reduce Transparency), the plain window.
 struct SettingsBackdropView: View {
     /// The selected space's color (`#RRGGBB`), in Settings › Spaces.
     var spaceHex: String?
+    @Environment(\.usesGlassEffects) private var usesGlass
 
     var body: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor)
-            if #available(macOS 26, *) {
+            if usesGlass {
                 tint
             }
         }

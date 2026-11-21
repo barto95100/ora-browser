@@ -4,6 +4,7 @@ import SwiftUI
 struct SidebarURLDisplay: View {
     @Environment(\.theme) private var theme
     @Environment(\.window) private var window
+    @Environment(\.usesGlassEffects) private var usesGlass
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var sidebarManager: SidebarManager
     @EnvironmentObject var tabManager: TabManager
@@ -123,7 +124,9 @@ struct SidebarURLDisplay: View {
         .background(
             ConditionallyConcentricRectangle(cornerRadius: 10, style: .continuous)
                 .fill(theme.invertedSolidWindowBackgroundColor.opacity(isHovering ? 0.11 : 0.07))
+                .opacity(usesGlass ? 0 : 1)
         )
+        .sidebarGlassField(cornerRadius: 10, isHovering: isHovering)
         .overlay(
             Button("") { openLauncher() }
                 .ombreShortcut(KeyboardShortcuts.Address.focus)
@@ -136,6 +139,7 @@ struct SidebarURLDisplay: View {
         .overlay(
             ConditionallyConcentricRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(theme.invertedSolidWindowBackgroundColor.opacity(0.05), lineWidth: 1)
+                .opacity(usesGlass ? 0 : 1)
         )
         .animation(.easeOut(duration: 0.15), value: isHovering)
         .onReceive(NotificationCenter.default.publisher(for: .copyAddressURL)) { note in

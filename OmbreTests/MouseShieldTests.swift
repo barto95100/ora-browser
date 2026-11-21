@@ -47,4 +47,33 @@ struct MouseShieldTests {
         #expect(!tracker.isShielded)
         #expect(tracker.mouseMoved(toX: 100, windowWidth: 1000) == .forward)
     }
+
+    /// The sidebar shows while the mouse rests at the window's edge (over
+    /// YouTube's list, say): the page is told at once, not on the next move.
+    @Test func pageIsToldAtOnceWhenTheSidebarShowsUnderTheMouse() {
+        var tracker = MouseShieldTracker()
+        #expect(tracker.mouseMoved(toX: 5, windowWidth: 1000) == .forward)
+        tracker.shield = MouseShield(edge: .leading, fraction: 0.3)
+        #expect(tracker.shieldShown(mouseAtX: 5, windowWidth: 1000) == .leavePage)
+        #expect(tracker.isShielded)
+        // The next moves under it: nothing more.
+        #expect(tracker.mouseMoved(toX: 20, windowWidth: 1000) == .ignore)
+    }
+
+    @Test func aSidebarAwayFromTheMouseChangesNothing() {
+        var tracker = MouseShieldTracker()
+        tracker.shield = MouseShield(edge: .leading, fraction: 0.3)
+        #expect(tracker.shieldShown(mouseAtX: 700, windowWidth: 1000) == .forward)
+        #expect(!tracker.isShielded)
+        #expect(tracker.mouseMoved(toX: 100, windowWidth: 1000) == .leavePage)
+    }
+
+    /// Clicks under the panel are kept from the page (`OmbreWebView.hitTest`).
+    @Test func clicksUnderThePanelAreCovered() {
+        var tracker = MouseShieldTracker()
+        #expect(!tracker.isCovered(windowX: 100, windowWidth: 1000))
+        tracker.shield = MouseShield(edge: .trailing, fraction: 0.3)
+        #expect(tracker.isCovered(windowX: 900, windowWidth: 1000))
+        #expect(!tracker.isCovered(windowX: 100, windowWidth: 1000))
+    }
 }

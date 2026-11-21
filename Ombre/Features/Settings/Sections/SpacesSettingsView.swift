@@ -13,6 +13,7 @@ struct SpacesSettingsView: View {
     /// New Space… was clicked: the space that appears next is selected.
     @State private var awaitsNewSpace = false
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.usesGlassEffects) private var usesGlass
     @EnvironmentObject private var toastManager: ToastManager
 
     private var selectedContainer: TabContainer? {
@@ -30,7 +31,7 @@ struct SpacesSettingsView: View {
                 }
                 .preference(key: SettingsSpaceColorKey.self, value: selectedContainer?.spaceColor?.hex)
 
-            if #unavailable(macOS 26) { Divider() }
+            if !usesGlass { Divider() }
 
             // Right details
             ScrollView {
@@ -130,7 +131,7 @@ struct SpacesSettingsView: View {
     /// of sections; before, a plain list.
     @ViewBuilder
     private var spacesColumn: some View {
-        if #available(macOS 26, *) {
+        if #available(macOS 26, *), usesGlass {
             VStack(spacing: 0) {
                 GlassSelectionList(ids: containers.map(\.id), selection: $selectedContainerId) { id in
                     if let container = containers.first(where: { $0.id == id }) {

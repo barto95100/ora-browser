@@ -328,7 +328,7 @@ private struct QuitHintRing: View {
 
 private struct QuitHintBackground: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(macOS 26, *) {
+        if #available(macOS 26, *), GlassEffects.isActiveNow {
             content.glassEffect(.regular, in: Capsule())
         } else {
             content

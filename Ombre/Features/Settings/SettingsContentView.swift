@@ -74,6 +74,7 @@ struct SettingsWindowRoot: View {
         SettingsContentView()
             .environmentObject(ToastManager.shared)
             .modifier(ThemeProvider())
+            .glassEffectsEnvironment()
             .background(SettingsWindowAdopter())
             .frame(minWidth: SettingsWindow.minimumSize.width, minHeight: SettingsWindow.minimumSize.height)
     }
@@ -82,6 +83,7 @@ struct SettingsWindowRoot: View {
 struct SettingsContentView: View {
     @AppStorage(SettingsWindow.selectionKey) private var selectionRawValue: String = SettingsTab.general.rawValue
     @Environment(\.theme) private var theme
+    @Environment(\.usesGlassEffects) private var usesGlass
     /// The color of the space Settings › Spaces shows, if it has one.
     @State private var shownSpaceHex: String?
 
@@ -120,12 +122,11 @@ struct SettingsContentView: View {
         .tint(theme.accent)
     }
 
-    /// On macOS 26, a glass panel floating over the window's backdrop, its
-    /// selection a tinted pill; before, the sidebar material and a
-    /// line.
+    /// With glass, a panel floating over the window's backdrop, its
+    /// selection a tinted pill; without, the sidebar material and a line.
     @ViewBuilder
     private var sectionsList: some View {
-        if #available(macOS 26, *) {
+        if #available(macOS 26, *), usesGlass {
             GlassSelectionList(ids: SettingsTab.allCases, selection: selection, focusesFirst: true) { tab in
                 SettingsSidebarRow(tab: tab)
             }

@@ -134,6 +134,67 @@
         }
       }
     },
+    "Glass Effects (Liquid Glass)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effets de verre (Liquid Glass)"
+          }
+        }
+      }
+    },
+    "glass.transparency.light" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Light"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Légère"
+          }
+        }
+      }
+    },
+    "glass.transparency.medium" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Medium"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyenne"
+          }
+        }
+      }
+    },
+    "glass.transparency.strong" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Strong"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forte"
+          }
+        }
+      }
+    },
     "Hold %@ to Quit" : {
       "localizations" : {
         "fr" : {
@@ -154,12 +215,42 @@
         }
       }
     },
+    "How much of the wallpaper shows through the sidebar. Light is easier to read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui transparaît du fond d’écran sous la barre latérale. « Légère » se lit le plus facilement."
+          }
+        }
+      }
+    },
+    "Needs macOS 26 or later." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nécessite macOS 26 ou ultérieur."
+          }
+        }
+      }
+    },
     "No" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Non"
+          }
+        }
+      }
+    },
+    "Off while Reduce Transparency is on in System Settings › Accessibility › Display." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivés tant que « Réduire la transparence » est activé dans Réglages Système › Accessibilité › Affichage."
           }
         }
       }
@@ -190,6 +281,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitter directement"
+          }
+        }
+      }
+    },
+    "The sidebar and the settings in Liquid Glass. Off, Ombre looks as before." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La barre latérale et les réglages en Liquid Glass. Désactivés, Ombre garde son apparence d’avant."
           }
         }
       }
@@ -240,6 +341,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour quitter"
+          }
+        }
+      }
+    },
+    "Transparency" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparence"
           }
         }
       }

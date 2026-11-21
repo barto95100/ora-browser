@@ -45,14 +45,17 @@ struct BrowserView: View {
     /// effects, cursor), in their web views, never in the pages (SEC-26).
     /// Both sides of a split view; `previousTab`'s pages are released.
     private func updateSidebarMouseShield(previousTab: Tab? = nil) {
-        for tab in tabManager.shownTabs(around: previousTab) {
+        let shown = tabManager.shownTabs(around: tabManager.activeTab)
+        let shownIDs = Set(shown.map(\.id))
+        for tab in tabManager.shownTabs(around: previousTab) where !shownIDs.contains(tab.id) {
             tab.browserPage?.setMouseShield(nil)
         }
         let shield = showFloatingSidebar && sidebarManager.isSidebarHidden ? MouseShield(
             edge: sidebarManager.sidebarPosition == .primary ? .leading : .trailing,
             fraction: sidebarManager.currentFraction.value
         ) : nil
-        for tab in tabManager.shownTabs(around: tabManager.activeTab) {
+        // Set again, unchanged, it does nothing (see `OmbreWebView`).
+        for tab in shown {
             tab.browserPage?.setMouseShield(shield)
         }
     }
@@ -61,22 +64,10 @@ struct BrowserView: View {
         ZStack(alignment: .top) {
             BrowserSplitView()
                 .ignoresSafeArea(.all)
-                // The space's color, faded from one space to the next.
-                .background {
-                    ZStack {
-                        Rectangle()
-                            .fill(spaceTheme.windowBackground)
-                            .id(backgroundKey)
-                            .transition(.opacity)
-                    }
-                    .animation(.easeOut(duration: 0.35), value: backgroundKey)
-                    .ignoresSafeArea(.all)
-                }
+                // The space's color, faded from one space to the next, over
+                // the desktop.
+                .background { SpaceWindowBackground(theme: spaceTheme, key: backgroundKey) }
                 .environment(\.theme, spaceTheme)
-                .background(
-                    BlurEffectView(material: .underWindowBackground, blendingMode: .behindWindow)
-                        .ignoresSafeArea(.all)
-                )
                 .overlay {
                     if appState.showLauncher, tabManager.activeTab != nil {
                         LauncherView()
@@ -122,6 +113,8 @@ struct BrowserView: View {
         // A space with a theme is shown dark, like Arc (private windows are
         // made dark by `OmbreRoot`).
         .preferredColorScheme(!privacyMode.isPrivate && tabManager.activeContainer?.spaceTheme != nil ? .dark : nil)
+        .translucentWindowEnvironment()
+        .glassEffectsEnvironment()
         .enableInjection()
         .animation(.easeOut(duration: 0.1), value: showFloatingSidebar)
         .onChange(of: showFloatingSidebar) { updateSidebarMouseShield() }

@@ -10,7 +10,28 @@ final class OmbreWebView: WKWebView {
 
     var mouseShield: MouseShield? {
         get { shieldTracker.shield }
-        set { shieldTracker.shield = newValue }
+        set {
+            guard newValue != shieldTracker.shield else { return }
+            let wasShown = shieldTracker.shield != nil
+            shieldTracker.shield = newValue
+            // Only when the panel shows, not while a button is held (a drag
+            // in the page, such as a video's progress bar, goes on).
+            guard newValue != nil, !wasShown, NSEvent.pressedMouseButtons == 0, let window else { return }
+            let mouse = window.mouseLocationOutsideOfEventStream
+            if shieldTracker.shieldShown(mouseAtX: mouse.x, windowWidth: windowWidth) == .leavePage {
+                leavePage(at: mouse.y, modifierFlags: NSEvent.modifierFlags, windowNumber: window.windowNumber)
+            }
+        }
+    }
+
+    /// Under the panel, the page gets no click, right click or scroll
+    /// either: they go to the panel, or nowhere (its margins).
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        if let superview, shieldTracker.shield != nil {
+            let windowX = superview.convert(point, to: nil).x
+            if shieldTracker.isCovered(windowX: windowX, windowWidth: windowWidth) { return nil }
+        }
+        return super.hitTest(point)
     }
 
     private var windowWidth: CGFloat? {
@@ -24,18 +45,26 @@ final class OmbreWebView: WKWebView {
         case .ignore:
             break
         case .leavePage:
-            // As if the mouse left the page, at a point just outside it (the
-            // page reads where it went): its hover effects end.
-            let outside = NSPoint(x: convert(bounds, to: nil).minX - 1, y: event.locationInWindow.y)
-            if let exit = NSEvent.enterExitEvent(
-                with: .mouseExited, location: outside, modifierFlags: event.modifierFlags,
-                timestamp: event.timestamp, windowNumber: event.windowNumber, context: nil,
-                eventNumber: 0, trackingNumber: 0, userData: nil
-            ) {
-                super.mouseExited(with: exit)
-            }
-            NSCursor.arrow.set()
+            leavePage(
+                at: event.locationInWindow.y,
+                modifierFlags: event.modifierFlags,
+                windowNumber: event.windowNumber
+            )
         }
+    }
+
+    /// As if the mouse left the page, at a point just outside it (the page
+    /// reads where it went): its hover effects and tooltip end.
+    private func leavePage(at windowY: CGFloat, modifierFlags: NSEvent.ModifierFlags, windowNumber: Int) {
+        let outside = NSPoint(x: convert(bounds, to: nil).minX - 1, y: windowY)
+        if let exit = NSEvent.enterExitEvent(
+            with: .mouseExited, location: outside, modifierFlags: modifierFlags,
+            timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: windowNumber, context: nil,
+            eventNumber: 0, trackingNumber: 0, userData: nil
+        ) {
+            super.mouseExited(with: exit)
+        }
+        NSCursor.arrow.set()
     }
 
     override func mouseEntered(with event: NSEvent) {

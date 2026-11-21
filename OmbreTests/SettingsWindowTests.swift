@@ -126,6 +126,29 @@ struct SettingsSectionsListTests {
         [view] + view.subviews.flatMap(views(in:))
     }
 
+    private func sectionsList(in host: NSView) -> NSScrollView? {
+        let scrolls = views(in: host).compactMap { $0 as? NSScrollView }
+        if #available(macOS 26, *) {
+            return scrolls.first { $0.convert($0.bounds, to: host).minX < SettingsWindow.sidebarInset + 1 }
+        }
+        return views(in: host).compactMap { $0 as? NSTableView }.first?.enclosingScrollView
+    }
+
+    /// The list's rows: a table's, or the glass list's (in the
+    /// accessibility tree, where its rows are buttons).
+    private func rowCount(in host: NSView, list: NSScrollView) -> Int {
+        if let table = list.documentView as? NSTableView { return table.numberOfRows }
+        func elements(_ element: Any) -> [Any] {
+            let children = (element as? NSAccessibilityElementProtocol).flatMap {
+                ($0 as AnyObject).accessibilityChildren?() ?? nil
+            } ?? []
+            return [element] + children.flatMap(elements)
+        }
+        return elements(host).filter {
+            ($0 as AnyObject).accessibilityIdentifier?() == "glassSelectionList.row"
+        }.count
+    }
+
     @Test(arguments: [false, true])
     func theSectionsListIsAlwaysThere(atMinimumSize: Bool) async throws {
         let size = atMinimumSize ? SettingsWindow.minimumSize : CGSize(width: 1100, height: 760)
@@ -135,21 +158,21 @@ struct SettingsSectionsListTests {
             window.contentView = nil
             window.close()
         }
-        // A list appears after its first layout passes.
-        var list: NSTableView?
+        // A list appears after its first layout passes: on macOS 26, the
+        // glass list (a scroll view at the window's left); before, a table.
+        var list: NSScrollView?
         for _ in 0 ..< 50 where list == nil {
             try await Task.sleep(for: .milliseconds(30))
             host.layoutSubtreeIfNeeded()
-            list = views(in: host).compactMap { $0 as? NSTableView }.first
+            list = sectionsList(in: host)
         }
         // No split view: nothing to fold, nothing remembered folded.
         #expect(!views(in: host).contains { $0 is NSSplitView })
-        let sections = try #require(list)
-        #expect(sections.numberOfRows == SettingsTab.allCases.count)
-        let scroll = try #require(sections.enclosingScrollView)
+        let scroll = try #require(list)
+        #expect(rowCount(in: host, list: scroll) == SettingsTab.allCases.count)
         let frame = scroll.convert(scroll.bounds, to: host)
         #expect(frame.width >= SettingsWindow.sidebarWidth - 1, "\(frame)")
-        #expect(frame.minX < 1)
+        #expect(frame.minX < SettingsWindow.sidebarInset + 1)
         // The content cannot be narrower than the list plus the page's room.
         #expect(host.fittingSize.width >= SettingsWindow.sidebarWidth + SettingsWindow.minimumDetailWidth)
     }

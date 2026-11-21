@@ -3,18 +3,11 @@ import SwiftUI
 
 // swiftlint:disable type_body_length large_tuple
 struct SpacesSettingsView: View {
-    private enum ClearDataAction: Hashable {
-        case cache(UUID)
-        case cookies(UUID)
-        case history(UUID)
-    }
-
     @Query(sort: TabContainer.displayOrder) var containers: [TabContainer]
 
     @ObservedObject private var settings = SettingsStore.shared
     @StateObject private var searchService = SearchEngineService()
     @State private var selectedContainerId: UUID?
-    @State private var completedClearActions: Set<ClearDataAction> = []
     @State private var newCustomFilterListURL = ""
     @State private var spacePendingDeletion: TabContainer?
     /// New Space… was clicked: the space that appears next is selected.
@@ -28,54 +21,16 @@ struct SpacesSettingsView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Left list
-            VStack(spacing: 0) {
-                List(selection: $selectedContainerId) {
-                    ForEach(containers) { container in
-                        HStack {
-                            Text(container.emoji)
-                            Text(container.name)
-                        }
-                        .tag(container.id)
-                        .contextMenu {
-                            Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
-                                .disabled(containers.count <= 1)
-                        }
-                    }
+            spacesColumn
+                // A space just made with New Space… is shown at once.
+                .onChange(of: containers.map(\.id)) { old, new in
+                    guard awaitsNewSpace, let added = new.first(where: { !old.contains($0) }) else { return }
+                    awaitsNewSpace = false
+                    selectedContainerId = added
                 }
-                Divider()
-                HStack {
-                    Menu {
-                        Button("New Space…") {
-                            awaitsNewSpace = true
-                            BrowserWindows.newSpace()
-                        }
-                        Divider()
-                        Button("Import from Safari…") { BrowserWindows.showImport(from: .safari) }
-                        Button("Import from Arc…") { BrowserWindows.showImport(from: .arc) }
-                        Button("Import from Zen…") { BrowserWindows.showImport(from: .zen) }
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                    .help(String(localized: "New Space or Import"))
-                    .accessibilityLabel(String(localized: "New Space or Import"))
-                    Spacer()
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-            }
-            .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
-            // A space just made with New Space… is shown at once.
-            .onChange(of: containers.map(\.id)) { old, new in
-                guard awaitsNewSpace, let added = new.first(where: { !old.contains($0) }) else { return }
-                awaitsNewSpace = false
-                selectedContainerId = added
-            }
+                .preference(key: SettingsSpaceColorKey.self, value: selectedContainer?.spaceColor?.hex)
 
-            Divider()
+            if #unavailable(macOS 26) { Divider() }
 
             // Right details
             ScrollView {
@@ -131,67 +86,9 @@ struct SpacesSettingsView: View {
                         SitePermissionsSettingsCard(container: container)
                         adBlockingSettingsCard(for: container)
 
-                        SettingsCard(header: String(localized: "Clear Data")) {
-                            VStack(spacing: 8) {
-                                Button(
-                                    clearDataButtonTitle(
-                                        for: .cache(container.id),
-                                        defaultTitle: String(localized: "Clear Cache"),
-                                        completedTitle: String(localized: "Cache Cleared")
-                                    )
-                                ) {
-                                    PrivacyService.clearCache(container) {
-                                        DispatchQueue.main.async {
-                                            completedClearActions.insert(.cache(container.id))
-                                            toastManager.show(
-                                                String(localized: "Cache cleared"),
-                                                icon: .system("trash")
-                                            )
-                                        }
-                                    }
-                                }
-                                .disabled(completedClearActions.contains(.cache(container.id)))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                                Button(
-                                    clearDataButtonTitle(
-                                        for: .cookies(container.id),
-                                        defaultTitle: String(localized: "Clear Cookies"),
-                                        completedTitle: String(localized: "Cookies Cleared")
-                                    )
-                                ) {
-                                    PrivacyService.clearCookies(container) {
-                                        DispatchQueue.main.async {
-                                            completedClearActions.insert(.cookies(container.id))
-                                            toastManager.show(
-                                                String(localized: "Cookies cleared"),
-                                                icon: .system("trash")
-                                            )
-                                        }
-                                    }
-                                }
-                                .disabled(completedClearActions.contains(.cookies(container.id)))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                                Button(
-                                    clearDataButtonTitle(
-                                        for: .history(container.id),
-                                        defaultTitle: String(localized: "Clear History"),
-                                        completedTitle: String(localized: "History Cleared")
-                                    )
-                                ) {
-                                    if clearHistory(for: container) {
-                                        completedClearActions.insert(.history(container.id))
-                                        toastManager.show(String(localized: "History cleared"), icon: .system("trash"))
-                                    }
-                                }
-                                .disabled(completedClearActions.contains(.history(container.id)))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .buttonStyle(.bordered)
+                        SpaceDangerZoneCard(container: container, canDelete: containers.count > 1) {
+                            spacePendingDeletion = container
                         }
-
-                        deleteSpaceCard(for: container)
                     } else {
                         Text("No spaces found")
                             .foregroundStyle(.secondary)
@@ -229,6 +126,76 @@ struct SpacesSettingsView: View {
         }
     }
 
+    /// The spaces, then New Space: on macOS 26 a glass panel like the list
+    /// of sections; before, a plain list.
+    @ViewBuilder
+    private var spacesColumn: some View {
+        if #available(macOS 26, *) {
+            VStack(spacing: 0) {
+                GlassSelectionList(ids: containers.map(\.id), selection: $selectedContainerId) { id in
+                    if let container = containers.first(where: { $0.id == id }) {
+                        spaceRow(container)
+                    }
+                }
+                newSpaceBar
+            }
+            .frame(width: 200)
+            .ombreGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), rim: true)
+            .padding(.vertical, SettingsWindow.sidebarInset)
+        } else {
+            VStack(spacing: 0) {
+                List(selection: $selectedContainerId) {
+                    ForEach(containers) { container in
+                        spaceRow(container)
+                            .tag(container.id)
+                    }
+                }
+                Divider()
+                newSpaceBar
+            }
+            .frame(minWidth: 200, idealWidth: 200, maxWidth: 220)
+        }
+    }
+
+    private func spaceRow(_ container: TabContainer) -> some View {
+        HStack {
+            Text(container.emoji)
+            Text(container.name)
+        }
+        // The whole row opens its menu, not only its name.
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
+                .disabled(containers.count <= 1)
+        }
+    }
+
+    private var newSpaceBar: some View {
+        HStack {
+            Menu {
+                Button("New Space…") {
+                    awaitsNewSpace = true
+                    BrowserWindows.newSpace()
+                }
+                Divider()
+                Button("Import from Safari…") { BrowserWindows.showImport(from: .safari) }
+                Button("Import from Arc…") { BrowserWindows.showImport(from: .arc) }
+                Button("Import from Zen…") { BrowserWindows.showImport(from: .zen) }
+            } label: {
+                Image(systemName: "plus")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help(String(localized: "New Space or Import"))
+            .accessibilityLabel(String(localized: "New Space or Import"))
+            Spacer()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+    }
+
     /// The space's engine or AI: « Use Global Choice » (the default) or one
     /// engine; a chosen engine shows (see `SearchEngineService.choose`).
     private func enginePicker(for container: TabContainer, isAI: Bool) -> some View {
@@ -255,23 +222,6 @@ struct SpacesSettingsView: View {
         .fixedSize()
     }
 
-    private func deleteSpaceCard(for container: TabContainer) -> some View {
-        SettingsCard(header: String(localized: "Delete Space")) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(
-                    containers.count <= 1
-                        ? "The last space can't be deleted."
-                        : "Removes the space with its tabs, folders and website data."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                Button("Delete Space…", role: .destructive) { spacePendingDeletion = container }
-                    .disabled(containers.count <= 1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
     /// The browser window deletes it, like from the sidebar (see `BrowserWindows`).
     private func delete(_ container: TabContainer) {
         if selectedContainerId == container.id {
@@ -279,19 +229,6 @@ struct SpacesSettingsView: View {
         }
         BrowserWindows.deleteSpace(container.id)
         spacePendingDeletion = nil
-    }
-
-    private func clearHistory(for container: TabContainer) -> Bool {
-        HistoryManager(modelContainer: modelContext.container, modelContext: modelContext)
-            .clearContainerHistory(container)
-    }
-
-    private func clearDataButtonTitle(
-        for action: ClearDataAction,
-        defaultTitle: String,
-        completedTitle: String
-    ) -> String {
-        completedClearActions.contains(action) ? completedTitle : defaultTitle
     }
 
     private func privacySettingsCard(for container: TabContainer) -> some View {

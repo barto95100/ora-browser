@@ -32,23 +32,8 @@ enum BrowserWindows {
     static let tabManagers = NSMapTable<NSWindow, TabManager>.weakToWeakObjects()
     /// All browser windows, normal and private.
     static let browsing = NSHashTable<NSWindow>.weakObjects()
-
-    /// The browser window that asks to confirm quitting: the key one, else
-    /// the frontmost, else a minimized one. Only open windows: one closed but
-    /// not yet freed, or hidden with the app, could not show the question
-    /// and quitting would wait forever. None when only the settings or
-    /// passwords window is open (or the app is hidden): the app quits now.
-    static func quitTarget(
-        keyWindow: NSWindow?,
-        orderedWindows: [NSWindow],
-        browserWindows: [NSWindow],
-        isOpen: (NSWindow) -> Bool = { $0.isVisible || $0.isMiniaturized }
-    ) -> NSWindow? {
-        let candidates = browserWindows.filter(isOpen)
-        let isCandidate = { (window: NSWindow) in candidates.contains { $0 === window } }
-        if let keyWindow, isCandidate(keyWindow) { return keyWindow }
-        return orderedWindows.first(where: isCandidate) ?? candidates.first
-    }
+    /// Each browser window's tab manager, normal and private.
+    static let allTabManagers = NSMapTable<NSWindow, TabManager>.weakToWeakObjects()
 
     /// The tab manager of the normal window in front.
     static var frontTabManager: TabManager? {

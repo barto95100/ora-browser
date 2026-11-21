@@ -50,7 +50,4 @@ extension Notification.Name {
     static let clearCacheAndReload = Notification.Name("ClearCacheAndReload")
     static let clearCookiesAndReload = Notification.Name("ClearCookiesAndReload")
     static let spacePrivacySettingsChanged = Notification.Name("SpacePrivacySettingsChanged")
-
-    /// App lifecycle
-    static let quitRequested = Notification.Name("QuitRequested")
 }

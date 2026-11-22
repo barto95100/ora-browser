@@ -6,6 +6,8 @@ struct LocalFavIcon: View {
     let textColor: Color
     /// Grey for tabs whose page is not loaded.
     var isGrayscale = true
+    /// Its width and height (favorites: larger, with their cell).
+    var size: CGFloat = 16
 
     @State private var image: NSImage?
 
@@ -15,14 +17,14 @@ struct LocalFavIcon: View {
             Image(nsImage: image)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 16, height: 16)
-                .cornerRadius(4)
+                .frame(width: size, height: size)
+                .cornerRadius(size / 4)
                 .grayscale(isGrayscale ? 1.0 : 0.0)
         } else {
             Image(systemName: "globe")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 16, height: 16)
+                .frame(width: size, height: size)
                 .foregroundColor(textColor)
         }
     }

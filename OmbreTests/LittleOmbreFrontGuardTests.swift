@@ -66,6 +66,7 @@ struct LittleOmbreFrontGuardTests {
 
     /// A guard over two windows never put on screen, with the key window and
     /// the event being handled as the test sets them.
+    @MainActor
     private final class Setup {
         let little = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: true)
         let browser = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: true)

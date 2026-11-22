@@ -21,8 +21,13 @@ struct SidebarView: View {
 
     @ObserveInjection var inject
 
-    /// Downloads transition state
+    /// Downloads transition state: how far a drag moves the sidebar between
+    /// the downloads and the first space (see `DownloadsDrag`).
     @State private var dragOffset: CGFloat = 0
+    /// True while the drag lasts; SwiftUI puts it back to false when the drag
+    /// ends and also when it is cancelled (a tab dragged out, the window
+    /// losing the mouse), when `onEnded` never comes.
+    @GestureState private var isDragging = false
 
     /// Trackpad and Magic Mouse swipes, all handled here (the pager has no
     /// swipe of its own): one swipe changes space with a short animation;
@@ -77,6 +82,20 @@ struct SidebarView: View {
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { swipeArea.frame = $0 }
         .onChange(of: selectedContainerIndex, initial: true) { _, index in
             swipeArea.selectedIndex = index
+            resetDrag("change of space") // not shown
+        }
+        .onChange(of: isShowingDownloads) {
+            resetDrag("downloads shown or hidden") // not shown
+        }
+        .onChange(of: isDragging) { _, dragging in
+            guard !dragging else { return }
+            // After `onEnded`, if it comes: it settles the drag itself.
+            DispatchQueue.main.async {
+                guard !isDragging else { return }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                    resetDrag("drag cancelled") // not shown
+                }
+            }
         }
         .onChange(of: containers.map(\.id), initial: true) {
             swipeArea.containers = containers
@@ -90,6 +109,7 @@ struct SidebarView: View {
         }
         .onDisappear {
             swipeMonitor.stop()
+            dragOffset = 0
         }
         .modifier(TabSelectionKeys(tabManager: tabManager, window: window))
         .enableInjection()
@@ -144,10 +164,14 @@ struct SidebarView: View {
     /// Computes transition progress (0 = spaces visible, 1 = downloads visible)
     /// incorporating both the boolean state and any interactive drag offset.
     private func transitionProgress(for width: CGFloat) -> CGFloat {
-        let base: CGFloat = isShowingDownloads ? 1.0 : 0.0
-        // dragOffset > 0 means dragging right (toward spaces), < 0 means dragging left (toward downloads)
-        let dragContribution = -dragOffset / max(width, 1)
-        return min(1, max(0, base + dragContribution))
+        DownloadsDrag.progress(showingDownloads: isShowingDownloads, offset: dragOffset, width: width)
+    }
+
+    /// Puts the sidebar back on a whole page when a drag left it between two.
+    private func resetDrag(_ reason: String) {
+        guard dragOffset != 0 else { return }
+        DownloadsDrag.logReset(reason, offset: dragOffset)
+        dragOffset = 0
     }
 
     // MARK: - Gesture
@@ -156,49 +180,32 @@ struct SidebarView: View {
     /// swipe-to-enter (left swipe from first container).
     private func downloadsNavigationGesture(width: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 30)
+            .updating($isDragging) { _, dragging, _ in dragging = true }
             .onChanged { value in
-                if isShowingDownloads {
-                    // Swipe right to dismiss downloads
-                    if value.translation.width > 0 {
-                        dragOffset = value.translation.width
-                    }
-                } else if selectedContainerIndex == 0 {
-                    // Swipe left from first container to show downloads
-                    if value.translation.width < 0 {
-                        dragOffset = value.translation.width
-                    }
-                }
+                dragOffset = DownloadsDrag.offset(
+                    translation: value.translation.width,
+                    showingDownloads: isShowingDownloads,
+                    selectedIndex: selectedContainerIndex
+                )
             }
             .onEnded { value in
-                let threshold = width * 0.25
-                if isShowingDownloads {
-                    if value.translation.width > threshold
-                        || value.predictedEndTranslation.width > threshold * 2
-                    {
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
-                            downloadManager.isShowingDownloadsHistory = false
-                            dragOffset = 0
-                        }
-                    } else {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                            dragOffset = 0
-                        }
+                let outcome = DownloadsDrag.outcome(
+                    translation: value.translation.width,
+                    predictedTranslation: value.predictedEndTranslation.width,
+                    width: width,
+                    showingDownloads: isShowingDownloads,
+                    selectedIndex: selectedContainerIndex
+                )
+                switch outcome {
+                case .showDownloads, .hideDownloads:
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
+                        downloadManager.isShowingDownloadsHistory = outcome == .showDownloads
+                        dragOffset = 0
                     }
-                } else if selectedContainerIndex == 0 {
-                    if -value.translation.width > threshold
-                        || -value.predictedEndTranslation.width > threshold * 2
-                    {
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
-                            downloadManager.isShowingDownloadsHistory = true
-                            dragOffset = 0
-                        }
-                    } else {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                            dragOffset = 0
-                        }
+                case .stay:
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
+                        dragOffset = 0
                     }
-                } else {
-                    dragOffset = 0
                 }
             }
     }

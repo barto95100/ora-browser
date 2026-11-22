@@ -191,12 +191,16 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         }
     }
 
-    /// In front again, with the keyboard where it was.
+    /// In front again, with the keyboard where it was (Ombre active: see
+    /// `LittleOmbreFrontGuard`): ordered explicitly above the browser window
+    /// in front of the current Space (ordering front alone left it below),
+    /// then made key.
     private func bringToFront() {
         guard !isClosed, !TestHost.isActive else { return }
         if window.isMiniaturized { window.deminiaturize(nil) }
+        let top = NSApp.orderedWindows.first { $0.isOnActiveSpace && BrowserWindows.browsing.contains($0) }
+        if let top { window.order(.above, relativeTo: top.windowNumber) }
         window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
     }
 
     /// The site as the title (never the page's own title alone).

@@ -18,13 +18,15 @@ struct FavTabItem: View {
 
     @State private var isHovering = false
 
+    /// The icon, `size` wide (see `FavoritesGridMetrics.iconSize`).
     @ViewBuilder
-    private var favicon: some View {
+    private func favicon(size: CGFloat) -> some View {
         if tab.faviconLocalFile != nil {
             LocalFavIcon(
                 faviconLocalFile: tab.faviconLocalFile,
                 textColor: Color(.white),
-                isGrayscale: !tab.isWebViewReady
+                isGrayscale: !tab.isWebViewReady,
+                size: size
             )
         } else if let favicon = tab.favicon, tab.isWebViewReady {
             AsyncImage(
@@ -33,19 +35,50 @@ struct FavTabItem: View {
                 image
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 20, height: 20)
+                    .frame(width: size, height: size)
             } placeholder: {
                 LocalFavIcon(
                     faviconLocalFile: tab.faviconLocalFile,
-                    textColor: Color(.white)
+                    textColor: Color(.white),
+                    size: size
                 )
             }
         } else {
             LocalFavIcon(
                 faviconLocalFile: tab.faviconLocalFile,
-                textColor: Color(.white)
+                textColor: Color(.white),
+                size: size
             )
         }
+    }
+
+    /// The icon with its badges, centered in a cell `height` tall: they grow
+    /// and shrink with it, the badges kept at the icon's corners.
+    private func content(height: CGFloat) -> some View {
+        let size = FavoritesGridMetrics.iconSize(forCellHeight: height)
+        let offset = FavoritesGridMetrics.badgeOffset(forIconSize: size)
+        return favicon(size: size)
+            // Next to the icon, like the other tabs: in the corner of the
+            // card it was cut by the rounded border.
+            .overlay(alignment: .bottomTrailing) {
+                if let badge = mediaBadge {
+                    Image(systemName: badge.symbolName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 8, height: 8)
+                        .foregroundColor(badge.color)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.6))
+                                .frame(width: 12, height: 12)
+                        )
+                        .help(badge.help)
+                        .offset(x: offset, y: offset)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                AgentTabBadge(tabID: tab.id).offset(x: offset, y: -offset)
+            }
     }
 
     /// Camera or microphone in use (red, grey when paused) before playing sound,
@@ -67,29 +100,11 @@ struct FavTabItem: View {
     }
 
     var body: some View {
-        ZStack {
-            favicon
-                // Next to the icon, like the other tabs: in the corner of the
-                // card it was cut by the rounded border.
-                .overlay(alignment: .bottomTrailing) {
-                    if let badge = mediaBadge {
-                        Image(systemName: badge.symbolName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 8, height: 8)
-                            .foregroundColor(badge.color)
-                            .background(
-                                Circle()
-                                    .fill(Color.black.opacity(0.6))
-                                    .frame(width: 12, height: 12)
-                            )
-                            .help(badge.help)
-                            .offset(x: 7, y: 7)
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    AgentTabBadge(tabID: tab.id).offset(x: 7, y: -7)
-                }
+        // The cell the grid gives (see `FavoritesGridLayout`), read in the
+        // same layout pass: no jump while the sidebar is resized.
+        GeometryReader { proxy in
+            content(height: proxy.size.height)
+                .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .onAppear {
             if tabManager.isActive(tab) {
@@ -103,8 +118,7 @@ struct FavTabItem: View {
             }
         }
         .foregroundColor(theme.foreground)
-        .frame(height: 48)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .opacity(isDragging ? 0.0 : 1.0)
         .background(backgroundColor)
         .cornerRadius(10)

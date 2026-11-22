@@ -52,8 +52,9 @@ struct DownloadsDragTests {
         }
     }
 
-    /// The defect: a drag cancelled halfway kept its offset, and the sidebar
-    /// stayed half downloads, half spaces.
+    /// What the sidebar showed in the defect: an offset kept by a drag
+    /// cancelled halfway puts it half on the downloads, half on the spaces.
+    /// (The reset itself is the view's, checked by the manual tests.)
     @Test func anOffsetLeftByADragIsBetweenPages() {
         let half = DownloadsDrag.progress(showingDownloads: false, offset: -width / 2, width: width)
         #expect(half == 0.5)

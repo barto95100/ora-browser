@@ -142,6 +142,8 @@ extension LittleOmbreWindow {
     /// Its page went to a tab: the browser window shows, for every Little
     /// Ombre that hid it.
     func showBrowserWindow() {
+        // Shown on purpose: no longer given the front back.
+        frontGuard?.stop()
         guard let browserWindow else { return }
         Self.shownForATab.add(browserWindow)
         for little in Self.openWindows where little.browserWindow === browserWindow {
@@ -172,6 +174,9 @@ extension LittleOmbreWindow {
     /// Little Ombre hid it.
     static func browserWindowNeeded(_ browserWindow: NSWindow) {
         shownForATab.add(browserWindow)
+        for little in openWindows where little.browserWindow === browserWindow {
+            little.frontGuard?.stop()
+        }
         guard held(browserWindow) != nil else { return }
         for little in openWindows where little.browserWindow === browserWindow {
             little.hiddenBrowserWindow = nil

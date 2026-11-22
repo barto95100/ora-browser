@@ -28,6 +28,8 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     /// The page went to a tab: not torn down with the window.
     private var isMovedToTab = false
     private var isClosed = false
+    /// Keeps it in front just after a link from another app.
+    var frontGuard: LittleOmbreFrontGuard?
     private var observations: Set<AnyCancellable> = []
 
     static func isLittleOmbreWindow(_ window: NSWindow) -> Bool {
@@ -180,6 +182,23 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         }
     }
 
+    /// Opened for a link from another app: kept in front while the link's
+    /// handling and Ombre's activation settle (see `LittleOmbreFrontGuard`).
+    func keepInFrontAfterLink() {
+        frontGuard?.stop()
+        frontGuard = LittleOmbreFrontGuard(little: window, browserWindow: browserWindow) { [weak self] in
+            self?.bringToFront()
+        }
+    }
+
+    /// In front again, with the keyboard where it was.
+    private func bringToFront() {
+        guard !isClosed, !TestHost.isActive else { return }
+        if window.isMiniaturized { window.deminiaturize(nil) }
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+    }
+
     /// The site as the title (never the page's own title alone).
     private func updateTitle() {
         let site = PopupTitle.title(for: popup.page.currentURL)
@@ -209,6 +228,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         guard !model.isPageGone, let tabManager, let url = popup.page.currentURL ?? popup.address,
               let target = space ?? spaces.first(where: { $0.id == model.spaceID }) ?? tabManager.activeContainer
         else { return }
+        frontGuard?.stop()
         popup.sheets.dismiss()
         popup.cancelPermissionRequest()
         // The tab offers the passwords from now on.
@@ -297,6 +317,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         isClosed = true
+        frontGuard?.stop()
         observations.removeAll()
         popup.pageDidChange = nil
         popup.closeWindow = nil

@@ -130,6 +130,7 @@ private struct BrowserWindowRoot: View {
                    let little = LittleOmbreWindow.open(url, from: tabManager, window: window, in: ruleSpace)
                 {
                     LinkLog.notice("link opened in Little Ombre") // not shown
+                    little.keepInFrontAfterLink()
                     if let window, let appeared = windowAppearance {
                         hideIfMadeForTheLink(window, by: little, appearedFor: .now - appeared)
                     } else {

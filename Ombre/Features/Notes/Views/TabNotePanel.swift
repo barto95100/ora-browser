@@ -97,7 +97,7 @@ struct TabNotePanel: View {
                 Text(note?.title ?? String(localized: "Tab Note"))
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
-                Text(tab.title)
+                Text(tab.displayName)
                     .font(.system(size: 11))
                     .foregroundColor(theme.mutedForeground)
                     .lineLimit(1)

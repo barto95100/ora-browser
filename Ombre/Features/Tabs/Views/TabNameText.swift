@@ -10,6 +10,8 @@ struct TabNameText: View {
     let style: AnyShapeStyle
     @EnvironmentObject var tabManager: TabManager
     @State private var name = ""
+    /// Escape: the name stays as it was.
+    @State private var isCancelled = false
     @FocusState private var isNameFocused: Bool
 
     private var isRenaming: Bool {
@@ -24,13 +26,26 @@ struct TabNameText: View {
                 .font(font)
                 .focused($isNameFocused)
                 .onSubmit(endRenaming)
-                .onExitCommand { tabManager.renamingTabID = nil }
+                .onExitCommand {
+                    isCancelled = true
+                    tabManager.renamingTabID = nil
+                }
                 .onAppear {
                     name = tab.displayName
+                    isCancelled = false
                     DispatchQueue.main.async { isNameFocused = true }
                 }
                 .onChange(of: isNameFocused) { _, isFocused in
                     if !isFocused { endRenaming() }
+                }
+                // Another tab shown (a click elsewhere keeps the field's
+                // focus): the name typed is kept.
+                .onChange(of: tabManager.activeTab?.id) { endRenaming() }
+                // Gone for any other reason (the popover of a favorite
+                // closed, the floating sidebar hidden): kept too, unless
+                // Escape.
+                .onDisappear {
+                    if !isCancelled { tabManager.renameTab(tab, to: name) }
                 }
         } else {
             Text(tab.displayName)
@@ -41,7 +56,7 @@ struct TabNameText: View {
     }
 
     private func endRenaming() {
-        guard isRenaming else { return }
+        guard isRenaming, !isCancelled else { return }
         tabManager.renameTab(tab, to: name)
         tabManager.renamingTabID = nil
     }

@@ -61,7 +61,8 @@ struct TabSelectionKeys: ViewModifier {
         escape.start(window: { [weak target, weak manager] in
             // Tabs closed or moved away: nothing selected to clear, the
             // Escape goes on to the page.
-            manager?.selectedTabs.isEmpty == false ? target : nil
+            // A tab's name being edited: the Escape is its field's.
+            manager?.selectedTabs.isEmpty == false && manager?.renamingTabID == nil ? target : nil
         }, onEscape: { [weak manager] in
             manager?.clearTabSelection()
             Self.announce(count: 0)

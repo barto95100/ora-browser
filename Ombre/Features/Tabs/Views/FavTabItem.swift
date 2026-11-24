@@ -186,8 +186,8 @@ struct FavTabItem: View {
         }
     }
 
-    /// The rename popover closed from outside (Escape, a click elsewhere):
-    /// the name stays as it was.
+    /// The rename popover closed from outside (a click elsewhere): the name
+    /// typed is kept (see `TabNameText`), unless Escape.
     private var isRenamingBinding: Binding<Bool> {
         Binding(
             get: { tabManager.renamingTabID == tab.id },

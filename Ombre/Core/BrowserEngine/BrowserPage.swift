@@ -20,6 +20,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     /// Engine-internal: used by the delegate extensions. Outside the browser
     /// engine, go through the page API (`contentView`, `load`, …).
     let webView: WKWebView
+    /// The Web Inspector panel the Developer menu last opened (see
+    /// `WebInspector.action`).
+    private var inspectorPanel: WebInspector.Panel?
     private let messageNames: [String]
     // Navigation tracking, updated by the navigation delegate extension only.
     var originalURL: URL?
@@ -476,11 +479,16 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         !isPrivate
     }
 
-    /// Opens the Web Inspector or its console for this page (View ›
-    /// Developer), only with the "Allow Web Inspector" setting.
+    /// Opens or closes the Web Inspector or its console for this page (View
+    /// › Developer, see `WebInspector.action`), only with the "Allow Web
+    /// Inspector" setting.
     func showWebInspector(_ panel: WebInspector.Panel) {
         guard BrowserEngine.shared.allowsInspection, Self.inspectsInOmbre(isPrivate: isPrivate) else { return }
-        WebInspector.show(panel, for: webView)
+        switch WebInspector.toggle(panel, for: webView, lastShown: inspectorPanel) {
+        case let .show(shown): inspectorPanel = shown
+        case .close: inspectorPanel = nil
+        case nil: break
+        }
     }
 
     deinit {

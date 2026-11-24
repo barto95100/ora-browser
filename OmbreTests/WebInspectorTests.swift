@@ -91,8 +91,8 @@ struct WebInspectorTests {
         }
     }
 
-    /// Fails when a macOS update takes `_inspector`, `show`, `showConsole` or
-    /// `isVisible` away: View › Developer would quietly do nothing.
+    /// Fails when a macOS update takes `_inspector`, `show`, `showConsole`,
+    /// `close` or `isVisible` away: View › Developer would quietly do nothing.
     @Test func webKitCanStillShowTheInspectorAndItsConsole() {
         #expect(WebInspector.canShowPanels)
     }
@@ -152,6 +152,21 @@ struct WebInspectorTests {
         #expect(!ShortcutOverrideMonitor.isInPage(NSTextField()))
         #expect(!ShortcutOverrideMonitor.isInPage(nil))
         page.teardown()
+    }
+
+    /// ⌥⌘I and ⌥⌘C open and close the inspector, like Safari.
+    @Test func theDeveloperKeysOpenAndClose() {
+        // Closed: each opens its panel.
+        #expect(WebInspector.action(for: .inspector, isVisible: false, lastShown: nil) == .show(.inspector))
+        #expect(WebInspector.action(for: .console, isVisible: false, lastShown: .console) == .show(.console))
+        // Open: ⌥⌘I closes it, whatever it shows.
+        #expect(WebInspector.action(for: .inspector, isVisible: true, lastShown: .console) == .close)
+        #expect(WebInspector.action(for: .inspector, isVisible: true, lastShown: nil) == .close)
+        // Open on the console: ⌥⌘C closes it; on another panel: to the console.
+        #expect(WebInspector.action(for: .console, isVisible: true, lastShown: .console) == .close)
+        #expect(WebInspector.action(for: .console, isVisible: true, lastShown: .inspector) == .show(.console))
+        // Opened by "Inspect Element" (Ombre opened nothing): to the console.
+        #expect(WebInspector.action(for: .console, isVisible: true, lastShown: nil) == .show(.console))
     }
 
     @Test func javaScriptIsSetWithThePublicPreference() {

@@ -137,7 +137,7 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   dit une fois, sans plantage ; `GeolocationProviderTests` échoue alors (et vérifie la disposition de la structure C).
   **Quatrième exception tolérée** (décision de Ludo, 24/11/2026) : l'inspecteur web dans Ombre (`WebInspector`), avec le
   réglage « Autoriser l'inspecteur web » (sinon rien). Préférence `developerExtrasEnabled` (« Inspecter l'élément » au clic
-  droit, inspecteur ancré dans la fenêtre) et `_inspector` avec ses méthodes `show` / `showConsole` / `isVisible` (Présentation ›
+  droit, inspecteur ancré dans la fenêtre) et `_inspector` avec ses méthodes `show` / `showConsole` / `close` / `isVisible` (Présentation ›
   Développeur, ⌥⌘I et ⌥⌘C) : aucune API publique sur macOS (`isInspectable` ne sert qu'au menu Développement de Safari).
   Pas dans les fenêtres privées (l'inspecteur garde l'historique de sa console et ses réglages sur le disque) : là,
   seulement le menu Développement de Safari. Chacune n'est utilisée que si WebKit la connaît encore ;

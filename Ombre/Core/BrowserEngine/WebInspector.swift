@@ -8,9 +8,9 @@ import WebKit
 /// - The `developerExtrasEnabled` preference adds "Inspect Element" to the
 ///   page's context menu; the inspector opens docked in the window.
 /// - Not in private windows (see `BrowserPage.inspectsInOmbre`).
-/// - `_inspector` (`_WKInspector`) and its `show` and `showConsole` open it
-///   from the menu (View › Developer); `isVisible` tells whether it was
-///   open.
+/// - `_inspector` (`_WKInspector`) and its `show`, `showConsole` and `close`
+///   open and close it from the menu (View › Developer), as Safari's keys
+///   do; `isVisible` tells whether it is open.
 ///
 /// Each is used only if WebKit still has it: a macOS without them changes
 /// nothing and never crashes (the menu items do nothing then);
@@ -19,6 +19,24 @@ enum WebInspector {
     enum Panel {
         case inspector
         case console
+    }
+
+    /// What a Developer key does.
+    enum Action: Equatable {
+        case show(Panel)
+        case close
+    }
+
+    /// Like Safari: "Show Web Inspector" closes an open inspector; "Show
+    /// JavaScript Console" closes it when it shows the console (the last
+    /// panel Ombre opened: WebKit doesn't tell which tab it shows), and
+    /// goes to the console otherwise.
+    static func action(for panel: Panel, isVisible: Bool, lastShown: Panel?) -> Action {
+        guard isVisible else { return .show(panel) }
+        switch panel {
+        case .inspector: return .close
+        case .console: return lastShown == .console ? .close : .show(.console)
+        }
     }
 
     static let preferenceKey = "developerExtrasEnabled"
@@ -60,6 +78,25 @@ enum WebInspector {
         return inspectorClass.instancesRespond(to: selector(for: .inspector))
             && inspectorClass.instancesRespond(to: selector(for: .console))
             && inspectorClass.instancesRespond(to: visibleGetter)
+            && inspectorClass.instancesRespond(to: closeSelector)
+    }
+
+    private static let closeSelector = NSSelectorFromString("close")
+
+    /// Opens or closes the inspector for `panel` (see `action`); nil when
+    /// WebKit can't.
+    @MainActor @discardableResult
+    static func toggle(_ panel: Panel, for webView: WKWebView, lastShown: Panel?) -> Action? {
+        guard let inspector = inspector(of: webView) else { return nil }
+        let action = action(for: panel, isVisible: isVisible(inspector), lastShown: lastShown)
+        switch action {
+        case let .show(shown):
+            guard show(shown, for: webView) else { return nil }
+        case .close:
+            guard inspector.responds(to: closeSelector) else { return nil }
+            inspector.perform(closeSelector)
+        }
+        return action
     }
 
     /// Opens `panel` for the page; false when WebKit can't.

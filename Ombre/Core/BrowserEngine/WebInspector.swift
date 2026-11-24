@@ -29,8 +29,8 @@ enum WebInspector {
 
     /// Like Safari: "Show Web Inspector" closes an open inspector; "Show
     /// JavaScript Console" closes it when it shows the console (the last
-    /// panel Ombre opened: WebKit doesn't tell which tab it shows), and
-    /// goes to the console otherwise.
+    /// panel Ombre opened: WebKit doesn't tell which tab it shows, nor when
+    /// its own button closes it), and goes to the console otherwise.
     static func action(for panel: Panel, isVisible: Bool, lastShown: Panel?) -> Action {
         guard isVisible else { return .show(panel) }
         switch panel {
@@ -88,6 +88,8 @@ enum WebInspector {
     @MainActor @discardableResult
     static func toggle(_ panel: Panel, for webView: WKWebView, lastShown: Panel?) -> Action? {
         guard let inspector = inspector(of: webView) else { return nil }
+        // Any key stops the console's retries of the key before.
+        consoleRequests[ObjectIdentifier(webView), default: 0] += 1
         let action = action(for: panel, isVisible: isVisible(inspector), lastShown: lastShown)
         switch action {
         case let .show(shown):
@@ -110,10 +112,15 @@ enum WebInspector {
         // console asked for: asked again then (see `consoleRetries`). Also
         // when it is open: it may still be loading (⌥⌘I just before).
         if panel == .console {
+            let key = ObjectIdentifier(webView)
+            let request = consoleRequests[key, default: 0]
             Task { @MainActor [weak webView] in
+                defer { if webView == nil { consoleRequests[key] = nil } }
                 for delay in consoleRetries {
                     try? await Task.sleep(for: delay)
-                    guard let webView, let current = Self.inspector(of: webView), isVisible(current) else { return }
+                    guard let webView, consoleRequests[key, default: 0] == request,
+                          let current = Self.inspector(of: webView), isVisible(current)
+                    else { return }
                     current.perform(selector)
                 }
             }
@@ -125,6 +132,10 @@ enum WebInspector {
     /// load (a few tenths of a second, more on a first open), short enough
     /// not to undo a tab the user picks afterwards. Sent only while the
     /// inspector is open; on Console already, it changes nothing.
+    /// Counts the Developer keys per web view: the console's retries stop
+    /// at the next key.
+    @MainActor private static var consoleRequests: [ObjectIdentifier: Int] = [:]
+
     static let consoleRetries: [Duration] = [.milliseconds(400), .milliseconds(1200), .milliseconds(2500)]
 
     @MainActor

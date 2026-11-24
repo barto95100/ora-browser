@@ -301,6 +301,14 @@ private struct WindowPageCommands: ViewModifier {
                     tabManager.activeTab?.reload()
                 }
             }
+            .onNotification(.showWebInspector) { note in
+                guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                tabManager.activeTab?.browserPage?.showWebInspector(.inspector)
+            }
+            .onNotification(.showJavaScriptConsole) { note in
+                guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                tabManager.activeTab?.browserPage?.showWebInspector(.console)
+            }
         #if DEBUG
             .onNotification(.simulatePageCrash) { note in
                 Task { @MainActor in

@@ -149,7 +149,8 @@ struct GeneralSettingsView: View {
                 SettingsRow(
                     title: String(localized: "Allow Web Inspector"),
                     detail: String(
-                        localized: "Inspect pages from Safari's Develop menu (Safari › Settings › Advanced)."
+                        // swiftlint:disable:next line_length
+                        localized: "Inspect pages in Ombre: Inspect Element in a page's context menu, or View › Developer (Show Web Inspector, Show JavaScript Console)."
                     )
                 ) {
                     Toggle("", isOn: $settings.developerToolsEnabled).labelsHidden().toggleStyle(.switch)

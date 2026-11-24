@@ -135,6 +135,11 @@ décisions prises, les points ouverts et la liste des tests manuels à faire.
   avec les fonctions C de WebKit (`WKGeolocationManagerSetProvider`, `WKContextGetGeolocationManager`, etc.).
   Elles sont **résolues à l'exécution (`dlsym`), jamais liées** : si l'une manque, les sites sont refusés et Ombre le
   dit une fois, sans plantage ; `GeolocationProviderTests` échoue alors (et vérifie la disposition de la structure C).
+  **Quatrième exception tolérée** (décision de Ludo, 24/11/2026) : l'inspecteur web dans Ombre (`WebInspector`), avec le
+  réglage « Autoriser l'inspecteur web » (sinon rien). Préférence `developerExtrasEnabled` (« Inspecter l'élément » au clic
+  droit, inspecteur ancré dans la fenêtre) et `_inspector` avec ses méthodes `show` / `showConsole` (Présentation ›
+  Développeur, ⌥⌘I et ⌥⌘C) : aucune API publique sur macOS (`isInspectable` ne sert qu'au menu Développement de Safari).
+  Chacune n'est utilisée que si WebKit la connaît encore ; `WebInspectorTests` échoue sinon.
 
 ## Traduction (français / anglais, selon la langue du Mac)
 

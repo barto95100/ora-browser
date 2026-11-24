@@ -41,9 +41,10 @@ struct OmbreMigrationTests {
                 configurations: ModelConfiguration("OmbreData", schema: schema, url: url)
             )
             let context = ModelContext(old)
-            let space = TabContainer(name: "Work")
+            // V1's own classes (frozen), as that build stored them.
+            let space = OmbreSchemaV1.TabContainer(name: "Work")
             context.insert(space)
-            let folder = Folder(name: "Reading", isOpened: true, container: space)
+            let folder = OmbreSchemaV1.Folder(name: "Reading", isOpened: true, container: space)
             folder.order = 3
             context.insert(folder)
             try context.save()
@@ -102,6 +103,43 @@ struct OmbreMigrationTests {
         #expect(try context.fetch(FetchDescriptor<SpaceTask>()).map(\.title) == ["Task"])
         context.insert(TabGroup(spaceID: work.id, name: "example.com", kind: .site, tabIDs: tabs.map(\.id)))
         try context.save()
+    }
+
+    /// A database written by the build before tab names (`main` at
+    /// 482d060: a space, a folder, a pinned, a normal and a favorite tab, a
+    /// group, a history entry, a task), opened by this one: nothing lost,
+    /// every tab without a name of its own, and a name kept once given.
+    @Test func aDatabaseOfTheBuildBeforeTabNamesOpens() throws {
+        let fixture = try #require(Bundle(for: FixtureToken.self).url(
+            forResource: "OmbreData-v2",
+            withExtension: "sqlite"
+        ))
+        let url = try temporaryStore()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        try FileManager.default.copyItem(at: fixture, to: url)
+
+        do {
+            let context = try ModelContext(ModelConfiguration.createMainContainer(at: url))
+            let spaces = try context.fetch(FetchDescriptor<TabContainer>())
+            #expect(spaces.map(\.name) == ["Work"])
+            let tabs = try context.fetch(FetchDescriptor<Tab>(sortBy: [SortDescriptor(\.order)]))
+            #expect(tabs.map(\.title) == ["Page A", "Page B", "Other"])
+            #expect(tabs.map(\.type) == [.pinned, .normal, .fav])
+            #expect(tabs.allSatisfy { $0.customName == nil && $0.parentContainer?.name == "Work" })
+            #expect(tabs.map(\.displayName) == ["Page A", "Page B", "Other"])
+            let folder = try #require(context.fetch(FetchDescriptor<Folder>()).first)
+            #expect(folder.name == "Reading" && tabs.first?.folderID == folder.id)
+            #expect(try context.fetch(FetchDescriptor<TabGroup>()).map(\.tabIDs) == [[tabs[1].id]])
+            #expect(try context.fetch(FetchDescriptor<History>()).map(\.visitCount) == [2])
+            #expect(try context.fetch(FetchDescriptor<SpaceTask>()).map(\.title) == ["Task"])
+            tabs[1].customName = "My board"
+            try context.save()
+        }
+
+        let reopened = try ModelContext(ModelConfiguration.createMainContainer(at: url))
+        let tabs = try reopened.fetch(FetchDescriptor<Tab>(sortBy: [SortDescriptor(\.order)]))
+        #expect(tabs.map(\.customName) == [nil, "My board", nil])
+        #expect(tabs[1].displayName == "My board")
     }
 
     /// Opened twice at the new version: no migration the second time.

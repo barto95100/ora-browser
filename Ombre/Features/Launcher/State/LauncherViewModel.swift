@@ -253,7 +253,7 @@ class LauncherViewModel: ObservableObject {
             suggestions.append(
                 LauncherSuggestion(
                     type: .openedTab,
-                    title: tab.title,
+                    title: tab.displayName,
                     url: tab.url,
                     faviconURL: tab.favicon,
                     faviconLocalFile: tab.faviconLocalFile,

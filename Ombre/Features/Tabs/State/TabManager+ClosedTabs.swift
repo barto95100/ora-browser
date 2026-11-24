@@ -8,6 +8,7 @@ struct ClosedTabSnapshot {
     let url: URL
     let savedURL: URL?
     let title: String
+    let customName: String?
     let favicon: URL?
     let faviconLocalFile: URL?
     let createdAt: Date
@@ -23,6 +24,7 @@ struct ClosedTabSnapshot {
         url = tab.url
         savedURL = tab.savedURL
         title = tab.title
+        customName = tab.customName
         favicon = tab.favicon
         faviconLocalFile = tab.faviconLocalFile
         createdAt = tab.createdAt
@@ -64,6 +66,7 @@ extension TabManager {
         restoredTab.createdAt = snapshot.createdAt
         restoredTab.lastAccessedAt = snapshot.lastAccessedAt
         restoredTab.backgroundColorHex = snapshot.backgroundColorHex
+        restoredTab.customName = snapshot.customName
         activateTab(restoredTab)
         modelContext.saveOrLog("restore last tab")
     }

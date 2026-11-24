@@ -8,7 +8,7 @@ extension ModelConfiguration {
     }
 
     /// The models stored in the main database.
-    static let mainSchema = Schema(versionedSchema: OmbreSchemaV2.self)
+    static let mainSchema = Schema(versionedSchema: OmbreSchemaV3.self)
 
     /// The main database's configuration, stored at `url`.
     static func mainDatabase(at url: URL) -> ModelConfiguration {

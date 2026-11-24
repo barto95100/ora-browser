@@ -24,24 +24,27 @@ final class TabSearchingService: TabSearchingProviding {
         guard let activeContainerId = activeContainer?.id else { return [] }
         let trimmedText = text.trimmingCharacters(in: .whitespaces)
 
-        let predicate: Predicate<Tab>
-        if trimmedText.isEmpty {
-            predicate = #Predicate { tab in tab.parentContainer?.id == activeContainerId }
-        } else {
-            predicate = #Predicate { tab in
-                (tab.urlString.localizedStandardContains(trimmedText)
-                    || tab.title.localizedStandardContains(trimmedText))
-                    && tab.parentContainer?.id == activeContainerId
-            }
-        }
-
-        guard let results = try? modelContext.fetch(FetchDescriptor<Tab>(predicate: predicate)) else {
+        // The space's tabs, then those matching: by their name, their page's
+        // real title or their address (see `TabName`).
+        let predicate = #Predicate<Tab> { tab in tab.parentContainer?.id == activeContainerId }
+        guard var results = try? modelContext.fetch(FetchDescriptor<Tab>(predicate: predicate)) else {
             return []
+        }
+        if !trimmedText.isEmpty {
+            results = results.filter { tab in
+                tab.urlString.localizedStandardContains(trimmedText)
+                    || TabName.matches(trimmedText, customName: tab.customName, pageTitle: tab.title)
+            }
         }
         let query = trimmedText.lowercased()
         return Self.ranked(
             results,
-            match: { Self.scoreMatch(title: $0.title, url: $0.urlString, query: query) },
+            match: { tab in
+                max(
+                    Self.scoreMatch(title: tab.title, url: tab.urlString, query: query),
+                    tab.customName.map { Self.scoreMatch(title: $0, url: "", query: query) } ?? 0
+                )
+            },
             accessedAt: \.lastAccessedAt
         )
     }

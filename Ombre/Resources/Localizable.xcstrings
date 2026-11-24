@@ -136,6 +136,26 @@
         }
       }
     },
+    "Rename…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer…"
+          }
+        }
+      }
+    },
+    "Restore Page Name" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir le nom de la page"
+          }
+        }
+      }
+    },
     "Show JavaScript Console" : {
       "localizations" : {
         "fr" : {

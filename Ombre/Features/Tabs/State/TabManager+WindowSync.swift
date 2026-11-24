@@ -128,6 +128,9 @@ extension TabManager {
         if let renamingFolderID, goneFolderIDs.contains(renamingFolderID) {
             self.renamingFolderID = nil
         }
+        if let renamingTabID, goneTabs.contains(where: { $0.id == renamingTabID }) {
+            self.renamingTabID = nil
+        }
         replaceWhatWasGone(
             activeWasGone: activeWasGone, partner: partner, goneTabs: goneTabs, goneSpaceIDs: goneSpaceIDs
         )

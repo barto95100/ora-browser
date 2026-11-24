@@ -50,6 +50,9 @@ struct ImportedTab: Equatable, Sendable {
     var url: URL
     var title: String
     var faviconURL: URL?
+    /// The name the user gave the tab in the other browser (Arc's Rename):
+    /// the tab's name in Ombre (see `TabName`).
+    var name: String?
 }
 
 indirect enum ImportedPinnedItem: Equatable, Sendable {

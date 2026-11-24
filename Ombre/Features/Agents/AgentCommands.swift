@@ -150,7 +150,11 @@ struct AgentError: Error, Equatable {
 /// A tab as agents see it.
 struct AgentTab: Codable, Equatable {
     let id: String
+    /// The page's title.
     let title: String
+    /// The tab's name: the one the user gave it (Rename…), or else the
+    /// page's title (see `TabName`).
+    let name: String
     let address: String
     /// "normal", "pinned" or "favorite".
     let kind: String
@@ -295,7 +299,7 @@ enum AgentCommands {
         return lhs.order > rhs.order
     }
 
-    private static func agentTab(_ tab: Tab, in tabManager: TabManager) -> AgentTab {
+    static func agentTab(_ tab: Tab, in tabManager: TabManager) -> AgentTab {
         let kind = switch tab.type {
         case .fav: "favorite"
         case .pinned: "pinned"
@@ -304,6 +308,7 @@ enum AgentCommands {
         return AgentTab(
             id: tab.id.uuidString,
             title: tab.title,
+            name: tab.displayName,
             address: tab.url.absoluteString,
             kind: kind,
             active: tab.id == tabManager.activeTab?.id

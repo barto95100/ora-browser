@@ -90,6 +90,7 @@ extension TabManager {
             downloadManager: downloadManager
         )
         tab.savedURL = imported.url
+        tab.customName = imported.name
         return tab
     }
 }

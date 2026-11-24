@@ -59,7 +59,8 @@ struct ArcImporterTests {
         #expect(data.spaces.map(\.emoji) == ["💼", "🏠"])
         let work = data.spaces[0]
         #expect(try work.pinned == [
-            .tab(ImportedTab(url: #require(URL(string: "https://mail.example.com/")), title: "Mail")),
+            // Renamed in Arc: "Mail" is its name, "Inbox" its page's title.
+            .tab(ImportedTab(url: #require(URL(string: "https://mail.example.com/")), title: "Inbox", name: "Mail")),
             .folder(name: "Projects", isOpen: false, items: [
                 .tab(ImportedTab(url: #require(URL(string: "https://board.example.org/")), title: "Board"))
             ]),

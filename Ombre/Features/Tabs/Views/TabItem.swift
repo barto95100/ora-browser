@@ -181,6 +181,8 @@ struct TabItem: View {
         )
         .contentShape(ConditionallyConcentricRectangle(cornerRadius: 10))
         .onTapGesture {
+            // While its name is edited, a click is the field's.
+            guard tabManager.renamingTabID != tab.id else { return }
             // A ⌘- or ⇧-click selects (see `TabManager+Selection.swift`): the
             // tab isn't shown, its page not loaded.
             let isPlainClick = TabManager.SelectionClick(NSEvent.modifierFlags) == .plain
@@ -227,11 +229,12 @@ struct TabItem: View {
     }
 
     private var tabTitle: some View {
-        Text(tab.title)
-            .font(.system(size: 13, weight: usesGlass && isSelected ? .semibold : .regular))
+        TabNameText(
+            tab: tab,
+            font: .system(size: 13, weight: usesGlass && isSelected ? .semibold : .regular),
             // Over the desktop, macOS's vibrant label style keeps it legible.
-            .foregroundStyle(isTranslucent ? AnyShapeStyle(.primary) : AnyShapeStyle(textColor))
-            .lineLimit(1)
+            style: isTranslucent ? AnyShapeStyle(.primary) : AnyShapeStyle(textColor)
+        )
     }
 
     private var backgroundColor: Color {
@@ -294,6 +297,8 @@ struct TabItem: View {
         Button(action: onDuplicate) {
             Label("Duplicate Tab", systemImage: "doc.on.doc")
         }
+
+        TabRenameMenuItems(tab: tab)
 
         CopyTabAddressButton(tab: tab)
 

@@ -60,6 +60,8 @@ struct SplitTabItem: View {
         // One gesture for the whole row, like a tab row: gestures on each side
         // kept the row from being dragged.
         .onTapGesture { location in
+            // While a side's name is edited, a click is the field's.
+            guard tabManager.renamingTabID != left.id, tabManager.renamingTabID != right.id else { return }
             onSelect(location.x < rowWidth / 2 ? left : right)
         }
         .onHover { isHovering = $0 }
@@ -98,6 +100,9 @@ struct SplitTabItem: View {
                 systemImage: tab.type == .fav ? "star.slash" : "star"
             )
         }
+
+        // Each side has a name of its own: the side clicked.
+        TabRenameMenuItems(tab: tab)
 
         CopyTabAddressButton(tab: tab)
 
@@ -140,10 +145,11 @@ struct SplitTabItem: View {
             .overlay(alignment: .topLeading) {
                 AgentTabBadge(tabID: tab.id).offset(x: -5, y: -5)
             }
-            Text(tab.title)
-                .font(.system(size: 13, weight: usesGlass && isFocused ? .semibold : .regular))
-                .foregroundStyle(isTranslucent ? AnyShapeStyle(.primary) : AnyShapeStyle(textColor))
-                .lineLimit(1)
+            TabNameText(
+                tab: tab,
+                font: .system(size: 13, weight: usesGlass && isFocused ? .semibold : .regular),
+                style: isTranslucent ? AnyShapeStyle(.primary) : AnyShapeStyle(textColor)
+            )
             Spacer(minLength: 0)
             if hoveredTabID == tab.id {
                 ActionButton(icon: "xmark", color: textColor) { onClose(tab) }

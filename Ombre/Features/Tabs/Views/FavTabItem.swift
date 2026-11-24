@@ -139,6 +139,7 @@ struct FavTabItem: View {
                 : nil
         )
         .onTapGesture {
+            guard tabManager.renamingTabID != tab.id else { return }
             // A ⌘- or ⇧-click selects: the tab isn't shown, its page not loaded.
             let isPlainClick = TabManager.SelectionClick(NSEvent.modifierFlags) == .plain
             onTap()
@@ -153,6 +154,15 @@ struct FavTabItem: View {
             }
         }
         .onHover { isHovering = $0 }
+        // A favorite shows only its icon: its name on hover.
+        .help(tab.displayName)
+        // Rename…: its name in a small field below it (see `TabNameText`).
+        .popover(isPresented: isRenamingBinding, arrowEdge: .bottom) {
+            TabNameText(tab: tab, font: .system(size: 13), style: AnyShapeStyle(.primary))
+                .frame(width: 220)
+                .padding(10)
+                .environmentObject(tabManager)
+        }
         .tabAccessibility(
             tab: tab,
             isSelected: isSelected,
@@ -176,6 +186,17 @@ struct FavTabItem: View {
         }
     }
 
+    /// The rename popover closed from outside (Escape, a click elsewhere):
+    /// the name stays as it was.
+    private var isRenamingBinding: Binding<Bool> {
+        Binding(
+            get: { tabManager.renamingTabID == tab.id },
+            set: { isShown in
+                if !isShown, tabManager.renamingTabID == tab.id { tabManager.renamingTabID = nil }
+            }
+        )
+    }
+
     private var singleTabMenuItems: some View {
         Group {
             Button(action: onFavoriteToggle) {
@@ -185,6 +206,8 @@ struct FavTabItem: View {
             Button(action: onDuplicate) {
                 Label("Duplicate Tab", systemImage: "doc.on.doc")
             }
+
+            TabRenameMenuItems(tab: tab)
 
             CopyTabAddressButton(tab: tab)
 

@@ -84,7 +84,7 @@ struct ActiveTabMarkerPill: View {
                     .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .help(tab.title)
+                .help(tab.displayName)
                 .accessibilityLabel(Text(ActiveTabMarker.accessibilityLabel(edge)))
                 .transition(.opacity)
             }

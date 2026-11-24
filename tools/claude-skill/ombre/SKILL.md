@@ -37,8 +37,9 @@ ombre js <code> [-t id]             runs JavaScript (an async function's body; `
 ```
 
 `ombre tabs` answers an array of spaces, each
-`{"id", "name", "active", "tabs": [{"id", "title", "address", "kind", "active"}]}`
-(`kind`: `normal`, `pinned` or `favorite`). `read` answers
+`{"id", "name", "active", "tabs": [{"id", "title", "name", "address", "kind", "active"}]}`
+(`kind`: `normal`, `pinned` or `favorite`; `name`: the name the user gave the tab,
+or its `title`, the page's title). `read` answers
 `{"id", "title", "address", "text", "truncated"}` (the page's visible text, not
 its HTML); `js` answers `{"id", "title", "address", "result"}`.
 

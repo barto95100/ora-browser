@@ -38,6 +38,9 @@ class Tab: ObservableObject, Identifiable {
     var splitFraction: Double = 0.5
     /// Folder of the pinned section this tab is in (see `TabFolders`).
     var folderID: UUID?
+    /// The name the user gave the tab (Rename…), kept whatever the page's
+    /// title; nil: the page's title (see `TabName`).
+    var customName: String?
 
     /// Published so the sidebar's speaker icon follows playback.
     @Transient @Published var isPlayingMedia: Bool = false
@@ -623,6 +626,7 @@ extension Tab {
         note(\.splitRightTabID)
         note(\.splitFraction)
         note(\.folderID)
+        note(\.customName)
         note(\.parentContainer)
     }
 

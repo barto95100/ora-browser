@@ -19,6 +19,8 @@ class TabManager: ObservableObject {
     @Published var renamingFolderID: UUID?
     /// Tab group whose name the sidebar is editing.
     @Published var renamingGroupID: UUID?
+    /// Tab whose name the sidebar is editing (Rename…, see `TabNameText`).
+    @Published var renamingTabID: UUID?
     /// Changes with the groups (here or in another window): the sidebar reads
     /// them again.
     @Published var tabGroupsRevision = 0
@@ -362,6 +364,8 @@ class TabManager: ObservableObject {
             isPrivate: tab.isPrivate,
             loadSilently: true
         ) else { return }
+        // Its name too (see `TabName`).
+        newTab.customName = tab.customName
         // Right after the original, in the same section (a new tab's order
         // says nothing about its place: it may be below the original's).
         tab.container.placeTab(newTab, after: tab)

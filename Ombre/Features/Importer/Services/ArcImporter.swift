@@ -166,10 +166,12 @@ private final class ItemReader {
         guard let address = tab["savedURL"] as? String, let url = URL(string: address),
               let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https"
         else { return nil }
-        let title = customTitle.flatMap(\.nonBlank)
-            ?? (tab["savedTitle"] as? String).flatMap(\.nonBlank)
-            ?? url.host ?? address
-        return ImportedTab(url: url, title: title)
+        // A title given in Arc (Rename) is the tab's name; its title, the
+        // page's one.
+        let name = customTitle.flatMap(\.nonBlank)
+        let title = (tab["savedTitle"] as? String).flatMap(\.nonBlank)
+            ?? name ?? url.host ?? address
+        return ImportedTab(url: url, title: title, name: name)
     }
 }
 

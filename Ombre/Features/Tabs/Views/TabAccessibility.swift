@@ -36,7 +36,7 @@ extension View {
         actions: [(name: String, action: () -> Void)]
     ) -> some View {
         accessibilityElement(children: .ignore)
-            .accessibilityLabel(TabAccessibility.label(title: tab.title, url: tab.url))
+            .accessibilityLabel(TabAccessibility.label(title: tab.displayName, url: tab.url))
             .modifier(TabAccessibilityValue(tab: tab, isInSelection: isInSelection))
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
             .accessibilityAction(.default) { activate() }

@@ -22,6 +22,41 @@ struct HTTPFaviconTests {
         let withPort = try #require(URL(string: "http://intranet.example:8080/icon.png"))
         #expect(WebContentIconFetcher.origin(of: withPort) == URL(string: "http://intranet.example:8080/"))
         #expect(try WebContentIconFetcher.origin(of: #require(URL(string: "data:image/png;base64,AAAA"))) == nil)
+        let ipv6 = try #require(URL(string: "http://[fd00::1]:8080/favicon.ico"))
+        #expect(WebContentIconFetcher.origin(of: ipv6) == URL(string: "http://[fd00::1]:8080/"))
+    }
+
+    /// An `https` page's `http` icon is never fetched in clear.
+    @Test func anHTTPIconOfASecurePageGoesOverHTTPS() throws {
+        let page = try #require(URL(string: "https://example.com/"))
+        let candidate = PageIconCandidate(href: "http://example.com:80/icon.png", rel: "icon", sizes: "", type: "")
+        let urls = PageFaviconSelector.orderedIconURLs(from: [candidate], pageURL: page)
+        #expect(urls.first == URL(string: "https://example.com/icon.png"))
+        #expect(urls.allSatisfy { $0.scheme == "https" })
+        // An http page keeps its http icons.
+        let plain = try #require(URL(string: "http://minio.example/login"))
+        let plainURLs = PageFaviconSelector.orderedIconURLs(from: [candidate], pageURL: plain)
+        #expect(plainURLs.first == URL(string: "http://example.com:80/icon.png"))
+    }
+
+    /// When WebKit can't get it (a redirect to another origin), the icon
+    /// is tried over https.
+    @Test func anHTTPIconFallsBackToHTTPS() throws {
+        let icon = try #require(URL(string: "http://minio.example:80/favicon.ico"))
+        #expect(FaviconStore.secureVariant(of: icon) == URL(string: "https://minio.example/favicon.ico"))
+    }
+
+    /// A page that takes too long is given up, and the icons after it
+    /// don't wait behind it.
+    @Test func aSlowIconIsGivenUp() async throws {
+        let png = try #require(Self.pngData())
+        let icon = try #require(URL(string: "data:image/png;base64," + png.base64EncodedString()))
+        let origin = try #require(URL(string: "http://favicon-test.invalid/"))
+        // Shorter than starting a web content process.
+        let fetcher = WebContentIconFetcher(timeout: .milliseconds(1))
+
+        #expect(await fetcher.data(from: icon, origin: origin) == nil)
+        #expect(await fetcher.data(from: icon, origin: origin) == nil)
     }
 
     /// The defect: an `http` icon went to `URLSession`, refused by ATS.

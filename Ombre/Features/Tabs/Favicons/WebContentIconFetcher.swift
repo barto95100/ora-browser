@@ -25,6 +25,14 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
         await shared.data(from: iconURL)
     }
 
+    /// How long an icon may take, its page included: WebKit may suspend
+    /// a hidden page's timers, so the script's own limit is not enough.
+    private let timeout: Duration
+
+    init(timeout: Duration = .seconds(15)) {
+        self.timeout = timeout
+    }
+
     private var webView: WKWebView?
     private var loading: CheckedContinuation<Bool, Never>?
     /// One icon at a time: each changes the page's origin.
@@ -49,11 +57,41 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
         return await fetch.value
     }
 
+    /// Gives up after `timeout`: the web view goes (with what it was
+    /// doing), and the next icons don't wait behind this one.
     private func fetch(_ iconURL: URL, origin: URL?, maximumSize: Int) async -> Data? {
         release?.cancel()
         defer { scheduleRelease() }
         guard let origin else { return nil }
+        let answer = Answer()
+        var limit: Task<Void, Never>?
+        let data = await withCheckedContinuation { continuation in
+            answer.continuation = continuation
+            Task {
+                await answer.give(self.load(iconURL, origin: origin, maximumSize: maximumSize))
+            }
+            limit = Task { [timeout] in
+                try? await Task.sleep(for: timeout)
+                guard !Task.isCancelled, answer.isWaiting else { return }
+                Self.logger.notice("http icon not fetched: too long") // not shown
+                self.abandon()
+                answer.give(nil)
+            }
+        }
+        limit?.cancel()
+        return data
+    }
+
+    private func abandon() {
+        finishLoading(false)
+        webView?.stopLoading()
+        webView = nil
+    }
+
+    private func load(_ iconURL: URL, origin: URL, maximumSize: Int) async -> Data? {
         let webView = webView ?? makeWebView()
+        // One load at a time (the queue): a load still waiting is given up.
+        finishLoading(false)
         let loaded = await withCheckedContinuation { continuation in
             loading = continuation
             // Nothing is requested: the empty page takes the icon's origin, so
@@ -77,12 +115,15 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
 
     /// The scheme, host and port of `url`: the hidden page's address.
     static func origin(of url: URL) -> URL? {
-        guard let scheme = url.scheme, let host = url.host else { return nil }
-        var components = URLComponents()
-        components.scheme = scheme
-        components.host = host
-        components.port = url.port
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              components.scheme != nil, components.percentEncodedHost?.isEmpty == false
+        else { return nil }
+        // The host as written (an IPv6 address keeps its brackets).
+        components.user = nil
+        components.password = nil
         components.path = "/"
+        components.query = nil
+        components.fragment = nil
         return components.url
     }
 
@@ -96,6 +137,7 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
             credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer", signal: controller.signal
         });
         if (!response.ok) { return null; }
+        if (Number(response.headers.get("content-length")) > limit) { return null; }
         const bytes = new Uint8Array(await response.arrayBuffer());
         if (bytes.length === 0 || bytes.length > limit) { return null; }
         let binary = "";
@@ -114,6 +156,8 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
         configuration.websiteDataStore = .nonPersistent()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = false
         configuration.mediaTypesRequiringUserActionForPlayback = .all
+        // Hidden, it would be suspended: the icon would never come.
+        configuration.preferences.inactiveSchedulingPolicy = .none
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.customUserAgent = FaviconStore.userAgent
         webView.navigationDelegate = self
@@ -136,19 +180,42 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // Not from a web view given up (`abandon`).
+        guard webView === self.webView else { return }
         finishLoading(true)
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        // Not from a web view given up (`abandon`).
+        guard webView === self.webView else { return }
         finishLoading(false)
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        // Not from a web view given up (`abandon`).
+        guard webView === self.webView else { return }
         finishLoading(false)
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard webView === self.webView else { return }
         finishLoading(false)
-        if webView === self.webView { self.webView = nil }
+        self.webView = nil
+    }
+}
+
+/// The one answer of a fetch: from its work or from its time limit, the
+/// first to come.
+@MainActor
+private final class Answer {
+    var continuation: CheckedContinuation<Data?, Never>?
+
+    var isWaiting: Bool {
+        continuation != nil
+    }
+
+    func give(_ data: Data?) {
+        continuation?.resume(returning: data)
+        continuation = nil
     }
 }

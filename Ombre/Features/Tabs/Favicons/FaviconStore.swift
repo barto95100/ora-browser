@@ -113,8 +113,16 @@ actor FaviconStore {
 
     private func download(_ iconURL: URL) async -> Data? {
         if Self.needsWebContent(iconURL) {
-            return await webContentFetch(iconURL)
+            if let data = await webContentFetch(iconURL) { return data }
+            // Redirected to another origin (often to https), the page's
+            // fetch fails: the icon may well be there over https.
+            guard let secure = Self.secureVariant(of: iconURL) else { return nil }
+            return await sessionData(from: secure)
         }
+        return await sessionData(from: iconURL)
+    }
+
+    private func sessionData(from iconURL: URL) async -> Data? {
         do {
             let (data, response) = try await session.data(from: iconURL)
             if let http = response as? HTTPURLResponse, !(200 ..< 300).contains(http.statusCode) {
@@ -130,6 +138,13 @@ actor FaviconStore {
     /// (error -1022), not to web content.
     static func needsWebContent(_ iconURL: URL) -> Bool {
         iconURL.scheme?.lowercased() == "http"
+    }
+
+    static func secureVariant(of iconURL: URL) -> URL? {
+        guard var components = URLComponents(url: iconURL, resolvingAgainstBaseURL: false) else { return nil }
+        components.scheme = "https"
+        if components.port == 80 { components.port = nil }
+        return components.url
     }
 
     private func keep(_ data: Data, named name: String, at file: URL, isPrivate: Bool) -> URL? {

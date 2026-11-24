@@ -20,10 +20,15 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
     /// after the last icon.
     static let idleTime: Duration = .seconds(30)
 
-    /// What `FaviconStore` calls for an `http` icon.
-    static func icon(from iconURL: URL) async -> Data? {
-        await shared.data(from: iconURL)
+    /// What `FaviconStore` calls for an `http` icon, or an `https` one
+    /// whose certificate the user accepted (`trusting`).
+    static func icon(from iconURL: URL, trusting accepted: AcceptedCertificate?) async -> Data? {
+        await shared.data(from: iconURL, trusting: accepted)
     }
+
+    /// The certificate trusted for the icon being fetched (one at a time):
+    /// any other untrusted one is refused, as macOS would.
+    private var accepted: AcceptedCertificate?
 
     /// How long an icon may take, its page included: WebKit may suspend
     /// a hidden page's timers, so the script's own limit is not enough.
@@ -46,11 +51,14 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
     func data(
         from iconURL: URL,
         origin: URL? = nil,
+        trusting accepted: AcceptedCertificate? = nil,
         maximumSize: Int = FaviconStore.maximumSize
     ) async -> Data? {
         let previous = queue
         let fetch = Task { () -> Data? in
             await previous?.value
+            self.accepted = accepted
+            defer { self.accepted = nil }
             return await self.fetch(iconURL, origin: origin ?? Self.origin(of: iconURL), maximumSize: maximumSize)
         }
         queue = Task { _ = await fetch.value }
@@ -195,6 +203,24 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
         // Not from a web view given up (`abandon`).
         guard webView === self.webView else { return }
         finishLoading(false)
+    }
+
+    /// Trusts the server only when it presents the certificate the user
+    /// accepted for this host; everything else as macOS decides.
+    func webView(
+        _ webView: WKWebView,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping @MainActor @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        let space = challenge.protectionSpace
+        if webView === self.webView, space.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let accepted, let trust = space.serverTrust,
+           accepted.trusts(host: space.host, digest: CertificateException.digest(of: trust))
+        {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } else {
+            completionHandler(.performDefaultHandling, nil)
+        }
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {

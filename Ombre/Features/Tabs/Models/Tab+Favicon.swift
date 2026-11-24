@@ -18,8 +18,13 @@ extension Tab {
         }
 
         let isPrivate = isPrivate
+        // Certificates the user accepted for this page (Continue anyway):
+        // its icons too, with those certificates only.
+        let exceptions = browserPage?.certificateExceptions ?? [:]
         Task { [weak self] in
-            let icon = await FaviconStore.shared.firstAvailableIcon(among: iconURLs, isPrivate: isPrivate)
+            let icon = await FaviconStore.shared.firstAvailableIcon(
+                among: iconURLs, isPrivate: isPrivate, certificateExceptions: exceptions
+            )
             // The tab may have moved to another site meanwhile.
             guard let self, faviconSiteHost == host else { return }
             favicon = icon?.icon

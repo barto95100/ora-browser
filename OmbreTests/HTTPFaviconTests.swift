@@ -65,7 +65,7 @@ struct HTTPFaviconTests {
         let directory = Self.directory()
         defer { try? FileManager.default.removeItem(at: directory) }
         let asked = Asked()
-        let store = FaviconStore(directory: directory) { url in
+        let store = FaviconStore(directory: directory) { url, _ in
             await asked.add(url)
             return png
         }
@@ -81,7 +81,7 @@ struct HTTPFaviconTests {
         let png = try #require(Self.pngData())
         let directory = Self.directory()
         defer { try? FileManager.default.removeItem(at: directory) }
-        let store = FaviconStore(directory: directory) { _ in png }
+        let store = FaviconStore(directory: directory) { _, _ in png }
         let icon = try #require(URL(string: "http://minio.example/favicon.ico"))
 
         let address = try #require(await store.localFile(for: icon, isPrivate: true))
@@ -94,7 +94,7 @@ struct HTTPFaviconTests {
     @Test func whatWebKitBringsMustStillBeAnIcon() async throws {
         let directory = Self.directory()
         defer { try? FileManager.default.removeItem(at: directory) }
-        let store = FaviconStore(directory: directory) { _ in Data("<html>login</html>".utf8) }
+        let store = FaviconStore(directory: directory) { _, _ in Data("<html>login</html>".utf8) }
         let icon = try #require(URL(string: "http://minio.example/favicon.ico"))
 
         #expect(await store.localFile(for: icon, isPrivate: false) == nil)
@@ -105,7 +105,7 @@ struct HTTPFaviconTests {
         let directory = Self.directory()
         defer { try? FileManager.default.removeItem(at: directory) }
         let asked = Asked()
-        let store = FaviconStore(directory: directory) { url in
+        let store = FaviconStore(directory: directory) { url, _ in
             await asked.add(url)
             return nil
         }

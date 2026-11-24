@@ -301,6 +301,15 @@ private struct WindowPageCommands: ViewModifier {
                     tabManager.activeTab?.reload()
                 }
             }
+            .onNotification(.showWebInspector) { note in
+                guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                // The page in front: a Peek's, or the tab's.
+                (tabManager.peek?.page ?? tabManager.activeTab?.browserPage)?.showWebInspector(.inspector)
+            }
+            .onNotification(.showJavaScriptConsole) { note in
+                guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                (tabManager.peek?.page ?? tabManager.activeTab?.browserPage)?.showWebInspector(.console)
+            }
         #if DEBUG
             .onNotification(.simulatePageCrash) { note in
                 Task { @MainActor in

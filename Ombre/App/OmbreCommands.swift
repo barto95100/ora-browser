@@ -10,6 +10,8 @@ struct OmbreCommands: Commands {
     /// Customized shortcuts show in the menus at once.
     @ObservedObject private var shortcuts = CustomKeyboardShortcutManager.shared
     @FocusedValue(\.isPeekOpen) private var isPeekOpen
+    /// The Developer menu follows "Allow Web Inspector".
+    @ObservedObject private var settings = SettingsStore.shared
 
     var body: some Commands {
         // The system's File › Close (⌘W too) goes: ⌘W is "Close Tab" only,
@@ -138,6 +140,19 @@ struct OmbreCommands: Commands {
                 NotificationCenter.default.post(name: .toggleFullURL, object: NSApp.keyWindow)
             }
             Divider()
+
+            Menu("Developer") {
+                Button("Show Web Inspector") {
+                    NotificationCenter.default.post(name: .showWebInspector, object: NSApp.keyWindow)
+                }
+                .keyboardShortcut(KeyboardShortcuts.Developer.webInspector.keyboardShortcut)
+
+                Button("Show JavaScript Console") {
+                    NotificationCenter.default.post(name: .showJavaScriptConsole, object: NSApp.keyWindow)
+                }
+                .keyboardShortcut(KeyboardShortcuts.Developer.javaScriptConsole.keyboardShortcut)
+            }
+            .disabled(!settings.developerToolsEnabled)
         }
 
         CommandMenu("Navigation") {

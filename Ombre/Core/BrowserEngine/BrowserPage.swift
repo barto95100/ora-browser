@@ -133,8 +133,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webConfiguration.websiteDataStore = profile.dataStore
         webConfiguration.allowsAirPlayForMediaPlayback = configuration.allowsAirPlayForMediaPlayback
         // Public preferences only (JavaScript is set per page below), except
-        // Picture in Picture (`PictureInPicturePreference`, the one private
-        // setting shipped) and the Debug-only inspector key (`applyInspection`).
+        // Picture in Picture (`PictureInPicturePreference`, a tolerated private
+        // setting shipped) and the Web Inspector's (`applyInspection`).
         PictureInPicturePreference.enable(in: webConfiguration.preferences)
         webConfiguration.preferences.javaScriptCanOpenWindowsAutomatically =
             configuration.allowsJavaScriptWindowsAutomatically
@@ -458,15 +458,29 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         webView.closeAllMediaPresentations(completionHandler: completion)
     }
 
-    /// Safari's Web Inspector, through the public `isInspectable` (its Develop
-    /// menu). Debug builds also get "Inspect Element" in the context menu,
-    /// a private preference.
+    /// The Web Inspector, with the "Allow Web Inspector" setting: in Ombre
+    /// ("Inspect Element" in the context menu, see `WebInspector`) and from
+    /// Safari's Develop menu (the public `isInspectable`).
     private func applyInspection() {
         let allowsInspection = BrowserEngine.shared.allowsInspection
         webView.isInspectable = allowsInspection
-        #if DEBUG
-            webView.configuration.preferences.setValue(allowsInspection, forKey: "developerExtrasEnabled")
-        #endif
+        WebInspector.allowInspectElement(
+            allowsInspection && Self.inspectsInOmbre(isPrivate: isPrivate),
+            in: webView.configuration.preferences
+        )
+    }
+
+    /// Not in private windows: the inspector keeps what is typed in its
+    /// console and its own settings on the disk, outside the page's data.
+    static func inspectsInOmbre(isPrivate: Bool) -> Bool {
+        !isPrivate
+    }
+
+    /// Opens the Web Inspector or its console for this page (View ›
+    /// Developer), only with the "Allow Web Inspector" setting.
+    func showWebInspector(_ panel: WebInspector.Panel) {
+        guard BrowserEngine.shared.allowsInspection, Self.inspectsInOmbre(isPrivate: isPrivate) else { return }
+        WebInspector.show(panel, for: webView)
     }
 
     deinit {

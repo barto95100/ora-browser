@@ -304,6 +304,24 @@ enum KeyboardShortcuts {
         )
     }
 
+    // MARK: - Developer
+
+    /// Only with Settings › General › "Allow Web Inspector" (see `WebInspector`).
+    enum Developer {
+        static let webInspector = KeyboardShortcutDefinition(
+            id: "developer.webInspector",
+            name: String(localized: "Show Web Inspector"),
+            category: String(localized: "Developer"),
+            defaultChord: KeyChord(keyEquivalent: .init("i"), modifiers: [.command, .option])
+        )
+        static let javaScriptConsole = KeyboardShortcutDefinition(
+            id: "developer.javaScriptConsole",
+            name: String(localized: "Show JavaScript Console"),
+            category: String(localized: "Developer"),
+            defaultChord: KeyChord(keyEquivalent: .init("c"), modifiers: [.command, .option])
+        )
+    }
+
     // MARK: - App
 
     enum App {
@@ -368,6 +386,9 @@ enum KeyboardShortcuts {
 
         // Zoom
         Zoom.zoomIn, Zoom.zoomOut, Zoom.reset,
+
+        // Developer
+        Developer.webInspector, Developer.javaScriptConsole,
 
         // App
         App.quit, App.hide, App.preferences, App.toggleSidebar, App.toggleToolbar

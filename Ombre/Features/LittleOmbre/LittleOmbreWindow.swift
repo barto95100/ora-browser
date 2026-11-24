@@ -128,13 +128,15 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
         observeNavigationCommands()
     }
 
-    /// Reload, Back and Forward from the menu, with their keys as the menu
+    /// Reload, Back, Forward and the Web Inspector from the menu, with their keys as the menu
     /// matches them (customized, and on any keyboard layout).
     private func observeNavigationCommands() {
         let commands: [(Notification.Name, @MainActor (LittleOmbreWindow) -> Void)] = [
             (.reloadPage, { $0.reload() }),
             (.goBack, { $0.goBack() }),
-            (.goForward, { $0.goForward() })
+            (.goForward, { $0.goForward() }),
+            (.showWebInspector, { $0.popup.page.showWebInspector(.inspector) }),
+            (.showJavaScriptConsole, { $0.popup.page.showWebInspector(.console) })
         ]
         for (name, command) in commands {
             NotificationCenter.default.publisher(for: name, object: window)

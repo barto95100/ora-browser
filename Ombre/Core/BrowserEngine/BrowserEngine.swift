@@ -49,8 +49,9 @@ final class BrowserEngine {
     /// Posted when `allowsInspection` changes: open pages follow it.
     static let inspectionDidChange = Notification.Name("BrowserEngine.inspectionDidChange")
 
-    /// Whether pages can be inspected with Safari's Web Inspector (Develop
-    /// menu): the "Allow Web Inspector" setting.
+    /// Whether pages can be inspected with the Web Inspector (in Ombre, see
+    /// `WebInspector`, and from Safari's Develop menu): the "Allow Web
+    /// Inspector" setting.
     var allowsInspection = false {
         didSet {
             guard allowsInspection != oldValue else { return }

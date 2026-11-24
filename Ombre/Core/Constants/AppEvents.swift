@@ -34,6 +34,9 @@ extension Notification.Name {
     static let findInPage = Notification.Name("FindInPage")
     static let toggleFullURL = Notification.Name("ToggleFullURL")
     static let reloadPage = Notification.Name("ReloadPage")
+    /// The Web Inspector of the key window's page (View › Developer).
+    static let showWebInspector = Notification.Name("ShowWebInspector")
+    static let showJavaScriptConsole = Notification.Name("ShowJavaScriptConsole")
     static let simulatePageCrash = Notification.Name("SimulatePageCrash") // Debug builds only
     static let goBack = Notification.Name("GoBack")
     static let goForward = Notification.Name("GoForward")

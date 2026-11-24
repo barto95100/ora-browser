@@ -126,6 +126,36 @@
         }
       }
     },
+    "Inspect pages in Ombre: Inspect Element in a page's context menu, or View › Developer (Show Web Inspector, Show JavaScript Console)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inspectez les pages dans Ombre : « Inspecter l’élément » dans le menu contextuel d’une page, ou Présentation › Développeur (Afficher l’inspecteur web, Afficher la console JavaScript)."
+          }
+        }
+      }
+    },
+    "Show JavaScript Console" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la console JavaScript"
+          }
+        }
+      }
+    },
+    "Show Web Inspector" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’inspecteur web"
+          }
+        }
+      }
+    },
     "agent.actions.app" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -5761,16 +5791,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Indigo"
-          }
-        }
-      }
-    },
-    "Inspect pages from Safari's Develop menu (Safari › Settings › Advanced)." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inspectez les pages depuis le menu Développement de Safari (Safari › Réglages › Avancés)."
           }
         }
       }

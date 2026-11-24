@@ -340,7 +340,8 @@ class SettingsStore: ObservableObject {
         didSet { defaults.set(passwordSavePromptsEnabled, forKey: passwordSavePromptsEnabledKey) }
     }
 
-    /// Pages can be inspected with Safari's Web Inspector. Off by default, like
+    /// Pages can be inspected with the Web Inspector, in Ombre (see
+    /// `WebInspector`) and from Safari's Develop menu. Off by default, like
     /// Safari's Develop menu; on in Debug builds.
     @Published var developerToolsEnabled: Bool {
         didSet {

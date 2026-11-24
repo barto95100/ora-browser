@@ -6,7 +6,9 @@ import UniformTypeIdentifiers
 
 /// Downloads page icons and keeps them on disk, one file per icon URL.
 ///
-/// Requests go without cookies and with Safari's user agent. Icons of private
+/// Requests go without cookies and with Safari's user agent; icons of `http`
+/// sites through WebKit (`WebContentIconFetcher`), which App Transport
+/// Security lets load them, unlike the app's own requests. Icons of private
 /// tabs stay in memory only, behind an `ombre-private-favicon:` address, and
 /// are forgotten when the last private window closes: browsing in private
 /// leaves nothing on the disk.
@@ -23,6 +25,8 @@ actor FaviconStore {
     /// is not kept.
     private var privateGeneration = 0
     private var downloads: [URL: Task<URL?, Never>] = [:]
+    /// Downloads an `http` icon (see `WebContentIconFetcher`).
+    private let webContentFetch: @Sendable (URL) async -> Data?
 
     /// Safari's full user agent (WebKit's prefix + `SafariUserAgent.current`).
     static let userAgent =
@@ -32,8 +36,12 @@ actor FaviconStore {
     /// Larger files are not icons.
     static let maximumSize = 1_000_000
 
-    init(directory: URL = FileManager.default.faviconDirectory) {
+    init(
+        directory: URL = FileManager.default.faviconDirectory,
+        webContentFetch: @escaping @Sendable (URL) async -> Data? = { await WebContentIconFetcher.icon(from: $0) }
+    ) {
         self.directory = directory
+        self.webContentFetch = webContentFetch
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpShouldSetCookies = false
         configuration.httpCookieAcceptPolicy = .never
@@ -94,20 +102,49 @@ actor FaviconStore {
     }
 
     private func fetch(_ iconURL: URL) async -> Data? {
+        guard let data = await download(iconURL),
+              !data.isEmpty, data.count <= Self.maximumSize, Self.isIconImage(data),
+              NSImage(data: data) != nil
+        else {
+            return nil
+        }
+        return data
+    }
+
+    private func download(_ iconURL: URL) async -> Data? {
+        if Self.needsWebContent(iconURL) {
+            if let data = await webContentFetch(iconURL) { return data }
+            // Redirected to another origin (often to https), the page's
+            // fetch fails: the icon may well be there over https.
+            guard let secure = Self.secureVariant(of: iconURL) else { return nil }
+            return await sessionData(from: secure)
+        }
+        return await sessionData(from: iconURL)
+    }
+
+    private func sessionData(from iconURL: URL) async -> Data? {
         do {
             let (data, response) = try await session.data(from: iconURL)
             if let http = response as? HTTPURLResponse, !(200 ..< 300).contains(http.statusCode) {
-                return nil
-            }
-            guard !data.isEmpty, data.count <= Self.maximumSize, Self.isIconImage(data),
-                  NSImage(data: data) != nil
-            else {
                 return nil
             }
             return data
         } catch {
             return nil
         }
+    }
+
+    /// Plain `http`: App Transport Security refuses it to `URLSession`
+    /// (error -1022), not to web content.
+    static func needsWebContent(_ iconURL: URL) -> Bool {
+        iconURL.scheme?.lowercased() == "http"
+    }
+
+    static func secureVariant(of iconURL: URL) -> URL? {
+        guard var components = URLComponents(url: iconURL, resolvingAgainstBaseURL: false) else { return nil }
+        components.scheme = "https"
+        if components.port == 80 { components.port = nil }
+        return components.url
     }
 
     private func keep(_ data: Data, named name: String, at file: URL, isPrivate: Bool) -> URL? {

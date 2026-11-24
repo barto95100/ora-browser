@@ -24,9 +24,10 @@ enum PageFaviconSelector {
     static func orderedIconURLs(from candidates: [PageIconCandidate], pageURL: URL) -> [URL] {
         let ranked = candidates
             .compactMap { candidate -> (url: URL, score: Int)? in
-                guard let url = URL(string: candidate.href, relativeTo: pageURL)?.absoluteURL,
-                      isFetchable(url)
+                guard let declared = URL(string: candidate.href, relativeTo: pageURL)?.absoluteURL,
+                      isFetchable(declared)
                 else { return nil }
+                let url = upgradedIfMixed(declared, pageURL: pageURL)
                 return (url, score(candidate, url: url))
             }
             .sorted { $0.score < $1.score }
@@ -73,6 +74,17 @@ enum PageFaviconSelector {
             .lowercased()
             .split(separator: " ")
             .compactMap { $0.split(separator: "x").first.flatMap { Int($0) } }
+    }
+
+    /// An `http` icon of an `https` page goes over `https`, as Safari
+    /// upgrades mixed content: never in clear for a secure page.
+    static func upgradedIfMixed(_ url: URL, pageURL: URL) -> URL {
+        guard pageURL.scheme?.lowercased() == "https", url.scheme?.lowercased() == "http",
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        else { return url }
+        components.scheme = "https"
+        if components.port == 80 { components.port = nil }
+        return components.url ?? url
     }
 
     private static func isFetchable(_ url: URL) -> Bool {

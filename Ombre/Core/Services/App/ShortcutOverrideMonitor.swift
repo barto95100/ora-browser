@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 
 /// Detects a second quick press of a shortcut that the app did not handle the
 /// first time (the page kept it, e.g. Cmd+S on Discord).
@@ -80,8 +81,12 @@ final class ShortcutOverrideMonitor {
             return false
         }
         // The Developer menu's keys never go to the page first, as in Safari:
-        // WebKit takes ⌥⌘C for ⌘C (Copy) and keeps it from the menu.
-        if Self.goesFirstToApp(chord, inspectorAllowed: SettingsStore.shared.developerToolsEnabled) {
+        // WebKit takes ⌥⌘C for ⌘C (Copy) and keeps it from the menu. Only
+        // from a page: elsewhere (the shortcut recorder, a text field) the
+        // menu gets them as usual.
+        if Self.isInPage(event.window?.firstResponder),
+           Self.goesFirstToApp(chord, inspectorAllowed: SettingsStore.shared.developerToolsEnabled)
+        {
             return NSApp.mainMenu?.performKeyEquivalent(with: event) == true
         }
         guard Self.isOverridable(chord), detector.keyPressed(chord, at: event.timestamp) else {
@@ -90,6 +95,16 @@ final class ShortcutOverrideMonitor {
 
         // Second quick press: straight to Ombre's menu, without going through the page.
         return NSApp.mainMenu?.performKeyEquivalent(with: event) == true
+    }
+
+    /// Whether the keyboard is in a web page.
+    static func isInPage(_ responder: NSResponder?) -> Bool {
+        var view = responder as? NSView
+        while let current = view {
+            if current is WKWebView { return true }
+            view = current.superview
+        }
+        return false
     }
 
     /// The shortcuts of View › Developer, while "Allow Web Inspector" is on.

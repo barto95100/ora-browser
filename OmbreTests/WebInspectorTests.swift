@@ -128,9 +128,30 @@ struct WebInspectorTests {
         }
         let inspector = KeyboardShortcuts.Developer.webInspector.defaultChord
         #expect(ShortcutOverrideMonitor.goesFirstToApp(inspector, inspectorAllowed: true, chord: { $0.defaultChord }))
+        // Customized: the new keys, no longer ⌥⌘C.
+        let custom = KeyChord(keyEquivalent: .init("j"), modifiers: [.command, .shift])
+        let customized: @MainActor (KeyboardShortcutDefinition) -> KeyChord = {
+            $0.id == KeyboardShortcuts.Developer.javaScriptConsole.id ? custom : $0.defaultChord
+        }
+        let console = KeyboardShortcuts.Developer.javaScriptConsole.defaultChord
+        #expect(ShortcutOverrideMonitor.goesFirstToApp(custom, inspectorAllowed: true, chord: customized))
+        #expect(!ShortcutOverrideMonitor.goesFirstToApp(console, inspectorAllowed: true, chord: customized))
         // Copy itself still goes to the page.
         let copy = KeyChord(keyEquivalent: .init("c"), modifiers: [.command])
         #expect(!ShortcutOverrideMonitor.goesFirstToApp(copy, inspectorAllowed: true, chord: { $0.defaultChord }))
+    }
+
+    /// Only from a page: the shortcut recorder and text fields get the keys
+    /// as usual.
+    @Test func theDeveloperKeysSkipAheadOnlyFromAPage() {
+        let page = makePage()
+        let child = NSView()
+        page.webView.addSubview(child)
+        #expect(ShortcutOverrideMonitor.isInPage(page.webView))
+        #expect(ShortcutOverrideMonitor.isInPage(child))
+        #expect(!ShortcutOverrideMonitor.isInPage(NSTextField()))
+        #expect(!ShortcutOverrideMonitor.isInPage(nil))
+        page.teardown()
     }
 
     @Test func javaScriptIsSetWithThePublicPreference() {

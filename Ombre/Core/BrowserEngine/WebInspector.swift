@@ -68,11 +68,11 @@ enum WebInspector {
         guard let inspector = inspector(of: webView) else { return false }
         let selector = selector(for: panel)
         guard inspector.responds(to: selector) else { return false }
-        let wasVisible = isVisible(inspector)
         inspector.perform(selector)
         // Opening, the inspector shows its last tab once loaded, over the
-        // console asked for: asked again then (see `consoleRetries`).
-        if panel == .console, !wasVisible {
+        // console asked for: asked again then (see `consoleRetries`). Also
+        // when it is open: it may still be loading (⌥⌘I just before).
+        if panel == .console {
             Task { @MainActor [weak webView] in
                 for delay in consoleRetries {
                     try? await Task.sleep(for: delay)
@@ -84,10 +84,11 @@ enum WebInspector {
         return true
     }
 
-    /// After the inspector opened for its console: long enough for it to
-    /// load (a few tenths of a second), short enough not to undo a tab the
-    /// user picks afterwards.
-    static let consoleRetries: [Duration] = [.milliseconds(400), .milliseconds(1200)]
+    /// After the console was asked for: long enough for the inspector to
+    /// load (a few tenths of a second, more on a first open), short enough
+    /// not to undo a tab the user picks afterwards. Sent only while the
+    /// inspector is open; on Console already, it changes nothing.
+    static let consoleRetries: [Duration] = [.milliseconds(400), .milliseconds(1200), .milliseconds(2500)]
 
     @MainActor
     private static func inspector(of webView: WKWebView) -> NSObject? {

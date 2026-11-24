@@ -258,7 +258,9 @@ final class TabBrowserPageDelegate: BrowserPageDelegate {
                let favicon = try? JSONDecoder().decode(PageFaviconMessage.self, from: Data(json.utf8))
             {
                 MainActor.assumeIsolated {
-                    tab.updateFavicon(from: favicon, pageURL: page.currentURL)
+                    tab.updateFavicon(
+                        from: favicon, pageURL: page.currentURL, certificateExceptions: page.certificateExceptions
+                    )
                 }
             }
         case "passwordManager":

@@ -42,6 +42,7 @@ struct CertificateFaviconTests {
             NSURLErrorServerCertificateUntrusted,
             NSURLErrorServerCertificateHasUnknownRoot,
             NSURLErrorServerCertificateHasBadDate,
+            NSURLErrorServerCertificateNotYetValid,
             NSURLErrorSecureConnectionFailed
         ] {
             #expect(FaviconStore.isCertificateError(NSError(domain: NSURLErrorDomain, code: code)))

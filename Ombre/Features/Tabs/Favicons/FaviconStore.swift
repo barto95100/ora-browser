@@ -136,7 +136,7 @@ actor FaviconStore {
         if let accepted {
             let data = await webContentFetch(iconURL, accepted)
             if data == nil {
-                let what = "not fetched with the certificate accepted" // not shown
+                let what = "not fetched (https, with the certificate accepted)" // not shown
                 log(iconURL, isPrivate: isPrivate, what)
             }
             return data
@@ -154,7 +154,7 @@ actor FaviconStore {
         } catch {
             // Without an exception for this host: no icon, never another way.
             if Self.isCertificateError(error) {
-                log(iconURL, isPrivate: isPrivate, "refused: certificate not trusted, no exception") // not shown
+                log(iconURL, isPrivate: isPrivate, "refused: TLS or certificate not trusted, no exception") // not shown
             }
             return nil
         }

@@ -81,7 +81,7 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
             limit = Task { [timeout] in
                 try? await Task.sleep(for: timeout)
                 guard !Task.isCancelled, answer.isWaiting else { return }
-                Self.logger.notice("http icon not fetched: too long") // not shown
+                Self.logger.notice("icon not fetched (web content): too long") // not shown
                 self.abandon()
                 answer.give(nil)
             }
@@ -116,7 +116,8 @@ final class WebContentIconFetcher: NSObject, WKNavigationDelegate {
             guard let encoded = value as? String else { return nil }
             return Data(base64Encoded: encoded)
         } catch {
-            Self.logger.notice("http icon not fetched: \(error.localizedDescription, privacy: .public)") // not shown
+            Self.logger
+                .notice("icon not fetched (web content): \(error.localizedDescription, privacy: .public)") // not shown
             return nil
         }
     }

@@ -3,7 +3,12 @@ import Foundation
 @MainActor
 extension Tab {
     /// Shows the icon the page declares, like Safari (from the page script).
-    func updateFavicon(from message: PageFaviconMessage, pageURL: URL?) {
+    /// `certificateExceptions`: those of the page that sent the icons.
+    func updateFavicon(
+        from message: PageFaviconMessage,
+        pageURL: URL?,
+        certificateExceptions exceptions: [String: String] = [:]
+    ) {
         guard let pageURL, let host = pageURL.host else { return }
 
         // Another site: don't keep showing the previous site's icon meanwhile.
@@ -20,7 +25,6 @@ extension Tab {
         let isPrivate = isPrivate
         // Certificates the user accepted for this page (Continue anyway):
         // its icons too, with those certificates only.
-        let exceptions = browserPage?.certificateExceptions ?? [:]
         Task { [weak self] in
             let icon = await FaviconStore.shared.firstAvailableIcon(
                 among: iconURLs, isPrivate: isPrivate, certificateExceptions: exceptions

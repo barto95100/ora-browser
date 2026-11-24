@@ -75,15 +75,32 @@ final class ShortcutOverrideMonitor {
     /// Whether the press was sent straight to Ombre's menu (and must not reach the page).
     private func forwardsToApp(_ event: NSEvent) -> Bool {
         guard event.modifierFlags.contains(.command), !event.isARepeat,
-              let chord = KeyChord(fromEvent: event),
-              Self.isOverridable(chord),
-              detector.keyPressed(chord, at: event.timestamp)
+              let chord = KeyChord(fromEvent: event)
         else {
+            return false
+        }
+        // The Developer menu's keys never go to the page first, as in Safari:
+        // WebKit takes ⌥⌘C for ⌘C (Copy) and keeps it from the menu.
+        if Self.goesFirstToApp(chord, inspectorAllowed: SettingsStore.shared.developerToolsEnabled) {
+            return NSApp.mainMenu?.performKeyEquivalent(with: event) == true
+        }
+        guard Self.isOverridable(chord), detector.keyPressed(chord, at: event.timestamp) else {
             return false
         }
 
         // Second quick press: straight to Ombre's menu, without going through the page.
         return NSApp.mainMenu?.performKeyEquivalent(with: event) == true
+    }
+
+    /// The shortcuts of View › Developer, while "Allow Web Inspector" is on.
+    static func goesFirstToApp(
+        _ chord: KeyChord,
+        inspectorAllowed: Bool,
+        chord current: @MainActor (KeyboardShortcutDefinition) -> KeyChord = { $0.currentChord }
+    ) -> Bool {
+        guard inspectorAllowed else { return false }
+        return [KeyboardShortcuts.Developer.webInspector, KeyboardShortcuts.Developer.javaScriptConsole]
+            .contains { current($0).isSameKeys(as: chord) }
     }
 
     static func isOverridable(_ chord: KeyChord) -> Bool {

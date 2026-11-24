@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 @testable import Ombre
 import Testing
@@ -90,8 +91,8 @@ struct WebInspectorTests {
         }
     }
 
-    /// Fails when a macOS update takes `_inspector`, `show` or `showConsole`
-    /// away: View › Developer would quietly do nothing.
+    /// Fails when a macOS update takes `_inspector`, `show`, `showConsole` or
+    /// `isVisible` away: View › Developer would quietly do nothing.
     @Test func webKitCanStillShowTheInspectorAndItsConsole() {
         #expect(WebInspector.canShowPanels)
     }
@@ -108,6 +109,28 @@ struct WebInspectorTests {
             )
             #expect(other == nil)
         }
+    }
+
+    /// WebKit took ⌥⌘C for ⌘C (Copy) before the menu: the Developer keys go
+    /// to the menu first, on any layout (a US or AZERTY Mac sends "ç" or
+    /// "©" for ⌥C, the same "c" without modifiers).
+    @Test func theDeveloperKeysGoToTheMenuBeforeThePage() throws {
+        for typed in ["ç", "©"] {
+            let event = try #require(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [.command, .option], timestamp: 0,
+                windowNumber: 0, context: nil, characters: typed, charactersIgnoringModifiers: "c",
+                isARepeat: false, keyCode: 8
+            ))
+            let chord = try #require(KeyChord(fromEvent: event))
+            #expect(ShortcutOverrideMonitor.goesFirstToApp(chord, inspectorAllowed: true, chord: { $0.defaultChord }))
+            // Setting off: the page gets them, as any key.
+            #expect(!ShortcutOverrideMonitor.goesFirstToApp(chord, inspectorAllowed: false, chord: { $0.defaultChord }))
+        }
+        let inspector = KeyboardShortcuts.Developer.webInspector.defaultChord
+        #expect(ShortcutOverrideMonitor.goesFirstToApp(inspector, inspectorAllowed: true, chord: { $0.defaultChord }))
+        // Copy itself still goes to the page.
+        let copy = KeyChord(keyEquivalent: .init("c"), modifiers: [.command])
+        #expect(!ShortcutOverrideMonitor.goesFirstToApp(copy, inspectorAllowed: true, chord: { $0.defaultChord }))
     }
 
     @Test func javaScriptIsSetWithThePublicPreference() {

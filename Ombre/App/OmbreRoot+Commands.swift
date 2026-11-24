@@ -303,11 +303,12 @@ private struct WindowPageCommands: ViewModifier {
             }
             .onNotification(.showWebInspector) { note in
                 guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                tabManager.activeTab?.browserPage?.showWebInspector(.inspector)
+                // The page in front: a Peek's, or the tab's.
+                (tabManager.peek?.page ?? tabManager.activeTab?.browserPage)?.showWebInspector(.inspector)
             }
             .onNotification(.showJavaScriptConsole) { note in
                 guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                tabManager.activeTab?.browserPage?.showWebInspector(.console)
+                (tabManager.peek?.page ?? tabManager.activeTab?.browserPage)?.showWebInspector(.console)
             }
         #if DEBUG
             .onNotification(.simulatePageCrash) { note in

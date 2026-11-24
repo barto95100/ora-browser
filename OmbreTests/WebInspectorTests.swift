@@ -31,7 +31,7 @@ struct WebInspectorTests {
 
     /// "Inspect Element" in the page's context menu (the private preference).
     private func inspectsElements(_ page: BrowserPage) -> Bool? {
-        page.webView.configuration.preferences.value(forKey: WebInspector.preferenceKey) as? Bool
+        WebInspector.inspectsElements(in: page.webView.configuration.preferences)
     }
 
     @Test func aPageIsNotInspectableWithTheSettingOff() {
@@ -43,16 +43,13 @@ struct WebInspectorTests {
         }
     }
 
-    /// In Release too ("Inspect Element" was Debug only).
     @Test func anOpenPageFollowsTheSetting() {
         withInspection(false) {
             let page = makePage()
             BrowserEngine.shared.allowsInspection = true
             #expect(page.webView.isInspectable)
-            #expect(inspectsElements(page) == true)
             BrowserEngine.shared.allowsInspection = false
             #expect(page.webView.isInspectable == false)
-            #expect(inspectsElements(page) == false)
             page.teardown()
         }
     }
@@ -73,9 +70,24 @@ struct WebInspectorTests {
         let preferences = WKPreferences()
         #expect(WebInspector.hasPreference(in: preferences))
         WebInspector.allowInspectElement(true, in: preferences)
-        #expect(preferences.value(forKey: WebInspector.preferenceKey) as? Bool == true)
+        #expect(WebInspector.inspectsElements(in: preferences) == true)
         WebInspector.allowInspectElement(false, in: preferences)
-        #expect(preferences.value(forKey: WebInspector.preferenceKey) as? Bool == false)
+        #expect(WebInspector.inspectsElements(in: preferences) == false)
+    }
+
+    /// In Release too ("Inspect Element" was Debug only), except in private
+    /// windows: Safari's Develop menu only there (the inspector in Ombre
+    /// would keep the console's history on the disk). The pages of these
+    /// tests are private: a regular one would write its data on the disk.
+    @Test func aPrivatePageIsNotInspectedInOmbre() {
+        #expect(BrowserPage.inspectsInOmbre(isPrivate: false))
+        #expect(!BrowserPage.inspectsInOmbre(isPrivate: true))
+        withInspection(true) {
+            let page = makePage()
+            #expect(page.webView.isInspectable)
+            #expect(inspectsElements(page) == false)
+            page.teardown()
+        }
     }
 
     /// Fails when a macOS update takes `_inspector`, `show` or `showConsole`

@@ -464,13 +464,22 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     private func applyInspection() {
         let allowsInspection = BrowserEngine.shared.allowsInspection
         webView.isInspectable = allowsInspection
-        WebInspector.allowInspectElement(allowsInspection, in: webView.configuration.preferences)
+        WebInspector.allowInspectElement(
+            allowsInspection && Self.inspectsInOmbre(isPrivate: isPrivate),
+            in: webView.configuration.preferences
+        )
+    }
+
+    /// Not in private windows: the inspector keeps what is typed in its
+    /// console and its own settings on the disk, outside the page's data.
+    static func inspectsInOmbre(isPrivate: Bool) -> Bool {
+        !isPrivate
     }
 
     /// Opens the Web Inspector or its console for this page (View ›
     /// Developer), only with the "Allow Web Inspector" setting.
     func showWebInspector(_ panel: WebInspector.Panel) {
-        guard BrowserEngine.shared.allowsInspection else { return }
+        guard BrowserEngine.shared.allowsInspection, Self.inspectsInOmbre(isPrivate: isPrivate) else { return }
         WebInspector.show(panel, for: webView)
     }
 

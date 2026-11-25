@@ -1,6 +1,7 @@
 import AppKit
 import CryptoKit
 import Foundation
+import os.log
 import ImageIO
 import UniformTypeIdentifiers
 
@@ -25,8 +26,10 @@ actor FaviconStore {
     /// is not kept.
     private var privateGeneration = 0
     private var downloads: [URL: Task<URL?, Never>] = [:]
-    /// Downloads an `http` icon (see `WebContentIconFetcher`).
-    private let webContentFetch: @Sendable (URL) async -> Data?
+    /// Downloads an icon through WebKit (see `WebContentIconFetcher`): an
+    /// `http` one, or an `https` one whose certificate the user accepted
+    /// for its host, trusting that certificate only.
+    private let webContentFetch: @Sendable (URL, AcceptedCertificate?) async -> Data?
 
     /// Safari's full user agent (WebKit's prefix + `SafariUserAgent.current`).
     static let userAgent =
@@ -38,7 +41,9 @@ actor FaviconStore {
 
     init(
         directory: URL = FileManager.default.faviconDirectory,
-        webContentFetch: @escaping @Sendable (URL) async -> Data? = { await WebContentIconFetcher.icon(from: $0) }
+        webContentFetch: @escaping @Sendable (URL, AcceptedCertificate?) async -> Data? = {
+            await WebContentIconFetcher.icon(from: $0, trusting: $1)
+        }
     ) {
         self.directory = directory
         self.webContentFetch = webContentFetch
@@ -56,9 +61,15 @@ actor FaviconStore {
     }
 
     /// The first of the icons that can be downloaded, with its local address.
-    func firstAvailableIcon(among iconURLs: [URL], isPrivate: Bool) async -> (icon: URL, file: URL)? {
+    /// `certificateExceptions`: the page's (`BrowserPage`), by host.
+    func firstAvailableIcon(
+        among iconURLs: [URL],
+        isPrivate: Bool,
+        certificateExceptions: [String: String] = [:]
+    ) async -> (icon: URL, file: URL)? {
         for iconURL in iconURLs {
-            if let file = await localFile(for: iconURL, isPrivate: isPrivate) {
+            let file = await localFile(for: iconURL, isPrivate: isPrivate, certificateExceptions: certificateExceptions)
+            if let file {
                 return (iconURL, file)
             }
         }
@@ -67,7 +78,7 @@ actor FaviconStore {
 
     /// A file for a regular tab, an `ombre-private-favicon:` address for a
     /// private one.
-    func localFile(for iconURL: URL, isPrivate: Bool) async -> URL? {
+    func localFile(for iconURL: URL, isPrivate: Bool, certificateExceptions: [String: String] = [:]) async -> URL? {
         let name = Self.fileName(for: iconURL)
         let file = isPrivate ? Self.privateAddress(name) : directory.appendingPathComponent(name)
         if isPrivate ? privateIcons[name] != nil : FileManager.default.fileExists(atPath: file.path) {
@@ -79,7 +90,8 @@ actor FaviconStore {
         }
         let generation = privateGeneration
         let download = Task { () -> URL? in
-            guard let data = await self.fetch(iconURL) else { return nil }
+            let accepted = AcceptedCertificate.for(iconURL, in: certificateExceptions)
+            guard let data = await self.fetch(iconURL, accepted: accepted, isPrivate: isPrivate) else { return nil }
             if isPrivate, generation != self.privateGeneration { return nil }
             return self.keep(data, named: name, at: file, isPrivate: isPrivate)
         }
@@ -101,8 +113,8 @@ actor FaviconStore {
         privateGeneration += 1
     }
 
-    private func fetch(_ iconURL: URL) async -> Data? {
-        guard let data = await download(iconURL),
+    private func fetch(_ iconURL: URL, accepted: AcceptedCertificate?, isPrivate: Bool) async -> Data? {
+        guard let data = await download(iconURL, accepted: accepted, isPrivate: isPrivate),
               !data.isEmpty, data.count <= Self.maximumSize, Self.isIconImage(data),
               NSImage(data: data) != nil
         else {
@@ -111,18 +123,28 @@ actor FaviconStore {
         return data
     }
 
-    private func download(_ iconURL: URL) async -> Data? {
+    private func download(_ iconURL: URL, accepted: AcceptedCertificate?, isPrivate: Bool) async -> Data? {
         if Self.needsWebContent(iconURL) {
-            if let data = await webContentFetch(iconURL) { return data }
+            if let data = await webContentFetch(iconURL, nil) { return data }
             // Redirected to another origin (often to https), the page's
             // fetch fails: the icon may well be there over https.
             guard let secure = Self.secureVariant(of: iconURL) else { return nil }
-            return await sessionData(from: secure)
+            return await sessionData(from: secure, isPrivate: isPrivate)
         }
-        return await sessionData(from: iconURL)
+        // A certificate the user accepted for this host (Continue anyway):
+        // `URLSession` would refuse it; WebKit trusts that one only.
+        if let accepted {
+            let data = await webContentFetch(iconURL, accepted)
+            if data == nil {
+                let what = "not fetched (https, with the certificate accepted)" // not shown
+                log(iconURL, isPrivate: isPrivate, what)
+            }
+            return data
+        }
+        return await sessionData(from: iconURL, isPrivate: isPrivate)
     }
 
-    private func sessionData(from iconURL: URL) async -> Data? {
+    private func sessionData(from iconURL: URL, isPrivate: Bool) async -> Data? {
         do {
             let (data, response) = try await session.data(from: iconURL)
             if let http = response as? HTTPURLResponse, !(200 ..< 300).contains(http.statusCode) {
@@ -130,8 +152,33 @@ actor FaviconStore {
             }
             return data
         } catch {
+            // Without an exception for this host: no icon, never another way.
+            if Self.isCertificateError(error) {
+                log(iconURL, isPrivate: isPrivate, "refused: TLS or certificate not trusted, no exception") // not shown
+            }
             return nil
         }
+    }
+
+    private static let logger = Logger(category: "Favicons")
+
+    private func log(_ iconURL: URL, isPrivate: Bool, _ what: String) {
+        let site = PageLog.site(iconURL, isPrivate: isPrivate)
+        Self.logger.notice("icon of \(site, privacy: .public) \(what, privacy: .public)") // not shown
+    }
+
+    /// A TLS failure about the server's certificate (untrusted, expired,
+    /// unknown root…).
+    static func isCertificateError(_ error: Error) -> Bool {
+        let error = error as NSError
+        guard error.domain == NSURLErrorDomain else { return false }
+        return [
+            NSURLErrorServerCertificateUntrusted,
+            NSURLErrorServerCertificateHasBadDate,
+            NSURLErrorServerCertificateHasUnknownRoot,
+            NSURLErrorServerCertificateNotYetValid,
+            NSURLErrorSecureConnectionFailed
+        ].contains(error.code)
     }
 
     /// Plain `http`: App Transport Security refuses it to `URLSession`

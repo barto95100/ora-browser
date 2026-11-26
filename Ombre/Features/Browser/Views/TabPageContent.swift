@@ -64,11 +64,21 @@ struct TabPageContent: View {
                         }
                     }
                     .overlay(alignment: .topTrailing) {
+                        // In the article while reader mode shows it, below its buttons.
                         if appState.showFinderIn == tab.id {
                             FindView(page: page)
-                                .padding(.top, 16)
+                                .padding(.top, page.reader.isShown ? 52 : 16)
                                 .padding(.trailing, 16)
                         }
+                    }
+                    // Find looked in the page or the article: it closes when
+                    // the other comes (⌘F looks in it).
+                    .onChange(of: page.reader.isShown) {
+                        guard appState.showFinderIn == tab.id else { return }
+                        appState.showFinderIn = nil
+                        // No marks left in either.
+                        FindController(webView: page.webView).clearMatches()
+                        if let reader = page.reader.webView { FindController(webView: reader).clearMatches() }
                     }
                     .overlay(alignment: .topTrailing) {
                         if let runtime, runtime.showsTranslationPanel {

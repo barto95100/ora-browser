@@ -7,7 +7,9 @@ import WebKit
 /// and the article shown over the page (⇧⌘R).
 ///
 /// Asked once per page loaded, when it has finished loading: a short look
-/// at its paragraphs, no timer and nothing more until the next page.
+/// at its paragraphs, nothing more until the next page. A page that changes
+/// its address without loading (history API, fragment) is another page too:
+/// asked again once, a moment later, when it has had time to show it.
 @MainActor
 @Observable
 final class PageReader {
@@ -24,6 +26,14 @@ final class PageReader {
 
     /// The page that was there when a look started: a later one answers for itself.
     @ObservationIgnored private var generation = 0
+    /// The page's address when last asked: a change without a load is
+    /// another page (WebKit reports it, no polling).
+    @ObservationIgnored private var address: URL?
+    /// After a change of address without a load: the page shows its new
+    /// content (most sites change it just before or after the address).
+    static var settleDelay: Duration = .milliseconds(800)
+    /// The reader's own web view while it shows the article (Find looks in it).
+    @ObservationIgnored weak var webView: WKWebView?
 
     static func canRead(_ url: URL?) -> Bool {
         url?.scheme == "https" || url?.scheme == "http"
@@ -33,12 +43,38 @@ final class PageReader {
     /// the keyboard back to the page.
     func pageCommitted(_ page: BrowserPage) {
         generation += 1
+        address = page.webView.url
         isAvailable = false
         isOpening = false
         close(page)
     }
 
     func pageFinished(_ page: BrowserPage) {
+        address = page.webView.url
+        ask(page)
+    }
+
+    /// The address changed: by a load (its commit follows and says so) or
+    /// within the page (`pushState`, `replaceState`, a fragment), which shows
+    /// another article or none. Reader mode closes; the address bar asks again.
+    func addressChanged(_ page: BrowserPage) {
+        let url = page.webView.url
+        guard let address, url != address else { return }
+        self.address = url
+        generation += 1
+        isAvailable = false
+        isOpening = false
+        close(page)
+        let current = generation
+        Task { [weak self, weak page] in
+            try? await Task.sleep(for: Self.settleDelay)
+            guard let self, let page, generation == current, !page.webView.isLoading else { return }
+            ask(page)
+        }
+    }
+
+    /// Whether the address bar offers it.
+    private func ask(_ page: BrowserPage) {
         guard !page.isExtensionPage, Self.canRead(page.currentURL) else { return }
         let current = generation
         call("return reader.isReadable();", in: page) { [weak self] value in // not shown
@@ -76,6 +112,7 @@ final class PageReader {
     func close(_ page: BrowserPage) {
         guard isShown else { return }
         article = nil
+        webView = nil
         guard let window = page.webView.window else { return }
         var responder = window.firstResponder as? NSView
         while let view = responder, !(view is ReaderPageWebView) {
@@ -83,6 +120,23 @@ final class PageReader {
         }
         if responder != nil || window.firstResponder === window {
             window.makeFirstResponder(page.webView)
+        }
+    }
+
+    /// ⌘+, ⌘− and ⌘0 while the article is shown: its text size (the "Aa"
+    /// button's), not the page's zoom. Whether it was shown.
+    func zoom(_ step: Int, settings: ReaderSettings = .shared) -> Bool {
+        guard isShown else { return false }
+        Self.changeTextSize(step, settings: settings)
+        return true
+    }
+
+    /// One size bigger (step > 0), smaller (< 0), or the default (0).
+    static func changeTextSize(_ step: Int, settings: ReaderSettings) {
+        switch step {
+        case 1...: settings.makeTextBigger()
+        case ..<0: settings.makeTextSmaller()
+        default: settings.resetTextSize()
         }
     }
 

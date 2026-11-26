@@ -203,6 +203,7 @@ struct ReaderStyleView: View {
 @MainActor
 final class ReaderWebViewCoordinator: NSObject, ObservableObject, WKNavigationDelegate, WKUIDelegate {
     private(set) var webView: ReaderPageWebView?
+    private weak var reader: PageReader?
     var article: ReaderArticle?
     /// The style asked for, and the one the shown document has.
     var style: ReaderDocument.Style?
@@ -240,6 +241,7 @@ final class ReaderWebViewCoordinator: NSObject, ObservableObject, WKNavigationDe
         webView.allowsMagnification = true
         webView.isHidden = true
         self.webView = webView
+        reader = page.reader
         return webView
     }
 
@@ -323,6 +325,8 @@ final class ReaderWebViewCoordinator: NSObject, ObservableObject, WKNavigationDe
         applyStyle()
         webView.isHidden = false
         webView.window?.makeFirstResponder(webView)
+        // Find looks in it from now on (its article loaded).
+        reader?.webView = webView
     }
 
     static func withoutFragment(_ url: URL) -> URL? {

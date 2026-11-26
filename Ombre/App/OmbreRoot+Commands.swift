@@ -271,6 +271,9 @@ private struct WindowPageCommands: ViewModifier {
                           let page = tabManager.activeTab?.browserPage,
                           let step = note.userInfo?["step"] as? Int
                     else { return }
+                    // Reader mode in front: its text size, not the page's zoom.
+                    let front = tabManager.peek?.page ?? page
+                    if front.reader.zoom(step) { return }
                     page.pageZoom = PageZoom.level(after: page.pageZoom, step: step)
                 }
             }

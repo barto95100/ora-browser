@@ -219,12 +219,14 @@ final class PasswordAutofillCoordinator {
 
     func presentTriggerOverlay() {
         dismissWorkItem?.cancel()
+        guard ombreHandlesPasswords else { return clearAutofillState() }
         guard let overlay = host?.passwordTriggerOverlayState else { return }
         host?.passwordOverlayState = overlay
         setOverlayKeyboardActive(true)
     }
 
     func autofill(_ entry: SavedPasswordSummary, for overlay: PasswordAutofillOverlayState) {
+        guard ombreHandlesPasswords else { return clearAutofillState() }
         // On the main thread, like every other use of the coordinator.
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -322,7 +324,7 @@ final class PasswordAutofillCoordinator {
     }
 
     private func presentOverlay(for focus: PasswordBridgeFocusPayload, pageURL: URL?) {
-        let provider = providers.descriptor(for: settings.passwordManagerProvider)
+        let provider = providers.descriptor(for: settings.passwordManagerExtensionID)
         guard settings.passwordsEnabled,
               settings.passwordAutofillEnabled,
               provider.usesBuiltInOverlay,
@@ -366,9 +368,12 @@ final class PasswordAutofillCoordinator {
             pageOrigin: PasswordManagerService.normalizedOrigin(from: pageURL)
         )
 
-        host?.passwordTriggerOverlayState = overlayState
-        host?.passwordOverlayState = overlayState
-        setOverlayKeyboardActive(true)
+        // A password manager extension installed before: offered once, here.
+        PasswordManagerExtensionOffer.beforeOmbreOffers(on: presentationWindow(), resumes: false) { [weak self] in
+            self?.host?.passwordTriggerOverlayState = overlayState
+            self?.host?.passwordOverlayState = overlayState
+            self?.setOverlayKeyboardActive(true)
+        }
     }
 
     /// Whether the tab still shows the page the overlay was opened for.
@@ -396,7 +401,7 @@ final class PasswordAutofillCoordinator {
     }
 
     private func handleSubmit(_ payload: PasswordBridgeSubmitPayload, pageURL: URL?) {
-        let provider = providers.descriptor(for: settings.passwordManagerProvider)
+        let provider = providers.descriptor(for: settings.passwordManagerExtensionID)
         guard settings.passwordsEnabled,
               settings.passwordSavePromptsEnabled,
               provider.usesBuiltInVault,
@@ -453,9 +458,10 @@ final class PasswordAutofillCoordinator {
         }
 
         Task { @MainActor [weak self] in
-            PasswordManagerExtensionOffer.beforeSavePrompt(on: self?.presentationWindow()) { [weak self] in
-                self?.presentSavePrompt(prompt, normalizedHost: normalizedHost, saveAction: saveAction)
-            }
+            PasswordManagerExtensionOffer
+                .beforeOmbreOffers(on: self?.presentationWindow(), resumes: true) { [weak self] in
+                    self?.presentSavePrompt(prompt, normalizedHost: normalizedHost, saveAction: saveAction)
+                }
         }
     }
 
@@ -728,5 +734,13 @@ extension Tab: PasswordAutofillHost {
 
     func runPasswordScript(_ script: String) {
         evaluateJavaScript(script)
+    }
+}
+
+private extension PasswordAutofillCoordinator {
+    /// Ombre's menu, unless an extension handles the passwords (chosen since it showed).
+    var ombreHandlesPasswords: Bool {
+        PasswordManagerProviderRegistry.shared.descriptor(for: SettingsStore.shared.passwordManagerExtensionID)
+            .usesBuiltInOverlay
     }
 }

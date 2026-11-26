@@ -10,6 +10,26 @@
     " / %@" : {
 
     },
+    "%@ is no longer available: Ombre handles your passwords again." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est plus disponible : Ombre gère à nouveau vos mots de passe."
+          }
+        }
+      }
+    },
+    "%@ fills in and saves your passwords: Ombre stays out of its way." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ remplit et enregistre vos mots de passe : Ombre se met en retrait."
+          }
+        }
+      }
+    },
     "An extension" : {
       "localizations" : {
         "fr" : {
@@ -30,6 +50,26 @@
         }
       }
     },
+    "Keep Ombre’s Passwords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder les mots de passe d’Ombre"
+          }
+        }
+      }
+    },
+    "Kept in Ombre while %@ handles your passwords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardés dans Ombre pendant que %@ gère vos mots de passe."
+          }
+        }
+      }
+    },
     "Open hidden pages of its own" : {
       "localizations" : {
         "fr" : {
@@ -46,26 +86,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages des mots de passe…"
-          }
-        }
-      }
-    },
-    "Keep Offering" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continuer à proposer"
-          }
-        }
-      }
-    },
-    "Ombre can stop offering to save passwords, so they stay in %@. You can change this in Settings › Passwords." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ombre peut cesser de vous proposer d’enregistrer les mots de passe, pour qu’ils restent dans %@. Vous pourrez changer d’avis dans Réglages › Mots de passe."
           }
         }
       }
@@ -96,6 +116,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ombre a ajouté un complément à sa copie, pour : %@."
+          }
+        }
+      }
+    },
+    "passwords.extensionOffer.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ombre can let %@ fill in and save your passwords: Ombre then no longer offers to save them nor shows its menu under the fields. The passwords saved in Ombre stay in Settings › Passwords, where you can change this."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre peut laisser %@ remplir et enregistrer vos mots de passe : Ombre ne propose alors plus de les enregistrer et n’affiche plus son menu sous les champs. Les mots de passe enregistrés dans Ombre restent dans Réglages › Mots de passe, où vous pourrez changer d’avis."
           }
         }
       }
@@ -154,12 +191,12 @@
         }
       }
     },
-    "Stop Offering" : {
+    "Use %@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ne plus proposer"
+            "value" : "Utiliser %@"
           }
         }
       }
@@ -265,16 +302,6 @@
         }
       }
     },
-    "%@ integration coming soon." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Intégration de %@ bientôt disponible."
-          }
-        }
-      }
-    },
     "%@ is already the shortcut for “%@”. Change that one first." : {
       "localizations" : {
         "en" : {
@@ -303,16 +330,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ est bloqué · accessible dans %2$@"
-          }
-        }
-      }
-    },
-    "%@ is not yet integrated." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ n’est pas encore intégré."
           }
         }
       }

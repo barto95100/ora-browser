@@ -17,7 +17,7 @@ struct PasswordsSettingsView: View {
     @State private var pendingDelete: SavedPasswordSummary?
 
     private var selectedProvider: PasswordManagerProviderDescriptor {
-        providers.descriptor(for: settings.passwordManagerProvider)
+        providers.descriptor(for: settings.passwordManagerExtensionID)
     }
 
     private var selectedContainer: TabContainer? {
@@ -71,12 +71,12 @@ struct PasswordsSettingsView: View {
         SettingsCard {
             SettingsRow(
                 title: String(localized: "Password manager"),
-                detail: selectedProvider.summary,
-                detailIsWarning: !selectedProvider.isAvailable
+                detail: selectedProvider.summary
             ) {
-                Picker("", selection: $settings.passwordManagerProvider) {
+                // Ombre's, or a password manager extension installed and enabled.
+                Picker("", selection: providerBinding) {
                     ForEach(providers.providers) { provider in
-                        Text(provider.title).tag(provider.kind)
+                        Text(provider.title).tag(provider.id)
                     }
                 }
                 .pickerStyle(.menu)
@@ -87,7 +87,7 @@ struct PasswordsSettingsView: View {
             switchRow(String(localized: "Enable password manager"), isOn: $settings.passwordsEnabled)
             Divider()
             switchRow(String(localized: "Autofill on login forms"), isOn: $settings.passwordAutofillEnabled)
-                .disabled(!settings.passwordsEnabled)
+                .disabled(!settings.passwordsEnabled || !selectedProvider.usesBuiltInOverlay)
             Divider()
             switchRow(String(localized: "Auto-submit after autofill"), isOn: $settings.passwordAutofillSubmitEnabled)
                 .disabled(
@@ -107,12 +107,15 @@ struct PasswordsSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
 
-            if !selectedProvider.isAvailable {
-                Text("\(selectedProvider.title) is not yet integrated.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+    /// The menu's choice: Ombre's id, or the extension's.
+    private var providerBinding: Binding<String> {
+        Binding {
+            selectedProvider.id
+        } set: { id in
+            settings.passwordManagerExtensionID = id == PasswordManagerProviderDescriptor.ombreID ? nil : id
         }
     }
 
@@ -137,10 +140,9 @@ struct PasswordsSettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(selectedProvider
-                            .usesBuiltInVault ? String(localized: "Saved Credentials") : selectedProvider.title)
+                        Text(String(localized: "Saved Credentials"))
                             .font(.headline)
-                        if selectedProvider.usesBuiltInVault, isUnlocked {
+                        if isUnlocked {
                             Text("\(visibleEntries.count) items")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -149,16 +151,20 @@ struct PasswordsSettingsView: View {
 
                     Spacer()
 
-                    if selectedProvider.usesBuiltInVault, isUnlocked {
+                    if isUnlocked {
                         Button("Lock") {
                             lockVault()
                         }
                     }
                 }
 
+                // With an extension: Ombre's credentials stay, unused, until it is Ombre again.
                 if !selectedProvider.usesBuiltInVault {
-                    emptyState(message: String(localized: "\(selectedProvider.title) integration coming soon."))
-                } else if containers.isEmpty {
+                    Text("Kept in Ombre while \(selectedProvider.title) handles your passwords.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if containers.isEmpty {
                     emptyState(message: String(localized: "Create a space to start storing passwords."))
                 } else if isUnlocked {
                     spacePickerRow

@@ -18,6 +18,9 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     let id: String
     var source: Source
     var name: String
+    /// Its short name (`short_name`: "Bitwarden" for "Bitwarden Password
+    /// Manager"), as last loaded.
+    var shortName: String?
     /// The app that brings it, for a Safari extension.
     var appName: String?
     /// The developer team that signs a Safari extension: it must stay the
@@ -47,6 +50,11 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     var version: String?
     var installedAt: Date
 
+    /// Its short name, else its name: what Ombre calls it in a sentence.
+    var displayShortName: String {
+        shortName.flatMap { $0.isEmpty ? nil : $0 } ?? name
+    }
+
     init(id: String = UUID().uuidString, source: Source, name: String, appName: String?) {
         self.id = id
         self.source = source
@@ -70,6 +78,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         id = try container.decode(String.self, forKey: .id)
         source = try container.decode(Source.self, forKey: .source)
         name = try container.decode(String.self, forKey: .name)
+        shortName = try container.decodeIfPresent(String.self, forKey: .shortName)
         appName = try container.decodeIfPresent(String.self, forKey: .appName)
         signingTeam = try container.decodeIfPresent(String.self, forKey: .signingTeam)
         isEnabled = try container.decode(Bool.self, forKey: .isEnabled)

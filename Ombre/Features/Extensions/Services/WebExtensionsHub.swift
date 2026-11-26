@@ -11,12 +11,16 @@ enum WebExtensionsHub {
         return false
     }
 
-    /// The name of an enabled password manager extension, if there is one.
-    static var enabledPasswordManagerName: String? {
-        guard #available(macOS 15.4, *) else { return nil }
+    /// The password manager extensions installed and enabled: their id and short name.
+    static var passwordManagerExtensions: [(id: String, name: String)] {
+        guard #available(macOS 15.4, *) else { return [] }
         return WebExtensionsManager.shared.installed
-            .first { $0.record.isEnabled && PasswordManagerExtensionOffer.isPasswordManager($0.record.name) }?
-            .record.name
+            // Not one that failed to load (its app removed, another signature).
+            .filter {
+                $0.record.isEnabled && $0.loadError == nil && PasswordManagerExtensionOffer
+                    .isPasswordManager($0.record.name)
+            }
+            .map { ($0.record.id, $0.record.displayShortName) }
     }
 
     /// At launch, before the first page: pages get the extension controller.

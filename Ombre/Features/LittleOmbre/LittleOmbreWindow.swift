@@ -148,6 +148,15 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
                 }
                 .store(in: &observations)
         }
+        // ⌘+, ⌘− and ⌘0: reader mode's text size while it shows the article.
+        NotificationCenter.default.publisher(for: .zoomPage, object: window)
+            .sink { [weak self] note in
+                MainActor.assumeIsolated {
+                    guard let self, let step = note.userInfo?["step"] as? Int else { return }
+                    _ = self.popup.page.reader.zoom(step)
+                }
+            }
+            .store(in: &observations)
     }
 
     /// Smaller than a browser window, centered on the screen in front.

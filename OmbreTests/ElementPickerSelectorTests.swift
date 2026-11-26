@@ -116,12 +116,13 @@ struct ElementPickerSelectorTests {
         #expect(value as? [String] == ["p#text", "div#inner", "div#outer", "div#outer", "div#inner"])
     }
 
-    /// The lists' title: its own words, else the start of its text, else its kind.
+    /// The lists' title: its own name, else its kind; never its text (it can
+    /// be about the user).
     @Test func aNameAPersonWouldGive() async throws {
         let page = try await OffscreenPage("""
         <aside id="a" aria-label="Related stories"><p>One</p></aside>
         <div id="b" class="cs-sidebar__inner"><h2>  Most   read </h2><p>Text</p></div>
-        <div id="c"><p>A long paragraph of words that goes on well past the forty characters kept.</p></div>
+        <div id="c"><p>Hello Jane, you have 3 new messages.</p></div>
         <nav id="d"><img src="data:," alt=""></nav>
         <div id="e" role="complementary"></div>
         """)
@@ -134,8 +135,7 @@ struct ElementPickerSelectorTests {
         let names = try #require(value as? [[String]])
         #expect(names[0] == ["Related stories", "sidebar"])
         #expect(names[1] == ["Most read", ""])
-        #expect(names[2][0].hasPrefix("A long paragraph of words"))
-        #expect(names[2][0].hasSuffix("…") && names[2][0].count <= 40)
+        #expect(names[2] == ["", ""])
         #expect(names[3] == ["", "navigation"])
         #expect(names[4] == ["", "sidebar"])
     }

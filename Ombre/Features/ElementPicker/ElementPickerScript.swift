@@ -131,7 +131,8 @@ enum ElementPickerScript {
     }
 
     // What a person would call it, saved when it is hidden (it isn't shown
-    // afterwards): its own words, else the start of its text, else its kind.
+    // afterwards): its own name (label, title, heading, image text), else
+    // its kind. Never its text: it can be about the user ("Hello Jane").
     function words(text, limit) {
         const clean = (text || "").replace(/\s+/g, " ").trim();
         if (!clean) return null;
@@ -149,7 +150,7 @@ enum ElementPickerScript {
         if (heading && words(heading.textContent, 60)) return words(heading.textContent, 60);
         const image = element.localName === "img" ? element : null;
         if (image && words(image.getAttribute("alt"), 60)) return words(image.getAttribute("alt"), 60);
-        return words(element.innerText, 40);
+        return null;
     }
 
     const roleKinds = {

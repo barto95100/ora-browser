@@ -70,6 +70,31 @@ struct HiddenElementsTests {
         #expect(HiddenElement(selector: "div", label: "div.wrapper", date: .now).title != "div.wrapper")
     }
 
+    /// The first version kept the start of an element's text as its name
+    /// (it can be about the user): gone at the next launch, its kind instead;
+    /// names saved since stay.
+    @Test func namesFromTheTextAreForgotten() throws {
+        let defaults = try #require(UserDefaults(suiteName: "HiddenElementsTests-\(UUID().uuidString)"))
+        let stored = [space.uuidString: ["example.com": [
+            HiddenElement(selector: "nav", label: "nav", date: .now, name: "Hello Jane, 3 messages", kind: "navigation")
+        ]]]
+        try defaults.set(JSONEncoder().encode(stored), forKey: "hidden")
+
+        let store = HiddenElementsStore(defaults: defaults, storageKey: "hidden")
+        let element = try #require(store.elements(onSite: "example.com", in: space).first)
+        #expect(element.name == nil && element.title == HiddenElement.kindTitle("navigation"))
+        // Not on the disk either.
+        let saved = try #require(defaults.data(forKey: "hidden"))
+        #expect(saved.range(of: Data("Jane".utf8)) == nil)
+
+        store.hide(
+            HiddenElement(selector: "#a", label: "aside", date: .now, name: "Related stories", kind: "sidebar"),
+            onSite: "example.com", in: space
+        )
+        let relaunched = HiddenElementsStore(defaults: defaults, storageKey: "hidden")
+        #expect(relaunched.elements(onSite: "example.com", in: space).map(\.name) == [nil, "Related stories"])
+    }
+
     @Test func keptAcrossLaunches() throws {
         let (store, defaults) = try makeStore()
         store.hide(element("#ad"), onSite: "example.com", in: space)

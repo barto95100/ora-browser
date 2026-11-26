@@ -1,15 +1,37 @@
 import Foundation
 import os.log
+import WebKit
 
 private let logger = Logger(category: "FindController")
 
+/// Find in page, in the app's world: the page's own view, or reader mode's
+/// while it shows the article (`PageReader.webView`, JavaScript off for the
+/// page there, not for the app's scripts).
 @MainActor
 class FindController: NSObject {
-    let page: BrowserPage
+    private weak var webView: WKWebView?
 
     init(page: BrowserPage) {
-        self.page = page
+        webView = page.reader.webView ?? page.webView
         super.init()
+    }
+
+    init(webView: WKWebView) {
+        self.webView = webView
+        super.init()
+    }
+
+    private func evaluate(_ script: String, completion: ((Any?) -> Void)? = nil) {
+        guard let webView else {
+            completion?(nil)
+            return
+        }
+        webView.evaluateJavaScript(script, in: nil, in: BrowserPage.appWorld) { result in
+            if case let .failure(error) = result, completion == nil {
+                logger.error("Find: \(error.localizedDescription)")
+            }
+            completion?(try? result.get())
+        }
     }
 
     // MARK: - Inject mark.js
@@ -22,11 +44,7 @@ class FindController: NSObject {
             return
         }
 
-        page.evaluateJavaScript(jsCode) { _, error in
-            if let error {
-                logger.error("Error injecting mark.js: \(error.localizedDescription)")
-            }
-        }
+        evaluate(jsCode)
     }
 
     // MARK: - Highlight Text
@@ -79,7 +97,7 @@ class FindController: NSObject {
             });
         })();
         """
-        page.evaluateJavaScript(js)
+        evaluate(js)
     }
 
     // MARK: - Next Match
@@ -97,7 +115,7 @@ class FindController: NSObject {
             }
         })();
         """
-        page.evaluateJavaScript(js)
+        evaluate(js)
     }
 
     // MARK: - Previous Match
@@ -115,7 +133,7 @@ class FindController: NSObject {
             }
         })();
         """
-        page.evaluateJavaScript(js)
+        evaluate(js)
     }
 
     // MARK: - Clear All Matches
@@ -131,7 +149,7 @@ class FindController: NSObject {
             }
         })();
         """
-        page.evaluateJavaScript(js)
+        evaluate(js)
     }
 
     // MARK: - Count Matches
@@ -144,7 +162,7 @@ class FindController: NSObject {
                 : 0;
         })();
         """
-        page.evaluateJavaScript(js) { result, _ in
+        evaluate(js) { result in
             let count = result as? Int ?? 0
             completion(count)
         }
@@ -160,7 +178,7 @@ class FindController: NSObject {
                 : 0;
         })();
         """
-        page.evaluateJavaScript(js) { result, _ in
+        evaluate(js) { result in
             let index = result as? Int ?? 0
             completion(index)
         }
@@ -180,7 +198,7 @@ class FindController: NSObject {
             return { total: 0, current: 0 };
         })();
         """
-        page.evaluateJavaScript(js) { result, _ in
+        evaluate(js) { result in
             if let dict = result as? [String: Any],
                let total = dict["total"] as? Int,
                let current = dict["current"] as? Int

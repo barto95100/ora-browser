@@ -179,7 +179,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             // Address and title, including same-page navigations (history API,
             // fragments): WebKit reports them, no polling from the page needed.
             webView.observe(\.url) { [weak self] _, _ in
-                self?.notifyOnMain { $0.delegate?.browserPage($0, didChangeURL: $0.webView.url) }
+                self?.notifyOnMain {
+                    $0.reader.addressChanged($0)
+                    $0.delegate?.browserPage($0, didChangeURL: $0.webView.url)
+                }
             },
             webView.observe(\.title) { [weak self] _, _ in
                 self?.notifyOnMain { $0.delegate?.browserPage($0, didChangeTitle: $0.webView.title) }

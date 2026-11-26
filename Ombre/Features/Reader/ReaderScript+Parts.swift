@@ -137,4 +137,34 @@ extension ReaderScript {
         return time ? time.getAttribute("datetime") : null;
     }
     """#
+
+    /// What is never the article: boxes Wikipedia marks so, and edit links.
+    static let editLinksSource = #"""
+    // Marked by Wikipedia as not the article's text: boxes about the page
+    // ("upcoming election"), the summary box (its table of facts, before the
+    // introduction), navigation boxes, edit links.
+    const notArticle = /(^|\s)(metadata|noprint|infobox|navbox|navigation-only|mw-editsection)(\s|$)/;
+
+    // Edit links ("modifier", "edit", "modifier le code"…), alone in a
+    // heading or a block: the reader isn't where one edits it.
+    const editWords = new RegExp("^(" + [
+        "modifier", "modifier le code", "modifier le wikicode", "éditer", "edit", "edit source", "edit section",
+        "bearbeiten", "quelltext bearbeiten", "editar", "editar código", "editar código fuente", "modifica",
+        "modifica wikitesto"
+    ].join("|") + ")$", "i");
+
+    function isOnlyEditLinks(element) {
+        if (element.localName === "a" || element.textContent.length > 120) return false;
+        const links = Array.from(element.querySelectorAll("a"));
+        if (!links.length || !links.every(link => editWords.test(clean(link.textContent)))) return false;
+        // Nothing else but brackets and separators.
+        let rest = "";
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+            const link = text.parentElement && text.parentElement.closest("a");
+            if (!link || !element.contains(link)) rest += text.textContent;
+        }
+        return /^[\s\[\]|·•()\-–—]*$/.test(rest);
+    }
+    """#
 }

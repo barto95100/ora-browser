@@ -86,6 +86,10 @@ struct NotesPanel: View {
             pasteMonitor = nil
         }
         .onChange(of: text) { scheduleSave() }
+        // Already open: on the note asked for.
+        .onChange(of: appState.noteToOpen) { _, wanted in
+            if wanted != nil { load() }
+        }
         // Links of a note open in a new tab.
         .environment(\.openURL, OpenURLAction { url in
             tabManager.openTab(url: url, historyManager: historyManager, isPrivate: privacyMode.isPrivate)
@@ -221,10 +225,15 @@ struct NotesPanel: View {
     // MARK: - Actions
 
     private func load() {
+        let wanted = appState.noteToOpen?.standardizedFileURL.path
+        appState.noteToOpen = nil
         guard let space = tabManager.activeContainer else { return }
         let folder = store.folder(for: space.id, named: space.name)
         self.folder = folder
         notes = store.notes(in: folder)
+        if let wanted, let note = notes.first(where: { $0.url.standardizedFileURL.path == wanted }) {
+            return open(note)
+        }
         if let first = notes.first {
             open(first)
         }

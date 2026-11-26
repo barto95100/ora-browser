@@ -46,7 +46,8 @@ struct TabPageContent: View {
                         ReaderOverlay(page: page, context: ReaderContext(
                             isPrivate: tab.isPrivate,
                             spaceID: tab.container.id,
-                            spaceName: tab.container.name
+                            spaceName: tab.container.name,
+                            openNote: { appState.openNote($0) }
                         ))
                     }
                     .animation(.easeOut(duration: 0.15), value: page.reader.isShown)

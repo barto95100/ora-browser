@@ -16,7 +16,7 @@ enum ReaderScript {
     static let source = #"""
     (() => {
     if (window.__ombreReader) return;
-    """# + markdownSource + detailsSource + #"""
+    """# + markdownSource + detailsSource + editLinksSource + #"""
 
     const negative = new RegExp("(^|[-_ ])(" + [
         "comment", "comments", "meta", "footer", "footnotes", "sidebar", "widget", "share", "sharing", "social",
@@ -103,6 +103,21 @@ enum ReaderScript {
             if (score > bestScore) { best = element; bestScore = score; }
         }
         if (!best) return null;
+        // An article cut into sections, one per heading (Wikipedia's): all
+        // of them, the introduction before the first heading included. Only
+        // sections led by a heading, not comments or related stories.
+        const isHeaded = element => {
+            const first = element.firstElementChild;
+            return !!first && (/^h[2-6]$/.test(first.localName) || first.classList.contains("mw-heading"));
+        };
+        while (best.localName === "section" && isHeaded(best) && best.parentElement) {
+            const parent = best.parentElement;
+            if (parent === document.body || parent === document.documentElement) break;
+            const sections = Array.from(parent.children).filter(child => child !== best
+                && child.localName === "section" && isHeaded(child) && weight(child) >= 0 && child.querySelector("p"));
+            if (!sections.length) break;
+            best = parent;
+        }
         // A parent nearly as good holds more of it (title, figures, paragraphs in their own blocks).
         for (let step = 0; step < 3; step += 1) {
             const parent = best.parentElement;
@@ -176,6 +191,9 @@ enum ReaderScript {
         if (node.nodeType !== Node.ELEMENT_NODE) return;
         const tag = node.localName;
         if (dropped.has(tag) || node === bylineElement || isHidden(node)) return;
+        if (notArticle.test(hint(node)) || isOnlyEditLinks(node)) return;
+        // A heading's own edit link ("History [edit]").
+        if (tag === "a" && editWords.test(clean(node.textContent)) && node.closest("h1, h2, h3, h4, h5, h6")) return;
         // Share buttons, related stories, comments: little text or mostly links.
         if (weight(node) < 0 && node.querySelectorAll("img").length < 3) {
             const length = clean(node.textContent).length;
@@ -243,6 +261,11 @@ enum ReaderScript {
         for (const child of root.childNodes) rebuild(child, content, title);
         const text = clean(content.textContent);
         if (text.length < 200) return null;
+        // The contents: its headings, each with an anchor of the reader's own.
+        const headings = Array.from(content.querySelectorAll("h2, h3")).map((heading, index) => {
+            heading.setAttribute("id", "ombre-heading-" + (index + 1));
+            return { level: Number(heading.localName.slice(1)), text: clean(heading.textContent), id: heading.id };
+        }).filter(heading => heading.text);
         const images = Array.from(content.querySelectorAll("img")).map(image => image.getAttribute("src"));
         const words = text.split(" ").length;
         return {
@@ -255,6 +278,7 @@ enum ReaderScript {
             html: content.innerHTML,
             markdown: markdown(content, 0).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim(),
             images: Array.from(new Set(images)),
+            headings: headings,
             words: words
         };
     }

@@ -241,6 +241,77 @@ struct ReaderTests {
         #expect(decide(other.absoluteString, .linkActivated, false) == .cancel)
     }
 
+    /// A page cut into sections, one per heading, as Wikipedia's: its
+    /// introduction (before the first heading) is kept; its edit links and
+    /// its box about the page aren't.
+    @Test func wikipediaSectionsTheIntroductionAndNoEditLinks() async throws {
+        func section(_ id: Int, _ title: String, paragraphs: Int) -> String {
+            """
+            <section data-mw-section-id="\(id)"><div class="mw-heading mw-heading2"><h2 id="s\(id)">\(title)</h2>\
+            <span class="mw-editsection"><span class="mw-editsection-bracket">[</span>\
+            <a href="/w/index.php?veaction=edit&section=\(id)"><span>modifier</span></a>\
+            <span class="mw-editsection-divider"> | </span>\
+            <a href="/w/index.php?action=edit&section=\(id)"><span>modifier le code</span></a>\
+            <span class="mw-editsection-bracket">]</span></span></div>
+            \(String(repeating: "<p>\(Self.paragraph)</p>", count: paragraphs))
+            </section>
+            """
+        }
+        let page = """
+        <h1 id="firstHeading">Élections générales de 2026</h1>
+        <div id="mw-content-text" class="mw-body-content"><div class="mw-content-ltr mw-parser-output">
+        <section data-mw-section-id="0">
+        <div class="bandeau-container metadata bandeau-article">Cet article contient des informations \
+        sur des scrutins à venir.</div>
+        <p>Les élections générales de 2026 ont lieu afin d'élire les membres de la législature.</p>
+        </section>
+        \(section(1, "Contexte", paragraphs: 2))
+        \(section(2, "Mode de scrutin", paragraphs: 5))
+        \(section(3, "Sondages", paragraphs: 1))
+        </div></div>
+        """
+        let article = try #require(try await extract(page))
+        #expect(article.html.contains("Les élections générales de 2026 ont lieu"))
+        #expect(article.html.contains("Contexte") && article.html.contains("Sondages"))
+        #expect(!article.html.contains("modifier") && !article.markdown.contains("modifier"))
+        #expect(!article.html.contains("scrutins à venir"))
+        // Its contents: the three headings, each with its anchor.
+        #expect(article.headings.map(\.text) == ["Contexte", "Mode de scrutin", "Sondages"])
+        #expect(article.hasContents)
+        #expect(article.headings.allSatisfy { article.html.contains("id=\"\($0.id)\"") })
+    }
+
+    /// Sections of a blog beside its post (comments): not taken with it.
+    @Test func otherSectionsStayOut() async throws {
+        func paragraphs(_ count: Int) -> String {
+            String(repeating: "<p>\(Self.paragraph)</p>", count: count)
+        }
+        let body = """
+        <main><section class="post"><h2>The river plan</h2>\(paragraphs(5))</section>
+        <section class="comments"><h2>Comments</h2>\(paragraphs(3))</section></main>
+        """
+        let article = try #require(try await extract(body))
+        #expect(!article.html.contains("Comments"))
+    }
+
+    /// Elsewhere too: a heading's or a block's edit links only ("edit"), not
+    /// a link that says more.
+    @Test func editLinksAloneAreLeftOut() async throws {
+        let body = """
+        <article><h1>Title</h1>
+        <h2>History <a href="/edit/1">edit</a></h2><p>\(Self.paragraph)</p>
+        <div class="tools"><a href="/edit/2">Edit</a> · <a href="/source/2">Edit source</a></div>
+        <h3>Later</h3><p>\(Self.paragraph) <a href="/guide">Edit the guide</a>.</p>
+        <p>\(Self.paragraph)</p><p>\(Self.paragraph)</p></article>
+        """
+        let article = try #require(try await extract(body))
+        #expect(article.html.contains("History") && !article.html.contains(">edit<"))
+        #expect(!article.html.contains("Edit source") && !article.html.contains("/edit/2"))
+        #expect(article.html.contains("Edit the guide"))
+        // Two headings: no contents.
+        #expect(article.headings.map(\.level) == [2, 3] && !article.hasContents)
+    }
+
     @Test func onlyWebPages() {
         #expect(PageReader.canRead(URL(string: "https://example.com")))
         #expect(!PageReader.canRead(URL(string: "file:///tmp/a.html")))

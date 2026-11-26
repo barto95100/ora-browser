@@ -16,6 +16,8 @@ struct ReaderArticle: Equatable {
     /// Markdown has them).
     let images: [String]
     let words: Int
+    /// Its h2 and h3, for the contents (each with an anchor in `html`).
+    let headings: [Heading]
     /// The page it comes from: the base of its addresses.
     let pageURL: URL
 
@@ -34,8 +36,31 @@ struct ReaderArticle: Equatable {
         self.html = html
         self.markdown = markdown
         images = value["images"] as? [String] ?? []
+        headings = (value["headings"] as? [[String: Any]] ?? []).compactMap(Heading.init)
         words = (value["words"] as? Int) ?? (value["words"] as? Double).map { Int($0) } ?? 0
         self.pageURL = pageURL
+    }
+
+    struct Heading: Equatable, Identifiable {
+        /// 2 or 3.
+        let level: Int
+        let text: String
+        /// Its anchor in the article ("ombre-heading-1"), made by the script.
+        let id: String
+
+        init?(_ value: [String: Any]) {
+            guard let text = value["text"] as? String, !text.isEmpty,
+                  let id = value["id"] as? String, id.hasPrefix("ombre-heading-")
+            else { return nil }
+            level = (value["level"] as? Int) ?? (value["level"] as? Double).map { Int($0) } ?? 2
+            self.text = text
+            self.id = id
+        }
+    }
+
+    /// The contents are offered from three headings.
+    var hasContents: Bool {
+        headings.count >= 3
     }
 
     /// Minutes to read it, at about 230 words a minute.

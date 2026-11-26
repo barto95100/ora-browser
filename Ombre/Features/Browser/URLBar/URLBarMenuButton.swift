@@ -3,6 +3,8 @@ import SwiftUI
 
 struct URLBarMenuButton: View {
     let foregroundColor: Color
+    /// The page the menu is for: its hidden elements (see `ElementPickerOverlay`).
+    var tab: Tab?
     let onShare: (NSView, NSRect) -> Void
 
     @State private var isHovering = false
@@ -57,6 +59,10 @@ struct URLBarMenuButton: View {
         shareItem.target = delegate
         shareItem.representedObject = delegate // prevent deallocation
         menu.addItem(shareItem)
+        if let tab {
+            menu.addItem(.separator())
+            HiddenElementsMenu.addItems(for: tab, to: menu, window: sourceView.window)
+        }
 
         let point = NSPoint(x: 0, y: sourceView.bounds.height + 4)
         menu.popUp(positioning: nil, at: point, in: sourceView)

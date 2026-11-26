@@ -338,6 +338,21 @@ private struct WindowPageCommands: ViewModifier {
                     tabManager.refreshPrivacySettings(for: containerId)
                 }
             }
+            // The element picker over the active page; again: it stops.
+            .onNotification(.pickElement) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                    if appState.elementPicker != nil {
+                        appState.elementPicker = nil
+                        return
+                    }
+                    guard tabManager.peek == nil, let tab = tabManager.activeTab, tab.browserPage != nil,
+                          tab.url.scheme == "https" || tab.url.scheme == "http"
+                    else { return }
+                    appState.areaCapture = nil
+                    appState.elementPicker = ElementPickerRequest(tabID: tab.id)
+                }
+            }
             // Clear cache and reload
             .onNotification(.clearCacheAndReload) { note in
                 Task { @MainActor in

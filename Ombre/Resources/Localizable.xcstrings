@@ -70,6 +70,16 @@
         }
       }
     },
+    "Add to Tab Note" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter à la note de l’onglet"
+          }
+        }
+      }
+    },
     "Address Starting With" : {
       "localizations" : {
         "fr" : {
@@ -126,12 +136,152 @@
         }
       }
     },
+    "Elements hidden with Hide or Capture an Element (⇧⌘H) in %@. They stay hidden on their site from its next load." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Éléments masqués avec Masquer ou capturer un élément (⇧⌘H) dans %@. Ils restent masqués sur leur site dès son prochain chargement."
+          }
+        }
+      }
+    },
+    "Hidden Elements" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Éléments masqués"
+          }
+        }
+      }
+    },
+    "Hidden Elements on %@ (%lld)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Éléments masqués sur %@ (%lld)"
+          }
+        }
+      }
+    },
+    "Hidden on this page only: this element can't be found again" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué sur cette page seulement : cet élément ne pourrait pas être retrouvé"
+          }
+        }
+      }
+    },
+    "Image copied" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image copiée"
+          }
+        }
+      }
+    },
+    "Capture" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturer"
+          }
+        }
+      }
+    },
+    "Copy Image" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l’image"
+          }
+        }
+      }
+    },
+    "Hides it on this site, now and on your next visits" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le masque sur ce site, maintenant et lors de vos prochaines visites"
+          }
+        }
+      }
+    },
+    "Hides it on this page only: a private window records nothing" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le masque sur cette page seulement : une fenêtre privée n’enregistre rien"
+          }
+        }
+      }
+    },
+    "Hidden on %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué sur %@"
+          }
+        }
+      }
+    },
+    "Choose a block · ↑ ↓ to widen or narrow · Esc to cancel" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un bloc · ↑ ↓ pour l’élargir ou le réduire · Échap pour annuler"
+          }
+        }
+      }
+    },
+    "Hide or Capture an Element" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer ou capturer un élément"
+          }
+        }
+      }
+    },
+    "Hide or Capture an Element…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer ou capturer un élément…"
+          }
+        }
+      }
+    },
     "Inspect pages in Ombre: Inspect Element in a page's context menu, or View › Developer (Show Web Inspector, Show JavaScript Console)." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inspectez les pages dans Ombre : « Inspecter l’élément » dans le menu contextuel d’une page, ou Présentation › Développeur (Afficher l’inspecteur web, Afficher la console JavaScript)."
+          }
+        }
+      }
+    },
+    "No element is hidden in this space." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun élément n’est masqué dans cet espace."
           }
         }
       }
@@ -152,6 +302,76 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rétablir le nom de la page"
+          }
+        }
+      }
+    },
+    "Show it again" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le réafficher"
+          }
+        }
+      }
+    },
+    "Show All" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout réafficher"
+          }
+        }
+      }
+    },
+    "Show all hidden elements in %@?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réafficher tous les éléments masqués dans %@ ?"
+          }
+        }
+      }
+    },
+    "Show All…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout réafficher…"
+          }
+        }
+      }
+    },
+    "Show All on This Site" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout réafficher sur ce site"
+          }
+        }
+      }
+    },
+    "Show Again: %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réafficher : %@"
+          }
+        }
+      }
+    },
+    "Save Image…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer l’image…"
           }
         }
       }
@@ -914,6 +1134,16 @@
         }
       }
     },
+    "The block could not be captured" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le bloc n’a pas pu être capturé"
+          }
+        }
+      }
+    },
     "The sidebar and the settings in Liquid Glass. Off, Ombre looks as before." : {
       "localizations" : {
         "fr" : {
@@ -930,6 +1160,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le site reçoit la question dans l’adresse"
+          }
+        }
+      }
+    },
+    "They show again from the next load of their page." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ils réapparaissent dès le prochain chargement de leur page."
           }
         }
       }

@@ -397,6 +397,8 @@ final class BrowserPrivacyService {
     static func blocksContent(ruleListIdentifier identifier: String) -> Bool {
         identifier != StaticRuleListIdentifier.thirdPartyCookies.identifier
             && identifier != StaticRuleListIdentifier.allCookies.identifier
+            // Elements the user hid (see `HiddenElementRuleLists`): not blocked content.
+            && !identifier.hasPrefix(AppIdentity.identifier("hiddenElements."))
     }
 
     /// Whether a space blocks anything with content rules.

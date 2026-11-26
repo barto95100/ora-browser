@@ -85,6 +85,7 @@ struct SpacesSettingsView: View {
 
                         privacySettingsCard(for: container)
                         SitePermissionsSettingsCard(container: container)
+                        HiddenElementsSettingsCard(container: container)
                         adBlockingSettingsCard(for: container)
 
                         SpaceDangerZoneCard(container: container, canDelete: containers.count > 1) {

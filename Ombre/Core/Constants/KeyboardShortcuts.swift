@@ -304,6 +304,18 @@ enum KeyboardShortcuts {
         )
     }
 
+    // MARK: - Page
+
+    enum Page {
+        /// Hide or capture a block of the page (see `ElementPickerOverlay`).
+        static let pickElement = KeyboardShortcutDefinition(
+            id: "page.pickElement",
+            name: String(localized: "Hide or Capture an Element"),
+            category: String(localized: "Page"),
+            defaultChord: KeyChord(keyEquivalent: .init("h"), modifiers: [.command, .shift])
+        )
+    }
+
     // MARK: - Developer
 
     /// Only with Settings › General › "Allow Web Inspector" (see `WebInspector`).
@@ -386,6 +398,9 @@ enum KeyboardShortcuts {
 
         // Zoom
         Zoom.zoomIn, Zoom.zoomOut, Zoom.reset,
+
+        // Page
+        Page.pickElement,
 
         // Developer
         Developer.webInspector, Developer.javaScriptConsole,

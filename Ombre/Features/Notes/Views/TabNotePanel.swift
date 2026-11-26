@@ -84,6 +84,13 @@ struct TabNotePanel: View {
             load()
         }
         .onChange(of: text) { scheduleSave() }
+        // A capture added from the page (`TabNoteImages`): this text first, then the note's.
+        .onReceive(NotificationCenter.default.publisher(for: TabNoteImages.willChange)) { note in
+            if note.object as? UUID == tab.id { saveNow() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: TabNoteImages.didChange)) { note in
+            if note.object as? UUID == tab.id { load() }
+        }
         // Links of the note open in a new tab, the note stays.
         .environment(\.openURL, OpenURLAction { url in
             tabManager.openTab(url: url, historyManager: historyManager, isPrivate: false)

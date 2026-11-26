@@ -60,6 +60,11 @@ struct BrowserWebContentView: View {
                         AreaCaptureOverlay(tabs: panelTabs, request: request)
                     }
 
+                    // A block of the page to hide or capture.
+                    if let request = appState.elementPicker, panelTabs.contains(where: { $0.id == request.tabID }) {
+                        ElementPickerOverlay(tabs: panelTabs, request: request)
+                    }
+
                     if appState.isURLBarEditing {
                         // Visual dimming only: clicks go through to the page (links,
                         // context menu...). The URL bar ends editing by itself on any

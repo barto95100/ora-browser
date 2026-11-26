@@ -263,6 +263,8 @@ enum ExtensionPermissionText {
         "menus": String(localized: "Add items to context menus"),
         "nativeMessaging": String(localized: "Talk to its app"),
         "notifications": String(localized: "Show notifications"),
+        "offscreen": String(localized: "Open hidden pages of its own"),
+        "privacy": String(localized: "Change your privacy settings"),
         "scripting": String(localized: "Run scripts in pages"),
         "storage": String(localized: "Store data"),
         "tabs": String(localized: "See your tabs' addresses and titles"),

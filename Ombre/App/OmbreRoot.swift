@@ -16,6 +16,7 @@ final class PrivacyMode: ObservableObject {
 /// nothing else.
 struct OmbreRoot: View {
     @StateObject private var session: WindowSession
+    @Environment(\.openWindow) private var openWindow
 
     init(isPrivate: Bool = false) {
         _session = StateObject(wrappedValue: WindowSession(isPrivate: isPrivate))
@@ -23,6 +24,8 @@ struct OmbreRoot: View {
 
     var body: some View {
         BrowserWindowRoot(session: session)
+            // For what opens the settings outside a view (an alert's button).
+            .onAppear { SettingsWindow.opener = openWindow }
     }
 }
 

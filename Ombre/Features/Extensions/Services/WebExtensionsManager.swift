@@ -31,6 +31,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         var signingTeam: String?
         let fallbackName: String
         let webExtension: WKWebExtension
+        /// What Ombre added to its copy (`ExtensionComplementPackage`).
+        var added: ExtensionComplementPackage.Added?
 
         var name: String {
             webExtension.displayName ?? fallbackName
@@ -40,7 +42,17 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             ExtensionRecord(id: id, source: source, name: name, appName: appName).originText
         }
 
+        /// What it asks for, as its developer wrote it (not what Ombre added),
+        /// with the APIs Ombre adds (WebKit doesn't list them).
         var permissions: [String] {
+            let added = Set(added?.permissions ?? [])
+            let complements = ExtensionComplementScript.permissions
+                .intersection(ExtensionComplements.declaredPermissions(of: webExtension).required)
+            return Set(webExtension.requestedPermissions.map(\.rawValue)).subtracting(added).union(complements).sorted()
+        }
+
+        /// Allowed when it is added: what it asks for, and what Ombre added.
+        var grantedPermissions: [String] {
             webExtension.requestedPermissions.map(\.rawValue).sorted()
         }
 
@@ -80,6 +92,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     static let appStoreURL = URL(string: "macappstore://apps.apple.com/story/id1377753262")
 
     let controller: WKWebExtensionController
+    /// The APIs Ombre adds (`ExtensionComplements`).
+    let complements = ExtensionComplements()
     @Published private(set) var installed: [Installed] = []
     @Published private(set) var candidates: [SafariExtensionCandidate] = []
     /// Bumped when an extension's button (icon, badge, state) changes.
@@ -133,9 +147,17 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         // (Bitwarden's popup stops on WebKit's bare one, without "Safari/").
         let pageConfiguration = configuration.webViewConfiguration ?? WKWebViewConfiguration()
         pageConfiguration.applicationNameForUserAgent = SafariUserAgent.current
+        // APIs Chrome has and WebKit doesn't, in the extensions' pages, from
+        // Ombre: nothing of their packages changes (an app's extension too).
+        let complementHandler = ExtensionComplementHandler()
+        ExtensionComplements.configure(pageConfiguration, handler: complementHandler)
         configuration.webViewConfiguration = pageConfiguration
         controller = WKWebExtensionController(configuration: configuration)
         super.init()
+        complementHandler.target = { [weak self] in self.map { ($0.complements, $0.controller) } }
+        complements.askUser = { [weak self] names, context, answer in
+            self?.askComplementPermissions(names, for: context, answer: answer) ?? answer(false)
+        }
         controller.delegate = self
         privateWindowsObserver = NotificationCenter.default.addObserver(
             forName: PrivateWindows.lastWindowDidClose, object: PrivateWindows.shared, queue: .main
@@ -264,7 +286,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     func install(_ review: Review, allowAllSites: Bool) {
         var record = ExtensionRecord(id: review.id, source: review.source, name: review.name, appName: review.appName)
         record.signingTeam = review.signingTeam
-        record.grantedPermissions = review.permissions
+        record.grantedPermissions = review.grantedPermissions
         record.grantedMatchPatterns = review.sites
         record.otherSites = allowAllSites ? .allow : .ask
         installed.append(Installed(record: record))
@@ -275,6 +297,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             candidates.removeAll { $0.bundleIdentifier == bundleIdentifier }
         }
         run(review.webExtension, id: record.id)
+        if PasswordManagerExtensionOffer.isPasswordManager(record.name) {
+            PasswordManagerExtensionOffer.offer(for: record.name, on: NSApp.keyWindow)
+        }
     }
 
     func setEnabled(_ enabled: Bool, id: String) {
@@ -285,6 +310,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             Task { await load(id: id) }
         } else {
             unload(at: index)
+            complements.extensionDisabled(id: id)
         }
     }
 
@@ -294,6 +320,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         unload(at: index)
         let record = installed.remove(at: index).record
         save()
+        complements.extensionRemoved(id: record.id)
         if record.storeID != nil { resetUpdateStatus() }
         if let pending = pendingUpdates.removeValue(forKey: id) {
             ExtensionPackages.remove(path: pending.package.path)
@@ -402,6 +429,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
 
     private func unload(at index: Int) {
         guard let context = installed[index].context else { return }
+        complements.extensionUnloaded(context)
         try? controller.unload(context)
         installed[index].context = nil
     }

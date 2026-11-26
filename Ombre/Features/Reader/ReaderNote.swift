@@ -144,16 +144,24 @@ private final class ImageDownloads: NSObject, WKDownloadDelegate {
     /// A size the server didn't tell: cancelled once it grows too big.
     private func limitSize(of download: WKDownload) {
         let limit = ReaderNote.maximumImageSize
+        let id = ObjectIdentifier(download)
         current?.size = download.progress.observe(\.completedUnitCount) { [weak self] progress, _ in
             guard progress.completedUnitCount > limit else { return }
-            Task { @MainActor in self?.cancelCurrent() }
+            Task { @MainActor in self?.cancelTooBig(id) }
         }
     }
 
-    /// Too big: WebKit then tells it failed, and the next one starts.
-    private func cancelCurrent() {
-        current?.size = nil
-        current?.download?.cancel { _ in }
+    /// Too big: left as a link, its part removed, and the next one starts
+    /// now (WebKit tells nothing more of a download cancelled). Only this
+    /// download: another may have started since the size was told.
+    private func cancelTooBig(_ id: ObjectIdentifier) {
+        guard let item = current, let download = item.download, ObjectIdentifier(download) == id else { return }
+        current = nil
+        let file = item.file
+        download.cancel { _ in
+            if let file { try? FileManager.default.removeItem(at: file) }
+        }
+        next()
     }
 
     private func saveData(_ source: URL, as key: String) {
@@ -201,7 +209,13 @@ private final class ImageDownloads: NSObject, WKDownloadDelegate {
     func downloadDidFinish(_ download: WKDownload) {
         guard let current, current.download === download else { return }
         if let file = current.file {
-            saved[current.source] = "attachments/" + file.lastPathComponent
+            // Finished before its size was checked: still never kept too big.
+            let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            if Int64(size) > ReaderNote.maximumImageSize {
+                try? FileManager.default.removeItem(at: file)
+            } else {
+                saved[current.source] = "attachments/" + file.lastPathComponent
+            }
         }
         self.current = nil
         next()

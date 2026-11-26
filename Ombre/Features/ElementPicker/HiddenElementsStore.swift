@@ -8,8 +8,9 @@ struct HiddenElement: Codable, Hashable, Identifiable {
     /// What it showed as when it was hidden ("div.sidebar"), for the lists.
     let label: String
     let date: Date
-    /// Its own words when it was hidden (`aria-label`, title, heading or the
-    /// start of its text): it isn't shown afterwards. Nil before they were kept.
+    /// Its own name when it was hidden (`aria-label`, title, heading, image
+    /// text; never its text, which can be about the user): it isn't shown
+    /// afterwards. Nil before names were kept.
     var name: String?
     /// Its kind ("sidebar", "navigation"…), from its role or its tag.
     var kind: String?
@@ -109,6 +110,29 @@ final class HiddenElementsStore: ObservableObject {
         self.defaults = defaults
         self.storageKey = storageKey
         elementsBySpace = Self.load(from: defaults, key: storageKey)
+        forgetNamesFromText()
+    }
+
+    /// The first names kept could be the start of the element's text, which
+    /// can be about the user: none of them is kept (their kind is the title),
+    /// once. Those saved since are the element's own name only.
+    private func forgetNamesFromText() {
+        let key = storageKey + ".ownNamesOnly"
+        guard !defaults.bool(forKey: key) else { return }
+        let named = elementsBySpace.values.contains { $0.values.contains { $0.contains { $0.name != nil } } }
+        if named {
+            elementsBySpace = elementsBySpace.mapValues { space in
+                space.mapValues { elements in
+                    elements.map { element in
+                        var element = element
+                        element.name = nil
+                        return element
+                    }
+                }
+            }
+            save()
+        }
+        defaults.set(true, forKey: key)
     }
 
     func elements(onSite site: String, in spaceID: UUID) -> [HiddenElement] {

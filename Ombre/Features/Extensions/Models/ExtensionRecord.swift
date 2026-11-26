@@ -278,6 +278,7 @@ enum ExtensionPermissionText {
         "storage": String(localized: "Store data"),
         "tabs": String(localized: "See your tabs' addresses and titles"),
         "unlimitedStorage": String(localized: "Store unlimited data"),
+        "userScripts": String(localized: "Run the user scripts you add"),
         "webNavigation": String(localized: "Follow navigation in tabs"),
         "webRequest": String(localized: "See web requests")
     ]

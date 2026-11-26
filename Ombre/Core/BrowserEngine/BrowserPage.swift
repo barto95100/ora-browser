@@ -9,7 +9,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     weak var delegate: BrowserPageDelegate?
     /// Made with an extension's configuration, for its own pages: WebKit
     /// loads nothing else in it (a website it leads to opens in a tab).
-    var isExtensionPage = false
+    var isExtensionPage = false {
+        didSet {
+            // Set once made: the user scripts of the extensions are for websites.
+            if isExtensionPage, #available(macOS 15.4, *) { ExtensionUserScriptInjector.shared.detach(self) }
+        }
+    }
     /// Its data is private (a private window's): its sites are never written
     /// to the log. An extension's page is never private here, whatever its
     /// window: the log writes "extension" for it instead.
@@ -89,6 +94,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     var notificationPageScript: WKUserScript?
     /// The site and permission `Notification.permission` starts with.
     var notificationInitialState: WebNotificationScript.InitialState?
+    /// The user scripts of the extensions (`chrome.userScripts`), and the
+    /// worlds whose scripts may message them (`ExtensionUserScriptInjector`).
+    var extensionUserScripts: [WKUserScript] = []
+    var extensionUserScriptWorlds: [WKContentWorld] = []
+    /// The address they were chosen for (the main frame's next document).
+    var extensionUserScriptsURL: URL?
     /// The secret event name the app tells the page's notifications with
     /// (see `WebNotificationScript`): a page can't guess it.
     let notificationChannel = "n" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
@@ -224,6 +235,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
         }
         if configuration.enablesWebNotifications {
             installWebNotifications(in: contentController)
+        }
+        if #available(macOS 15.4, *) {
+            ExtensionUserScriptInjector.shared.attach(self)
         }
 
         webView.navigationDelegate = self
@@ -576,6 +590,12 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             controller.removeScriptMessageHandler(forName: messageName, contentWorld: Self.appWorld)
         }
         controller.removeScriptMessageHandler(forName: WebNotificationBridge.messageName, contentWorld: Self.appWorld)
+        if #available(macOS 15.4, *) { ExtensionUserScriptInjector.shared.forget(self) }
+        for world in extensionUserScriptWorlds {
+            controller.removeScriptMessageHandler(
+                forName: ExtensionComplementScript.userScriptHandlerName, contentWorld: world
+            )
+        }
         webView.removeFromSuperview()
     }
 

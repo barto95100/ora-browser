@@ -235,6 +235,14 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         completionHandler: @escaping ((any Error)?) -> Void
     ) {
+        // Ombre's channel: a service worker of Ombre's copy listens for its
+        // user scripts' messages (`ExtensionUserScriptMessages`).
+        if port.applicationIdentifier == ExtensionComplements.applicationIdentifier,
+           complements.connect(port, for: extensionContext)
+        {
+            completionHandler(nil)
+            return
+        }
         if loggedNativeCommands.insert("\(extensionContext.uniqueIdentifier):connect").inserted {
             logger.notice("\(self.name(of: extensionContext), privacy: .public) native connection closed")
         }

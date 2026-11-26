@@ -159,6 +159,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             self?.askComplementPermissions(names, for: context, answer: answer) ?? answer(false)
         }
         controller.delegate = self
+        setUpUserScripts()
         privateWindowsObserver = NotificationCenter.default.addObserver(
             forName: PrivateWindows.lastWindowDidClose, object: PrivateWindows.shared, queue: .main
         ) { [weak self] _ in
@@ -392,6 +393,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             try controller.load(context)
             installed[index].context = context
             installed[index].loadError = nil
+            userScriptsChanged()
             // Tabs opened before it loaded (at launch, before the windows
             // were known): without them, their pages' scripts can't talk to it.
             for tabID in openTabIDs {
@@ -439,6 +441,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         complements.extensionUnloaded(context)
         try? controller.unload(context)
         installed[index].context = nil
+        userScriptsChanged()
     }
 
     private func logErrors(of context: WKWebExtensionContext?) {

@@ -171,6 +171,16 @@
         }
       }
     },
+    "Run the user scripts you add" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécuter les scripts utilisateur que vous ajoutez"
+          }
+        }
+      }
+    },
     "Turned off by %@, which saves your passwords." : {
       "localizations" : {
         "fr" : {

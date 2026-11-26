@@ -93,7 +93,7 @@ final class ExtensionComplements {
                 method,
                 details,
                 extensionID: context.uniqueIdentifier,
-                extensionName: context.webExtension.displayName
+                extensionName: context.webExtension.displayShortName ?? context.webExtension.displayName
             )
         case "offscreen":
             return try await offscreen.handle(method, details, context: context)

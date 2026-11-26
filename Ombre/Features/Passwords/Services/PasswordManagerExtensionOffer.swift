@@ -2,13 +2,15 @@ import AppKit
 import Foundation
 
 /// With a password manager extension (Bitwarden, 1Password, Proton Pass…),
-/// Ombre offers once to stop its own "save this password?" offers, which
-/// would come with the extension's. Settings › Passwords › "Prompt to save
-/// passwords" is the setting, whatever is chosen here; an extension may
-/// also change it itself (`ExtensionPrivacy`).
+/// Ombre offers once to let it handle the passwords: chosen in Settings ›
+/// Passwords › "Password manager", Ombre then stays out of its way (no
+/// offer to save, no menu under the fields, no autofill). The credentials
+/// saved in Ombre stay. Offered when it is installed, or, for one installed
+/// before, the first time Ombre would offer to save or show its menu.
 @MainActor
 enum PasswordManagerExtensionOffer {
-    static let shownKey = "passwords.extensionOfferShown"
+    /// Its first version only turned off the offers to save: offered again.
+    static let shownKey = "passwords.extensionOfferShown.v2"
 
     /// Names of the password managers Ombre knows, as their extensions call themselves.
     private static let names = [
@@ -22,50 +24,72 @@ enum PasswordManagerExtensionOffer {
         return names.contains { name.contains($0) }
     }
 
-    /// Whether it still has to be offered (once, while Ombre offers to save).
-    static func isDue(defaults: UserDefaults = .standard, settings: SettingsStore = .shared) -> Bool {
-        // Only while Ombre itself offers to save (its passwords on, its own vault).
-        !defaults.bool(forKey: shownKey) && settings.passwordsEnabled && settings.passwordSavePromptsEnabled
-            && PasswordManagerProviderRegistry.shared.descriptor(for: settings.passwordManagerProvider).usesBuiltInVault
+    /// Whether it still has to be offered (once, while Ombre handles the passwords).
+    static func isDue(
+        defaults: UserDefaults = .standard,
+        settings: PasswordManagerChoiceSettings = SettingsStore.shared
+    ) -> Bool {
+        !defaults.bool(forKey: shownKey) && settings.passwordsEnabled && settings.passwordManagerExtensionID == nil
     }
 
-    /// Before Ombre offers to save: a password manager extension installed
-    /// earlier gets the offer, once, here; then `present` if Ombre still offers.
-    static func beforeSavePrompt(on window: NSWindow?, present: @escaping @MainActor () -> Void) {
-        guard let name = WebExtensionsHub.enabledPasswordManagerName, isDue() else { return present() }
-        offer(for: name, on: window) { stillOffers in
-            if stillOffers { present() }
+    /// On screen now: nothing of Ombre's comes meanwhile.
+    private(set) static var isPresenting = false
+
+    /// Before Ombre offers to save or shows its menu: a password manager
+    /// extension installed earlier gets the offer, once, here. `next` runs
+    /// at once when it isn't offered; after the offer only if `resumes`
+    /// and Ombre still handles the passwords (a menu waits for the next
+    /// focus instead: its field may be gone).
+    static func beforeOmbreOffers(
+        on window: NSWindow?,
+        resumes: Bool,
+        settings: PasswordManagerChoiceSettings = SettingsStore.shared,
+        next: @escaping @MainActor () -> Void
+    ) {
+        guard !isPresenting else { return }
+        guard let found = WebExtensionsHub.passwordManagerExtensions.first, isDue() else { return next() }
+        offer(id: found.id, name: found.name, on: window) { ombreStill in
+            if resumes, ombreStill, settings.passwordManagerExtensionID == nil { next() }
         }
     }
 
-    /// Offers it for `name`'s extension, on `window`; `then` once answered
-    /// (with whether Ombre still offers to save).
+    /// Offers `name`'s extension (its short name), on `window`; `then` once
+    /// answered, with whether Ombre still handles the passwords.
     static func offer(
-        for name: String,
+        id: String,
+        name: String,
         on window: NSWindow?,
         defaults: UserDefaults = .standard,
-        settings: SettingsStore = .shared,
+        settings: PasswordManagerChoiceSettings = SettingsStore.shared,
         then: @escaping @MainActor (Bool) -> Void = { _ in }
     ) {
-        guard isDue(defaults: defaults, settings: settings), !TestHost.isActive else { return then(true) }
+        guard isDue(defaults: defaults, settings: settings), !TestHost.isActive, !isPresenting else {
+            return then(settings.passwordManagerExtensionID == nil)
+        }
         defaults.set(true, forKey: shownKey)
+        isPresenting = true
         let alert = NSAlert()
         alert.messageText = String(localized: "\(name) can save your passwords")
         alert.informativeText = String(
-            localized: "Ombre can stop offering to save passwords, so they stay in \(name). You can change this in Settings › Passwords."
+            localized: "passwords.extensionOffer.message",
+            defaultValue: """
+            Ombre can let \(name) fill in and save your passwords: Ombre then no longer offers to save them \
+            nor shows its menu under the fields. The passwords saved in Ombre stay in Settings › Passwords, \
+            where you can change this.
+            """
         )
-        alert.addButton(withTitle: String(localized: "Stop Offering"))
-        alert.addButton(withTitle: String(localized: "Keep Offering"))
+        alert.addButton(withTitle: String(localized: "Use \(name)"))
+        alert.addButton(withTitle: String(localized: "Keep Ombre’s Passwords"))
         alert.addButton(withTitle: String(localized: "Password Settings…"))
         let answer = { (response: NSApplication.ModalResponse) in
+            isPresenting = false
             switch response {
             case .alertFirstButtonReturn:
-                settings.passwordSavePromptsEnabled = false
-                ExtensionPrivacy.shared.userChangedPasswordSaving()
+                choose(id, settings: settings)
                 then(false)
             case .alertThirdButtonReturn:
                 SettingsWindow.show(.passwords)
-                then(settings.passwordSavePromptsEnabled)
+                then(settings.passwordManagerExtensionID == nil)
             default:
                 then(true)
             }
@@ -75,5 +99,10 @@ enum PasswordManagerExtensionOffer {
         } else {
             answer(alert.runModal())
         }
+    }
+
+    /// The extension handles the passwords (Settings › Passwords › "Password manager").
+    static func choose(_ id: String, settings: PasswordManagerChoiceSettings = SettingsStore.shared) {
+        settings.passwordManagerExtensionID = id
     }
 }

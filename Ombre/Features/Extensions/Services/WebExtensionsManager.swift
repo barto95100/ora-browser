@@ -285,6 +285,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     /// on all of them, or each asked for the first time (like Safari).
     func install(_ review: Review, allowAllSites: Bool) {
         var record = ExtensionRecord(id: review.id, source: review.source, name: review.name, appName: review.appName)
+        record.shortName = review.webExtension.displayShortName
         record.signingTeam = review.signingTeam
         record.grantedPermissions = review.grantedPermissions
         record.grantedMatchPatterns = review.sites
@@ -298,7 +299,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
         run(review.webExtension, id: record.id)
         if PasswordManagerExtensionOffer.isPasswordManager(record.name) {
-            PasswordManagerExtensionOffer.offer(for: record.name, on: NSApp.keyWindow)
+            PasswordManagerExtensionOffer.offer(id: record.id, name: record.displayShortName, on: NSApp.keyWindow)
         }
     }
 
@@ -311,6 +312,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         } else {
             unload(at: index)
             complements.extensionDisabled(id: id)
+            PasswordManagerChoice.extensionGone(id: id, name: installed[index].record.displayShortName)
         }
     }
 
@@ -321,6 +323,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         let record = installed.remove(at: index).record
         save()
         complements.extensionRemoved(id: record.id)
+        PasswordManagerChoice.extensionGone(id: record.id, name: record.displayShortName)
         if record.storeID != nil { resetUpdateStatus() }
         if let pending = pendingUpdates.removeValue(forKey: id) {
             ExtensionPackages.remove(path: pending.package.path)
@@ -402,6 +405,10 @@ final class WebExtensionsManager: NSObject, ObservableObject {
                 installed[index].record.name = name
                 save()
             }
+            if let shortName = webExtension.displayShortName, shortName != installed[index].record.shortName {
+                installed[index].record.shortName = shortName
+                save()
+            }
             if let version = webExtension.version, version != installed[index].record.version {
                 installed[index].record.version = version
                 save()
@@ -446,6 +453,7 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         logger.error("Extension \(id, privacy: .public) not loaded: \(error.localizedDescription, privacy: .public)")
         if let index = index(of: id) {
             installed[index].loadError = error.localizedDescription
+            PasswordManagerChoice.extensionGone(id: id, name: installed[index].record.displayShortName)
         }
     }
 

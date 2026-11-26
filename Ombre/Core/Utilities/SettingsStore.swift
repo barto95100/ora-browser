@@ -167,7 +167,8 @@ class SettingsStore: ObservableObject {
         defaults.object(forKey: glassEffectsKey) as? Bool ?? true
     }
     private let passwordsEnabledKey = "settings.passwords.enabled"
-    private let passwordManagerProviderKey = "settings.passwords.provider"
+    /// The password manager extension chosen; none: Ombre's passwords.
+    private let passwordManagerExtensionKey = "settings.passwords.extension"
     private let passwordAutofillEnabledKey = "settings.passwords.autofillEnabled"
     private let passwordAutofillSubmitEnabledKey = "settings.passwords.autofillSubmitEnabled"
     private let passwordSavePromptsEnabledKey = "settings.passwords.savePromptsEnabled"
@@ -324,8 +325,10 @@ class SettingsStore: ObservableObject {
         didSet { defaults.set(passwordsEnabled, forKey: passwordsEnabledKey) }
     }
 
-    @Published var passwordManagerProvider: PasswordManagerProviderKind {
-        didSet { defaults.set(passwordManagerProvider.rawValue, forKey: passwordManagerProviderKey) }
+    /// The password manager extension that handles the passwords; nil:
+    /// Ombre's (`PasswordManagerProviderRegistry`).
+    @Published var passwordManagerExtensionID: String? {
+        didSet { defaults.set(passwordManagerExtensionID, forKey: passwordManagerExtensionKey) }
     }
 
     @Published var passwordAutofillEnabled: Bool {
@@ -432,13 +435,7 @@ class SettingsStore: ObservableObject {
             ?? GlassTransparency.defaultValue
         allowsDownloadsByDefault = defaults.bool(forKey: allowsDownloadsByDefaultKey)
         passwordsEnabled = defaults.object(forKey: passwordsEnabledKey) as? Bool ?? true
-        if let raw = defaults.string(forKey: passwordManagerProviderKey),
-           let provider = PasswordManagerProviderKind(rawValue: raw)
-        {
-            passwordManagerProvider = provider
-        } else {
-            passwordManagerProvider = .ombre
-        }
+        passwordManagerExtensionID = defaults.string(forKey: passwordManagerExtensionKey)
         passwordAutofillEnabled = defaults.object(forKey: passwordAutofillEnabledKey) as? Bool ?? true
         passwordAutofillSubmitEnabled = defaults.object(forKey: passwordAutofillSubmitEnabledKey) as? Bool ?? true
         passwordSavePromptsEnabled = defaults.object(forKey: passwordSavePromptsEnabledKey) as? Bool ?? true

@@ -42,6 +42,14 @@ struct TabPageContent: View {
                     .background {
                         if let runtime { PageTranslationHost(tab: tab, runtime: runtime) }
                     }
+                    .overlay {
+                        ReaderOverlay(page: page, context: ReaderContext(
+                            isPrivate: tab.isPrivate,
+                            spaceID: tab.container.id,
+                            spaceName: tab.container.name
+                        ))
+                    }
+                    .animation(.easeOut(duration: 0.15), value: page.reader.isShown)
                     .overlay(alignment: .topLeading) {
                         if let triggerState = tab.passwordTriggerOverlayState {
                             PasswordAutofillTriggerView(overlay: triggerState, coordinator: tab.passwordCoordinator)

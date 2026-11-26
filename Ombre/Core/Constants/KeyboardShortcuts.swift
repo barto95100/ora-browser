@@ -148,7 +148,7 @@ enum KeyboardShortcuts {
             id: "navigation.hardReload",
             name: String(localized: "Clear Cache & Reload"),
             category: String(localized: "Navigation"),
-            defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .shift])
+            defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .option])
         )
         static let clearCookiesAndReload = KeyboardShortcutDefinition(
             id: "navigation.clearCookiesAndReload",
@@ -314,6 +314,13 @@ enum KeyboardShortcuts {
             category: String(localized: "Page"),
             defaultChord: KeyChord(keyEquivalent: .init("h"), modifiers: [.command, .shift])
         )
+        /// Reader mode on or off (see `PageReader`), as Safari's ⇧⌘R.
+        static let reader = KeyboardShortcutDefinition(
+            id: "page.reader",
+            name: String(localized: "Reader Mode"),
+            category: String(localized: "Page"),
+            defaultChord: KeyChord(keyEquivalent: .init("r"), modifiers: [.command, .shift])
+        )
     }
 
     // MARK: - Developer
@@ -400,7 +407,7 @@ enum KeyboardShortcuts {
         Zoom.zoomIn, Zoom.zoomOut, Zoom.reset,
 
         // Page
-        Page.pickElement,
+        Page.reader, Page.pickElement,
 
         // Developer
         Developer.webInspector, Developer.javaScriptConsole,

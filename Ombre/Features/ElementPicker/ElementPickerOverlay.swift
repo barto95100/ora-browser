@@ -56,6 +56,10 @@ struct ElementPickerOverlay: View {
             }
         }
         .onDisappear { stopPicking() }
+        // Reader mode over the page (its button, its menu): nothing left to pick.
+        .onChange(of: tabs.contains { $0.browserPage?.reader.isShown == true }) { _, reading in
+            if reading { close() }
+        }
     }
 
     private func actionBar(for choice: ElementPickerSession.Choice) -> some View {

@@ -352,6 +352,22 @@ struct URLBar: View {
         }
     }
 
+    /// Reader mode and translation, when the page offers them.
+    @ViewBuilder
+    private func pageButtons(_ tab: Tab) -> some View {
+        if let page = tab.browserPage {
+            ReaderButton(page: page, foregroundColor: buttonForegroundColor)
+        }
+        if let runtime = tab.runtime {
+            PageTranslationButton(
+                tab: tab,
+                runtime: runtime,
+                foregroundColor: buttonForegroundColor,
+                isOverDark: foreground(tab).isLight
+            )
+        }
+    }
+
     private func urlDisplayField(tab: Tab) -> some View {
         HStack(spacing: 8) {
             securityIndicator(tab: tab)
@@ -407,14 +423,7 @@ struct URLBar: View {
                 PrivateBrowsingBadge(foregroundColor: buttonForegroundColor)
             }
 
-            if let runtime = tab.runtime {
-                PageTranslationButton(
-                    tab: tab,
-                    runtime: runtime,
-                    foregroundColor: buttonForegroundColor,
-                    isOverDark: foreground(tab).isLight
-                )
-            }
+            pageButtons(tab)
 
             PrivacyShieldButton(
                 tab: tab,

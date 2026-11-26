@@ -30,6 +30,11 @@ final class OffscreenPage: NSObject, WKNavigationDelegate {
         )
     }
 
+    /// Runs `source` (a whole script) in `world`.
+    func run(script source: String, in world: WKContentWorld) async throws -> Any? {
+        try await webView.callAsyncJavaScript(source, contentWorld: world)
+    }
+
     // swiftlint:disable:next implicitly_unwrapped_optional
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         MainActor.assumeIsolated {

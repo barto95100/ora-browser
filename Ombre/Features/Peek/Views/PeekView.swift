@@ -26,6 +26,14 @@ struct PeekView: View {
                         Color.clear
                     } else {
                         BrowserPageView(page: peek.page, onEscape: onClose)
+                            .overlay {
+                                ReaderOverlay(page: peek.page, context: ReaderContext(
+                                    isPrivate: peek.isPrivate,
+                                    spaceID: peek.spaceID,
+                                    spaceName: peek.spaceName
+                                ))
+                            }
+                            .animation(.easeOut(duration: 0.15), value: peek.page.reader.isShown)
                             .overlay(alignment: .top) {
                                 if let request = peek.permissionRequest {
                                     SitePermissionPromptView(
@@ -74,6 +82,8 @@ struct PeekView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 12)
+            ReaderButton(page: peek.page, foregroundColor: theme.mutedForeground)
+                .padding(.trailing, 4)
             // Camera and microphone in use, as in a tab's address bar.
             MediaCaptureIndicator(
                 state: peek.mediaCaptureState,

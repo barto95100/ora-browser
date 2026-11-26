@@ -52,6 +52,8 @@ extension Notification.Name {
     // Cache and cookies
     static let clearCacheAndReload = Notification.Name("ClearCacheAndReload")
     static let pickElement = Notification.Name("PickElement")
+    /// Reader mode of the key window's page, on or off.
+    static let toggleReader = Notification.Name("ToggleReader")
     static let clearCookiesAndReload = Notification.Name("ClearCookiesAndReload")
     static let spacePrivacySettingsChanged = Notification.Name("SpacePrivacySettingsChanged")
 }

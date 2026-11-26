@@ -59,7 +59,7 @@ struct KeyboardShortcutDefinitionTests {
             excluding: KeyboardShortcuts.Tabs.new.id,
             chord: \.defaultChord
         )
-        #expect(conflict?.id == KeyboardShortcuts.Navigation.hardReload.id)
+        #expect(conflict?.id == KeyboardShortcuts.Page.reader.id)
     }
 
     @Test func zoomFollowsSafarisSteps() {

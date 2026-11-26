@@ -51,6 +51,25 @@ struct HiddenElementsTests {
         #expect(!store.removeAll(in: space))
     }
 
+    /// Its words first, else its kind; elements kept before their words
+    /// were: a kind told by their label, never the selector again.
+    @Test func titlesAreReadable() throws {
+        let named = HiddenElement(selector: "#x", label: "div#x", date: .now, name: "Related stories", kind: "sidebar")
+        #expect(named.title == "Related stories")
+        let kindOnly = HiddenElement(selector: "nav", label: "nav", date: .now, name: "", kind: "navigation")
+        #expect(kindOnly.name == nil)
+        #expect(kindOnly.title == HiddenElement.kindTitle("navigation"))
+        // Saved by the first version, without words nor kind.
+        let old = try JSONDecoder().decode(HiddenElement.self, from: Data(
+            #"{"selector":"div.cs-sidebar__inner","label":"div.cs-sidebar__inner","date":0}"#.utf8
+        ))
+        #expect(old.title == HiddenElement.kindTitle("sidebar"))
+        #expect(HiddenElement.kind(fromLabel: "div#cookie-consent") == "cookies")
+        #expect(HiddenElement.kind(fromLabel: "footer") == "footer")
+        #expect(HiddenElement.kind(fromLabel: "div.wrapper") == nil)
+        #expect(HiddenElement(selector: "div", label: "div.wrapper", date: .now).title != "div.wrapper")
+    }
+
     @Test func keptAcrossLaunches() throws {
         let (store, defaults) = try makeStore()
         store.hide(element("#ad"), onSite: "example.com", in: space)

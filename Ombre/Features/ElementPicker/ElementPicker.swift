@@ -64,11 +64,10 @@ enum ElementPicker {
     /// Hidden at once on the page; in a regular window, also on the site's
     /// next visits in this space, if WebKit accepts its rule. Nothing is
     /// recorded in a private window. `completion`: whether it is kept.
-    static func hide(selector: String, label: String, in tab: Tab, completion: @escaping @MainActor (Bool) -> Void) {
-        call("return picker.hide(selector);", arguments: ["selector": selector], in: tab) { _ in } // not shown
+    static func hide(_ element: HiddenElement, in tab: Tab, completion: @escaping @MainActor (Bool) -> Void) {
+        call("return picker.hide(selector);", arguments: ["selector": element.selector], in: tab) { _ in }
         guard !tab.isPrivate, let site = WebSite.registrableDomain(of: tab.url) else { return completion(false) }
         let spaceID = tab.container.id
-        let element = HiddenElement(selector: selector, label: label, date: Date())
         HiddenElementRuleLists.shared.accepts(element, onSite: site) { accepted in
             guard accepted else { return completion(false) }
             if HiddenElementsStore.shared.hide(element, onSite: site, in: spaceID) {

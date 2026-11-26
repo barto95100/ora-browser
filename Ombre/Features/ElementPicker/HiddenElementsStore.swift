@@ -8,9 +8,82 @@ struct HiddenElement: Codable, Hashable, Identifiable {
     /// What it showed as when it was hidden ("div.sidebar"), for the lists.
     let label: String
     let date: Date
+    /// Its own words when it was hidden (`aria-label`, title, heading or the
+    /// start of its text): it isn't shown afterwards. Nil before they were kept.
+    var name: String?
+    /// Its kind ("sidebar", "navigation"…), from its role or its tag.
+    var kind: String?
 
     var id: String {
         selector
+    }
+
+    init(selector: String, label: String, date: Date, name: String? = nil, kind: String? = nil) {
+        self.selector = selector
+        self.label = label
+        self.date = date
+        self.name = name.flatMap { $0.isEmpty ? nil : $0 }
+        self.kind = kind
+    }
+
+    /// The title of the lists: its words, else a name for its kind; elements
+    /// hidden before their words were kept: a kind told by their label.
+    var title: String {
+        if let name { return name }
+        if let title = Self.kindTitle(kind ?? Self.kind(fromLabel: label)) { return title }
+        return String(localized: "Element")
+    }
+
+    /// A kind guessed from words of the label ("div.cs-sidebar__inner": a sidebar).
+    static func kind(fromLabel label: String) -> String? {
+        let lowered = label.lowercased()
+        let tag = String(lowered.prefix { $0.isLetter || $0.isNumber })
+        let hints: [(String, String)] = [
+            ("sidebar", "sidebar"), ("aside", "sidebar"), ("cookie", "cookies"), ("consent", "cookies"),
+            ("banner", "banner"), ("header", "banner"), ("footer", "footer"), ("nav", "navigation"),
+            ("menu", "menu"), ("modal", "dialog"), ("popup", "dialog"), ("dialog", "dialog"),
+            ("newsletter", "newsletter"), ("advert", "ad"), ("promo", "ad"), ("comment", "comments"),
+            ("toolbar", "toolbar"), ("search", "search")
+        ]
+        if let hint = hints.first(where: { lowered.dropFirst(tag.count).contains($0.0) }) { return hint.1 }
+        let tags = [
+            "nav": "navigation", "aside": "sidebar", "header": "banner", "footer": "footer", "dialog": "dialog",
+            "form": "form", "img": "image", "picture": "image", "figure": "image", "svg": "image",
+            "video": "video", "iframe": "embed", "main": "main", "article": "article", "section": "section",
+            "ul": "list", "ol": "list", "table": "table", "button": "button"
+        ]
+        return tags[tag]
+    }
+
+    static func kindTitle(_ kind: String?) -> String? {
+        guard let kind else { return nil }
+        let titles = [
+            "navigation": String(localized: "hiddenElement.navigation", defaultValue: "Navigation"),
+            "sidebar": String(localized: "Sidebar"),
+            "banner": String(localized: "hiddenElement.banner", defaultValue: "Banner"),
+            "footer": String(localized: "hiddenElement.footer", defaultValue: "Footer"),
+            "dialog": String(localized: "hiddenElement.dialog", defaultValue: "Dialog"),
+            "search": String(localized: "hiddenElement.search", defaultValue: "Search Box"),
+            "form": String(localized: "hiddenElement.form", defaultValue: "Form"),
+            "image": String(localized: "hiddenElement.image", defaultValue: "Image"),
+            "video": String(localized: "hiddenElement.video", defaultValue: "Video"),
+            "audio": String(localized: "hiddenElement.audio", defaultValue: "Audio Player"),
+            "embed": String(localized: "hiddenElement.embed", defaultValue: "Embedded Content"),
+            "main": String(localized: "hiddenElement.main", defaultValue: "Main Content"),
+            "article": String(localized: "hiddenElement.article", defaultValue: "Article"),
+            "section": String(localized: "hiddenElement.section", defaultValue: "Section"),
+            "list": String(localized: "hiddenElement.list", defaultValue: "List"),
+            "table": String(localized: "hiddenElement.table", defaultValue: "Table"),
+            "menu": String(localized: "hiddenElement.menu", defaultValue: "Menu"),
+            "toolbar": String(localized: "hiddenElement.toolbar", defaultValue: "Toolbar"),
+            "button": String(localized: "hiddenElement.button", defaultValue: "Button"),
+            "notice": String(localized: "hiddenElement.notice", defaultValue: "Notice"),
+            "cookies": String(localized: "hiddenElement.cookies", defaultValue: "Cookie Banner"),
+            "newsletter": String(localized: "hiddenElement.newsletter", defaultValue: "Newsletter Box"),
+            "ad": String(localized: "hiddenElement.ad", defaultValue: "Ad"),
+            "comments": String(localized: "hiddenElement.comments", defaultValue: "Comments")
+        ]
+        return titles[kind]
     }
 }
 

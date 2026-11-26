@@ -86,7 +86,11 @@ extension WebExtensionsManager {
     {
         do {
             let webExtension = try await WKWebExtension(resourceBaseURL: package)
-            return Review(id: id, source: source, appName: nil, fallbackName: fallbackName, webExtension: webExtension)
+            var review = Review(
+                id: id, source: source, appName: nil, fallbackName: fallbackName, webExtension: webExtension
+            )
+            review.added = ExtensionComplementPackage.added(at: package.path)
+            return review
         } catch {
             ExtensionPackages.remove(path: package.path)
             throw error

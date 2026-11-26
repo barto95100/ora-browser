@@ -122,11 +122,13 @@ enum ExtensionPackages {
             .appendingPathComponent("Packages", isDirectory: true) // not shown
     }
 
-    /// Keeps a `.zip` for an extension.
+    /// Keeps a `.zip` for an extension (already checked, if signed), with
+    /// Ombre's complement if it needs one (`ExtensionComplementPackage`).
     static func store(zip: Data, id: String) throws -> URL {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let url = folder.appendingPathComponent("\(id).zip")
         try zip.write(to: url, options: .atomic)
+        ExtensionComplementPackage.add(toZip: url)
         return url
     }
 
@@ -136,6 +138,7 @@ enum ExtensionPackages {
         let url = folder.appendingPathComponent(id, isDirectory: true)
         try? FileManager.default.removeItem(at: url)
         try FileManager.default.copyItem(at: source, to: url)
+        ExtensionComplementPackage.add(toFolder: url)
         return url
     }
 

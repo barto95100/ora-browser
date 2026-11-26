@@ -183,6 +183,23 @@ extension WebExtensionsManager {
         }
     }
 
+    /// The same for an API Ombre adds (`ExtensionComplements`).
+    func askComplementPermissions(
+        _ names: [String],
+        for context: WKWebExtensionContext,
+        answer: @escaping (Bool) -> Void
+    ) {
+        guard let record = record(for: context) else { return answer(false) }
+        let lines = names.map { "• " + ExtensionPermissionText.describe($0) }.joined(separator: "\n")
+        ask(
+            title: String(localized: "“\(record.name)” would like to:"),
+            message: lines,
+            buttons: [String(localized: "Allow"), String(localized: "Don't Allow")]
+        ) { choice in
+            answer(choice == 0)
+        }
+    }
+
     /// An extension asks for websites while running: all websites, or some.
     /// From a private window (`isPrivate`), the answer is kept in memory
     /// only: a site visited in private leaves no trace in `extensions.json`.

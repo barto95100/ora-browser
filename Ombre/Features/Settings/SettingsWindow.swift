@@ -33,6 +33,16 @@ enum SettingsWindow {
     /// The window, while it is open.
     private(set) weak static var window: NSWindow?
 
+    /// A browser window's `openWindow`, for `show(_:)` outside a view.
+    static var opener: OpenWindowAction?
+
+    /// Shows the settings at `section`, from outside a view (an alert).
+    static func show(_ section: SettingsTab) {
+        show(section, existing: window) {
+            opener?(id: sceneID)
+        }
+    }
+
     /// Shows the settings, at `section` if given; `open` is the caller's
     /// `openWindow`, which makes the window when there is none.
     static func show(_ section: SettingsTab? = nil, opening open: OpenWindowAction) {

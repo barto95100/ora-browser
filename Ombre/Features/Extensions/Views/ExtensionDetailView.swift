@@ -9,6 +9,8 @@ import SwiftUI
 struct ExtensionDetailView: View {
     let item: WebExtensionsManager.Installed
     @ObservedObject private var manager = WebExtensionsManager.shared
+    /// What Ombre added to its copy (`ExtensionComplementPackage`), read once.
+    @State private var added: ExtensionComplementPackage.Added?
 
     private var record: ExtensionRecord {
         item.record
@@ -38,11 +40,40 @@ struct ExtensionDetailView: View {
 
             shortcuts
 
+            complement
+
             if let context = item.context, context.optionsPageURL != nil {
                 Button("Options…") { manager.openOptions(context) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .task(id: record.path) {
+            let path = record.path
+            added = record.bundleIdentifier == nil
+                ? await Task.detached { ExtensionComplementPackage.added(at: path) }.value
+                : nil
+        }
+    }
+
+    // MARK: - Ombre's complement
+
+    /// The APIs Ombre gives it that WebKit doesn't (`ExtensionComplements`).
+    @ViewBuilder private var complement: some View {
+        let apis = item.context.map {
+            ExtensionComplementScript.permissions.intersection(
+                ExtensionComplements.declaredPermissions(of: $0.webExtension).required
+                    .union(ExtensionComplements.declaredPermissions(of: $0.webExtension).optional)
+            ).sorted()
+        } ?? []
+        if let added {
+            Text("Ombre added a complement to its copy, for: \(added.apis.formatted(.list(type: .and))).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else if !apis.isEmpty {
+            Text("Ombre also gives it: \(apis.formatted(.list(type: .and))).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     // MARK: - Websites

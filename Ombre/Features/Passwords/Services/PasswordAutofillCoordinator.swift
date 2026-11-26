@@ -453,11 +453,9 @@ final class PasswordAutofillCoordinator {
         }
 
         Task { @MainActor [weak self] in
-            self?.presentSavePrompt(
-                prompt,
-                normalizedHost: normalizedHost,
-                saveAction: saveAction
-            )
+            PasswordManagerExtensionOffer.beforeSavePrompt(on: self?.presentationWindow()) { [weak self] in
+                self?.presentSavePrompt(prompt, normalizedHost: normalizedHost, saveAction: saveAction)
+            }
         }
     }
 

@@ -6,6 +6,7 @@ struct PasswordsSettingsView: View {
 
     @ObservedObject private var settings = SettingsStore.shared
     @ObservedObject private var passwordManager = PasswordManagerService.shared
+    @ObservedObject private var extensionPrivacy = ExtensionPrivacy.shared
     private let providers = PasswordManagerProviderRegistry.shared
 
     @State private var searchText = ""
@@ -95,14 +96,33 @@ struct PasswordsSettingsView: View {
                         || !selectedProvider.usesBuiltInOverlay
                 )
             Divider()
-            switchRow(String(localized: "Prompt to save passwords"), isOn: $settings.passwordSavePromptsEnabled)
+            switchRow(String(localized: "Prompt to save passwords"), isOn: savePromptsBinding)
                 .disabled(!settings.passwordsEnabled || !selectedProvider.usesBuiltInVault)
+            // An extension changed it (a password manager, `chrome.privacy`).
+            if extensionPrivacy.passwordSavingController != nil {
+                let name = extensionPrivacy.passwordSavingControllerName ?? String(localized: "An extension")
+                Text(settings.passwordSavePromptsEnabled
+                    ? String(localized: "Turned on by \(name).")
+                    : String(localized: "Turned off by \(name), which saves your passwords."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             if !selectedProvider.isAvailable {
                 Text("\(selectedProvider.title) is not yet integrated.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    /// Changed by the user: an extension no longer holds it.
+    private var savePromptsBinding: Binding<Bool> {
+        Binding {
+            settings.passwordSavePromptsEnabled
+        } set: { value in
+            settings.passwordSavePromptsEnabled = value
+            extensionPrivacy.userChangedPasswordSaving()
         }
     }
 

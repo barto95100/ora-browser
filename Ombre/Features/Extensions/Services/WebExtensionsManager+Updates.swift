@@ -120,8 +120,11 @@ extension WebExtensionsManager {
         let package = try ExtensionPackages.store(zip: zip, id: "\(record.id).update")
         let webExtension = try await WKWebExtension(resourceBaseURL: package)
 
+        // What Ombre added to the copy isn't asked to the user, and is allowed.
+        let added = ExtensionComplementPackage.added(at: package.path)?.permissions ?? []
         let newPermissions = webExtension.requestedPermissions.map(\.rawValue)
-            .filter { !record.grantedPermissions.contains($0) }.sorted()
+            .filter { !record.grantedPermissions.contains($0) && !added.contains($0) }.sorted()
+
         let allowed = Set(record.grantedMatchPatterns + record.extraMatchPatterns)
         let newSites = webExtension.allRequestedMatchPatterns.map(\.string)
             .filter { !allowed.contains($0) }.sorted()
@@ -163,6 +166,11 @@ extension WebExtensionsManager {
     /// extension runs the new version.
     private func install(_ pending: PendingUpdate, id: String) throws {
         guard let record = installed.first(where: { $0.id == id })?.record else { return }
+        // What Ombre added to the new copy: allowed with it, never asked.
+        let added = ExtensionComplementPackage.added(at: pending.package.path)?.permissions ?? []
+        if added.contains(where: { !record.grantedPermissions.contains($0) }) {
+            updateRecord(id: id) { $0.grant(added) }
+        }
         let current = URL(fileURLWithPath: record.path)
         do {
             _ = try FileManager.default.replaceItemAt(current, withItemAt: pending.package)

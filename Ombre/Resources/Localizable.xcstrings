@@ -10,6 +10,96 @@
     " / %@" : {
 
     },
+    "An extension" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une extension"
+          }
+        }
+      }
+    },
+    "Change your privacy settings" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier vos réglages de confidentialité"
+          }
+        }
+      }
+    },
+    "Open hidden pages of its own" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir ses propres pages cachées"
+          }
+        }
+      }
+    },
+    "Password Settings…" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages des mots de passe…"
+          }
+        }
+      }
+    },
+    "Keep Offering" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer à proposer"
+          }
+        }
+      }
+    },
+    "Ombre can stop offering to save passwords, so they stay in %@. You can change this in Settings › Passwords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre peut cesser de vous proposer d’enregistrer les mots de passe, pour qu’ils restent dans %@. Vous pourrez changer d’avis dans Réglages › Mots de passe."
+          }
+        }
+      }
+    },
+    "%@ can save your passwords" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ peut enregistrer vos mots de passe"
+          }
+        }
+      }
+    },
+    "Ombre also gives it: %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre lui donne aussi : %@."
+          }
+        }
+      }
+    },
+    "Ombre added a complement to its copy, for: %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombre a ajouté un complément à sa copie, pour : %@."
+          }
+        }
+      }
+    },
     "reader.contents" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -40,6 +130,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir"
+          }
+        }
+      }
+    },
+    "Turned off by %@, which saves your passwords." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé par %@, qui enregistre vos mots de passe."
+          }
+        }
+      }
+    },
+    "Turned on by %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé par %@."
+          }
+        }
+      }
+    },
+    "Stop Offering" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne plus proposer"
           }
         }
       }

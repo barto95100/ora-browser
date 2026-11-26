@@ -195,6 +195,19 @@ extension WebExtensionsManager: WKWebExtensionControllerDelegate {
         for extensionContext: WKWebExtensionContext,
         replyHandler: @escaping (Any?, (any Error)?) -> Void
     ) {
+        // Ombre's own channel, from a service worker of Ombre's copy: the
+        // extension is the one WebKit says sends it, never what it says.
+        if applicationIdentifier == ExtensionComplements.applicationIdentifier {
+            Task { @MainActor in
+                do {
+                    let value = try await complements.handle(message, from: extensionContext)
+                    replyHandler(["value": value ?? NSNull()], nil)
+                } catch {
+                    replyHandler(["error": error.localizedDescription], nil)
+                }
+            }
+            return
+        }
         let command = ((message as? [String: Any])?["command"] as? String) ?? "?"
         // Bitwarden's "Open popup" (shortcut, notification) on Safari: its
         // app shows the popup.

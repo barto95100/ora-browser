@@ -15,6 +15,8 @@ final class PeekPage: ObservableObject, Identifiable {
     let openerTabID: UUID
     /// The space of the tab Peek was opened from: its site permissions apply.
     let spaceID: UUID
+    /// Its space's name: its notes' folder (reader mode's "Send to a Note").
+    let spaceName: String
     @Published private(set) var url: URL
     @Published private(set) var title: String = ""
     @Published private(set) var isLoading = true
@@ -42,6 +44,7 @@ final class PeekPage: ObservableObject, Identifiable {
         isPrivate = opener.isPrivate
         openerTabID = opener.id
         spaceID = opener.container.id
+        spaceName = opener.container.name
         openerURL = opener.shownURL
         pageDelegate = PeekPageDelegate(opener: opener)
         pageDelegate.peek = self

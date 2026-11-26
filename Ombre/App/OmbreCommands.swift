@@ -207,6 +207,11 @@ struct OmbreCommands: Commands {
 
             Divider()
 
+            Button("Reader Mode") {
+                NotificationCenter.default.post(name: .toggleReader, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Page.reader.keyboardShortcut)
+
             Button("Hide or Capture an Element…") {
                 NotificationCenter.default.post(name: .pickElement, object: NSApp.keyWindow)
             }

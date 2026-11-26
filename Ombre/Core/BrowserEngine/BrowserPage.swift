@@ -54,6 +54,8 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     var isPostNavigation = false
     /// The page as agents' last command on it found it.
     var agentMark: NavigationMark?
+    /// Its reader mode (see `PageReader`), wherever it is shown.
+    let reader = PageReader()
     private var observations: [NSKeyValueObservation] = []
     private nonisolated(unsafe) var inspectionObserver: NSObjectProtocol?
     private nonisolated(unsafe) var hiddenElementsObserver: NSObjectProtocol?

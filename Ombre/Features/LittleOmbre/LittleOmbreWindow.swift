@@ -97,7 +97,7 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
     private init(popup: PopupPage, tabManager: TabManager, space: TabContainer) {
         self.popup = popup
         self.tabManager = tabManager
-        model = LittleOmbreModel(popup: popup, spaceID: space.id)
+        model = LittleOmbreModel(popup: popup, spaceID: space.id, spaceName: space.name)
         let frame = Self.frame(near: NSApp.keyWindow)
         window = LittleOmbreNSWindow(
             contentRect: frame,
@@ -136,7 +136,8 @@ final class LittleOmbreWindow: NSObject, NSWindowDelegate {
             (.goBack, { $0.goBack() }),
             (.goForward, { $0.goForward() }),
             (.showWebInspector, { $0.popup.page.showWebInspector(.inspector) }),
-            (.showJavaScriptConsole, { $0.popup.page.showWebInspector(.console) })
+            (.showJavaScriptConsole, { $0.popup.page.showWebInspector(.console) }),
+            (.toggleReader, { $0.popup.page.reader.toggle($0.popup.page) })
         ]
         for (name, command) in commands {
             NotificationCenter.default.publisher(for: name, object: window)
@@ -387,6 +388,8 @@ final class LittleOmbreModel: ObservableObject {
     let popup: PopupPage
     /// The space whose data the page uses.
     let spaceID: UUID
+    /// Its notes' folder (reader mode's "Send to a Note").
+    let spaceName: String
     weak var owner: LittleOmbreWindow?
     /// Changes when the address field is to take the focus (⌘L, an empty
     /// Little Ombre).
@@ -394,9 +397,10 @@ final class LittleOmbreModel: ObservableObject {
     /// The page is going to a tab: Little Ombre no longer shows it.
     @Published var isPageGone = false
 
-    init(popup: PopupPage, spaceID: UUID) {
+    init(popup: PopupPage, spaceID: UUID, spaceName: String) {
         self.popup = popup
         self.spaceID = spaceID
+        self.spaceName = spaceName
     }
 
     func focusAddress() {
@@ -418,6 +422,14 @@ struct LittleOmbreContent: View {
                     Color.clear
                 } else {
                     LittlePageView(page: popup.page)
+                        .overlay {
+                            ReaderOverlay(page: popup.page, context: ReaderContext(
+                                isPrivate: popup.context.isPrivate,
+                                spaceID: model.spaceID,
+                                spaceName: model.spaceName
+                            ))
+                        }
+                        .animation(.easeOut(duration: 0.15), value: popup.page.reader.isShown)
                         .overlay(alignment: .topLeading) {
                             if let trigger = popup.passwordTriggerOverlayState {
                                 PasswordAutofillTriggerView(overlay: trigger, coordinator: popup.passwordCoordinator)

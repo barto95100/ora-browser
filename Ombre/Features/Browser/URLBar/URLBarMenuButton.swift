@@ -61,6 +61,15 @@ struct URLBarMenuButton: View {
         menu.addItem(shareItem)
         if let tab {
             menu.addItem(.separator())
+            if let page = tab.browserPage {
+                let reader = ActionMenuItem(
+                    title: page.reader.isShown ? String(localized: "Close Reader") : String(localized: "Show Reader")
+                ) {
+                    page.reader.toggle(page)
+                }
+                reader.isEnabled = PageReader.canRead(page.currentURL)
+                menu.addItem(reader)
+            }
             HiddenElementsMenu.addItems(for: tab, to: menu, window: sourceView.window)
         }
 

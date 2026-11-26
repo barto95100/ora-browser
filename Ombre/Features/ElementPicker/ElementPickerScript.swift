@@ -130,6 +130,46 @@ enum ElementPickerScript {
         return text;
     }
 
+    // What a person would call it, saved when it is hidden (it isn't shown
+    // afterwards): its own words, else the start of its text, else its kind.
+    function words(text, limit) {
+        const clean = (text || "").replace(/\s+/g, " ").trim();
+        if (!clean) return null;
+        return clean.length > limit ? clean.slice(0, limit - 1).trimEnd() + "…" : clean;
+    }
+
+    function ownName(element) {
+        const named = words(element.getAttribute("aria-label"), 60) || words(element.getAttribute("title"), 60);
+        if (named) return named;
+        const labelledBy = (element.getAttribute("aria-labelledby") || "").split(/\s+/)
+            .map(id => id && document.getElementById(id)).filter(Boolean)
+            .map(node => node.textContent).join(" ");
+        if (words(labelledBy, 60)) return words(labelledBy, 60);
+        const heading = element.querySelector("h1, h2, h3, h4, h5, h6");
+        if (heading && words(heading.textContent, 60)) return words(heading.textContent, 60);
+        const image = element.localName === "img" ? element : null;
+        if (image && words(image.getAttribute("alt"), 60)) return words(image.getAttribute("alt"), 60);
+        return words(element.innerText, 40);
+    }
+
+    const roleKinds = {
+        navigation: "navigation", complementary: "sidebar", banner: "banner", contentinfo: "footer",
+        dialog: "dialog", alertdialog: "dialog", search: "search", form: "form", img: "image",
+        main: "main", article: "article", region: "section", list: "list", table: "table",
+        menu: "menu", menubar: "menu", toolbar: "toolbar", button: "button", alert: "notice"
+    };
+    const tagKinds = {
+        nav: "navigation", aside: "sidebar", header: "banner", footer: "footer", dialog: "dialog",
+        form: "form", img: "image", picture: "image", figure: "image", svg: "image", canvas: "image",
+        video: "video", audio: "audio", iframe: "embed", embed: "embed", object: "embed", main: "main",
+        article: "article", section: "section", ul: "list", ol: "list", table: "table", button: "button"
+    };
+
+    function kind(element) {
+        const role = (element.getAttribute("role") || "").toLowerCase();
+        return roleKinds[role] || tagKinds[element.localName] || null;
+    }
+
     function isBlock(element) {
         const display = getComputedStyle(element).display;
         const box = element.getBoundingClientRect();
@@ -164,6 +204,8 @@ enum ElementPickerScript {
     window.__ombrePicker = {
         isStableToken: isStableToken,
         selectorFor: selectorFor,
+        ownName: ownName,
+        kind: kind,
         start: start,
         hit(x, y) {
             const element = document.elementsFromPoint(x, y)
@@ -178,7 +220,10 @@ enum ElementPickerScript {
         choose() {
             const element = chain[level];
             if (!element || !element.isConnected) return null;
-            return { selector: selectorFor(element), label: label(element) };
+            return {
+                selector: selectorFor(element), label: label(element),
+                name: ownName(element), kind: kind(element)
+            };
         },
         reveal() {
             const element = chain[level];

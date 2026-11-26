@@ -126,6 +126,7 @@ extension BrowserPage: WKNavigationDelegate {
         httpsUpgrade.navigationCommitted()
         if !isDownloadNavigation {
             lastCommittedURL = webView.url
+            reader.pageCommitted(self)
             emitNavigationEvent(
                 phase: .committed,
                 url: webView.url,
@@ -148,6 +149,7 @@ extension BrowserPage: WKNavigationDelegate {
                 isLoading: false
             )
             originalURL = nil
+            reader.pageFinished(self)
         }
     }
 

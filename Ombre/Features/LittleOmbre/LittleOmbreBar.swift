@@ -41,6 +41,7 @@ struct LittleOmbreBar: View {
                 }
             }
             .frame(maxWidth: .infinity)
+            ReaderButton(page: popup.page, foregroundColor: .secondary)
             openInOmbreButton
         }
         .padding(.horizontal, 10)

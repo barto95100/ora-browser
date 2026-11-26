@@ -65,7 +65,8 @@ struct HiddenElementsSettingsCard: View {
             ForEach(elements) { element in
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(element.label)
+                        Text(element.title)
+                            .lineLimit(1)
                         Text(element.selector)
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundStyle(.secondary)

@@ -15,8 +15,8 @@ final class ElementPickerSession {
 
     struct Choice {
         let tab: Tab
-        let selector: String
-        let label: String
+        /// As it would be kept, with its words and kind (see `HiddenElement.title`).
+        let element: HiddenElement
         let rect: CGRect
     }
 }
@@ -56,14 +56,19 @@ struct ElementPickerOverlay: View {
             }
         }
         .onDisappear { stopPicking() }
+        // Reader mode over the page (its button, its menu): nothing left to pick.
+        .onChange(of: tabs.contains { $0.browserPage?.reader.isShown == true }) { _, reading in
+            if reading { close() }
+        }
     }
 
     private func actionBar(for choice: ElementPickerSession.Choice) -> some View {
         HStack(spacing: 8) {
-            Text(choice.label)
-                .font(.system(size: 11, design: .monospaced))
+            Text(choice.element.title)
+                .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .help(choice.element.selector)
                 .frame(maxWidth: 160, alignment: .leading)
             Button {
                 hide(choice)
@@ -101,7 +106,7 @@ struct ElementPickerOverlay: View {
 
     private func hide(_ choice: ElementPickerSession.Choice) {
         let tab = choice.tab
-        ElementPicker.hide(selector: choice.selector, label: choice.label, in: tab) { kept in
+        ElementPicker.hide(choice.element, in: tab) { kept in
             guard !tab.isPrivate else { return }
             guard let site = WebSite.registrableDomain(of: tab.url) else { return }
             if kept {
@@ -322,8 +327,13 @@ final class ElementPickerNSView: NSView {
             else { return }
             session?.choice = ElementPickerSession.Choice(
                 tab: tab,
-                selector: selector,
-                label: value["label"] as? String ?? "",
+                element: HiddenElement(
+                    selector: selector,
+                    label: value["label"] as? String ?? "",
+                    date: Date(),
+                    name: value["name"] as? String,
+                    kind: value["kind"] as? String
+                ),
                 rect: highlight
             )
             needsDisplay = true

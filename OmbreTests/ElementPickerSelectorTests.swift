@@ -116,6 +116,30 @@ struct ElementPickerSelectorTests {
         #expect(value as? [String] == ["p#text", "div#inner", "div#outer", "div#outer", "div#inner"])
     }
 
+    /// The lists' title: its own words, else the start of its text, else its kind.
+    @Test func aNameAPersonWouldGive() async throws {
+        let page = try await OffscreenPage("""
+        <aside id="a" aria-label="Related stories"><p>One</p></aside>
+        <div id="b" class="cs-sidebar__inner"><h2>  Most   read </h2><p>Text</p></div>
+        <div id="c"><p>A long paragraph of words that goes on well past the forty characters kept.</p></div>
+        <nav id="d"><img src="data:," alt=""></nav>
+        <div id="e" role="complementary"></div>
+        """)
+        let value = try await page.run("""
+        return ["a", "b", "c", "d", "e"].map(id => {
+            const element = document.getElementById(id);
+            return [picker.ownName(element) ?? "", picker.kind(element) ?? ""];
+        });
+        """)
+        let names = try #require(value as? [[String]])
+        #expect(names[0] == ["Related stories", "sidebar"])
+        #expect(names[1] == ["Most read", ""])
+        #expect(names[2][0].hasPrefix("A long paragraph of words"))
+        #expect(names[2][0].hasSuffix("…") && names[2][0].count <= 40)
+        #expect(names[3] == ["", "navigation"])
+        #expect(names[4] == ["", "sidebar"])
+    }
+
     @Test func hideHidesEveryMatchOnThePage() async throws {
         let page = try await OffscreenPage(#"<div class="ad">a</div><div class="ad">b</div><div>c</div>"#)
         let value = try await page.run("""

@@ -24,6 +24,7 @@ extension View {
         modifier(WindowAppCommands(targets: targets))
             .modifier(WindowTabCommands(targets: targets))
             .modifier(WindowPageCommands(targets: targets))
+            .modifier(WindowPageToolCommands(targets: targets))
             .modifier(WindowSpaceCommands(targets: targets))
     }
 
@@ -338,21 +339,6 @@ private struct WindowPageCommands: ViewModifier {
                     tabManager.refreshPrivacySettings(for: containerId)
                 }
             }
-            // The element picker over the active page; again: it stops.
-            .onNotification(.pickElement) { note in
-                Task { @MainActor in
-                    guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
-                    if appState.elementPicker != nil {
-                        appState.elementPicker = nil
-                        return
-                    }
-                    guard tabManager.peek == nil, let tab = tabManager.activeTab, tab.browserPage != nil,
-                          tab.url.scheme == "https" || tab.url.scheme == "http"
-                    else { return }
-                    appState.areaCapture = nil
-                    appState.elementPicker = ElementPickerRequest(tabID: tab.id)
-                }
-            }
             // Clear cache and reload
             .onNotification(.clearCacheAndReload) { note in
                 Task { @MainActor in
@@ -440,5 +426,47 @@ private struct WindowLifecycle: ViewModifier {
                     tabManager.saveOnQuit()
                 }
             }
+    }
+}
+
+/// The page's tools: the element picker and reader mode.
+private struct WindowPageToolCommands: ViewModifier {
+    let targets: WindowCommandTargets
+
+    func body(content: Content) -> some View {
+        let window = targets.window
+        let appState = targets.appState
+        let tabManager = targets.tabManager
+
+        content
+            // The element picker over the active page; again: it stops.
+            .onNotification(.pickElement) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                    if appState.elementPicker != nil {
+                        appState.elementPicker = nil
+                        return
+                    }
+                    guard tabManager.peek == nil, let tab = tabManager.activeTab, let page = tab.browserPage,
+                          !page.reader.isShown, tab.url.scheme == "https" || tab.url.scheme == "http"
+                    else { return }
+                    appState.areaCapture = nil
+                    appState.elementPicker = ElementPickerRequest(tabID: tab.id)
+                }
+            }
+            // Reader mode of the page in front: Peek's, else the active tab's.
+            .onNotification(.toggleReader) { note in
+                Task { @MainActor in
+                    guard note.object as? NSWindow === window ?? NSApp.keyWindow else { return }
+                    toggleReader(tabManager: tabManager, appState: appState)
+                }
+            }
+    }
+
+    @MainActor
+    private func toggleReader(tabManager: TabManager, appState: AppState) {
+        guard let page = tabManager.peek?.page ?? tabManager.activeTab?.browserPage else { return NSSound.beep() }
+        if !page.reader.isShown { appState.elementPicker = nil }
+        page.reader.toggle(page)
     }
 }

@@ -24,11 +24,20 @@ enum HiddenElementsMenu {
         item.isEnabled = !elements.isEmpty
         let submenu = NSMenu()
         for element in elements {
-            let show = ActionMenuItem(title: String(localized: "Show Again: \(element.label)")) {
+            let show = ActionMenuItem(title: String(localized: "Show Again: \(element.title)")) {
                 ElementPicker.show(element.selector, onSite: site, in: spaceID, reloading: tab)
             }
             show.toolTip = element.selector
             submenu.addItem(show)
+            // The selector below, small (as the settings show it).
+            let selector = NSMenuItem(title: element.selector, action: nil, keyEquivalent: "")
+            selector.attributedTitle = NSAttributedString(string: element.selector, attributes: [
+                .font: NSFont.monospacedSystemFont(ofSize: NSFont.smallSystemFontSize - 1, weight: .regular),
+                .foregroundColor: NSColor.secondaryLabelColor
+            ])
+            selector.isEnabled = false
+            selector.indentationLevel = 1
+            submenu.addItem(selector)
         }
         if !elements.isEmpty {
             submenu.addItem(.separator())

@@ -205,6 +205,13 @@ struct OmbreCommands: Commands {
             }
             .keyboardShortcut(KeyboardShortcuts.Notes.tasks.keyboardShortcut)
 
+            Divider()
+
+            Button("Hide or Capture an Element…") {
+                NotificationCenter.default.post(name: .pickElement, object: NSApp.keyWindow)
+            }
+            .keyboardShortcut(KeyboardShortcuts.Page.pickElement.keyboardShortcut)
+
             #if DEBUG
                 Divider()
 

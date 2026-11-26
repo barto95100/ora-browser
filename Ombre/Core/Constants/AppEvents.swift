@@ -51,6 +51,7 @@ extension Notification.Name {
 
     // Cache and cookies
     static let clearCacheAndReload = Notification.Name("ClearCacheAndReload")
+    static let pickElement = Notification.Name("PickElement")
     static let clearCookiesAndReload = Notification.Name("ClearCookiesAndReload")
     static let spacePrivacySettingsChanged = Notification.Name("SpacePrivacySettingsChanged")
 }

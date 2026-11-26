@@ -246,6 +246,7 @@ struct URLBar: View {
 
                 URLBarMenuButton(
                     foregroundColor: dimmableColor(0.7),
+                    tab: tabManager.activeTab,
                     onShare: { sourceView, sourceRect in
                         if let activeTab = tabManager.activeTab {
                             shareCurrentPage(tab: activeTab, sourceView: sourceView, sourceRect: sourceRect)

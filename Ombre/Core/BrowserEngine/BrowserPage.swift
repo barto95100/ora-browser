@@ -56,6 +56,10 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     var agentMark: NavigationMark?
     private var observations: [NSKeyValueObservation] = []
     private nonisolated(unsafe) var inspectionObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var hiddenElementsObserver: NSObjectProtocol?
+    /// The elements hidden on sites of its space (see `HiddenElementRuleLists`),
+    /// kept when protections are off for a site.
+    private var hiddenElementsRuleList: WKContentRuleList?
     /// HTTPS first, see `HTTPSUpgradePolicy`. Used by the navigation delegate.
     var httpsUpgrade = HTTPSUpgradePolicy()
     /// How the next new tab asked by the page opens (context menu items, see
@@ -242,9 +246,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             if !isContentBlockingEnabled {
                 webView.configuration.userContentController.removeAllContentRuleLists()
             }
-            isReadyForNavigation = true
-            flushPendingNavigationIfNeeded()
+            prepareHiddenElements(profile: profile)
         }
+        observeHiddenElements(profile: profile)
     }
 
     /// Clears this page's own store (a private window's session included),
@@ -368,6 +372,46 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
             contentRuleLists.forEach(controller.add)
         } else {
             controller.removeAllContentRuleLists()
+            hiddenElementsRuleList.map(controller.add)
+        }
+    }
+
+    /// The space's hidden elements, from the next load.
+    func setHiddenElements(_ list: WKContentRuleList?) {
+        // Always again: `removeAllContentRuleLists` may have taken it off.
+        let controller = webView.configuration.userContentController
+        hiddenElementsRuleList.map(controller.remove)
+        list.map(controller.add)
+        hiddenElementsRuleList = list
+    }
+
+    /// Hidden before the first load shows them, then ready to navigate;
+    /// never in private (nothing hidden there is recorded).
+    private func prepareHiddenElements(profile: BrowserEngineProfile) {
+        guard !profile.isPrivate else {
+            isReadyForNavigation = true
+            flushPendingNavigationIfNeeded()
+            return
+        }
+        HiddenElementRuleLists.shared.ruleList(for: profile.identifier) { [weak self] list in
+            guard let self else { return }
+            setHiddenElements(list)
+            isReadyForNavigation = true
+            flushPendingNavigationIfNeeded()
+        }
+    }
+
+    /// Elements hidden or shown again in its space, from the next load.
+    private func observeHiddenElements(profile: BrowserEngineProfile) {
+        guard !profile.isPrivate else { return }
+        let spaceID = profile.identifier
+        hiddenElementsObserver = NotificationCenter.default.addObserver(
+            forName: HiddenElementRuleLists.didChange, object: nil, queue: .main
+        ) { [weak self] note in
+            guard note.userInfo?["spaceID"] as? UUID == spaceID else { return }
+            MainActor.assumeIsolated {
+                HiddenElementRuleLists.shared.ruleList(for: spaceID) { self?.setHiddenElements($0) }
+            }
         }
     }
 
@@ -494,6 +538,9 @@ final class BrowserPage: NSObject, WKScriptMessageHandler {
     deinit {
         if let inspectionObserver {
             NotificationCenter.default.removeObserver(inspectionObserver)
+        }
+        if let hiddenElementsObserver {
+            NotificationCenter.default.removeObserver(hiddenElementsObserver)
         }
     }
 

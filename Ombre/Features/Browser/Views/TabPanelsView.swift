@@ -138,7 +138,8 @@ struct TabPanelsView: View {
     /// shown over both sides, takes its own clicks).
     private func focusClickedPanel(for event: NSEvent) {
         // Tracing an area for a note: the click is for the capture.
-        guard tabManager.peek == nil, appState.areaCapture == nil, let active = tabManager.activeTab else { return }
+        guard tabManager.peek == nil, appState.areaCapture == nil, appState.elementPicker == nil,
+              let active = tabManager.activeTab else { return }
         for tab in tabManager.shownTabs(around: active) where tab.id != active.id {
             guard let webView = tab.browserPage?.webView,
                   let window = webView.window,

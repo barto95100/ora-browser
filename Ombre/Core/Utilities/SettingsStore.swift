@@ -524,6 +524,9 @@ class SettingsStore: ObservableObject {
         defaults.removeObject(forKey: keyForAutoGroup(for: containerId))
         defaults.removeObject(forKey: keyForPrivacySettings(for: containerId))
         SitePermissionStore.shared.removeAll(in: containerId)
+        if HiddenElementsStore.shared.removeAll(in: containerId) {
+            HiddenElementRuleLists.shared.update(containerId)
+        }
         objectWillChange.send()
     }
 

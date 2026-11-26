@@ -89,6 +89,8 @@ class AppState: ObservableObject {
     }
     /// An area of the page to trace for a note, see `AreaCaptureOverlay`.
     @Published var areaCapture: AreaCaptureRequest?
+    /// The element picker (⇧⌘H), see `ElementPickerOverlay`.
+    @Published var elementPicker: ElementPickerRequest?
     @Published var launcherSearchText: String = ""
     @Published var showFinderIn: UUID?
     @Published var isFloatingTabSwitchVisible: Bool = false

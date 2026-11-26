@@ -16,6 +16,17 @@ extension AppState {
 }
 
 extension AppState {
+    /// All the notes, on this one (a note just made, from reader mode).
+    func openNote(_ url: URL) {
+        showLauncher = false
+        showHistory = false
+        showTime = false
+        noteToOpen = url
+        showNotes = true
+    }
+}
+
+extension AppState {
     /// The summary beside the page, or the large panel without a page.
     func toggleTimeSummary(hasPage: Bool) {
         if hasPage {

@@ -55,6 +55,8 @@ class AppState: ObservableObject {
     @Published var showHistory: Bool = false
     /// The space's notes (⌃⌘N), see `NotesPanel`.
     @Published var showNotes: Bool = false
+    /// The note the notes panel opens on (one just made), instead of the latest.
+    @Published var noteToOpen: URL?
     /// The browsing time (⌥⌘Y), see `TimePanel`.
     @Published var showTime: Bool = false
     /// Import from another browser, see `BrowserImportSheet`.

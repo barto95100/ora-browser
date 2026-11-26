@@ -7,6 +7,8 @@ struct ReaderContext {
     let isPrivate: Bool
     let spaceID: UUID?
     let spaceName: String?
+    /// Shows a note just made, in the window's notes; nil: no "Open" button.
+    var openNote: ((URL) -> Void)?
 
     /// The space's notes, never a private window's (they have none).
     var canSendToNote: Bool {
@@ -34,8 +36,19 @@ struct ReaderView: View {
     @ObservedObject private var settings = ReaderSettings.shared
     @StateObject private var coordinator = ReaderWebViewCoordinator()
     @State private var showsStyle = false
-    @State private var status: String?
+    @State private var showsContents = false
+    @State private var status: Status?
     @State private var isSaving = false
+    /// How far the window's title bar reaches over the article (hidden, but
+    /// over the content): the buttons go below it.
+    @State private var titleBarOverlap: CGFloat = 0
+    @Environment(\.window) private var window
+
+    private struct Status: Equatable {
+        let text: String
+        /// "Open": the note just made.
+        var note: URL?
+    }
 
     var body: some View {
         ReaderWebView(
@@ -51,25 +64,64 @@ struct ReaderView: View {
         )
         .overlay(alignment: .topTrailing) {
             controls
-                .padding(.top, 12)
+                .padding(.top, 12 + titleBarOverlap)
                 .padding(.trailing, 16)
         }
         .overlay(alignment: .bottom) {
-            if let status {
-                Text(status)
-                    .font(.system(size: 12, weight: .medium))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding(.bottom, 16)
-                    .transition(.opacity)
-            }
+            if let status { statusView(status) }
         }
         .animation(.easeOut(duration: 0.2), value: status)
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { measure(proxy.frame(in: .global)) }
+                    .onChange(of: proxy.frame(in: .global)) { _, frame in measure(frame) }
+            }
+        }
+    }
+
+    /// The window's title bar is hidden but stays over the top of the content
+    /// (where the traffic lights are): how much of the article it covers.
+    private func measure(_ frame: CGRect) {
+        guard let window else { return }
+        let titleBar = max(0, window.frame.height - window.contentLayoutRect.height)
+        let overlap = max(0, titleBar - frame.minY)
+        if overlap != titleBarOverlap { titleBarOverlap = overlap }
+    }
+
+    private func statusView(_ status: Status) -> some View {
+        HStack(spacing: 10) {
+            Text(status.text)
+            if let note = status.note, let openNote = context.openNote {
+                Button(String(localized: "reader.note.open", defaultValue: "Open")) {
+                    self.status = nil
+                    openNote(note)
+                }
+                .buttonStyle(.borderless)
+                .fontWeight(.semibold)
+            }
+        }
+        .font(.system(size: 12, weight: .medium))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(.regularMaterial, in: Capsule())
+        .padding(.bottom, 16)
+        .transition(.opacity)
     }
 
     private var controls: some View {
         HStack(spacing: 2) {
+            if article.hasContents {
+                controlButton("list.bullet", help: String(localized: "reader.contents", defaultValue: "Contents")) {
+                    showsContents.toggle()
+                }
+                .popover(isPresented: $showsContents, arrowEdge: .bottom) {
+                    ReaderContentsView(headings: article.headings) { heading in
+                        showsContents = false
+                        coordinator.scroll(to: heading.id, margin: 56 + titleBarOverlap)
+                    }
+                }
+            }
             controlButton("textformat.size", help: String(localized: "Appearance")) { showsStyle.toggle() }
                 .popover(isPresented: $showsStyle, arrowEdge: .bottom) {
                     ReaderStyleView(settings: settings)
@@ -102,98 +154,29 @@ struct ReaderView: View {
         guard let spaceID = context.spaceID, let spaceName = context.spaceName, let webView = coordinator.webView
         else { return }
         isSaving = true
-        show(String(localized: "Saving the article…"), for: nil)
+        show(Status(text: String(localized: "Saving the article…")), for: nil)
         ReaderNote.save(article, in: spaceID, named: spaceName, downloadingWith: webView) { note in
             isSaving = false
-            if note != nil {
-                show(String(localized: "Saved to the notes of \(spaceName)"), for: 2.5)
+            if let note {
+                // Longer with its button: time to reach it.
+                let opens = context.openNote != nil
+                show(
+                    Status(text: String(localized: "Saved to the notes of \(spaceName)"), note: note.url),
+                    for: opens ? 6 : 2.5
+                )
             } else {
-                show(String(localized: "The article couldn’t be saved"), for: 3)
+                show(Status(text: String(localized: "The article couldn’t be saved")), for: 3)
             }
         }
     }
 
-    private func show(_ text: String, for seconds: Double?) {
-        status = text
+    private func show(_ shown: Status, for seconds: Double?) {
+        status = shown
         guard let seconds else { return }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(seconds))
-            if status == text { status = nil }
+            if status == shown { status = nil }
         }
-    }
-}
-
-/// Theme, text size, column width and font of reader mode.
-struct ReaderStyleView: View {
-    @ObservedObject var settings: ReaderSettings
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                ForEach(ReaderSettings.Theme.allCases) { theme in
-                    themeButton(theme)
-                }
-            }
-            HStack(spacing: 8) {
-                Button { settings.makeTextSmaller() } label: {
-                    Image(systemName: "textformat.size.smaller").frame(width: 40)
-                }
-                .disabled(!settings.canMakeTextSmaller)
-                .help("Smaller Text")
-                .accessibilityLabel(String(localized: "Smaller Text"))
-                Button { settings.resetTextSize() } label: {
-                    Text(verbatim: "\(settings.size)").monospacedDigit().frame(minWidth: 28)
-                }
-                .help("Default Size")
-                Button { settings.makeTextBigger() } label: {
-                    Image(systemName: "textformat.size.larger").frame(width: 40)
-                }
-                .disabled(!settings.canMakeTextBigger)
-                .help("Bigger Text")
-                .accessibilityLabel(String(localized: "Bigger Text"))
-            }
-            Picker("Width", selection: $settings.width) {
-                ForEach(ReaderSettings.Width.allCases) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            Picker("Font", selection: $settings.font) {
-                ForEach(ReaderSettings.Font.allCases) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-        }
-        .padding(16)
-        .frame(width: 280)
-    }
-
-    private func themeButton(_ theme: ReaderSettings.Theme) -> some View {
-        let selected = settings.theme == theme
-        return Button { settings.theme = theme } label: {
-            VStack(spacing: 4) {
-                ZStack {
-                    if theme == .automatic {
-                        Circle().fill(LinearGradient(
-                            colors: [
-                                Color(nsColor: ReaderDocument.background(for: .light, isDark: false)),
-                                Color(nsColor: ReaderDocument.background(for: .dark, isDark: true))
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
-                    } else {
-                        Circle().fill(Color(nsColor: ReaderDocument.background(for: theme, isDark: false)))
-                    }
-                    Circle().strokeBorder(
-                        selected ? Color.accentColor : Color.secondary.opacity(0.35),
-                        lineWidth: selected ? 2.5 : 1
-                    )
-                }
-                .frame(width: 34, height: 34)
-                Text(theme.title).font(.system(size: 10))
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(theme.title)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -264,6 +247,21 @@ final class ReaderWebViewCoordinator: NSObject, ObservableObject, WKNavigationDe
         guard isLoaded, let webView, let style, style != shownStyle else { return }
         shownStyle = style
         webView.evaluateJavaScript(ReaderDocument.applyScript(for: style), completionHandler: nil)
+    }
+
+    /// To one of the article's headings, in the reader (the page isn't asked).
+    /// `margin`: room left above it (the buttons are there).
+    func scroll(to anchor: String, margin: CGFloat) {
+        guard let webView, anchor.hasPrefix("ombre-heading-"),
+              anchor.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" })
+        else { return }
+        // Not shown: the reader's own script.
+        let script = """
+        (() => { const heading = document.getElementById('\(anchor)'); if (!heading) return 0;
+        const top = heading.getBoundingClientRect().top + window.scrollY - \(Int(margin));
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' }); return 0; })()
+        """
+        webView.evaluateJavaScript(script, completionHandler: nil)
     }
 
     enum Decision: Equatable {

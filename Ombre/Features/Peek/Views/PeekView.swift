@@ -9,6 +9,7 @@ struct PeekView: View {
     let onOpenInSplitView: () -> Void
 
     @Environment(\.theme) private var theme
+    @EnvironmentObject private var appState: AppState
 
     private let cornerRadius: CGFloat = 12
 
@@ -30,7 +31,11 @@ struct PeekView: View {
                                 ReaderOverlay(page: peek.page, context: ReaderContext(
                                     isPrivate: peek.isPrivate,
                                     spaceID: peek.spaceID,
-                                    spaceName: peek.spaceName
+                                    spaceName: peek.spaceName,
+                                    openNote: { url in
+                                        onClose()
+                                        appState.openNote(url)
+                                    }
                                 ))
                             }
                             .animation(.easeOut(duration: 0.15), value: peek.page.reader.isShown)

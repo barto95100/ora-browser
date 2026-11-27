@@ -142,6 +142,38 @@ struct ExtensionIdleNotificationsTests {
         await #expect(throws: ExtensionComplementFailure.self) { try await next("") }
     }
 
+    /// A worker that slept while its call waited, and another that runs.
+    @Test func aStaleWorkerNeitherDuplicatesNorLoses() async throws {
+        let events = ExtensionEvents()
+        events.askAgainWithin = .milliseconds(200)
+        func args(_ list: [ExtensionEvents.Event]) -> [String] {
+            list.compactMap { ($0["args"] as? [String])?.first }
+        }
+        func waiting(_ client: String) async throws -> Task<[ExtensionEvents.Event], Error> {
+            let task = Task { try await events.next(extensionID: "c", client: client, isWorker: true) }
+            try await Task.sleep(for: .milliseconds(50))
+            return task
+        }
+        // Both got it: the one that runs doesn't get it again.
+        let stale = try await waiting("A")
+        let live = try await waiting("B")
+        events.dispatch("notifications.onClicked", ["e"], to: "c")
+        _ = try await stale.value
+        #expect(try await args(live.value) == ["e"])
+        let again = try await waiting("B")
+        try await Task.sleep(for: .milliseconds(400))
+        events.dispatch("notifications.onClicked", ["f"], to: "c")
+        #expect(try await args(again.value) == ["f"])
+
+        // Only the stale one got it: the one that waits gets it once it's gone.
+        let stale2 = try await waiting("A2")
+        events.dispatch("notifications.onClicked", ["g"], to: "c")
+        _ = try await stale2.value
+        let late = try await waiting("B")
+        #expect(try await args(late.value) == ["g"])
+        events.forget(extensionID: "c")
+    }
+
     // MARK: - Notifications
 
     @Test func notificationsAsChrome() async throws {

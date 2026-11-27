@@ -11,6 +11,9 @@ extension WebExtensionsManager {
         complements.loadedContext = { [weak self] id in
             self?.installed.first { $0.id == id }?.context
         }
+        complements.userScriptsAllowed = { [weak self] id in
+            self?.installed.first { $0.id == id }?.record.allowsUserScripts == true
+        }
         complements.userScriptsDidChange = { [weak self] in self?.userScriptsChanged() }
         injector.entries = { [weak self] in self?.userScriptEntries() ?? [] }
         injector.handler = { [weak self] world in self?.complements.userScriptMessages.handler(for: world) }
@@ -21,9 +24,22 @@ extension WebExtensionsManager {
         ExtensionUserScriptInjector.shared.refresh()
     }
 
+    /// "Allow User Scripts": its scripts run (or stop) from the next load,
+    /// and the extension starts again, to see the API (or no longer).
+    func setAllowsUserScripts(_ allowed: Bool, id: String) {
+        guard let record = installed.first(where: { $0.id == id })?.record,
+              record.allowsUserScripts != allowed
+        else { return }
+        updateRecord(id: id) { $0.allowsUserScripts = allowed }
+        userScriptsChanged()
+        // Small, and must be done before it starts again.
+        ExtensionComplementPackage.setUserScriptsAllowed(allowed, at: record.path)
+        reload(id: id)
+    }
+
     private func userScriptEntries() -> [ExtensionUserScriptInjector.Entry] {
         installed.compactMap { item in
-            guard let context = item.context, complements.allows("userScripts", for: context) else { return nil }
+            guard let context = item.context, complements.runsUserScripts(context) else { return nil }
             let registered = complements.userScripts.registered(for: item.id)
             guard !registered.scripts.isEmpty else { return nil }
             return ExtensionUserScriptInjector.Entry(

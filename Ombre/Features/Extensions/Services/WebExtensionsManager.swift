@@ -368,6 +368,11 @@ final class WebExtensionsManager: NSObject, ObservableObject {
                 webExtension = try await WKWebExtension(appExtensionBundle: bundle)
             } else {
                 // Ombre's package: a .zip, or a folder.
+                // "Allow User Scripts", in a copy made since (an update).
+                if record.allowsUserScripts {
+                    let path = record.path
+                    _ = await Task.detached { ExtensionComplementPackage.setUserScriptsAllowed(true, at: path) }.value
+                }
                 let isArchive = record.path.hasSuffix(".zip")
                 let package = URL(fileURLWithPath: record.path, isDirectory: !isArchive)
                 webExtension = try await WKWebExtension(resourceBaseURL: package)
@@ -434,6 +439,13 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             installed[index].record.version = version
             save()
         }
+    }
+
+    /// Stops it and starts it again (its contexts read their manifest again).
+    func reload(id: String) {
+        guard let index = index(of: id), installed[index].context != nil else { return }
+        unload(at: index)
+        Task { await load(id: id) }
     }
 
     private func unload(at index: Int) {

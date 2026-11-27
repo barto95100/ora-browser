@@ -10,6 +10,8 @@ enum ExtensionComplementFailure: LocalizedError, Equatable {
     case notAllowed(String)
     case unknownCall(String)
     case invalid(String)
+    /// "Allow User Scripts" is off (Settings › Extensions).
+    case userScriptsOff
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +21,9 @@ enum ExtensionComplementFailure: LocalizedError, Equatable {
             "'\(call)' is not supported." // not shown
         case let .invalid(reason):
             reason
+        case .userScriptsOff:
+            "The 'userScripts' API is only available for users " // not shown
+                + "when the 'Allow User Scripts' toggle is enabled." // not shown
         }
     }
 }
@@ -44,10 +49,13 @@ final class ExtensionComplements {
     var loadedContext: (String) -> WKWebExtensionContext? = { _ in nil }
     private(set) lazy var userScriptMessages = ExtensionUserScriptMessages(checks: .init(
         context: { [weak self] in self?.loadedContext($0) },
-        allowsUserScripts: { [weak self] in self?.allows("userScripts", for: $0) == true },
+        allowsUserScripts: { [weak self] in self?.runsUserScripts($0) == true },
         registered: { [weak self] in self?.userScripts.registered(for: $0) ?? .init() }
     ))
     private let grants: ExtensionComplementGrants
+    /// Whether the user allowed its user scripts, by id ("Allow User
+    /// Scripts", Settings › Extensions): off, as in Chrome.
+    var userScriptsAllowed: (String) -> Bool = { _ in false }
     /// The extensions' user scripts changed, or what they may use: the
     /// pages get them again (`ExtensionUserScriptInjector`).
     var userScriptsDidChange: () -> Void = {}
@@ -86,6 +94,11 @@ final class ExtensionComplements {
         return declared.optional.contains(api) && grants.isGranted(api, id: context.uniqueIdentifier)
     }
 
+    /// Its user scripts may run: the API asked for and allowed by the user.
+    func runsUserScripts(_ context: WKWebExtensionContext) -> Bool {
+        allows("userScripts", for: context) && userScriptsAllowed(context.uniqueIdentifier)
+    }
+
     /// One call: `{api, method, details}`. Its value, or an error the
     /// extension sees as Chrome's.
     func handle(_ message: Any?, from context: WKWebExtensionContext) async throws -> Any? {
@@ -112,6 +125,7 @@ final class ExtensionComplements {
         case "offscreen":
             return try await offscreen.handle(method, details, context: context)
         case "userScripts":
+            guard userScriptsAllowed(context.uniqueIdentifier) else { throw Failure.userScriptsOff }
             return try userScripts.handle(method, details, extensionID: context.uniqueIdentifier)
         default:
             throw Failure.unknownCall(api)
@@ -191,7 +205,7 @@ final class ExtensionComplements {
     /// Its service worker listens for its user scripts' messages
     /// (`connectNative` to Ombre's channel, from its complement).
     func connect(_ port: WKWebExtension.MessagePort, for context: WKWebExtensionContext) -> Bool {
-        guard allows("userScripts", for: context) else { return false }
+        guard runsUserScripts(context) else { return false }
         userScriptMessages.connect(port, for: context)
         return true
     }

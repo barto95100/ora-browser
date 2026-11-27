@@ -22,6 +22,10 @@ enum ExtensionComplementPackage {
     /// The manifest says what Ombre added, for the complement to hide it
     /// from the extension (`permissions.contains`).
     static let addedPermissionsKey = "ombre_added_permissions"
+    /// The user allowed its user scripts ("Allow User Scripts"): read by the
+    /// complement when it starts, the only thing it reads at once in a worker.
+    /// Ombre checks again at every call: this only defines the API or not.
+    static let userScriptsAllowedKey = "ombre_user_scripts_allowed"
     static let complementFile = "\(folder)/complement.js"
     /// What Ombre added: `{"apis": […], "permissions": […]}`.
     static let addedFile = "\(folder)/added.json"
@@ -127,6 +131,41 @@ enum ExtensionComplementPackage {
         } catch {
             logger.error("Complement not added: \(error.localizedDescription, privacy: .public)")
             return nil
+        }
+    }
+
+    /// The manifest with "Allow User Scripts" as `allowed`; nil if it is already.
+    static func manifest(_ data: Data, allowingUserScripts allowed: Bool) -> Data? {
+        guard var manifest = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              (manifest[userScriptsAllowedKey] as? Bool == true) != allowed
+        else { return nil }
+        manifest[userScriptsAllowedKey] = allowed ? true : nil
+        return try? JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted])
+    }
+
+    /// Writes "Allow User Scripts" in a copy that has the complement for
+    /// them. Whether its manifest changed.
+    @discardableResult
+    static func setUserScriptsAllowed(_ allowed: Bool, at path: String) -> Bool {
+        guard added(at: path)?.apis.contains("userScripts") == true else { return false }
+        let url = URL(fileURLWithPath: path)
+        do {
+            if path.hasSuffix(".zip") {
+                let archive = try ZipArchive(Data(contentsOf: url))
+                guard let entry = archive.entry(named: "manifest.json"),
+                      let changed = try manifest(archive.contents(of: entry), allowingUserScripts: allowed)
+                else { return false }
+                try archive.replacing(["manifest.json": changed]).write(to: url, options: .atomic)
+            } else {
+                let manifestURL = url.appendingPathComponent("manifest.json")
+                guard let changed = try manifest(Data(contentsOf: manifestURL), allowingUserScripts: allowed)
+                else { return false }
+                try changed.write(to: manifestURL, options: .atomic)
+            }
+            return true
+        } catch {
+            logger.error("User scripts setting not written: \(error.localizedDescription, privacy: .public)")
+            return false
         }
     }
 

@@ -166,7 +166,9 @@ enum ExtensionComplementScript {
     /// `chrome.userScripts` (`ExtensionUserScripts`) and, in the service
     /// worker, `runtime.onUserScriptMessage` (`ExtensionUserScriptMessages`).
     private static let userScriptsPart = #"""
-        if (declared.has("userScripts")) {
+        // Only once the user allowed it ("Allow User Scripts"): otherwise
+        // undefined, as in Chrome, for the extension to explain what to do.
+        if (declared.has("userScripts") && manifest.\#(ExtensionComplementPackage.userScriptsAllowedKey) === true) {
             // A file's code is read here, from the package: Ombre gets the code.
             const withCode = scripts => Promise.all((Array.isArray(scripts) ? scripts : []).map(script => {
                 if (!script || !Array.isArray(script.js)) return script;

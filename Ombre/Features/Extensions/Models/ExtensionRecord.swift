@@ -46,6 +46,9 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
     var isPinned: Bool
     /// Runs in private windows too (off by default, like Safari).
     var allowsPrivateBrowsing: Bool
+    /// May run user scripts (`chrome.userScripts`): off by default, like
+    /// Chrome's "Allow User Scripts".
+    var allowsUserScripts: Bool
     /// Its version, as last loaded (to look for updates).
     var version: String?
     var installedAt: Date
@@ -69,6 +72,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         siteRules = []
         isPinned = true
         allowsPrivateBrowsing = false
+        allowsUserScripts = false
         installedAt = Date()
     }
 
@@ -90,6 +94,7 @@ struct ExtensionRecord: Codable, Equatable, Identifiable {
         siteRules = try container.decodeIfPresent([SiteRule].self, forKey: .siteRules) ?? []
         isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? true
         allowsPrivateBrowsing = try container.decodeIfPresent(Bool.self, forKey: .allowsPrivateBrowsing) ?? false
+        allowsUserScripts = try container.decodeIfPresent(Bool.self, forKey: .allowsUserScripts) ?? false
         version = try container.decodeIfPresent(String.self, forKey: .version)
         installedAt = try container.decode(Date.self, forKey: .installedAt)
     }

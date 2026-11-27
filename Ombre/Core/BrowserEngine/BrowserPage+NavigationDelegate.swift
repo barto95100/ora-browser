@@ -66,7 +66,10 @@ extension BrowserPage: WKNavigationDelegate {
                 // The site's notification choice, from its first script (the
                 // response checks it again after a redirect). Not for a new
                 // window: its page has its own scripts.
-                if navigationAction.targetFrame?.isMainFrame == true { prepareNotifications(for: url) }
+                if navigationAction.targetFrame?.isMainFrame == true {
+                    prepareNotifications(for: url)
+                    prepareExtensionUserScripts(for: url)
+                }
             }
             // Link Tracking Protection: the address loads without its
             // tracking parameters.
@@ -301,6 +304,7 @@ extension BrowserPage: WKNavigationDelegate {
                 isDownloadNavigation = false
                 originalURL = nil
                 prepareNotifications(for: navigationResponse.response.url)
+                prepareExtensionUserScripts(for: navigationResponse.response.url)
             }
             decisionHandler(.allow)
         case .frameDownload:
@@ -414,5 +418,15 @@ extension BrowserPage: WKNavigationDelegate {
         let nsError = error as NSError
         return nsError.domain == WKError.errorDomain
             && nsError.code == WKError.Code.webContentProcessTerminated.rawValue
+    }
+}
+
+extension BrowserPage {
+    /// The extensions' user scripts that run at `url`, before it shows
+    /// (`ExtensionUserScriptInjector`).
+    func prepareExtensionUserScripts(for url: URL?) {
+        if #available(macOS 15.4, *) {
+            ExtensionUserScriptInjector.shared.prepare(self, for: url)
+        }
     }
 }

@@ -13,15 +13,17 @@ enum ExtensionComplementScript {
     /// The channel from pages: a script message handler of the extensions'
     /// pages only (their configuration), answered by Ombre.
     static let handlerName = "ombreComplement"
+    /// The channel of user scripts' worlds (`ExtensionUserScriptMessages`).
+    static let userScriptHandlerName = "ombreUserScript"
     /// Native messaging to this "app" comes to Ombre (`ExtensionComplementPackage`).
     static let applicationIdentifier = "ombre.complement"
 
     /// The APIs added, by the permission that gives them.
-    static let permissions: Set<String> = ["privacy", "offscreen"]
+    static let permissions: Set<String> = ["privacy", "offscreen", "userScripts"]
 
     /// For pages: from the start of every extension page and frame.
     static var pageSource: String {
-        source(transport: #"""
+        source(isWorker: false, transport: #"""
         (() => {
             const handler = window.webkit && window.webkit.messageHandlers
                 && window.webkit.messageHandlers.\#(handlerName);
@@ -33,7 +35,7 @@ enum ExtensionComplementScript {
     /// For a service worker (Ombre's copies only): through native messaging
     /// to Ombre's own channel, the only way out of a worker.
     static var workerSource: String {
-        source(transport: #"""
+        source(isWorker: true, transport: #"""
         (() => {
             const root = typeof browser === "object" ? browser : chrome;
             return root && root.runtime && root.runtime.sendNativeMessage
@@ -43,7 +45,7 @@ enum ExtensionComplementScript {
         """#)
     }
 
-    private static func source(transport: String) -> String {
+    private static func source(isWorker: Bool, transport: String) -> String {
         #"""
         (() => {
         const root = typeof browser === "object" ? browser : (typeof chrome === "object" ? chrome : null);
@@ -88,7 +90,9 @@ enum ExtensionComplementScript {
             }
         }
 
-        """# + privacyPart + offscreenPart + permissionsPart + #"""
+        const isWorker = \#(isWorker);
+
+        """# + privacyPart + offscreenPart + userScriptsPart + permissionsPart + #"""
         })();
         """#
     }
@@ -159,6 +163,116 @@ enum ExtensionComplementScript {
 
     """#
 
+    /// `chrome.userScripts` (`ExtensionUserScripts`) and, in the service
+    /// worker, `runtime.onUserScriptMessage` (`ExtensionUserScriptMessages`).
+    private static let userScriptsPart = #"""
+        if (declared.has("userScripts")) {
+            // A file's code is read here, from the package: Ombre gets the code.
+            const withCode = scripts => Promise.all((Array.isArray(scripts) ? scripts : []).map(script => {
+                if (!script || !Array.isArray(script.js)) return script;
+                return Promise.all(script.js.map(source => {
+                    if (!source || typeof source !== "object") return source;
+                    const hasFile = source.file !== undefined, hasCode = source.code !== undefined;
+                    if (hasFile === hasCode) {
+                        throw new Error(`User script with ID '${script.id}' must specify exactly one of `
+                            + "'code' or 'file'.");
+                    }
+                    if (!hasFile) return source;
+                    return fetch(root.runtime.getURL(String(source.file))).then(response => {
+                        if (!response.ok) throw new Error(`Could not load file: '${source.file}'.`);
+                        return response.text();
+                    }).then(code => ({ file: String(source.file), code: code }));
+                })).then(js => Object.assign({}, script, { js: js }));
+            }));
+            const done = () => undefined;
+            install("userScripts", {
+                ExecutionWorld: { MAIN: "MAIN", USER_SCRIPT: "USER_SCRIPT" },
+                register: (scripts, callback) => either(Promise.resolve().then(() => withCode(scripts))
+                    .then(list => call("userScripts", "register", { scripts: list })).then(done), callback),
+                update: (scripts, callback) => either(Promise.resolve().then(() => withCode(scripts))
+                    .then(list => call("userScripts", "update", { scripts: list })).then(done), callback),
+                unregister: (filter, callback) => {
+                    if (typeof filter === "function") { callback = filter; filter = undefined; }
+                    return either(call("userScripts", "unregister", { filter: filter || null }).then(done), callback);
+                },
+                getScripts: (filter, callback) => {
+                    if (typeof filter === "function") { callback = filter; filter = undefined; }
+                    return either(call("userScripts", "getScripts", { filter: filter || null }), callback);
+                },
+                configureWorld: (properties, callback) =>
+                    either(call("userScripts", "configureWorld", { properties: properties || {} })
+                        .then(done), callback),
+                resetWorldConfiguration: (worldId, callback) => {
+                    if (typeof worldId === "function") { callback = worldId; worldId = undefined; }
+                    return either(call("userScripts", "resetWorldConfiguration", { worldId: worldId || null })
+                        .then(done), callback);
+                },
+                getWorldConfigurations: callback => either(call("userScripts", "getWorldConfigurations"), callback)
+            });
+            const onMessage = event(), onConnect = event();
+            const listeners = new Set();
+            // Ombre's messages to the worker: a native port to its channel,
+            // opened only once the worker listens (it may sleep otherwise:
+            // Ombre wakes it when a message comes).
+            let port = null;
+            const listen = () => {
+                if (port || !isWorker || typeof root.runtime.connectNative !== "function") return;
+                port = root.runtime.connectNative(\#(applicationIdentifierLiteral));
+                // Closed by Ombre (or the worker stops): not opened again at
+                // once, which could loop; the next listener, or a wake, does.
+                port.onDisconnect.addListener(() => { port = null; });
+                port.onMessage.addListener(item => deliver(item, port));
+            };
+            const add = onMessage.addListener, remove = onMessage.removeListener;
+            onMessage.addListener = listener => { listeners.add(listener); add(listener); listen(); };
+            onMessage.removeListener = listener => { listeners.delete(listener); remove(listener); };
+            for (const namespace of new Set([globalThis.browser, globalThis.chrome])) {
+                if (!namespace || !namespace.runtime) continue;
+                for (const [name, value] of [["onUserScriptMessage", onMessage], ["onUserScriptConnect", onConnect]]) {
+                    if (namespace.runtime[name] !== undefined) continue;
+                    const property = { value: value, enumerable: true, configurable: true };
+                    try { Object.defineProperty(namespace.runtime, name, property); }
+                    catch (e) {}
+                }
+            }
+            // Its tab, as the tabs API sees it (Ombre gives its address).
+            const tabOf = url => root.tabs && typeof root.tabs.query === "function" && url
+                ? Promise.resolve(root.tabs.query({})).then(tabs =>
+                    (tabs || []).filter(tab => tab.url === url).sort((a, b) => b.active - a.active)[0])
+                    .catch(() => undefined)
+                : Promise.resolve(undefined);
+            const deliver = (item, from) => {
+                if (!item || item.kind !== "message") return;
+                const reply = value => from.postMessage(Object.assign({ kind: "reply", id: item.id }, value));
+                if (!listeners.size) {
+                    return reply({ error: "Could not establish connection. Receiving end does not exist." });
+                }
+                const sender = Object.assign({}, item.sender || {});
+                (sender.frameId === 0 ? tabOf(sender.url) : Promise.resolve(undefined)).then(tab => {
+                    if (tab) sender.tab = tab;
+                    let answered = false, later = false;
+                    const respond = value => { if (!answered) { answered = true; reply({ value: value }); } };
+                    for (const listener of Array.from(listeners)) {
+                        try {
+                            const result = listener(item.message, sender, respond);
+                            if (result === true) later = true;
+                            else if (result && typeof result.then === "function") {
+                                later = true;
+                                result.then(respond, error => {
+                                    if (answered) return;
+                                    answered = true;
+                                    reply({ error: String(error && error.message || error) });
+                                });
+                            }
+                        } catch (e) {}
+                    }
+                    if (!later) respond(undefined);
+                });
+            };
+        }
+
+    """#
+
     /// `permissions.contains`, `request`, `remove` for the added APIs.
     private static let permissionsPart = #"""
         // The permissions of these APIs: WebKit doesn't know them. And what
@@ -212,6 +326,10 @@ enum ExtensionComplementScript {
         }
 
     """#
+
+    private static var applicationIdentifierLiteral: String {
+        "\"\(applicationIdentifier)\"" // not shown
+    }
 
     private static var permissionsLiteral: String {
         "[" + permissions.sorted().map { "\"\($0)\"" }.joined(separator: ", ") + "]" // not shown

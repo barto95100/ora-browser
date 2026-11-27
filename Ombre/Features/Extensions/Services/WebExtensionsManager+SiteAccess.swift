@@ -46,6 +46,8 @@ extension WebExtensionsManager {
                 ? .grantedExplicitly : .deniedExplicitly
             context.setPermissionStatus(status, for: pattern, expirationDate: entry.expiresAt)
         }
+        // Its user scripts follow (only once it runs: `run` asks then).
+        if installed.contains(where: { $0.context === context }) { userScriptsChanged() }
     }
 
     /// The website of the tab, if the extension wants it and nothing was

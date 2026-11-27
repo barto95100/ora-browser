@@ -83,30 +83,36 @@ struct PasswordsSettingsView: View {
                 .labelsHidden()
                 .fixedSize()
             }
-            Divider()
-            switchRow(String(localized: "Enable password manager"), isOn: $settings.passwordsEnabled)
-            Divider()
-            switchRow(String(localized: "Autofill on login forms"), isOn: $settings.passwordAutofillEnabled)
-                .disabled(!settings.passwordsEnabled || !selectedProvider.usesBuiltInOverlay)
-            Divider()
-            switchRow(String(localized: "Auto-submit after autofill"), isOn: $settings.passwordAutofillSubmitEnabled)
-                .disabled(
-                    !settings.passwordsEnabled
-                        || !settings.passwordAutofillEnabled
-                        || !selectedProvider.usesBuiltInOverlay
-                )
-            Divider()
-            switchRow(String(localized: "Prompt to save passwords"), isOn: savePromptsBinding)
-                .disabled(!settings.passwordsEnabled || !selectedProvider.usesBuiltInVault)
-            // An extension changed it (a password manager, `chrome.privacy`).
-            if extensionPrivacy.passwordSavingController != nil {
-                let name = extensionPrivacy.passwordSavingControllerName ?? String(localized: "An extension")
-                Text(settings.passwordSavePromptsEnabled
-                    ? String(localized: "Turned on by \(name).")
-                    : String(localized: "Turned off by \(name), which saves your passwords."))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // With an extension, only the menu: Ombre's switches would read as
+            // if it still filled in forms. Their values stay for when it is Ombre again.
+            if selectedProvider.usesBuiltInOverlay {
+                ombreSwitches
             }
+        }
+    }
+
+    /// Ombre's own switches, while it handles the passwords.
+    @ViewBuilder
+    private var ombreSwitches: some View {
+        Divider()
+        switchRow(String(localized: "Enable password manager"), isOn: $settings.passwordsEnabled)
+        Divider()
+        switchRow(String(localized: "Autofill on login forms"), isOn: $settings.passwordAutofillEnabled)
+            .disabled(!settings.passwordsEnabled)
+        Divider()
+        switchRow(String(localized: "Auto-submit after autofill"), isOn: $settings.passwordAutofillSubmitEnabled)
+            .disabled(!settings.passwordsEnabled || !settings.passwordAutofillEnabled)
+        Divider()
+        switchRow(String(localized: "Prompt to save passwords"), isOn: savePromptsBinding)
+            .disabled(!settings.passwordsEnabled)
+        // An extension changed it (a password manager, `chrome.privacy`).
+        if extensionPrivacy.passwordSavingController != nil {
+            let name = extensionPrivacy.passwordSavingControllerName ?? String(localized: "An extension")
+            Text(settings.passwordSavePromptsEnabled
+                ? String(localized: "Turned on by \(name).")
+                : String(localized: "Turned off by \(name), which saves your passwords."))
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 

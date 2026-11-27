@@ -39,7 +39,18 @@ final class ExtensionComplements {
 
     let privacy: ExtensionPrivacy
     let offscreen: OffscreenDocuments
+    let userScripts: ExtensionUserScripts
+    /// The extension running now, by id (the manager's).
+    var loadedContext: (String) -> WKWebExtensionContext? = { _ in nil }
+    private(set) lazy var userScriptMessages = ExtensionUserScriptMessages(checks: .init(
+        context: { [weak self] in self?.loadedContext($0) },
+        allowsUserScripts: { [weak self] in self?.allows("userScripts", for: $0) == true },
+        registered: { [weak self] in self?.userScripts.registered(for: $0) ?? .init() }
+    ))
     private let grants: ExtensionComplementGrants
+    /// The extensions' user scripts changed, or what they may use: the
+    /// pages get them again (`ExtensionUserScriptInjector`).
+    var userScriptsDidChange: () -> Void = {}
     /// Asks the user for optional permissions (Ombre's dialog); answers
     /// whether they allowed them. None: refused.
     var askUser: (_ names: [String], _ context: WKWebExtensionContext, _ answer: @escaping (Bool) -> Void) -> Void = {
@@ -49,11 +60,14 @@ final class ExtensionComplements {
     init(
         privacy: ExtensionPrivacy = .shared,
         offscreen: OffscreenDocuments = OffscreenDocuments(),
+        userScripts: ExtensionUserScripts = ExtensionUserScripts(),
         grants: ExtensionComplementGrants = ExtensionComplementGrants()
     ) {
         self.privacy = privacy
         self.offscreen = offscreen
+        self.userScripts = userScripts
         self.grants = grants
+        userScripts.didChange = { [weak self] _ in self?.userScriptsDidChange() }
     }
 
     /// The permissions its manifest asks for (`permissions`) and those it may
@@ -97,6 +111,8 @@ final class ExtensionComplements {
             )
         case "offscreen":
             return try await offscreen.handle(method, details, context: context)
+        case "userScripts":
+            return try userScripts.handle(method, details, extensionID: context.uniqueIdentifier)
         default:
             throw Failure.unknownCall(api)
         }
@@ -136,6 +152,8 @@ final class ExtensionComplements {
                 for name in undecided {
                     if allowed { grants.grant(name, id: id) } else { grants.deny(name, id: id) }
                 }
+                // Its registered scripts run again.
+                if allowed, undecided.contains("userScripts") { userScriptsDidChange() }
             }
             return names.allSatisfy { allows($0, for: context) }
         case "remove":
@@ -146,6 +164,7 @@ final class ExtensionComplements {
             for name in names {
                 grants.revoke(name, id: id)
             }
+            if names.contains("userScripts") { userScriptsDidChange() }
             return true
         default:
             throw Failure.unknownCall("permissions.\(method)")
@@ -155,6 +174,7 @@ final class ExtensionComplements {
     /// The extension is gone: its documents, its settings and its grants.
     func extensionUnloaded(_ context: WKWebExtensionContext) {
         offscreen.close(for: context.uniqueIdentifier)
+        userScriptMessages.extensionUnloaded(id: context.uniqueIdentifier)
     }
 
     /// Turned off: what it changed goes back, as in Chrome.
@@ -165,6 +185,15 @@ final class ExtensionComplements {
     func extensionRemoved(id: String) {
         privacy.release(extensionID: id)
         grants.forget(id: id)
+        userScripts.forget(id: id)
+    }
+
+    /// Its service worker listens for its user scripts' messages
+    /// (`connectNative` to Ombre's channel, from its complement).
+    func connect(_ port: WKWebExtension.MessagePort, for context: WKWebExtensionContext) -> Bool {
+        guard allows("userScripts", for: context) else { return false }
+        userScriptMessages.connect(port, for: context)
+        return true
     }
 
     /// Extension pages get the complement and its channel (`handler`).

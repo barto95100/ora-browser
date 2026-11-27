@@ -230,25 +230,38 @@ enum ExtensionNotificationCategories {
         return prefix + data.base64EncodedString()
     }
 
+    /// One registration after another: each writes every set kept, read
+    /// when its turn comes, and a notification waits for its own.
+    private static var registering: Task<Void, Never>?
+
+    /// Beyond `maxCategories` sets, the oldest goes: a notification still
+    /// shown with it loses its buttons.
     static func register(_ buttons: [String], in center: UNUserNotificationCenter) async {
         let identifier = identifier(for: buttons)
-        recent.removeAll { $0 == identifier }
-        recent.insert(identifier, at: 0)
-        guard registered[identifier] == nil else { return }
-        let actions = buttons.enumerated().map { index, title in
-            UNNotificationAction(identifier: buttonPrefix + String(index), title: title, options: [])
+        let previous = registering
+        let task = Task { @MainActor in
+            await previous?.value
+            recent.removeAll { $0 == identifier }
+            recent.insert(identifier, at: 0)
+            guard registered[identifier] == nil else { return }
+            let actions = buttons.enumerated().map { index, title in
+                UNNotificationAction(identifier: buttonPrefix + String(index), title: title, options: [])
+            }
+            registered[identifier] = UNNotificationCategory(
+                identifier: identifier, actions: actions, intentIdentifiers: [], options: [.customDismissAction]
+            )
+            for old in recent.dropFirst(maxCategories) {
+                registered[old] = nil
+            }
+            recent = Array(recent.prefix(maxCategories))
+            // Ombre's others stay as they are.
+            let existing = await center.notificationCategories()
+            center.setNotificationCategories(
+                existing.filter { !$0.identifier.hasPrefix(prefix) }.union(registered.values)
+            )
         }
-        registered[identifier] = UNNotificationCategory(
-            identifier: identifier, actions: actions, intentIdentifiers: [], options: [.customDismissAction]
-        )
-        for old in recent.dropFirst(maxCategories) {
-            registered[old] = nil
-        }
-        recent = Array(recent.prefix(maxCategories))
-        let ours = Set(registered.values)
-        // Ombre's others stay as they are.
-        let existing = await center.notificationCategories()
-        center.setNotificationCategories(existing.filter { !$0.identifier.hasPrefix(prefix) }.union(ours))
+        registering = task
+        await task.value
     }
 
     /// The extension's picture, from a file macOS moves into its own store.

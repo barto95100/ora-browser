@@ -96,11 +96,14 @@ struct ExtensionIdleNotificationsTests {
         func args(_ list: [ExtensionEvents.Event]) -> [String] {
             list.compactMap { ($0["args"] as? [String])?.first }
         }
-        // Nobody ever listened: nothing kept, nobody woken.
+        func next(_ client: String, worker: Bool = true) async throws -> [ExtensionEvents.Event] {
+            try await events.next(extensionID: "a", client: client, isWorker: worker)
+        }
+        // No worker ever listened: nothing kept, nobody woken.
         events.dispatch("idle.onStateChanged", ["idle"], to: "a")
         #expect(woken.isEmpty)
 
-        let first = Task { try await events.next(extensionID: "a", client: "page") }
+        let first = Task { try await next("worker") }
         let deadline = ContinuousClock.now + .seconds(5)
         while events.listeners(of: "a") == 0, ContinuousClock.now < deadline {
             await Task.yield()
@@ -111,27 +114,32 @@ struct ExtensionIdleNotificationsTests {
         // Another extension's events never reach it.
         events.dispatch("idle.onStateChanged", ["locked"], to: "b")
         events.dispatch("idle.onStateChanged", ["active"], to: "a")
-        let next = try await events.next(extensionID: "a", client: "page")
-        #expect(args(next) == ["active"])
+        #expect(try await args(next("worker")) == ["active"])
         #expect(woken.isEmpty)
 
-        // It doesn't ask again (its worker slept): what it was given is
-        // kept for the next context, and the worker is woken.
+        // It doesn't ask again (it slept): what it got is kept for the next
+        // worker, which is woken; so is what comes while none listens.
         try await Task.sleep(for: .milliseconds(600))
         #expect(events.listeners(of: "a") == 0 && woken == ["a"])
         events.dispatch("notifications.onClicked", ["m"], to: "a")
         #expect(woken == ["a", "a"])
-        let started = try await events.next(extensionID: "a", client: "worker")
-        #expect(args(started) == ["active", "m"])
-        // Each context once: another gets them too, the worker not again.
-        #expect(try await args(events.next(extensionID: "a", client: "popup")) == ["active", "m"])
+        // A page doesn't get them; the new worker does, once.
+        let page = Task { try await next("popup", worker: false) }
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(try await args(next("worker2")) == ["active", "m"])
+        events.dispatch("notifications.onClicked", ["p"], to: "a")
+        #expect(try await args(page.value) == ["p"])
+        #expect(try await args(next("worker2")) == ["p"])
+        // The one that was late, not gone: what it had is not given twice,
+        // what came after is.
+        #expect(try await args(next("worker")) == ["m"])
 
         // Stopped: what waits ends.
-        let waiting = Task { try await events.next(extensionID: "a", client: "worker") }
+        let waiting = Task { try await next("worker2") }
         try await Task.sleep(for: .milliseconds(100))
         events.forget(extensionID: "a")
         #expect(try await waiting.value.isEmpty)
-        await #expect(throws: ExtensionComplementFailure.self) { try await events.next(extensionID: "a", client: "") }
+        await #expect(throws: ExtensionComplementFailure.self) { try await next("") }
     }
 
     // MARK: - Notifications
@@ -225,8 +233,8 @@ struct ExtensionIdleNotificationsTests {
             try await complements.handle(create, from: without)
         }
         // Its events neither.
-        let next: [String: Any] = ["api": "events", "method": "next", "details": ["client": "c"]]
-        await #expect(throws: ExtensionComplementFailure.self) { try await complements.handle(next, from: without) }
+        let next: [String: Any] = ["api": "events", "method": "next", "details": ["client": "c", "worker": true]]
+        #expect(try await complements.handle(next, from: without) as? [String: Bool] == ["stop": true])
         let with = try await context(permissions: ["idle", "notifications"])
         #expect(try await complements.handle(query, from: with) as? String == "active")
         #expect(try await complements.handle(create, from: with) as? [String: Bool] == [:])

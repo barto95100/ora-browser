@@ -108,7 +108,8 @@ enum ExtensionComplementScript {
         function poll() {
             if (polling) return;
             polling = true;
-            const loop = () => call("events", "next", { client: client }).then(list => {
+            const loop = () => call("events", "next", { client: client, worker: isWorker }).then(list => {
+                if (list && list.stop === true) { polling = false; return; }
                 const items = Array.isArray(list) ? list : [];
                 for (const item of items) {
                     const target = item && routes[item.name];

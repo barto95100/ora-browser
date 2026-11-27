@@ -7,8 +7,9 @@ import Foundation
 /// between events: no polling.
 ///
 /// A context that doesn't ask again soon after an answer is gone (a worker
-/// that slept, a closed popup): what it was given is kept for the next
-/// context, and the worker is woken for it.
+/// that slept, a closed popup). Events while no worker listens (it slept),
+/// or that a worker got as it went, are kept a little for the next worker,
+/// which is woken for them: each event once.
 ///
 /// The extension is the one of the channel; `client` only tells its own
 /// contexts apart, and reaches nothing of another extension.
@@ -23,45 +24,53 @@ final class ExtensionEvents {
     }
 
     private final class Client {
+        let isWorker: Bool
         var queue: [Event] = []
         var waiter: CheckedContinuation<Batch, Never>?
         /// How many times it asked: an answer it doesn't follow is lost.
         var asks = 0
-        var answeredAt = Date()
+        var askedAt = Date()
+
+        init(isWorker: Bool) {
+            self.isWorker = isWorker
+        }
     }
 
-    /// An event no context took (its worker slept): for each context that
-    /// starts within `keptFor`, once.
+    /// An event no worker took (it slept): for the next worker, once.
     private final class Kept {
         let event: Event
         let at: Date
-        var givenTo: Set<String> = []
+        var givenTo: Set<String>
 
-        init(event: Event, at: Date) {
+        init(event: Event, at: Date, givenTo: Set<String>) {
             self.event = event
             self.at = at
+            self.givenTo = givenTo
         }
     }
 
     /// Starts the extension's background (its worker listens again).
     var wake: (String) -> Void = { _ in }
-    /// How long an event waits for a context that starts.
-    var keptFor: TimeInterval = 60
+    /// How long an event waits for a worker that starts.
+    var keptFor: TimeInterval = 30
     /// How soon a context asks again after an answer, else it is gone.
     var askAgainWithin: Duration = .seconds(2)
     private static let maxKept = 50
-    /// Contexts of one extension listening at once (its pages and worker).
+    /// Contexts of one extension listening at once (its pages and worker):
+    /// beyond, the one that asked longest ago goes.
     static let maxClients = 32
 
     private var clients: [String: [String: Client]] = [:]
-    private var kept: [String: [Kept]] = [:]
-    /// Extensions that listened since they started: only theirs are kept
-    /// (and their worker woken).
-    private var listened: Set<String> = []
+    /// By event number.
+    private var kept: [String: [Int: Kept]] = [:]
+    private var sequence = 0
+    /// Extensions whose worker listened since they started: only theirs
+    /// are kept, and their worker woken.
+    private var workers: Set<String> = []
 
     /// The next events for this context of the extension, at once if some
     /// wait, else when one comes.
-    func next(extensionID: String, client: String) async throws -> [Event] {
+    func next(extensionID: String, client: String, isWorker: Bool) async throws -> [Event] {
         guard !client.isEmpty, client.count <= 64 else {
             throw ExtensionComplementFailure.invalid("Invalid client.") // not shown
         }
@@ -70,22 +79,29 @@ final class ExtensionEvents {
         if let known = list[client] {
             item = known
         } else {
-            guard list.count < Self.maxClients else {
-                throw ExtensionComplementFailure.invalid("Too many listening contexts.") // not shown
+            if list.count >= Self.maxClients, let oldest = list.min(by: { $0.value.askedAt < $1.value.askedAt }) {
+                oldest.value.waiter?.resume(returning: Batch(events: []))
+                oldest.value.waiter = nil
+                list[oldest.key] = nil
             }
-            item = Client()
+            item = Client(isWorker: isWorker)
             list[client] = item
             clients[extensionID] = list
         }
-        listened.insert(extensionID)
+        if item.isWorker { workers.insert(extensionID) }
         item.asks += 1
+        item.askedAt = Date()
         // One call waits per context: an older one gets nothing.
         item.waiter?.resume(returning: Batch(events: []))
         item.waiter = nil
-        let cutoff = Date().addingTimeInterval(-keptFor)
-        kept[extensionID] = kept[extensionID]?.filter { $0.at > cutoff }
-        for waiting in kept[extensionID] ?? [] where waiting.givenTo.insert(client).inserted {
-            item.queue.append(waiting.event)
+        if item.isWorker {
+            let cutoff = Date().addingTimeInterval(-keptFor)
+            kept[extensionID] = kept[extensionID]?.filter { $0.value.at > cutoff }
+            for (_, waiting) in (kept[extensionID] ?? [:]).sorted(by: { $0.key < $1.key })
+                where waiting.givenTo.insert(client).inserted
+            {
+                item.queue.append(waiting.event)
+            }
         }
         if !item.queue.isEmpty {
             let events = item.queue
@@ -96,13 +112,12 @@ final class ExtensionEvents {
         return await withCheckedContinuation { item.waiter = $0 }.events
     }
 
-    /// An event for every context of the extension that listens.
+    /// An event for every context of the extension that listens; kept for
+    /// its worker if none listens now.
     func dispatch(_ name: String, _ args: [Any], to extensionID: String) {
-        let event: Event = ["name": name, "args": args]
-        guard let listening = clients[extensionID], !listening.isEmpty else {
-            keep([event], for: extensionID)
-            return
-        }
+        sequence += 1
+        let event: Event = ["name": name, "args": args, "seq": sequence]
+        let listening = clients[extensionID] ?? [:]
         for (key, client) in listening {
             if let waiter = client.waiter {
                 client.waiter = nil
@@ -114,12 +129,14 @@ final class ExtensionEvents {
                 client.queue = Array((client.queue + [event]).suffix(Self.maxKept))
             }
         }
+        if !listening.values.contains(where: \.isWorker) {
+            keep([event], for: extensionID, given: [])
+        }
     }
 
-    /// Given `events`: if it doesn't ask again soon, it is gone, and they
-    /// wait for the next context.
+    /// Given `events`: if it doesn't ask again soon, it is gone; a
+    /// worker's wait for the next one.
     private func answered(_ client: Client, client key: String, extensionID: String, events: [Event]) {
-        client.answeredAt = Date()
         let asks = client.asks
         let delay = askAgainWithin
         Task { [weak self] in
@@ -127,22 +144,31 @@ final class ExtensionEvents {
             guard let self, clients[extensionID]?[key] === client, client.asks == asks else { return }
             clients[extensionID]?[key] = nil
             if clients[extensionID]?.isEmpty == true { clients[extensionID] = nil }
-            // The others had them already.
-            keep(events + client.queue, for: extensionID, given: Set(clients[extensionID].map { Array($0.keys) } ?? []))
+            // Itself included: late rather than gone, it doesn't get them twice.
+            if client.isWorker { keep(events + client.queue, for: extensionID, given: [key]) }
         }
     }
 
-    private func keep(_ events: [Event], for extensionID: String, given: Set<String> = []) {
-        guard listened.contains(extensionID), !events.isEmpty else { return }
+    private func keep(_ events: [Event], for extensionID: String, given: Set<String>) {
+        guard workers.contains(extensionID), !events.isEmpty else { return }
         let cutoff = Date().addingTimeInterval(-keptFor)
-        var list = (kept[extensionID] ?? []).filter { $0.at > cutoff }
-        list += events.map {
-            let item = Kept(event: $0, at: Date())
-            item.givenTo = given
-            return item
+        var list = (kept[extensionID] ?? [:]).filter { $0.value.at > cutoff }
+        for event in events {
+            guard let seq = event["seq"] as? Int else { continue }
+            if let known = list[seq] {
+                known.givenTo.formUnion(given)
+            } else {
+                list[seq] = Kept(event: event, at: Date(), givenTo: given)
+            }
         }
-        kept[extensionID] = Array(list.suffix(Self.maxKept))
-        wake(extensionID)
+        if list.count > Self.maxKept {
+            for seq in list.keys.sorted().prefix(list.count - Self.maxKept) {
+                list[seq] = nil
+            }
+        }
+        kept[extensionID] = list
+        // A worker that listens now has them: only a sleeping one is woken.
+        if clients[extensionID]?.values.contains(where: \.isWorker) != true { wake(extensionID) }
     }
 
     /// The extension stopped: its waiting calls end, nothing is kept.
@@ -152,7 +178,7 @@ final class ExtensionEvents {
             client.waiter = nil
         }
         kept[extensionID] = nil
-        listened.remove(extensionID)
+        workers.remove(extensionID)
     }
 
     /// How many contexts of the extension listen (for the tests).

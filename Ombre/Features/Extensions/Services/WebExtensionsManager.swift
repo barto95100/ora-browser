@@ -160,6 +160,18 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
         controller.delegate = self
         setUpUserScripts()
+        // A click, a button or a dismissal of an extension's notification.
+        _ = NotificationCenter.default.addObserver(
+            forName: .extensionNotificationResponse, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let info = note.userInfo, let id = info["extensionID"] as? String,
+                  let notificationID = info["notificationID"] as? String,
+                  let response = info["response"] as? ExtensionNotifications.Response
+            else { return }
+            MainActor.assumeIsolated {
+                self?.complements.notifications.respond(response, extensionID: id, notificationID: notificationID)
+            }
+        }
         privateWindowsObserver = NotificationCenter.default.addObserver(
             forName: PrivateWindows.lastWindowDidClose, object: PrivateWindows.shared, queue: .main
         ) { [weak self] _ in

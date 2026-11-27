@@ -101,6 +101,29 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
         let tabID = (userInfo[Self.tabIDKey] as? String).flatMap(UUID.init(uuidString:))
         let notificationID = userInfo[Self.notificationIDKey] as? String
         let isClick = response.actionIdentifier == UNNotificationDefaultActionIdentifier
+        // An extension's (`ExtensionNotifications`): the extension is told.
+        if let extensionID = userInfo[ExtensionNotifications.extensionIDKey] as? String,
+           let id = userInfo[ExtensionNotifications.notificationIDKey] as? String
+        {
+            let action = response.actionIdentifier
+            DispatchQueue.main.async {
+                let answer: ExtensionNotifications.Response = if action == UNNotificationDismissActionIdentifier {
+                    .dismiss
+                } else if action.hasPrefix(ExtensionNotificationCategories.buttonPrefix),
+                          let index = Int(action.dropFirst(ExtensionNotificationCategories.buttonPrefix.count))
+                {
+                    .button(index)
+                } else {
+                    .click
+                }
+                if answer != .dismiss { NSApp.activate() }
+                NotificationCenter.default.post(name: .extensionNotificationResponse, object: nil, userInfo: [
+                    "extensionID": extensionID, "notificationID": id, "response": answer
+                ])
+                completionHandler()
+            }
+            return
+        }
         // A task reminder (see `TaskReminders`): its space's list.
         if userInfo[TaskReminders.taskIDKey] != nil {
             let spaceID = (userInfo[TaskReminders.spaceIDKey] as? String).flatMap(UUID.init(uuidString:))
@@ -144,4 +167,10 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
             }
         }
     }
+}
+
+extension Notification.Name {
+    /// The user answered an extension's notification: `extensionID`,
+    /// `notificationID`, `response` (`ExtensionNotifications.Response`).
+    static let extensionNotificationResponse = Notification.Name("ombre.extensionNotificationResponse")
 }

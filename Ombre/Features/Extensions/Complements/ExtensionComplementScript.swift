@@ -19,7 +19,7 @@ enum ExtensionComplementScript {
     static let applicationIdentifier = "ombre.complement"
 
     /// The APIs added, by the permission that gives them.
-    static let permissions: Set<String> = ["privacy", "offscreen", "userScripts"]
+    static let permissions: Set<String> = ["privacy", "offscreen", "userScripts", "idle", "notifications"]
 
     /// For pages: from the start of every extension page and frame.
     static var pageSource: String {
@@ -92,10 +92,119 @@ enum ExtensionComplementScript {
 
         const isWorker = \#(isWorker);
 
-        """# + privacyPart + offscreenPart + userScriptsPart + permissionsPart + #"""
-        })();
-        """#
+        """# + eventsPart + privacyPart + offscreenPart + userScriptsPart + idlePart + notificationsPart
+            + permissionsPart + #"""
+            })();
+            """#
     }
+
+    /// Events from Ombre (`ExtensionEvents`): one call waits while something
+    /// listens in this context, answered when an event comes.
+    private static let eventsPart = #"""
+        const routes = {};
+        const client = typeof crypto === "object" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID() : String(Math.random()).slice(2) + String(Date.now());
+        let polling = false;
+        function poll() {
+            if (polling) return;
+            polling = true;
+            const loop = () => call("events", "next", { client: client }).then(list => {
+                for (const item of Array.isArray(list) ? list : []) {
+                    const target = item && routes[item.name];
+                    if (target) target.dispatch(...(Array.isArray(item.args) ? item.args : []));
+                }
+                loop();
+            }, () => setTimeout(loop, 5000));
+            loop();
+        }
+        // An event of an added API: its first listener starts listening here.
+        function ombreEvent(name, onListen) {
+            const target = event();
+            const add = target.addListener;
+            target.addListener = listener => {
+                add(listener);
+                if (onListen) onListen();
+                poll();
+            };
+            routes[name] = target;
+            return target;
+        }
+
+    """#
+
+    /// `chrome.idle` (`ExtensionIdle`).
+    private static let idlePart = #"""
+        if (declared.has("idle")) {
+            let watched = false;
+            install("idle", {
+                IdleState: { ACTIVE: "active", IDLE: "idle", LOCKED: "locked" },
+                queryState: (detectionIntervalInSeconds, callback) => either(call("idle", "queryState",
+                    { detectionIntervalInSeconds: detectionIntervalInSeconds }), callback),
+                setDetectionInterval: intervalInSeconds => {
+                    call("idle", "setDetectionInterval", { intervalInSeconds: intervalInSeconds }).catch(() => {});
+                },
+                onStateChanged: ombreEvent("idle.onStateChanged", () => {
+                    if (watched) return;
+                    watched = true;
+                    call("idle", "watch").catch(() => { watched = false; });
+                })
+            });
+        }
+
+    """#
+
+    /// `chrome.notifications` (`ExtensionNotifications`): its pictures are
+    /// read here, from the package (or where they are), and given to Ombre.
+    private static let notificationsPart = #"""
+        if (declared.has("notifications")) {
+            const picture = url => {
+                if (typeof url !== "string" || !url) return Promise.resolve(null);
+                return fetch(/^[a-z][a-z0-9+.-]*:/i.test(url) ? url : root.runtime.getURL(url))
+                    .then(response => response.ok ? response.blob() : null)
+                    .then(blob => !blob || blob.size > 5242880 ? null : blob.arrayBuffer().then(buffer => {
+                        const bytes = new Uint8Array(buffer);
+                        let text = "";
+                        for (let i = 0; i < bytes.length; i += 32768) {
+                            text += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+                        }
+                        return { data: btoa(text), type: blob.type };
+                    }))
+                    .catch(() => null);
+            };
+            const withPictures = options => {
+                const copy = Object.assign({}, options || {});
+                return Promise.all([picture(copy.iconUrl), copy.type === "image" ? picture(copy.imageUrl) : null])
+                    .then(([icon, image]) => {
+                        if (icon) { copy.iconData = icon.data; copy.iconType = icon.type; }
+                        if (image) { copy.imageData = image.data; copy.imageType = image.type; }
+                        return copy;
+                    });
+            };
+            const id = value => value === undefined || value === null ? null : String(value);
+            install("notifications", {
+                TemplateType: { BASIC: "basic", IMAGE: "image", LIST: "list", PROGRESS: "progress" },
+                PermissionLevel: { GRANTED: "granted", DENIED: "denied" },
+                create: (...values) => {
+                    const callback = typeof values[values.length - 1] === "function" ? values.pop() : undefined;
+                    const [notificationId, options] = values.length > 1 ? values : [undefined, values[0]];
+                    return either(withPictures(options).then(given => call("notifications", "create",
+                        { notificationId: id(notificationId), options: given })), callback);
+                },
+                update: (notificationId, options, callback) => either(withPictures(options).then(given =>
+                    call("notifications", "update", { notificationId: id(notificationId), options: given })), callback),
+                clear: (notificationId, callback) =>
+                    either(call("notifications", "clear", { notificationId: id(notificationId) }), callback),
+                getAll: callback => either(call("notifications", "getAll"), callback),
+                getPermissionLevel: callback => either(call("notifications", "getPermissionLevel"), callback),
+                onClicked: ombreEvent("notifications.onClicked"),
+                onButtonClicked: ombreEvent("notifications.onButtonClicked"),
+                onClosed: ombreEvent("notifications.onClosed"),
+                onPermissionLevelChanged: event(),
+                onShowSettings: event()
+            });
+        }
+
+    """#
 
     /// `chrome.privacy`: Ombre's settings (`ExtensionPrivacy`).
     private static let privacyPart = #"""

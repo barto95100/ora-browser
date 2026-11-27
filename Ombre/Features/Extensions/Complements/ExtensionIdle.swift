@@ -35,8 +35,9 @@ final class ExtensionIdle {
     static let minimumInterval = 15
     /// Chrome's longest: 4 hours.
     static let maximumInterval = 4 * 60 * 60
-    /// How often a user who is idle is looked at again.
-    static let idleCheck: Duration = .seconds(2)
+    /// How often a user who is idle is looked at again, if no mouse or
+    /// key event of Ombre's says it sooner (another app's keys don't).
+    static let idleCheck: Duration = .seconds(10)
 
     var source: Source
     /// The state changed for an extension that listens.
@@ -47,9 +48,14 @@ final class ExtensionIdle {
     private var watching: [String: String] = [:]
     private var check: Task<Void, Never>?
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
+    /// While the user is idle: their first mouse or key event.
+    private var inputMonitors: [Any] = []
+    /// The Mac's notifications and events (not in the tests).
+    private let usesSystemEvents: Bool
 
-    init(source: Source = .system) {
+    init(source: Source = .system, usesSystemEvents: Bool = true) {
         self.source = source
+        self.usesSystemEvents = usesSystemEvents
     }
 
     func handle(_ method: String, _ details: [String: Any], extensionID: String) throws -> Any? {
@@ -96,6 +102,7 @@ final class ExtensionIdle {
     func evaluate() {
         check?.cancel()
         check = nil
+        stopInputMonitors()
         guard !watching.isEmpty else { return }
         let locked = source.isLocked()
         let since = source.secondsSinceInput()
@@ -116,6 +123,7 @@ final class ExtensionIdle {
             }
             if let next { wait = wait.map { min($0, next) } ?? next }
         }
+        if watching.values.contains("idle") { startInputMonitors() }
         guard let wait else { return }
         check = Task { [weak self] in
             try? await Task.sleep(for: wait, tolerance: .seconds(1))
@@ -131,6 +139,7 @@ final class ExtensionIdle {
         if watching.isEmpty {
             check?.cancel()
             check = nil
+            stopInputMonitors()
             for (center, observer) in observers {
                 center.removeObserver(observer)
             }
@@ -142,8 +151,38 @@ final class ExtensionIdle {
         !watching.isEmpty
     }
 
+    /// Back: the mouse moves or a key is pressed (in another app too, for
+    /// the mouse), told at once.
+    private func startInputMonitors() {
+        guard usesSystemEvents, inputMonitors.isEmpty else { return }
+        let mask: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDown, .rightMouseDown, .scrollWheel, .keyDown]
+        let back = { [weak self] in
+            guard let self, !inputMonitors.isEmpty else { return }
+            stopInputMonitors()
+            evaluate()
+        }
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: mask, handler: { _ in
+            MainActor.assumeIsolated { back() }
+        }) {
+            inputMonitors.append(global)
+        }
+        if let local = NSEvent.addLocalMonitorForEvents(matching: mask, handler: { event in
+            MainActor.assumeIsolated { back() }
+            return event
+        }) {
+            inputMonitors.append(local)
+        }
+    }
+
+    private func stopInputMonitors() {
+        for monitor in inputMonitors {
+            NSEvent.removeMonitor(monitor)
+        }
+        inputMonitors = []
+    }
+
     private func observe() {
-        guard observers.isEmpty else { return }
+        guard usesSystemEvents, observers.isEmpty else { return }
         let changed: @Sendable (Notification) -> Void = { [weak self] _ in
             MainActor.assumeIsolated { self?.evaluate() }
         }

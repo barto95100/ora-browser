@@ -25,7 +25,7 @@ final class ExtensionNotifications {
 
     /// Where notifications go (the tests give their own).
     struct Presenter {
-        var show: @MainActor (Shown) -> Void
+        var show: @MainActor (Shown) async -> Void
         var remove: @MainActor ([String]) -> Void
         /// Whether macOS lets Ombre show notifications.
         var isAllowed: @MainActor () async -> Bool
@@ -72,14 +72,18 @@ final class ExtensionNotifications {
                 let missing = "Some of the required properties are missing: " // not shown
                 throw ExtensionComplementFailure.invalid(missing + "type, iconUrl, title and message.") // not shown
             }
-            try show(id, options, extensionID: extensionID, extensionName: extensionName)
+            try await show(id, options, extensionID: extensionID, extensionName: extensionName)
             return id
         case "update":
             guard let id = details["notificationId"] as? String, let current = shown[extensionID]?[id] else {
                 return false
             }
             let changes = details["options"] as? [String: Any] ?? [:]
-            try show(id, current.merging(changes) { $1 }, extensionID: extensionID, extensionName: extensionName)
+            // Quietly, as in Chrome.
+            try await show(
+                id, current.merging(changes) { $1 }, extensionID: extensionID, extensionName: extensionName,
+                isUpdate: true
+            )
             return true
         case "clear":
             guard let id = details["notificationId"] as? String, shown[extensionID]?[id] != nil else { return false }
@@ -95,7 +99,13 @@ final class ExtensionNotifications {
         }
     }
 
-    private func show(_ id: String, _ options: [String: Any], extensionID: String, extensionName: String?) throws {
+    private func show(
+        _ id: String,
+        _ options: [String: Any],
+        extensionID: String,
+        extensionName: String?,
+        isUpdate: Bool = false
+    ) async throws {
         let type = options["type"] as? String ?? "basic"
         guard ["basic", "image", "list", "progress"].contains(type) else {
             throw ExtensionComplementFailure.invalid("Invalid notification type: '\(type)'.") // not shown
@@ -104,7 +114,7 @@ final class ExtensionNotifications {
         if type == "list" {
             for item in options["items"] as? [[String: Any]] ?? [] {
                 let title = item["title"] as? String ?? "", message = item["message"] as? String ?? ""
-                lines.append(message.isEmpty ? title : "\(title): \(message)") // not shown
+                lines.append(message.isEmpty ? title : String(localized: "\(title): \(message)"))
             }
         }
         if type == "progress", let progress = options["progress"] as? Int {
@@ -120,14 +130,14 @@ final class ExtensionNotifications {
             .flatMap { $0.count <= Self.maxImageBytes ? $0 : nil }
         let imageType = options["imageData"] != nil ? options["imageType"] as? String : options["iconType"] as? String
         shown[extensionID, default: [:]][id] = options
-        presenter.show(Shown(
+        await presenter.show(Shown(
             identifier: Self.identifier(extensionID: extensionID, notificationID: id),
             extensionID: extensionID,
             notificationID: id,
             title: options["title"] as? String ?? "",
             subtitle: extensionName ?? "",
             body: lines.filter { !$0.isEmpty }.joined(separator: "\n"),
-            isSilent: options["silent"] as? Bool == true,
+            isSilent: isUpdate || options["silent"] as? Bool == true,
             buttons: buttons,
             image: image,
             imageType: imageType
@@ -180,13 +190,15 @@ extension ExtensionNotifications.Presenter {
                     ExtensionNotifications.notificationIDKey: shown.notificationID
                 ]
                 content.categoryIdentifier = ExtensionNotificationCategories.identifier(for: shown.buttons)
-                ExtensionNotificationCategories.register(shown.buttons, in: center)
+                // Before it shows: else, without its buttons.
+                await ExtensionNotificationCategories.register(shown.buttons, in: center)
                 if let image = shown.image, let attachment = ExtensionNotificationCategories.attachment(
                     image, type: shown.imageType
                 ) {
                     content.attachments = [attachment]
                 }
-                center.add(UNNotificationRequest(identifier: shown.identifier, content: content, trigger: nil))
+                let request = UNNotificationRequest(identifier: shown.identifier, content: content, trigger: nil)
+                try? await center.add(request)
             },
             remove: { identifiers in
                 guard !TestHost.isActive else { return }
@@ -209,27 +221,34 @@ enum ExtensionNotificationCategories {
     static let prefix = "ombre.extension.buttons:"
     nonisolated static let buttonPrefix = "button"
     private static var registered: [String: UNNotificationCategory] = [:]
+    /// The most recent first: a few sets of buttons are kept, not all.
+    private static var recent: [String] = []
+    private static let maxCategories = 20
 
     static func identifier(for buttons: [String]) -> String {
         let data = (try? JSONSerialization.data(withJSONObject: buttons)) ?? Data()
         return prefix + data.base64EncodedString()
     }
 
-    static func register(_ buttons: [String], in center: UNUserNotificationCenter) {
+    static func register(_ buttons: [String], in center: UNUserNotificationCenter) async {
         let identifier = identifier(for: buttons)
+        recent.removeAll { $0 == identifier }
+        recent.insert(identifier, at: 0)
         guard registered[identifier] == nil else { return }
         let actions = buttons.enumerated().map { index, title in
-            UNNotificationAction(identifier: buttonPrefix + String(index), title: title, options: [.foreground])
+            UNNotificationAction(identifier: buttonPrefix + String(index), title: title, options: [])
         }
         registered[identifier] = UNNotificationCategory(
             identifier: identifier, actions: actions, intentIdentifiers: [], options: [.customDismissAction]
         )
-        let ours = Set(registered.values)
-        Task {
-            // Ombre's others stay as they are.
-            let existing = await center.notificationCategories()
-            center.setNotificationCategories(existing.filter { !$0.identifier.hasPrefix(prefix) }.union(ours))
+        for old in recent.dropFirst(maxCategories) {
+            registered[old] = nil
         }
+        recent = Array(recent.prefix(maxCategories))
+        let ours = Set(registered.values)
+        // Ombre's others stay as they are.
+        let existing = await center.notificationCategories()
+        center.setNotificationCategories(existing.filter { !$0.identifier.hasPrefix(prefix) }.union(ours))
     }
 
     /// The extension's picture, from a file macOS moves into its own store.

@@ -109,11 +109,13 @@ enum ExtensionComplementScript {
             if (polling) return;
             polling = true;
             const loop = () => call("events", "next", { client: client }).then(list => {
-                for (const item of Array.isArray(list) ? list : []) {
+                const items = Array.isArray(list) ? list : [];
+                for (const item of items) {
                     const target = item && routes[item.name];
                     if (target) target.dispatch(...(Array.isArray(item.args) ? item.args : []));
                 }
-                loop();
+                // Nothing: only when Ombre ended the call; not again at once.
+                if (items.length) loop(); else setTimeout(loop, 1000);
             }, () => setTimeout(loop, 5000));
             loop();
         }

@@ -59,6 +59,11 @@ extension ExtensionUserScriptsTests {
         let off = try #require(ExtensionComplementPackage.manifest(allowed, allowingUserScripts: false))
         #expect(try (JSONSerialization.jsonObject(with: off) as? [String: Any])?[key] == nil)
         #expect(ExtensionComplementPackage.manifest(manifest, allowingUserScripts: false) == nil)
+        // A developer's manifest can't allow them itself: Ombre's copy drops it.
+        let shipped = #"{"manifest_version":3,"name":"U","permissions":["userScripts"],"#
+            + #""background":{"service_worker":"sw.js"},"ombre_user_scripts_allowed":true}"#
+        let copy = try #require(ExtensionComplementPackage.changes(forManifest: Data(shipped.utf8)))
+        #expect(try (JSONSerialization.jsonObject(with: copy.manifest) as? [String: Any])?[key] == nil)
     }
 
     /// Not allowed: no `chrome.userScripts` in its worker, as in Chrome,

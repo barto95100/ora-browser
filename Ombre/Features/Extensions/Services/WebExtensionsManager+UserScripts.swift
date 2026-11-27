@@ -32,9 +32,27 @@ extension WebExtensionsManager {
         else { return }
         updateRecord(id: id) { $0.allowsUserScripts = allowed }
         userScriptsChanged()
-        // Small, and must be done before it starts again.
-        ExtensionComplementPackage.setUserScriptsAllowed(allowed, at: record.path)
-        reload(id: id)
+        Task {
+            await writeUserScriptsSetting(id: id, evenIfOff: true)
+            reload(id: id)
+        }
+    }
+
+    /// Writes its "Allow User Scripts" in its copy (off: only if asked, a
+    /// copy is written without it), as the record says when it is its turn:
+    /// one write after another, the last one right.
+    func writeUserScriptsSetting(id: String, evenIfOff: Bool) async {
+        let previous = userScriptsWrites
+        let write = Task { @MainActor [weak self] in
+            await previous?.value
+            guard let record = self?.installed.first(where: { $0.id == id })?.record,
+                  record.bundleIdentifier == nil, record.allowsUserScripts || evenIfOff
+            else { return }
+            let (allowed, path) = (record.allowsUserScripts, record.path)
+            _ = await Task.detached { ExtensionComplementPackage.setUserScriptsAllowed(allowed, at: path) }.value
+        }
+        userScriptsWrites = write
+        await write.value
     }
 
     private func userScriptEntries() -> [ExtensionUserScriptInjector.Entry] {

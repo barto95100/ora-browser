@@ -123,7 +123,13 @@ final class ExtensionComplements {
         let details = message["details"] as? [String: Any] ?? [:]
         if api == "permissions" { return try await permissions(method, details, context: context) }
         if api == "events", method == "next" {
-            return await events.next(extensionID: context.uniqueIdentifier, client: details["client"] as? String ?? "")
+            // Only for an extension that may have events.
+            guard allows("idle", for: context) || allows("notifications", for: context) else {
+                throw Failure.notAllowed("idle")
+            }
+            return try await events.next(
+                extensionID: context.uniqueIdentifier, client: details["client"] as? String ?? ""
+            )
         }
         guard ExtensionComplementScript.permissions.contains(api) else { throw Failure.unknownCall(api) }
         guard allows(api, for: context) else {

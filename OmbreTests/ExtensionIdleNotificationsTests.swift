@@ -39,7 +39,7 @@ struct ExtensionIdleNotificationsTests {
 
     @Test func idleStatesAsChrome() throws {
         let user = User()
-        let idle = ExtensionIdle(source: user.source)
+        let idle = ExtensionIdle(source: user.source, usesSystemEvents: false)
         #expect(try idle.handle("queryState", ["detectionIntervalInSeconds": 60], extensionID: "a") as? String
             == "active")
         user.since = 20
@@ -59,7 +59,7 @@ struct ExtensionIdleNotificationsTests {
 
     @Test func idleChangesAreToldToWhoListens() throws {
         let user = User()
-        let idle = ExtensionIdle(source: user.source)
+        let idle = ExtensionIdle(source: user.source, usesSystemEvents: false)
         var told: [String] = []
         idle.stateChanged = { id, state in told.append("\(id) \(state)") }
         _ = try idle.handle("setDetectionInterval", ["intervalInSeconds": 20], extensionID: "a")
@@ -90,40 +90,48 @@ struct ExtensionIdleNotificationsTests {
 
     @Test func eventsReachTheContextsThatListen() async throws {
         let events = ExtensionEvents()
+        events.askAgainWithin = .milliseconds(300)
         var woken: [String] = []
         events.wake = { woken.append($0) }
+        func args(_ list: [ExtensionEvents.Event]) -> [String] {
+            list.compactMap { ($0["args"] as? [String])?.first }
+        }
         // Nobody ever listened: nothing kept, nobody woken.
         events.dispatch("idle.onStateChanged", ["idle"], to: "a")
         #expect(woken.isEmpty)
 
-        let first = Task { await events.next(extensionID: "a", client: "page") }
-        while events.listeners(of: "a") == 0 {
+        let first = Task { try await events.next(extensionID: "a", client: "page") }
+        let deadline = ContinuousClock.now + .seconds(5)
+        while events.listeners(of: "a") == 0, ContinuousClock.now < deadline {
             await Task.yield()
         }
         events.dispatch("idle.onStateChanged", ["idle"], to: "a")
-        let got = await first.value
-        #expect(got.map { $0["name"] as? String } == ["idle.onStateChanged"])
-        #expect((got.first?["args"] as? [String]) == ["idle"])
+        let got = try await first.value
+        #expect(got.map { $0["name"] as? String } == ["idle.onStateChanged"] && args(got) == ["idle"])
         // Another extension's events never reach it.
         events.dispatch("idle.onStateChanged", ["locked"], to: "b")
         events.dispatch("idle.onStateChanged", ["active"], to: "a")
-        let next = await events.next(extensionID: "a", client: "page")
-        #expect((next.first?["args"] as? [String]) == ["active"] && next.count == 1)
+        let next = try await events.next(extensionID: "a", client: "page")
+        #expect(args(next) == ["active"])
+        #expect(woken.isEmpty)
 
-        // Its worker sleeps (nothing waits, long gone): kept, and woken.
-        events.keptFor = 0
-        events.dispatch("notifications.onClicked", ["n"], to: "a")
-        events.keptFor = 60
+        // It doesn't ask again (its worker slept): what it was given is
+        // kept for the next context, and the worker is woken.
+        try await Task.sleep(for: .milliseconds(600))
+        #expect(events.listeners(of: "a") == 0 && woken == ["a"])
         events.dispatch("notifications.onClicked", ["m"], to: "a")
         #expect(woken == ["a", "a"])
-        let started = await events.next(extensionID: "a", client: "worker")
-        #expect(started.compactMap { ($0["args"] as? [String])?.first } == ["n", "m"])
+        let started = try await events.next(extensionID: "a", client: "worker")
+        #expect(args(started) == ["active", "m"])
+        // Each context once: another gets them too, the worker not again.
+        #expect(try await args(events.next(extensionID: "a", client: "popup")) == ["active", "m"])
 
         // Stopped: what waits ends.
-        let waiting = Task { await events.next(extensionID: "a", client: "worker") }
+        let waiting = Task { try await events.next(extensionID: "a", client: "worker") }
         try await Task.sleep(for: .milliseconds(100))
         events.forget(extensionID: "a")
-        #expect(await waiting.value.isEmpty)
+        #expect(try await waiting.value.isEmpty)
+        await #expect(throws: ExtensionComplementFailure.self) { try await events.next(extensionID: "a", client: "") }
     }
 
     // MARK: - Notifications
@@ -194,7 +202,7 @@ struct ExtensionIdleNotificationsTests {
         let defaults = try #require(UserDefaults(suiteName: "ExtensionIdleNotificationsTests-\(UUID().uuidString)"))
         return ExtensionComplements(
             privacy: ExtensionPrivacy(settings: ExtensionComplementTests.Setting(), defaults: defaults, key: "p"),
-            idle: ExtensionIdle(source: user.source),
+            idle: ExtensionIdle(source: user.source, usesSystemEvents: false),
             notifications: ExtensionNotifications(presenter: shown.presenter),
             grants: ExtensionComplementGrants(defaults: defaults, key: "grants")
         )
@@ -216,9 +224,28 @@ struct ExtensionIdleNotificationsTests {
         await #expect(throws: ExtensionComplementFailure.notAllowed("notifications")) {
             try await complements.handle(create, from: without)
         }
+        // Its events neither.
+        let next: [String: Any] = ["api": "events", "method": "next", "details": ["client": "c"]]
+        await #expect(throws: ExtensionComplementFailure.self) { try await complements.handle(next, from: without) }
         let with = try await context(permissions: ["idle", "notifications"])
         #expect(try await complements.handle(query, from: with) as? String == "active")
         #expect(try await complements.handle(create, from: with) as? [String: Bool] == [:])
+
+        // Each extension its own events, whatever `client` says.
+        let other = try await context(permissions: ["notifications"])
+        let waiting = Task { try await complements.handle(next, from: other) as? [[String: Any]] }
+        let mine = Task { try await complements.handle(next, from: with) as? [[String: Any]] }
+        let deadline = ContinuousClock.now + .seconds(5)
+        while complements.events.listeners(of: with.uniqueIdentifier) == 0
+            || complements.events.listeners(of: other.uniqueIdentifier) == 0, ContinuousClock.now < deadline
+        {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        complements.events.dispatch("notifications.onClicked", ["n"], to: with.uniqueIdentifier)
+        #expect(try await mine.value?.count == 1)
+        complements.events.forget(extensionID: other.uniqueIdentifier)
+        #expect(try await waiting.value?.isEmpty == true)
+        complements.events.forget(extensionID: with.uniqueIdentifier)
     }
 
     /// In the service worker of Ombre's copy: the APIs, a picture of its

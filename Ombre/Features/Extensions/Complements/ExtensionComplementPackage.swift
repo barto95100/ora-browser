@@ -58,6 +58,8 @@ enum ExtensionComplementPackage {
         let apis = ExtensionComplementScript.permissions.intersection(permissions + optional).sorted()
         guard !apis.isEmpty else { return nil }
 
+        // Ombre's own, never the developer's.
+        manifest[userScriptsAllowedKey] = nil
         var added = Added(apis: apis, permissions: [])
         if !permissions.contains("nativeMessaging") {
             permissions.append("nativeMessaging")

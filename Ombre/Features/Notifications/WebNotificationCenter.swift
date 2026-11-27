@@ -116,7 +116,8 @@ final class WebNotificationCenter: NSObject, UNUserNotificationCenterDelegate {
                 } else {
                     .click
                 }
-                if answer != .dismiss { NSApp.activate() }
+                // A click brings Ombre forward (the extension often opens a tab); a button doesn't.
+                if answer == .click { NSApp.activate() }
                 NotificationCenter.default.post(name: .extensionNotificationResponse, object: nil, userInfo: [
                     "extensionID": extensionID, "notificationID": id, "response": answer
                 ])

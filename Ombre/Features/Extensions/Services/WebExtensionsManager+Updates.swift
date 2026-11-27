@@ -182,10 +182,7 @@ extension WebExtensionsManager {
         Task {
             // Read again from its place: the downloaded copy has moved.
             do {
-                if record.allowsUserScripts {
-                    let path = current.path
-                    _ = await Task.detached { ExtensionComplementPackage.setUserScriptsAllowed(true, at: path) }.value
-                }
+                await writeUserScriptsSetting(id: id, evenIfOff: false)
                 let updated = try await WKWebExtension(resourceBaseURL: current)
                 replaceRunning(id: id, with: updated)
             } catch {

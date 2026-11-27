@@ -182,6 +182,7 @@ extension WebExtensionsManager {
         Task {
             // Read again from its place: the downloaded copy has moved.
             do {
+                await writeUserScriptsSetting(id: id, evenIfOff: false)
                 let updated = try await WKWebExtension(resourceBaseURL: current)
                 replaceRunning(id: id, with: updated)
             } catch {

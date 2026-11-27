@@ -10,6 +10,8 @@ enum ExtensionComplementFailure: LocalizedError, Equatable {
     case notAllowed(String)
     case unknownCall(String)
     case invalid(String)
+    /// "Allow User Scripts" is off (Settings › Extensions).
+    case userScriptsOff
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +21,9 @@ enum ExtensionComplementFailure: LocalizedError, Equatable {
             "'\(call)' is not supported." // not shown
         case let .invalid(reason):
             reason
+        case .userScriptsOff:
+            "The 'userScripts' API is only available for users " // not shown
+                + "when the 'Allow User Scripts' toggle is enabled." // not shown
         }
     }
 }
@@ -40,14 +45,20 @@ final class ExtensionComplements {
     let privacy: ExtensionPrivacy
     let offscreen: OffscreenDocuments
     let userScripts: ExtensionUserScripts
+    let idle: ExtensionIdle
+    let notifications: ExtensionNotifications
+    let events = ExtensionEvents()
     /// The extension running now, by id (the manager's).
     var loadedContext: (String) -> WKWebExtensionContext? = { _ in nil }
     private(set) lazy var userScriptMessages = ExtensionUserScriptMessages(checks: .init(
         context: { [weak self] in self?.loadedContext($0) },
-        allowsUserScripts: { [weak self] in self?.allows("userScripts", for: $0) == true },
+        allowsUserScripts: { [weak self] in self?.runsUserScripts($0) == true },
         registered: { [weak self] in self?.userScripts.registered(for: $0) ?? .init() }
     ))
     private let grants: ExtensionComplementGrants
+    /// Whether the user allowed its user scripts, by id ("Allow User
+    /// Scripts", Settings › Extensions): off, as in Chrome.
+    var userScriptsAllowed: (String) -> Bool = { _ in false }
     /// The extensions' user scripts changed, or what they may use: the
     /// pages get them again (`ExtensionUserScriptInjector`).
     var userScriptsDidChange: () -> Void = {}
@@ -61,13 +72,24 @@ final class ExtensionComplements {
         privacy: ExtensionPrivacy = .shared,
         offscreen: OffscreenDocuments = OffscreenDocuments(),
         userScripts: ExtensionUserScripts = ExtensionUserScripts(),
+        idle: ExtensionIdle = ExtensionIdle(),
+        notifications: ExtensionNotifications = ExtensionNotifications(),
         grants: ExtensionComplementGrants = ExtensionComplementGrants()
     ) {
         self.privacy = privacy
         self.offscreen = offscreen
         self.userScripts = userScripts
+        self.idle = idle
+        self.notifications = notifications
         self.grants = grants
         userScripts.didChange = { [weak self] _ in self?.userScriptsDidChange() }
+        idle.stateChanged = { [weak self] id, state in self?.events.dispatch("idle.onStateChanged", [state], to: id) }
+        notifications.event = { [weak self] id, name, args in self?.events.dispatch(name, args, to: id) }
+        // A sleeping worker starts again for its events.
+        events.wake = { [weak self] id in
+            guard let context = self?.loadedContext(id) else { return }
+            Task { try? await context.loadBackgroundContent() }
+        }
     }
 
     /// The permissions its manifest asks for (`permissions`) and those it may
@@ -86,6 +108,11 @@ final class ExtensionComplements {
         return declared.optional.contains(api) && grants.isGranted(api, id: context.uniqueIdentifier)
     }
 
+    /// Its user scripts may run: the API asked for and allowed by the user.
+    func runsUserScripts(_ context: WKWebExtensionContext) -> Bool {
+        allows("userScripts", for: context) && userScriptsAllowed(context.uniqueIdentifier)
+    }
+
     /// One call: `{api, method, details}`. Its value, or an error the
     /// extension sees as Chrome's.
     func handle(_ message: Any?, from context: WKWebExtensionContext) async throws -> Any? {
@@ -95,6 +122,18 @@ final class ExtensionComplements {
         else { throw Failure.invalid("Invalid call.") } // not shown
         let details = message["details"] as? [String: Any] ?? [:]
         if api == "permissions" { return try await permissions(method, details, context: context) }
+        if api == "events", method == "next" {
+            // Only for an extension that may have events: else it stops
+            // asking (until a listener is added again).
+            guard allows("idle", for: context) || allows("notifications", for: context) else {
+                return ["stop": true]
+            }
+            return try await events.next(
+                extensionID: context.uniqueIdentifier,
+                client: details["client"] as? String ?? "",
+                isWorker: details["worker"] as? Bool == true
+            )
+        }
         guard ExtensionComplementScript.permissions.contains(api) else { throw Failure.unknownCall(api) }
         guard allows(api, for: context) else {
             let name = context.webExtension.displayName ?? context.uniqueIdentifier
@@ -111,7 +150,17 @@ final class ExtensionComplements {
             )
         case "offscreen":
             return try await offscreen.handle(method, details, context: context)
+        case "idle":
+            return try idle.handle(method, details, extensionID: context.uniqueIdentifier)
+        case "notifications":
+            return try await notifications.handle(
+                method,
+                details,
+                extensionID: context.uniqueIdentifier,
+                extensionName: context.webExtension.displayShortName ?? context.webExtension.displayName
+            )
         case "userScripts":
+            guard userScriptsAllowed(context.uniqueIdentifier) else { throw Failure.userScriptsOff }
             return try userScripts.handle(method, details, extensionID: context.uniqueIdentifier)
         default:
             throw Failure.unknownCall(api)
@@ -175,6 +224,9 @@ final class ExtensionComplements {
     func extensionUnloaded(_ context: WKWebExtensionContext) {
         offscreen.close(for: context.uniqueIdentifier)
         userScriptMessages.extensionUnloaded(id: context.uniqueIdentifier)
+        idle.forget(extensionID: context.uniqueIdentifier)
+        notifications.forget(extensionID: context.uniqueIdentifier)
+        events.forget(extensionID: context.uniqueIdentifier)
     }
 
     /// Turned off: what it changed goes back, as in Chrome.
@@ -191,7 +243,7 @@ final class ExtensionComplements {
     /// Its service worker listens for its user scripts' messages
     /// (`connectNative` to Ombre's channel, from its complement).
     func connect(_ port: WKWebExtension.MessagePort, for context: WKWebExtensionContext) -> Bool {
-        guard allows("userScripts", for: context) else { return false }
+        guard runsUserScripts(context) else { return false }
         userScriptMessages.connect(port, for: context)
         return true
     }

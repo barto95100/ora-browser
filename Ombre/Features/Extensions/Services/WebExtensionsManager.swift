@@ -132,6 +132,9 @@ final class WebExtensionsManager: NSObject, ObservableObject {
     /// Decided from private windows, never saved (see `PrivateSiteDecisions`).
     var privateSiteDecisions = PrivateSiteDecisions()
     private var privateWindowsObserver: NSObjectProtocol?
+    private var notificationResponseObserver: NSObjectProtocol?
+    /// "Allow User Scripts" written in the copies, one after another.
+    var userScriptsWrites: Task<Void, Never>?
     private var scanTask: Task<Void, Never>?
     /// Extensions settings views on screen now: only then is a return to
     /// Ombre (from the App Store) worth a new scan.
@@ -160,6 +163,18 @@ final class WebExtensionsManager: NSObject, ObservableObject {
         }
         controller.delegate = self
         setUpUserScripts()
+        // A click, a button or a dismissal of an extension's notification.
+        notificationResponseObserver = NotificationCenter.default.addObserver(
+            forName: .extensionNotificationResponse, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let info = note.userInfo, let id = info["extensionID"] as? String,
+                  let notificationID = info["notificationID"] as? String,
+                  let response = info["response"] as? ExtensionNotifications.Response
+            else { return }
+            MainActor.assumeIsolated {
+                self?.complements.notifications.respond(response, extensionID: id, notificationID: notificationID)
+            }
+        }
         privateWindowsObserver = NotificationCenter.default.addObserver(
             forName: PrivateWindows.lastWindowDidClose, object: PrivateWindows.shared, queue: .main
         ) { [weak self] _ in
@@ -368,6 +383,8 @@ final class WebExtensionsManager: NSObject, ObservableObject {
                 webExtension = try await WKWebExtension(appExtensionBundle: bundle)
             } else {
                 // Ombre's package: a .zip, or a folder.
+                // "Allow User Scripts", in a copy made since (an update).
+                await writeUserScriptsSetting(id: id, evenIfOff: false)
                 let isArchive = record.path.hasSuffix(".zip")
                 let package = URL(fileURLWithPath: record.path, isDirectory: !isArchive)
                 webExtension = try await WKWebExtension(resourceBaseURL: package)
@@ -434,6 +451,13 @@ final class WebExtensionsManager: NSObject, ObservableObject {
             installed[index].record.version = version
             save()
         }
+    }
+
+    /// Stops it and starts it again (its contexts read their manifest again).
+    func reload(id: String) {
+        guard let index = index(of: id), installed[index].context != nil else { return }
+        unload(at: index)
+        Task { await load(id: id) }
     }
 
     private func unload(at index: Int) {

@@ -11,14 +11,14 @@ import WebKit
 @MainActor
 @Suite(.serialized)
 struct ExtensionUserScriptsTests {
-    private static let extensionID = UUID().uuidString
+    static let extensionID = UUID().uuidString
 
-    private func makeStore() -> (ExtensionUserScripts, URL) {
+    func makeStore() -> (ExtensionUserScripts, URL) {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("userscripts-\(UUID().uuidString)")
         return (ExtensionUserScripts(folder: folder), folder)
     }
 
-    private static func script(_ id: String, _ extra: [String: Any] = [:]) -> [String: Any] {
+    static func script(_ id: String, _ extra: [String: Any] = [:]) -> [String: Any] {
         ["id": id, "matches": ["https://example.com/*"], "js": [["code": "1"]]].merging(extra) { $1 }
     }
 
@@ -383,7 +383,7 @@ struct ExtensionUserScriptsTests {
     // MARK: - The channel's refusals
 
     @available(macOS 15.4, *)
-    private func context(permissions: [String]) async throws -> WKWebExtensionContext {
+    func context(permissions: [String]) async throws -> WKWebExtensionContext {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("userscripts-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -396,14 +396,16 @@ struct ExtensionUserScriptsTests {
     }
 
     @available(macOS 15.4, *)
-    private func complements() throws -> (ExtensionComplements, URL) {
+    func complements() throws -> (ExtensionComplements, URL) {
         let defaults = try #require(UserDefaults(suiteName: "ExtensionUserScriptsTests-\(UUID().uuidString)"))
         let (store, folder) = makeStore()
-        return (ExtensionComplements(
+        let complements = ExtensionComplements(
             privacy: ExtensionPrivacy(settings: PrivacySetting(), defaults: defaults, key: "privacy"),
             userScripts: store,
             grants: ExtensionComplementGrants(defaults: defaults, key: "grants")
-        ), folder)
+        )
+        complements.userScriptsAllowed = { _ in true }
+        return (complements, folder)
     }
 
     @Test func refusedWithoutThePermission() async throws {
@@ -508,6 +510,7 @@ struct ExtensionUserScriptsTests {
             try content.write(to: folder.appendingPathComponent(path), atomically: true, encoding: .utf8)
         }
         #expect(ExtensionComplementPackage.add(toFolder: folder) != nil)
+        #expect(ExtensionComplementPackage.setUserScriptsAllowed(true, at: folder.path))
         let (complements, storeFolder) = try complements()
         defer { try? FileManager.default.removeItem(at: storeFolder) }
         let delegate = WorkerProbe(complements: complements)
@@ -552,11 +555,11 @@ struct ExtensionUserScriptsTests {
 }
 
 @available(macOS 15.4, *)
-private extension WKWebExtension.Permission {
+extension WKWebExtension.Permission {
     static let userScripts = WKWebExtension.Permission(rawValue: "userScripts")
 }
 
-private final class PrivacySetting: PasswordSavingSetting {
+final class PrivacySetting: PasswordSavingSetting {
     var passwordSavePromptsEnabled = true
 }
 
@@ -630,7 +633,7 @@ private final class AddingWaiter: NSObject, WKNavigationDelegate {
 /// and "probe" for what the worker says.
 @available(macOS 15.4, *)
 @MainActor
-private final class WorkerProbe: NSObject, WKWebExtensionControllerDelegate {
+final class WorkerProbe: NSObject, WKWebExtensionControllerDelegate {
     let complements: ExtensionComplements
     var messages: [String] = []
 

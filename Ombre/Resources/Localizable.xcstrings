@@ -30,6 +30,16 @@
         }
       }
     },
+    "Allow User Scripts" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les scripts utilisateur"
+          }
+        }
+      }
+    },
     "An extension" : {
       "localizations" : {
         "fr" : {
@@ -46,6 +56,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier vos réglages de confidentialité"
+          }
+        }
+      }
+    },
+    "It could run code it didn’t have reviewed, such as the scripts you add to it, on the websites it can read." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle pourra exécuter du code qu’elle n’a pas fait relire, comme les scripts que vous y ajoutez, sur les sites qu’elle peut lire."
           }
         }
       }

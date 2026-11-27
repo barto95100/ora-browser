@@ -34,6 +34,8 @@ struct ExtensionDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
+            userScripts
+
             websites
 
             refusedPermissions
@@ -56,6 +58,25 @@ struct ExtensionDetailView: View {
     }
 
     // MARK: - Ombre's complement
+
+    /// "Allow User Scripts", as in Chrome: for a copy that asks for them.
+    @ViewBuilder private var userScripts: some View {
+        if added?.apis.contains("userScripts") == true {
+            VStack(alignment: .leading, spacing: 2) {
+                Toggle("Allow User Scripts", isOn: Binding(
+                    get: { record.allowsUserScripts },
+                    set: { manager.setAllowsUserScripts($0, id: record.id) }
+                ))
+                Text(
+                    // swiftlint:disable:next line_length
+                    "It could run code it didn’t have reviewed, such as the scripts you add to it, on the websites it can read."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
 
     /// The APIs Ombre gives it that WebKit doesn't (`ExtensionComplements`).
     @ViewBuilder private var complement: some View {
